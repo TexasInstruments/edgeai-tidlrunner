@@ -1,9 +1,11 @@
-# edgeai-tidl-runner
+# edgeai-tidl-tools package
 
 
-This repository provides easy to use interface for tidl-tools.
+This package containes tidl-tools and tidl-runner
 
 <hr>
 
-TODO: Documenttion to be added.
+[tidl-runner](./tidl-runner)
+
+[tidl-tools](./tidl-tools)
 
