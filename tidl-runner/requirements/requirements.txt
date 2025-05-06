@@ -1,4 +1,0 @@
-cython
-wheel
-pillow
-numpy==1.23.0
