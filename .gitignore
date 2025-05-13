@@ -2,7 +2,8 @@ __pycache__
 *.pyc
 *.egg-info
 .idea
-/tidl_runner/tools/
-!/tidl_runner/tools/readme.txt
-/run
-!/run/readme.txt
+/tidl-tools/tidl_tools/tools
+!/tidl-tools/tidl_tools/tools/readme.txt
+/tidl-runner/tidl_runner/run
+!/tidl-runner/tidl_runner/run/readme.txt
+
