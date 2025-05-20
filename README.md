@@ -1,7 +1,10 @@
 
-## High Level TIDL Runner
+## TIDL commandline tools
+
+### TIDL Runner - beginner friendly basic tools
 [tidl-runner](tidl-runner)
 
-## Low Level TIDL Tools
+
+### TIDL Tools - advanced low level tools
 [tidl-tools](tidl-tools)
 
