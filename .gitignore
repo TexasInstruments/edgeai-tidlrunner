@@ -4,8 +4,9 @@ __pycache__
 .idea
 .vscode
 
-/tidl-tools/tidl_tools/tools
-!/tidl-tools/tidl_tools/tools/readme.txt
-/run
-!/run/readme.txt
+/tidl_runner/tools/TDA*
+/tidl_runner/tools/AM*
+/tidl_runner/tools/gcc-arm-*
 
+/run/runner
+/run/runtimes
