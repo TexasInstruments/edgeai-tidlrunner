@@ -9,4 +9,4 @@ __pycache__
 /tidl_runner/tools/gcc-arm-*
 
 /run/runner
-/run/runtimes
+/run/rtwrapper
