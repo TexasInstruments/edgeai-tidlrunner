@@ -4,6 +4,9 @@ __pycache__
 .idea
 .vscode
 
+build/
+dist/
+
 /tidl_runner/tools/TDA*
 /tidl_runner/tools/AM*
 /tidl_runner/tools/gcc-arm-*
