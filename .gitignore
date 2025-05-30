@@ -7,9 +7,9 @@ __pycache__
 build/
 dist/
 
-/tidl_runner/tools/TDA*
-/tidl_runner/tools/AM*
-/tidl_runner/tools/gcc-arm-*
+/tools/tidl_tools_package/TDA*
+/tools/tidl_tools_package/AM*
+/tools/tidl_tools_package/gcc-arm-*
 
 /run/runner
 /run/rtwrapper

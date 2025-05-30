@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=42", "wheel", "pyyaml", "tqdm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tidl_runner"
+version = "10.1"
+description = "Edge AI TIDL Runner"
+authors = [
+    { name = "Edge AI Development Team", email = "edgeai@list.ti.com" }
+]
+license = { text = "BSD 3-Clause" }
+readme = "README.md"
+requires-python = "==3.10.*"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3.10"
+]
+dependencies = [
+    "cython",
+    "requests",
+    "tqdm",
+    "pillow"
+]
+
+[project.urls]
+"Homepage" = "https://bitbucket.itg.ti.com/projects/EDGEAI-ALGO/repos/edgeai-tidl-runner/browse"
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.packages.find]
+where = ["./"]
+
+[tool.setuptools.dynamic]
+version = {attr = "tidl_runner.__version__"}
