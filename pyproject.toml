@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=42", "wheel", "pyyaml", "tqdm"]
+requires = ["setuptools>=42", "pyyaml", "tqdm"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "tidl_runner"
-version = "10.1"
+version = "11.0"
 description = "Edge AI TIDL Runner"
 authors = [
     { name = "Edge AI Development Team", email = "edgeai@list.ti.com" }
