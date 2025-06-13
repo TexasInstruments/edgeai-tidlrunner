@@ -2,3 +2,6 @@ cython
 requests
 tqdm
 pillow
+pycocotools
+numpy==1.23.0
+opencv-python
