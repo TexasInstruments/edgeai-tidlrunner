@@ -5,3 +5,4 @@ pillow
 pycocotools
 numpy==1.23.0
 opencv-python
+colorama
