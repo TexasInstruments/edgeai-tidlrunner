@@ -7,7 +7,7 @@ name = "edgeai_tidlrunner"
 version = "11.0"
 description = "Edge AI TIDL Runner"
 authors = [
-    { name = "Edge AI Development Team", email = "edgeai@list.ti.com" }
+    { name = "Edge AI Development Team", email = "edgeai-dev@list.ti.com" }
 ]
 license = { text = "BSD 3-Clause" }
 readme = "README.md"
@@ -24,7 +24,7 @@ dependencies = [
 ]
 
 [project.urls]
-"Homepage" = "https://bitbucket.itg.ti.com/projects/EDGEAI-ALGO/repos/edgeai-tidl-runner/browse"
+"Homepage" = "https://bitbucket.itg.ti.com/projects/EDGEAI-ALGO/repos/edgeai-tidlrunner/browse"
 
 [tool.setuptools]
 include-package-data = false
