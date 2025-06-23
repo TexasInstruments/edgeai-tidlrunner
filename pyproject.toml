@@ -3,7 +3,7 @@ requires = ["setuptools>=42", "pyyaml", "tqdm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tidl_runner"
+name = "edgeai_tidlrunner"
 version = "11.0"
 description = "Edge AI TIDL Runner"
 authors = [
@@ -33,4 +33,4 @@ include-package-data = false
 where = ["./"]
 
 [tool.setuptools.dynamic]
-version = {attr = "tidl_runner.__version__"}
+version = {attr = "edgeai_tidlrunner.__version__"}
