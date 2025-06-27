@@ -58,7 +58,7 @@ command_module_name_dict = command_module_name_dict_base | command_module_name_d
 command_choices = list(command_module_name_dict.keys())
 command_choices = list(set(command_choices))
 # combined commands
-command_choices += ['[import_model,infer_model]', '[compile_model,infer_analyze]', '[compile_model,infer_accuracy]']
+command_choices += ['[import_model,infer_model]', '[compile_model,infer_model]', '[compile_model,infer_analyze]', '[compile_model,infer_accuracy]']
 
 
 def get_command_choices():
