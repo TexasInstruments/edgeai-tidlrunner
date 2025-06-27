@@ -60,7 +60,6 @@ COPY_SETTINGS_DEFAULT = {}
 ##########################################################################
 ##########################################################################
 SETTINGS_DEFAULT['basic'] = settings_base.SETTINGS_TARGET_MODULE_ARGS_DICT | {
-    'config_path':             {'dest':'common.config_path', 'default':None, 'type': str, 'metavar': 'value'},
     # model
     'output_path':             {'dest':'session.run_dir', 'default':'./runs/runner/{model_name}', 'type':str, 'metavar':'value', 'help':'output model path'},
     'model_path':              {'dest':'session.model_path', 'default':None, 'type':str, 'metavar':'value', 'help':'input model'},

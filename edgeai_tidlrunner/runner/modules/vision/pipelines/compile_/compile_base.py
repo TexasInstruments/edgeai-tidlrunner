@@ -104,6 +104,43 @@ class CompileModelPipelineBase(bases.PipelineBase):
             shutil.copy2(model_source, model_folder)
         #
 
+    def _set_default_args(self, **kwargs):
+        kwargs_cmd = super()._set_default_args(**kwargs)
+        model_path = kwargs_cmd['session.model_path']
+        model_ext = os.path.splitext(model_path)[1] if model_path else None
+        if kwargs_cmd.get('preprocess.data_layout',None) is None:
+            data_layout_mapping = {
+                '.onnx': presets.DataLayoutType.NCHW,
+                '.tflite': presets.DataLayoutType.NHWC,
+            }
+            data_layout = data_layout_mapping.get(model_ext, None)
+            kwargs_cmd['preprocess.data_layout'] = data_layout
+        #
+        if kwargs_cmd.get('session.name',None) is None:
+            session_name_mapping = {
+                '.onnx': presets.RuntimeType.RUNTIME_TYPE_ONNXRT,
+                '.tflite': presets.RuntimeType.RUNTIME_TYPE_TFLITERT,
+            }
+            session_name = session_name_mapping.get(model_ext, None)
+            kwargs_cmd['session.name'] = session_name
+        #
+        return kwargs_cmd
+
+    def _upgrade_kwargs(self, **kwargs):
+        if 'session' in kwargs:
+            if 'runtime_options' in kwargs['session']:
+                runtime_options = kwargs['session'].pop('runtime_options', {})
+                runtime_settings = kwargs['session'].get('runtime_settings', {})
+                runtime_settings.get('runtime_options', {}).update(runtime_options)
+            #
+            if 'target_device' in kwargs['session']:
+                target_device = kwargs['session'].pop('target_device')
+                runtime_settings = kwargs['session'].get('runtime_settings', {})
+                runtime_settings['target_device'] = target_device
+            #
+        #
+        return kwargs
+
     def info(self):
         print(f'INFO: Model compile base - {__file__}')
 

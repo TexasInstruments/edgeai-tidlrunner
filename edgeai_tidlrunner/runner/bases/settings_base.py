@@ -36,4 +36,6 @@ SETTINGS_TARGET_MODULE_ARGS_DICT = {
     'target_module':           {'dest':'common.target_module', 'default':TargetModuleType.TARGET_MODULE_VISION, 
                                 'type':str, 'metavar':'value', 'choices':[TargetModuleType.TARGET_MODULE_VISION], 'required':False, 
                                 'help':'specify the target module to be used. default: vision eg. --target_module vision'},
+    'config_path':             {'dest':'common.config_path', 'default': None, 'type': str, 'metavar': 'value'},
+    'parallel_processes':      {'dest':'common.parallel_processes', 'default': None, 'type': int, 'metavar': 'value'},
 }

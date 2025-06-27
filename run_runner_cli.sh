@@ -36,4 +36,4 @@ export TARGET_DEVICE="AM68A"
 source ./set_env.sh
 
 ##################################################################
-tidlrunner-cli [compile_model,infer_model] --config_file ./data/models/configs.yaml --target_device ${TARGET_DEVICE}
+tidlrunner-cli [compile_model,infer_model] --config_path ./data/models/configs.yaml --target_device ${TARGET_DEVICE}
