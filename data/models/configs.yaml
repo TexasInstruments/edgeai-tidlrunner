@@ -1,0 +1,4 @@
+configs:
+  cl-6090: vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml
+  cl-6100: vision/classification/imagenet1k/torchvision/resnet18_config.yaml
+  cl-6110: vision/classification/imagenet1k/torchvision/resnet50_config.yaml

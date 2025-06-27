@@ -12,11 +12,10 @@ dist/
 /tools/tidl_tools_package/gcc*
 /tools/tidl_tools_backup/
 
-/run/runner
-/run/rtwrapper
+/runs/runner
+/runs/rtwrapper
 
-/examples/vision/datasets/imagenet*
-/examples/vision/datasets/coco*
-/examples/vision/models/mobilenet_v2*
-/examples/vision/models/ssd*
-/examples/vision/models/*resnet*
+/data/datasets/vision/backup
+/data/datasets/vision/imagenetv2c*
+/data/datasets/vision/coco*
+*.onnx

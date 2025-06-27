@@ -1,2 +1,0 @@
-command: import_model
-session.model_path: ./examples/vision/models/mobilenet_v2.onnx
