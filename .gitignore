@@ -15,5 +15,8 @@ dist/
 /run/runner
 /run/rtwrapper
 
-/examples/datasets/imagenet*
-/examples/models/mobilenet_v2*
+/examples/vision/datasets/imagenet*
+/examples/vision/datasets/coco*
+/examples/vision/models/mobilenet_v2*
+/examples/vision/models/ssd*
+/examples/vision/models/*resnet*
