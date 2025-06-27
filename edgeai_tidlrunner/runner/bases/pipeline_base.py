@@ -36,10 +36,11 @@ import json
 from ...rtwrapper.options import presets
 from ...rtwrapper.options import attr_dict
 from .. import utils
+from . import settings_base
 
 
 class PipelineBase():
-    args_dict = {}
+    args_dict = settings_base.SETTINGS_TARGET_MODULE_ARGS_DICT
     copy_args = {}
 
     def __init__(self, **kwargs):
@@ -51,6 +52,28 @@ class PipelineBase():
         settings = self._upgrade_kwargs(**settings)
         self.settings = attr_dict.AttrDict(settings)
         self.run_data = None # last run data, can be used by other pipelines
+
+        self.common_prefix = 'common'
+        self.dataloader_prefix = 'dataloader'
+        self.session_prefix = 'session'
+        self.preprocess_prefix = 'preprocess'
+        self.postprocess_prefix = 'postprocess'
+        if 'session' in self.settings and 'model_path' in self.settings['session']:
+            self.model_source = self.settings[self.session_prefix]['model_path']
+            run_dir = self.settings[self.session_prefix]['run_dir']
+            model_basename = os.path.basename(self.model_source)
+            model_basename_wo_ext = os.path.splitext(model_basename)[0]
+            self.run_dir = run_dir.replace('{model_name}', model_basename_wo_ext)
+            self.model_folder = os.path.join(self.run_dir, 'model')
+            self.model_path = os.path.join(self.model_folder, model_basename)
+            self.settings[self.session_prefix]['model_path'] = self.model_path
+            self.artifacts_folder = self.settings[self.session_prefix].get('artifactrs_folder', os.path.join(self.run_dir, 'artifacts'))
+            self.settings[self.session_prefix]['artifacts_folder'] = self.artifacts_folder
+        else:
+            self.run_dir = None
+            self.model_folder = None
+            self.model_path = None
+        #
 
     def info(self):
         print(f'INFO: running - {__file__}')
@@ -109,7 +132,6 @@ class PipelineBase():
             #
         #
         return kwargs_cmd
-
 
     def _set_default_args(self, **kwargs):
         kwargs_cmd = {}

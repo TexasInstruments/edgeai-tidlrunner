@@ -27,6 +27,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+import os
+import wurlitzer
+
 from .. import utils
 from . import settings_base
 from . import pipeline_base
@@ -34,7 +37,7 @@ from .. import modules
 
 
 class PipelineRunner(pipeline_base.PipelineBase):
-    args_dict = settings_base.SETTINGS_TARGET_MODULE_ARGS_DICT
+    args_dict = settings_base.SETTING_PIPELINE_RUNNER_ARGS_DICT
     copy_args = {}
 
     def __init__(self, command, **kwargs):
@@ -47,5 +50,18 @@ class PipelineRunner(pipeline_base.PipelineBase):
         self.command_object = command_module(**kwargs)
     
     def run(self):
-        return self.command_object.run()
+        if self.run_dir and self.settings['common']['log_file']:
+            log_file = self.settings['common']['log_file']
+            if not log_file.startswith('/') and not log_file.startswith('.'):
+                log_file =  os.path.join(self.run_dir, log_file)
+            #
+            os.makedirs(os.path.dirname(log_file), exist_ok=True)
+            with open(log_file, 'a') as log_fp:
+                with wurlitzer.pipes(stdout=log_fp, stderr=wurlitzer.STDOUT):
+                    return self.command_object.run()
+                #
+            #
+        else:
+            return self.command_object.run()
+
 

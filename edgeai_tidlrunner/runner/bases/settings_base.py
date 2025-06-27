@@ -38,4 +38,17 @@ SETTINGS_TARGET_MODULE_ARGS_DICT = {
                                 'help':'specify the target module to be used. default: vision eg. --target_module vision'},
     'config_path':             {'dest':'common.config_path', 'default': None, 'type': str, 'metavar': 'value'},
     'parallel_processes':      {'dest':'common.parallel_processes', 'default': None, 'type': int, 'metavar': 'value'},
+    'log_file':                {'dest': 'common.log_file', 'default':None, 'type':str, 'metavar': 'value'},
 }
+
+
+SETTING_PIPELINE_RUNNER_ARGS_DICT = SETTINGS_TARGET_MODULE_ARGS_DICT | {
+    # model
+    'output_path':             {'dest':'session.run_dir', 'default':'./runs/runner/{model_name}', 'type':str, 'metavar':'value', 'help':'output model path'},
+    'model_path':              {'dest':'session.model_path', 'default':None, 'type':str, 'metavar':'value', 'help':'input model'},
+}
+
+
+class SettingsBaseDefaults:
+    NUM_PARALLEL_PROCESSES = 12
+    LOG_FILE = 'run.log'

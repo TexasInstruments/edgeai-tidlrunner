@@ -119,8 +119,11 @@ class MainRunner(runner.bases.PipelineBase):
                         task_list = [task_entry]
                         task_entries.update({config_key: task_list})
                     #
-                    parallel_processes = self.kwargs['common.parallel_processes'] or 1
-                    return runner.utils.ParallelRunner(parallel_processes=parallel_processes).run(task_entries)
+                    # while running multiple configs, it is better to use parallel processing and log files
+                    # even if it is not set in the configs - these can be overridden from the command line
+                    parallel_processes = self.kwargs['common.parallel_processes'] or runner.bases.SettingsBaseDefaults.NUM_PARALLEL_PROCESSES
+                    log_file = runner.bases.SettingsBaseDefaults.LOG_FILE if self.kwargs['common.log_file'] is None else self.kwargs['common.log_file']
+                    return runner.utils.ParallelRunner(parallel_processes=parallel_processes, log_file=log_file).run(task_entries)
                 else:
                     configs = kwargs_cfg.pop('configs')
                     config_entry_file = list(configs.values())[0]

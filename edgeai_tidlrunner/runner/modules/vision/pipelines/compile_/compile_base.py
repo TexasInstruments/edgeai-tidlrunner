@@ -53,22 +53,6 @@ class CompileModelPipelineBase(bases.PipelineBase):
         self.session = None
         self.postprocess = None
         self.run_data = None
-        self.common_prefix = 'common'
-        self.dataloader_prefix = 'dataloader'
-        self.session_prefix = 'session'
-        self.preprocess_prefix = 'preprocess'
-        self.postprocess_prefix = 'postprocess'
-
-        self.model_source = self.settings[self.session_prefix]['model_path']
-        run_dir = self.settings[self.session_prefix]['run_dir']
-        model_basename = os.path.basename(self.model_source)
-        model_basename_wo_ext = os.path.splitext(model_basename)[0]
-        self.run_dir = run_dir.replace('{model_name}', model_basename_wo_ext)
-        self.model_folder = os.path.join(self.run_dir, 'model')
-        self.model_path = os.path.join(self.model_folder, model_basename)
-        self.settings[self.session_prefix]['model_path'] = self.model_path
-        self.artifacts_folder = self.settings[self.session_prefix].get('artifactrs_folder', os.path.join(self.run_dir, 'artifacts'))
-        self.settings[self.session_prefix]['artifacts_folder'] = self.artifacts_folder
 
         session_kwargs = self.settings[self.session_prefix]
         runtime_settings = session_kwargs['runtime_settings']

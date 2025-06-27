@@ -7,3 +7,4 @@ numpy==1.23.0
 opencv-python-headless
 colorama
 munkres
+wurlitzer
