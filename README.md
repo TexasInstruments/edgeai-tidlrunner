@@ -19,11 +19,11 @@ To setup on PC, run:
 ./setup_pc.sh
 ```
 
-Additional arguments such as tools_version and tools_type can be provided to configure the setup.
+Setup with gpu based tidl_tools (faster to run)
 
 Example:
 ```
-./setup_pc.sh --tools_version 10.1 --tools_type gpu
+./setup_pc_gpu.sh
 ```
 
 <hr>
@@ -32,21 +32,30 @@ Example:
 
 runner is a basic interface which hides most of the complexity of the underlying runtimes. It can be used either from Python script or from command line.
 
-### tidl-runner commandline interface
+### tidlrunner-cli commandline interface
 
 tidl-run is the interface script to run model compilation and inference via commandline:
 
 ```
-tidl-runner-cli compile --model_path=./data/examples/models/mobilenet_v2.onnx
+tidlrunner-cli import_model --model_path=./data/examples/models/mobilenet_v2.onnx
 ```
 
 More options can be specified to configure the run:
 
 ```
-tidl-runner-cli compile --model_path=./data/examples/models/mobilenet_v2.onnx --run_dir=./run/tidl-runner/mobilenet_v2 --input_data.path=./data/examples/coco_ccby/images
+tidlrunner-cli compile_model --model_path=./data/examples/models/mobilenet_v2.onnx --data_path=./data/datasets/vision/imagenetv2c/val
 ```
 
-See the commandline example in [run_runner_cli_example.sh](./run_runner_cli_example.sh)
+See the commandline example in [example_runner_cli.sh](./example_runner_cli.sh)
+
+The options that can be provided can be obtained using the help option. Examples
+```
+tidlrunner-cli --help
+tidlrunner-cli compile_model --help
+```
+
+The options that can be passed can also be seen in this file [settings_default.py](./edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py)
+Note: The options can be provided either using the short option that is the key or using the long option that is given against 'dest'
 
 ### edgeai_tidlrunner Pythonic interface
 
@@ -54,84 +63,27 @@ edgeai_tidlrunner.runner.run is the Pythonic API of runner
 
 ```
 kwargs = {
-    'model': './data/examples/models/mobilenet_v2.onnx',
-    'run_dir': './run/tidl-runner/mobilenet_v2',
-    'input_data.path': './data/examples/datasets/coco_ccby/images',
+    'session': {
+        'model_path': ./data/examples/models/mobilenet_v2.onnx',
+    }
+    'dataloader': {
+        'path': ./data/datasets/vision/imagenetv2c/val',
+     }
 }
 
-edgeai_tidlrunner.runner.run('compile', **kwargs)
+edgeai_tidlrunner.runner.run('compile_model', **kwargs)
 ```
 
-Several additional options such as runtime_settings can be provided in via this API. 
+See the Pythonic example in [example_runner_py.py](./examples/vision/scripts/example_runner_py.py) which is invoked via [example_runner_py.sh](./example_runner_py.sh)
 
-See the Pythonic example in [run_runner_py_example.py](./run_runner_py_example.py) which is invoked via [run_runner_py_example.sh](./run_runner_py_example.sh)
+The options that can be passed as **kwargs can be seen in this file [settings_default.py](./edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py)
+Note: that this file lists the options in a flat syntax using '.' separator for the fields - it is possible to use the '.' syntax or the nested dict as shown above. 
 
 <hr>
 
 ## Usage of runtimes wrappers (advanced interface)
 
-### Create a runtime_settings dict
-
-The default value for runtime_settings is in the file [edgeai_tidlrunner/runtimes/settings/default_settings.py](./edgeai_tidlrunner/runtimes/settings/default_settings.py). Any overrides can be passed here:
-
-```
-# runtime_settings and runtime_options
-settings_kwargs = {
-    # add any runtime_settings overrides here
-    'target_device': 'AM68A',
-    'runtime_options': {
-        # add any runtime_options overrides here
-        'advanced_options:c7x_firmware_version':'10_01_04_00',
-        'advanced_options:calibration_frames':12,
-        'advanced_options:calibration_iterations':12
-    }
-}
-runtime_settings = edgeai_tidlrunner.runtimes.settings.RuntimeSettings(**settings_kwargs)
-```
-
-### Run model compilation
-```
-images_path = f'./data/examples/datasets/coco_ccby/images'
-calib_dataset = glob.glob(f'{images_path}/*.*')
-
-onnxruntime_wrapper = edgeai_tidlrunner.runtimes.core.ONNXRuntimeWrapper(
-        runtime_options=runtime_settings['runtime_options'],
-        model_path=model_path,
-        artifacts_folder=artifacts_folder,
-        tidl_tools_path=os.environ['TIDL_TOOLS_PATH'])
-
-for input_index in range(runtime_settings['runtime_options']['advanced_options:calibration_frames']):
-    input_data = preprocess_input(calib_dataset[input_index])
-    onnxruntime_wrapper.run_import(input_data)
-```
-
-
-### Run model inference
-```
-images_path = f'./data/examples/datasets/coco_ccby/images'
-val_dataset = glob.glob(f'{images_path}/*.*')
-
-onnxruntime_wrapper = edgeai_tidlrunner.runtimes.core.ONNXRuntimeWrapper(
-        runtime_options=runtime_settings['runtime_options'],
-        model_path=model_path,
-        artifacts_folder=artifacts_folder,
-        tidl_tools_path=os.environ['TIDL_TOOLS_PATH'],
-        tidl_offload=True)
-
-for input_index in range(num_frames):
-    input_data = preprocess_input(val_dataset[input_index])
-    outputs = onnxruntime_wrapper.run_inference(input_data)
-    print(outputs)
-```
-
-### Examples
-
-A full example that demonstrates the usage of this runtimes: [tidl_onnxrt_example.py](./examples/tidl_onnxrt_example.py)
-
-<hr>
-
-## Usage of TIDL tools (low level interface)
-
-The API and usage of [edgeai_tidlrunner/tools](./edgeai_tidlrunner/tools) is described in [edgeai-tidl-tools](https://github.com/TexasInstruments/edgeai-tidl-tools)
+The runtime wrappers [edgeai_tidlrunner/rtwrapper](edgeai_tidlrunner/rtwrapper) provides an advanced low level interface beyond what the runner provides. 
+An example of this is in [example_advanced_rtwrapper.py](./examples/vision/scripts/example_advanced_rtwrapper.py)
 
 <hr>

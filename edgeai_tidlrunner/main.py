@@ -126,6 +126,7 @@ class MainRunner(runner.bases.PipelineBase):
 
         if len(sys.argv) == 1 or (len(sys.argv) > 1 and sys.argv[1] in ('help', 'h', '--help', '-h')):
             print('============================================================')
+            sys.argv = [sys.argv[0]]
             parser = cls.get_arg_parser()
             command_args, rest_args = parser.parse_known_args()
             kwargs = vars(command_args)
@@ -138,6 +139,7 @@ class MainRunner(runner.bases.PipelineBase):
                 print(f'{sys.argv[0]} {command_choice} --help')
             #
         elif len(sys.argv) == 2 or (len(sys.argv) > 2 and sys.argv[2] in ('help', 'h', '--help', '-h')):
+            sys.argv = [sys.argv[0], sys.argv[1]]
             parser = cls.get_arg_parser()
             command_args, rest_args = parser.parse_known_args()
             kwargs = vars(command_args)
