@@ -146,8 +146,11 @@ def float_or_tuple(v):
 
 
 def str_to_list_of_tuples(v):
-    lst = ast.literal_eval(v)
-    return lst
+    if isinstance(v, str):
+        v = ast.literal_eval(v)
+    #
+    assert isinstance(v, list), f'ERROR: invalid parsing output: {v}'
+    return v
 
 
 def str_to_literal(v):

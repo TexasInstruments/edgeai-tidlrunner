@@ -40,8 +40,8 @@ from . import settings_base
 
 
 class PipelineBase():
-    args_dict = settings_base.SETTINGS_TARGET_MODULE_ARGS_DICT
-    copy_args = {}
+    ARGS_DICT = settings_base.SETTINGS_TARGET_MODULE_ARGS_DICT
+    COPY_ARGS = {}
 
     def __init__(self, **kwargs):
         super().__init__()
@@ -58,7 +58,7 @@ class PipelineBase():
         self.session_prefix = 'session'
         self.preprocess_prefix = 'preprocess'
         self.postprocess_prefix = 'postprocess'
-        if 'session' in self.settings and 'model_path' in self.settings['session']:
+        if 'session' in self.settings and self.settings[self.session_prefix].get('model_path', None):
             self.model_source = self.settings[self.session_prefix]['model_path']
             run_dir = self.settings[self.session_prefix]['run_dir']
             model_basename = os.path.basename(self.model_source)
@@ -73,6 +73,7 @@ class PipelineBase():
             self.run_dir = None
             self.model_folder = None
             self.model_path = None
+            self.artifacts_folder = None
         #
 
     def info(self):
@@ -87,13 +88,27 @@ class PipelineBase():
         """
         return self.run_data
 
-    def _flatten_dict_fields(self, kwargs_flat, prefix, **kwargs):
-        for k, v in kwargs.items():
-            key_prefix = prefix + '.' + k if prefix else k
-            if isinstance(v, dict):
-                self._flatten_dict_fields(kwargs_flat, key_prefix, **v)
-            else:
-                kwargs_flat[key_prefix] = v
+    def _flatten_dict_fields(self, kwargs_flat, prefix, override_dict_fields=False, **kwargs):
+        dict_keys = [k for k, v in kwargs.items() if isinstance(v, dict)]
+        nondict_keys = [k for k, v in kwargs.items() if not isinstance(v, dict)]
+        if override_dict_fields:
+            for k in dict_keys:
+                key_prefix = prefix + '.' + k if prefix else k
+                self._flatten_dict_fields(kwargs_flat, key_prefix, **kwargs[k])
+            #
+            for k in nondict_keys:
+                key_prefix = prefix + '.' + k if prefix else k
+                kwargs_flat[key_prefix] = kwargs[k]
+            #
+        else:
+            for k in nondict_keys:
+                key_prefix = prefix + '.' + k if prefix else k
+                kwargs_flat[key_prefix] = kwargs[k]
+            #
+            for k in dict_keys:
+                key_prefix = prefix + '.' + k if prefix else k
+                self._flatten_dict_fields(kwargs_flat, key_prefix, **kwargs[k])
+            #
 
     def _flatten_dict(self, **kwargs):
         kwargs_flat = {}
@@ -125,8 +140,8 @@ class PipelineBase():
         
     def _copy_args(self, **kwargs_cmd):
         # copy entries if required
-        for k in self.copy_args:
-            src_key = self.copy_args[k]
+        for k in self.COPY_ARGS:
+            src_key = self.COPY_ARGS[k]
             if src_key in kwargs_cmd:
                 kwargs_cmd[k] = kwargs_cmd[src_key]
             #
@@ -135,7 +150,7 @@ class PipelineBase():
 
     def _set_default_args(self, **kwargs):
         kwargs_cmd = {}
-        for k_name, v_dict in self.args_dict.items():
+        for k_name, v_dict in self.ARGS_DICT.items():
             kwargs_cmd[v_dict['dest']] = v_dict['default']
 
         kwargs_cmd.update(kwargs)
@@ -147,7 +162,7 @@ class PipelineBase():
 
     @classmethod
     def _arg_parser_info(cls):
-        default_entries = {k:v['default'] for k,v in cls.args_dict.items()}
+        default_entries = {k:v['default'] for k,v in cls.ARGS_DICT.items()}
         output = json.dumps(default_entries, indent=4)
         return f'defaults: {output}'
 
@@ -162,7 +177,7 @@ class PipelineBase():
 
     @classmethod
     def get_arg_parser(cls):
-        args_dict = copy.deepcopy(cls.args_dict)
+        args_dict = copy.deepcopy(cls.ARGS_DICT)
         group_keys = args_dict.keys()
         group_dict = {}
         for k in group_keys:

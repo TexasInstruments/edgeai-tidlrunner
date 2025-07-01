@@ -43,8 +43,8 @@ from . import infer_model
 
 
 class InferAccuracyPipeline(infer_model.InferModelPipeline):
-    args_dict=SETTINGS_DEFAULT['infer_accuracy']
-    copy_args=COPY_SETTINGS_DEFAULT['infer_accuracy']
+    ARGS_DICT=SETTINGS_DEFAULT['infer_accuracy']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['infer_accuracy']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

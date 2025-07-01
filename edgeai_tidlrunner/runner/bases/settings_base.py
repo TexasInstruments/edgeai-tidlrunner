@@ -27,6 +27,17 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+class CaptureLogModes:
+    CAPTURE_LOG_MODE_OFF = False  # only to screen
+    CAPTURE_LOG_MODE_ON = True    # only to file
+    CAPTURE_LOG_MODE_TEE = 'tee'  # to screen and to file
+
+
+class SettingsBaseDefaults:
+    NUM_PARALLEL_PROCESSES = 12
+    CAPTURE_LOG_MODE = CaptureLogModes.CAPTURE_LOG_MODE_TEE
+    CAPTURE_LOG_FILE = 'run.log'
+
 
 class TargetModuleType:
     TARGET_MODULE_VISION = 'vision'
@@ -36,19 +47,16 @@ SETTINGS_TARGET_MODULE_ARGS_DICT = {
     'target_module':           {'dest':'common.target_module', 'default':TargetModuleType.TARGET_MODULE_VISION, 
                                 'type':str, 'metavar':'value', 'choices':[TargetModuleType.TARGET_MODULE_VISION], 'required':False, 
                                 'help':'specify the target module to be used. default: vision eg. --target_module vision'},
-    'config_path':             {'dest':'common.config_path', 'default': None, 'type': str, 'metavar': 'value'},
-    'parallel_processes':      {'dest':'common.parallel_processes', 'default': None, 'type': int, 'metavar': 'value'},
-    'log_file':                {'dest': 'common.log_file', 'default':None, 'type':str, 'metavar': 'value'},
 }
 
 
 SETTING_PIPELINE_RUNNER_ARGS_DICT = SETTINGS_TARGET_MODULE_ARGS_DICT | {
     # model
-    'output_path':             {'dest':'session.run_dir', 'default':'./runs/runner/{model_name}', 'type':str, 'metavar':'value', 'help':'output model path'},
-    'model_path':              {'dest':'session.model_path', 'default':None, 'type':str, 'metavar':'value', 'help':'input model'},
+    'model_path': {'dest': 'session.model_path', 'default': None, 'type': str, 'metavar': 'value', 'help': 'input model'},
+    'output_path':              {'dest':'session.run_dir', 'default':'./runs/runner/{model_name}', 'type':str, 'metavar':'value', 'help':'output model path'},
+    'config_path':              {'dest': 'common.config_path', 'default': None, 'type': str, 'metavar': 'value'},
+    'parallel_processes':       {'dest': 'common.parallel_processes', 'default': None, 'type': int, 'metavar': 'value'},
+    'log_file':                 {'dest': 'common.log_file', 'default': SettingsBaseDefaults.CAPTURE_LOG_FILE, 'type': str, 'metavar': 'value'},
+    'capture_log':              {'dest': 'common.capture_log', 'default': SettingsBaseDefaults.CAPTURE_LOG_MODE, 'type': str, 'metavar': 'value'},
 }
 
-
-class SettingsBaseDefaults:
-    NUM_PARALLEL_PROCESSES = 12
-    LOG_FILE = 'run.log'

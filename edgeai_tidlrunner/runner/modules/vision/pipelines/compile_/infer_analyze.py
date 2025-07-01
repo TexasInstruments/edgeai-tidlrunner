@@ -38,8 +38,8 @@ from . import infer_model
 
 
 class InferAnalyzePipeline(bases.PipelineBase):
-    args_dict=SETTINGS_DEFAULT['infer_analyze']
-    copy_args=COPY_SETTINGS_DEFAULT['infer_analyze']
+    ARGS_DICT=SETTINGS_DEFAULT['infer_analyze']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['infer_analyze']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

@@ -36,8 +36,8 @@ from ..... import bases
 
 
 class OptimizeModelGUIPipeline(bases.PipelineBase):
-    args_dict=SETTINGS_DEFAULT['basic']
-    copy_args=COPY_SETTINGS_DEFAULT['basic']
+    ARGS_DICT=SETTINGS_DEFAULT['basic']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['basic']
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

@@ -50,6 +50,23 @@ def log_color(tag, title, message=''):
     return msg
 
 
+##############################################################################
+# a simpler alternative to TeeLogger
+class TeeLogWriter:
+    def __init__(self, *streams):
+        self.streams = streams
+
+    def write(self, data):
+        for stream in self.streams:
+            stream.write(data)
+            stream.flush()
+
+    def flush(self):
+        for stream in self.streams:
+            stream.flush()
+
+
+##############################################################################
 class TeeLogger:
     def __enter__(self):
         return self

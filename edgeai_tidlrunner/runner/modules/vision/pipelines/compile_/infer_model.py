@@ -44,8 +44,8 @@ from .compile_base import CompileModelPipelineBase
 
 
 class InferModelPipeline(CompileModelPipelineBase):
-    args_dict=SETTINGS_DEFAULT['infer_model']
-    copy_args=COPY_SETTINGS_DEFAULT['infer_model']
+    ARGS_DICT=SETTINGS_DEFAULT['infer_model']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['infer_model']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

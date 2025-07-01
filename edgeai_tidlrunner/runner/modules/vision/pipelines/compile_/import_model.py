@@ -45,8 +45,8 @@ from ..optimize_ import optimize_model
 
 
 class ImportModelPipeline(CompileModelPipelineBase):
-    args_dict=SETTINGS_DEFAULT['import_model']
-    copy_args=COPY_SETTINGS_DEFAULT['import_model']
+    ARGS_DICT=SETTINGS_DEFAULT['import_model']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['import_model']
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

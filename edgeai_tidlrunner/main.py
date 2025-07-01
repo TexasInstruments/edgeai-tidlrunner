@@ -40,8 +40,8 @@ from edgeai_tidlrunner import runner
 
 
 class MainRunner(runner.bases.PipelineBase):
-    args_dict = runner.bases.SETTINGS_TARGET_MODULE_ARGS_DICT
-    copy_args = {}
+    ARGS_DICT = runner.bases.SETTING_PIPELINE_RUNNER_ARGS_DICT
+    COPY_ARGS = {}
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -94,9 +94,20 @@ class MainRunner(runner.bases.PipelineBase):
                 kwargs_cfg = yaml.safe_load(fp)
             #
             kwargs_cfg.pop('command', None)
-            if 'configs' in kwargs_cfg:
+            if not 'configs' in kwargs_cfg:
+                command_kwargs = kwargs_cfg
+                command_kwargs.update(self.kwargs)
+                command_kwargs.update({'common.config_path': config_path})
+                return self._run_command(command, config_path=config_path, **command_kwargs)
+            else:
                 if len(kwargs_cfg['configs']) > 1:
                     configs = kwargs_cfg.pop('configs')
+                    # while running multiple configs, it is better to use parallel processing
+                    parallel_processes = self.kwargs['common.parallel_processes'] or runner.bases.SettingsBaseDefaults.NUM_PARALLEL_PROCESSES
+                    # also setting capture_log mode to not use tee
+                    if self.kwargs['common.capture_log']:
+                        self.kwargs['common.capture_log'] = runner.bases.settings_base.CaptureLogModes.CAPTURE_LOG_MODE_ON
+                    #
                     def command_proc(func, *args, **kwargs):
                         print(f'INFO: running - {config_key}')
                         target = functools.partial(func, *args, **kwargs)
@@ -119,11 +130,7 @@ class MainRunner(runner.bases.PipelineBase):
                         task_list = [task_entry]
                         task_entries.update({config_key: task_list})
                     #
-                    # while running multiple configs, it is better to use parallel processing and log files
-                    # even if it is not set in the configs - these can be overridden from the command line
-                    parallel_processes = self.kwargs['common.parallel_processes'] or runner.bases.SettingsBaseDefaults.NUM_PARALLEL_PROCESSES
-                    log_file = runner.bases.SettingsBaseDefaults.LOG_FILE if self.kwargs['common.log_file'] is None else self.kwargs['common.log_file']
-                    return runner.utils.ParallelRunner(parallel_processes=parallel_processes, log_file=log_file).run(task_entries)
+                    return runner.utils.ParallelRunner(parallel_processes=parallel_processes).run(task_entries)
                 else:
                     configs = kwargs_cfg.pop('configs')
                     config_entry_file = list(configs.values())[0]
@@ -137,11 +144,6 @@ class MainRunner(runner.bases.PipelineBase):
                     command_kwargs.update({'common.config_path': config_path})
                     return self._run_command(command, config_path=config_path, **command_kwargs)
                 #
-            else:
-                command_kwargs = kwargs_cfg
-                command_kwargs.update(self.kwargs)
-                command_kwargs.update({'common.config_path': config_path})
-                return self._run_command(command, config_path=config_path, **command_kwargs)
             #
         #
 
@@ -180,7 +182,7 @@ class MainRunner(runner.bases.PipelineBase):
             kwargs = vars(command_args)
             target_module = cls._get_target_module(kwargs['common.target_module'])
             command_choices = target_module.get_command_choices()
-            command = sys.argv[1]
+            command = sys.argv[1].lower().replace(' ', '')
             assert command in command_choices, RuntimeError(
                 f'ERROR: invalid command: {command} - must be one of {command_choices}')
             sys.argv = [sys.argv[0]] + sys.argv[2:]

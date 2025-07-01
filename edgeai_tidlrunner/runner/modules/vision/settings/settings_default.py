@@ -151,9 +151,7 @@ COPY_SETTINGS_DEFAULT['infer_analyze'] = COPY_SETTINGS_DEFAULT['infer_model'] | 
 ##########################################################################
 # accuracy requires label_path as well
 SETTINGS_DEFAULT['infer_accuracy'] = SETTINGS_DEFAULT['compile_model'] | {
-    'data_name': {'dest': 'dataloader.name', 'default': 'image_classification_dataloader', 'type': str, 'metavar': 'value'},
-    'data_path': {'dest': 'dataloader.path', 'default': './examples/vision/datasets/imagenetv2c/val', 'type': str, 'metavar': 'path'},
-    'label_path':{'dest': 'dataloader.label_path', 'default':'./examples/datasets/imagenetv2c/val.txt', 'type':str, 'metavar':'path'},
+    'label_path':{'dest': 'dataloader.label_path', 'default':'./data/datasets/vision/imagenetv2c/val.txt', 'type':str, 'metavar':'path'},
 
     # postprocess
     'postprocess_name':                   {'dest':'postprocess.name', 'default':'no_postprocess', 'type':str, 'metavar':'value', 'group':'postprocess_name'},

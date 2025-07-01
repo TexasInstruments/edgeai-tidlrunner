@@ -36,8 +36,8 @@ from ...settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
 
 
 class CompileModelPipeline(import_model.ImportModelPipeline):
-    args_dict=SETTINGS_DEFAULT['compile_model']
-    copy_args=COPY_SETTINGS_DEFAULT['compile_model']
+    ARGS_DICT=SETTINGS_DEFAULT['compile_model']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['compile_model']
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
