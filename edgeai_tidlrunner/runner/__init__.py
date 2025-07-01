@@ -34,33 +34,58 @@ from . import bases
 from . import modules
 
 
-def _run(command_dict): 
-    if len(command_dict) == 1:
-        # there is only one command to run - running it in the current process
-        command_entry = list(command_dict.keys())[0]
-        command_kwargs = command_dict[command_entry]
-        runner_obj = bases.PipelineRunner(command_entry, **command_kwargs)
-        runner_obj.run()
+def _run(model_command_dict):
+    assert isinstance(model_command_dict, dict) and \
+           isinstance(list(model_command_dict.values())[0],list) and \
+            isinstance(list(model_command_dict.values())[0][0], tuple), 'expecting a dict of list of tuples'
+
+    parallel_processes = None
+    multiple_models = len(model_command_dict) > 1
+    multiple_commands = len(list(model_command_dict.values())[0]) > 1
+    proc_runner = multiple_models or multiple_commands
+
+    task_entries = {}
+    for model_key, model_command_list in model_command_dict.items():
+        task_list = []
+        for model_command_entry in model_command_list:
+            command_key, command_kwargs = model_command_entry
+            if multiple_models:
+                command_kwargs['common.capture_log'] = bases.settings_base.CaptureLogModes.CAPTURE_LOG_MODE_ON
+            #
+            # while running multiple configs, it is better to use parallel processing
+            parallel_processes = command_kwargs['common.parallel_processes']
+            runner_obj = bases.PipelineRunner(command_key, **command_kwargs)
+            command_func = runner_obj.run
+            proc_name = model_key+':'+command_key if model_key else command_key
+            task_entry = {'proc_name':proc_name, 'proc_func':command_func}
+            task_list.append(task_entry)
+        #
+        task_entries.update({model_key:task_list})
+    #
+
+    # if there is only one model and command, we can directly run it
+    # or else we need to launch in ParallelRunner
+    if not proc_runner:
+        proc_func = list(task_entries.values())[0][0]['proc_func']
+        return proc_func()
     else:
         # there are multiple commands given to be run back to back - running them on the same process can be problematic
         # so we will run them using multiprocessing - using separate process for each sub-command
         # this is useful for cases like 'compile,accuracy' or 'import,infer'
-        def command_proc(command_entry, **kwargs):
-            print(f'INFO: running - {command_entry}')
-            runner_obj = bases.PipelineRunner(command_entry, **kwargs)
-            proc = utils.ProcessWithQueue(name=command_entry, target=runner_obj.run)
+        def command_proc(proc_name, proc_func):
+            print(f'INFO: running - {proc_name}')
+            proc = utils.ProcessWithQueue(name=proc_name, target=proc_func)
             proc.start()
             return proc
-        
-        task_list = []
-        for commandi, commandi_kwargs in command_dict.items():
-            command_func = functools.partial(command_proc, commandi, **commandi_kwargs)
-            task_entry = {'proc_name':commandi, 'proc_func':command_func}
-            task_list.append(task_entry)
 
-        command_key = ','.join(command_dict.keys())
-        task_entries = {command_key: task_list}
-        return utils.ParallelRunner(parallel_processes=1).run(task_entries)
+        for task_list in task_entries.values():
+            for task_entry in task_list:
+                proc_name = task_entry['proc_name']
+                proc_func = task_entry['proc_func']
+                task_entry['proc_func'] = functools.partial(command_proc, proc_name, proc_func)
+            #
+        #
+        return utils.ParallelRunner(parallel_processes=parallel_processes).run(task_entries)
 
 
 def run(command, **kwargs):
@@ -72,13 +97,7 @@ def run(command, **kwargs):
     :return: The result of the command execution.
     """
     if isinstance(command, str):
-        _run({command:kwargs})
-    elif isinstance(command, dict) and len(command) > 0:
-        # there is only one command to run - running it in the current process
-        command_dict = command
-        if len(kwargs) > 0:
-            raise RuntimeError("ERROR: when command is a dict, kwargs should be empty. ")
-        _run(command_dict)
+        _run({command:[(command,kwargs)]})
     else:
         raise RuntimeError(f"ERROR: run() got unexpected command {command} with type {type(command)}. Expected str or dict.")
     

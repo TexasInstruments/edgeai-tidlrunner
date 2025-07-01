@@ -58,6 +58,7 @@ class ParallelRunner:
         self.terminate_all_flag = False
         self.result_entries = None
         self.check_errors = check_errors
+        self.last_update_time = time.time()
         if verbose:
             warnings.warn('''
             ParallelSubProcess is for tasks that are started with subprocess.Popen()
@@ -237,10 +238,16 @@ class ParallelRunner:
         num_completed = len(completed_tasks)
         num_running = len(running_tasks)
 
-        self.tqdm_obj.update(num_completed - self.tqdm_obj.n)
-        desc = self.desc + f' TOTAL={self.num_queued_tasks}, NUM_RUNNING={num_running}'
-        self.tqdm_obj.set_description(desc)
-        self.tqdm_obj.set_postfix(postfix=dict(RUNNING=running_tasks, COMPLETED=completed_tasks))
+
+        udate_interval = time.time() - self.last_update_time
+        update_interval_elapsed = (udate_interval > self.maxinterval)
+        if update_interval_elapsed:
+            self.last_update_time = time.time()
+            self.tqdm_obj.update(num_completed - self.tqdm_obj.n)
+            desc = self.desc + f' TOTAL={self.num_queued_tasks}, NUM_RUNNING={num_running}'
+            self.tqdm_obj.set_description(desc)
+            self.tqdm_obj.set_postfix(postfix=dict(RUNNING=running_tasks, COMPLETED=completed_tasks))
+
         return num_completed, num_running
 
     def _wait_in_loop(self, num_processes):

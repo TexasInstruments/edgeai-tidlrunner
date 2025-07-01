@@ -35,7 +35,7 @@ class CaptureLogModes:
 
 class SettingsBaseDefaults:
     NUM_PARALLEL_PROCESSES = 12
-    CAPTURE_LOG_MODE = CaptureLogModes.CAPTURE_LOG_MODE_TEE
+    CAPTURE_LOG_MODE = CaptureLogModes.CAPTURE_LOG_MODE_OFF
     CAPTURE_LOG_FILE = 'run.log'
 
 
@@ -52,10 +52,10 @@ SETTINGS_TARGET_MODULE_ARGS_DICT = {
 
 SETTING_PIPELINE_RUNNER_ARGS_DICT = SETTINGS_TARGET_MODULE_ARGS_DICT | {
     # model
-    'model_path': {'dest': 'session.model_path', 'default': None, 'type': str, 'metavar': 'value', 'help': 'input model'},
+    'model_path':               {'dest': 'session.model_path', 'default': None, 'type': str, 'metavar': 'value', 'help': 'input model'},
     'output_path':              {'dest':'session.run_dir', 'default':'./runs/runner/{model_name}', 'type':str, 'metavar':'value', 'help':'output model path'},
     'config_path':              {'dest': 'common.config_path', 'default': None, 'type': str, 'metavar': 'value'},
-    'parallel_processes':       {'dest': 'common.parallel_processes', 'default': None, 'type': int, 'metavar': 'value'},
+    'parallel_processes':       {'dest': 'common.parallel_processes', 'default': SettingsBaseDefaults.NUM_PARALLEL_PROCESSES, 'type': int, 'metavar': 'value'},
     'log_file':                 {'dest': 'common.log_file', 'default': SettingsBaseDefaults.CAPTURE_LOG_FILE, 'type': str, 'metavar': 'value'},
     'capture_log':              {'dest': 'common.capture_log', 'default': SettingsBaseDefaults.CAPTURE_LOG_MODE, 'type': str, 'metavar': 'value'},
 }

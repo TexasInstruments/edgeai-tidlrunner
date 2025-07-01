@@ -51,101 +51,74 @@ class MainRunner(runner.bases.PipelineBase):
         target_module = getattr(runner.modules, target_module_name)
         return target_module
 
-    def _run_command(self, command, config_path=None, **kwargs):
+    def _create_run_dict(self, command, model_key, **kwargs):
+        config_path = kwargs.get('common.config_path', None)
         # which target module to use
         target_module = self._get_target_module(kwargs['common.target_module'])
-
         if '[' in command:
             commands = command.replace('[', '').replace(']', '').split(',')
         elif isinstance(command, list):
             commands = command
         else:
             commands = [command]
-
+        #
         commands = [cmd.lower().replace(' ', '') for cmd in commands]
 
-        command_dict = {}
-        for commandi in commands:
+        command_list = []
+        for command_entry in commands:
             # remove spaces from command
-            command_module_name = target_module.pipelines.command_module_name_dict[commandi]
+            command_module_name = target_module.pipelines.command_module_name_dict[command_entry]
             command_module = getattr(target_module.pipelines, command_module_name)
-            if not config_path:
+
+            if config_path:
+                with open(config_path) as fp:
+                    kwargs_cfg = yaml.safe_load(fp)
+                #
+                kwargs_cfg.pop('command', None)
+            else:
                 command_args, rest_args = command_module.get_arg_parser().parse_known_args()
-                kwargs_cmd = vars(command_args)
+                kwargs_cfg = vars(command_args)
                 rest_args = [arg for arg in rest_args if 'config_path' not in arg]
                 rest_args = [arg for arg in rest_args if '.yaml' not in arg]
                 if rest_args:
-                    raise RuntimeError(f"WARNING: unrecognized arguments for {commandi}: {rest_args}")
+                    raise RuntimeError(f"WARNING: unrecognized arguments for {command_entry}: {rest_args}")
                 #
-            else:
-                kwargs_cmd = kwargs
             #
-            command_dict[commandi] = kwargs_cmd
 
-        runner.run(command_dict)
+            kwargs_cfg.update(kwargs)
+            command_list.append((command_entry,kwargs_cfg))
+        #
+        return command_list
 
     def run(self, command):
+        run_dict = {}
         config_path = self.kwargs.pop('common.config_path', None)
         if not config_path:
-            return self._run_command(command, **self.kwargs)
+            kwargs = copy.deepcopy(self.kwargs)
+            run_dict_entry = self._create_run_dict(command, model_key=None, **kwargs)
+            run_dict.update({'command':run_dict_entry})
         else:
-            config_base_path = os.path.dirname(config_path)
             with open(config_path) as fp:
                 kwargs_cfg = yaml.safe_load(fp)
             #
             kwargs_cfg.pop('command', None)
-            if not 'configs' in kwargs_cfg:
-                command_kwargs = kwargs_cfg
-                command_kwargs.update(self.kwargs)
-                command_kwargs.update({'common.config_path': config_path})
-                return self._run_command(command, config_path=config_path, **command_kwargs)
+            if 'configs' not in kwargs_cfg:
+                configs = {'config':config_path}
             else:
-                if len(kwargs_cfg['configs']) > 1:
-                    configs = kwargs_cfg.pop('configs')
-                    # while running multiple configs, it is better to use parallel processing
-                    parallel_processes = self.kwargs['common.parallel_processes'] or runner.bases.SettingsBaseDefaults.NUM_PARALLEL_PROCESSES
-                    # also setting capture_log mode to not use tee
-                    if self.kwargs['common.capture_log']:
-                        self.kwargs['common.capture_log'] = runner.bases.settings_base.CaptureLogModes.CAPTURE_LOG_MODE_ON
-                    #
-                    def command_proc(func, *args, **kwargs):
-                        print(f'INFO: running - {config_key}')
-                        target = functools.partial(func, *args, **kwargs)
-                        proc = runner.utils.ProcessWithQueue(name=config_key, target=target)
-                        proc.start()
-                        return proc
-                    #
-                    task_entries = {}
-                    for config_key, config_entry_file in configs.items():
-                        if not (config_entry_file.startswith('/') or config_entry_file.startswith('http')):
-                            config_entry_file = os.path.join(config_base_path, config_entry_file)
-                        #
-                        with open(config_entry_file) as fp:
-                            command_kwargs = yaml.safe_load(fp)
-                        #
-                        command_kwargs.update(self.kwargs)
-                        command_kwargs.update({'common.config_path': config_entry_file})
-                        command_func = functools.partial(command_proc, self._run_command, command, config_path=config_entry_file, **command_kwargs)
-                        task_entry = {'proc_name': config_key, 'proc_func': command_func}
-                        task_list = [task_entry]
-                        task_entries.update({config_key: task_list})
-                    #
-                    return runner.utils.ParallelRunner(parallel_processes=parallel_processes).run(task_entries)
-                else:
-                    configs = kwargs_cfg.pop('configs')
-                    config_entry_file = list(configs.values())[0]
-                    if not (config_entry_file.startswith('/') or config_entry_file.startswith('http')):
-                        config_entry_file = os.path.join(config_base_path, config_entry_file)
-                    #
-                    with open(config_entry_file) as fp:
-                        command_kwargs = yaml.safe_load(fp)
-                    #
-                    command_kwargs.update(self.kwargs)
-                    command_kwargs.update({'common.config_path': config_path})
-                    return self._run_command(command, config_path=config_path, **command_kwargs)
+                configs = kwargs_cfg.pop('configs')
+            #
+            for model_key, config_entry_file in configs.items():
+                if not (config_entry_file.startswith('/') or config_entry_file.startswith('http')):
+                    config_base_path = os.path.dirname(config_path)
+                    config_entry_file = os.path.join(config_base_path, config_entry_file)
                 #
+                kwargs = copy.deepcopy(self.kwargs)
+                kwargs.update({'common.config_path': config_entry_file})
+                run_dict_entry = self._create_run_dict(command, model_key=model_key, **kwargs)
+                run_dict.update({model_key:run_dict_entry})
             #
         #
+        return runner._run(run_dict)
 
     @classmethod
     def main(cls):

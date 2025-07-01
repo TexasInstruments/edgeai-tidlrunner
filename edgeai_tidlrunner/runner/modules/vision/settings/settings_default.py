@@ -81,6 +81,7 @@ SETTINGS_DEFAULT['import_model'] = SETTINGS_DEFAULT['basic'] | {
     # common options
     'task_type':               {'dest':'common.task_type', 'default':constants.TaskType.TASK_TYPE_CLASSIFICATION, 'type':str, 'metavar':'value'},
     'num_frames':              {'dest':'common.num_frames', 'default':1, 'type':int, 'metavar':'value'},
+    'config_path':             {'dest': 'common.config_path', 'default': None, 'type': str, 'metavar': 'value'},
     # compile/infer session
     ## --model
     'artifacts_folder':        {'dest':'session.artifacts_folder', 'default':None, 'type':str, 'metavar':'value'},
