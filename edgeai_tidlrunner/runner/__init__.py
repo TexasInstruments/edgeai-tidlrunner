@@ -48,11 +48,11 @@ def _run(model_command_dict):
         task_list = []
         for model_command_entry in model_command_list:
             command_key, command_kwargs = model_command_entry
-            if multiple_models:
-                command_kwargs['common.capture_log'] = bases.settings_base.CaptureLogModes.CAPTURE_LOG_MODE_ON
-            #
             # while running multiple configs, it is better to use parallel processing
             parallel_processes = command_kwargs['common.parallel_processes']
+            if parallel_processes and multiple_models:
+                command_kwargs['common.capture_log'] = bases.settings_base.CaptureLogModes.CAPTURE_LOG_MODE_ON
+            #
             runner_obj = bases.PipelineRunner(command_key, **command_kwargs)
             command_func = runner_obj.run
             proc_name = model_key+':'+command_key if model_key else command_key
@@ -64,7 +64,7 @@ def _run(model_command_dict):
 
     # if there is more than one model or command or parallel_processes is set, we need to launch in ParallelRunner
     # or else we can directly run it
-    if parallel_processes or multiple_models or multiple_commands:
+    if parallel_processes and (multiple_models or multiple_commands):
         # there are multiple commands given to be run back to back - running them on the same process can be problematic
         # so we will run them using multiprocessing - using separate process for each sub-command
         # this is useful for cases like 'compile,accuracy' or 'import,infer'
@@ -83,8 +83,7 @@ def _run(model_command_dict):
         #
         return utils.ParallelRunner(parallel_processes=parallel_processes).run(task_entries)
     else:
-        proc_func = list(task_entries.values())[0][0]['proc_func']
-        return proc_func()
+        return utils.SequentialRunner().run(task_entries)
 
 
 def run(command, **kwargs):

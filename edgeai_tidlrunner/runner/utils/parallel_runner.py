@@ -128,13 +128,15 @@ class ParallelRunner:
         out_ret = None
         if proc is not None:
             completed = False
-            exit_code = proc.returncode
+            exit_code = proc.returncode if hasattr(proc, 'returncode') else None
             try:
-                err_code = proc.wait(timeout=self.epsinterval)
+                err_code = proc.wait(timeout=self.epsinterval) if hasattr(proc, 'wait') else None
                 if err_code:
                     # raise subprocess.CalledProcessError(err_code, "Error occurred")
                     print(log_color("\nERROR", f"Error occurred: {running_proc_name}", f"Error Code: {err_code} at {__file__}"))
-                    proc.terminate()
+                    if hasattr(proc, 'terminate'):
+                        proc.terminate()
+                    #
                     completed = True
                     return completed, out_ret
                 #
@@ -144,10 +146,12 @@ class ParallelRunner:
                 pass
             except Exception as ex:
                 completed = True
-                proc.terminate()
+                if hasattr(proc, 'terminate'):
+                    proc.terminate()
+                #
                 print(log_color("\nERROR", f"Error occurred: {running_proc_name}", f"Error Code: {ex} at {__file__}"))
             else:
-                out_ret, err_ret = proc.communicate(timeout=self.epsinterval)
+                out_ret, err_ret = proc.communicate(timeout=self.epsinterval) if hasattr(proc, 'communicate') else None, None
                 completed = True
             #
         else:
@@ -217,7 +221,9 @@ class ParallelRunner:
                         proc_terminate = len(proc_term_msgs) > 0
                         if proc_terminate:
                             print(f"WARNING: terminating the process - {running_proc_name} - {', '.join(proc_term_msgs)}")
-                            proc.terminate()
+                            if hasattr(proc, 'terminate'):
+                                proc.terminate()
+                            #
                             proc_dict['terminated'] = True
                         #
                     #
@@ -291,7 +297,9 @@ class ParallelRunner:
                 running = (proc is not None) and proc_dict.get('running', False)
                 terminated = (proc is not None) and proc_dict.get('terminated', False)                   
                 if running and (not terminated):
-                    proc.terminate()
+                    if hasattr(proc, 'terminate'):
+                        proc.terminate()
+                    #
                     proc_dict['terminated'] = True       
                     print(f"WARNING: terminating the process - {running_proc_name} - {term_mesage}")                                                   
                 #

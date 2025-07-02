@@ -55,7 +55,6 @@ class AttrDict(BaseAttrDict):
 
     def update(self,  arg, **kwargs):
         if isinstance(arg, dict):
-            new_arg = AttrDict()
             for k, v in arg.items():
                 v = AttrDict(v) if (type(v) is dict) else v
                 if k in self and isinstance(self[k], dict) and isinstance(v, dict):

@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2025, Texas Instruments
+# Copyright (c) 2018-2021, Texas Instruments
 # All Rights Reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,11 +26,22 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
+import sys
+import time
+import traceback
+import subprocess
+import multiprocessing
+import tqdm
+import warnings
+import re
 
-from .config_utils.params_base import ParamsBase
-from .download_utils import *
-from .parse_utils import *
-from .file_utils import *
-from .process_with_queue import *
-from .parallel_runner import *
-from .sequential_runner import *
+from .logger_utils import log_color
+
+
+from .parallel_runner import ParallelRunner
+
+class SequentialRunner(ParallelRunner):
+    def __init__(self, *args, parallel_processes=0, **kwargs):
+        super().__init__(*args, parallel_processes=parallel_processes, **kwargs)
+
