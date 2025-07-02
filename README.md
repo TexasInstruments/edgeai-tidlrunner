@@ -28,7 +28,7 @@ Example:
 
 <hr>
 
-## Usage of runner (basic interface)
+## Usage of runner (edgeai_tidlrunner.runner basic interface)
 
 runner is a basic interface which hides most of the complexity of the underlying runtimes. It can be used either from Python script or from command line.
 
@@ -36,15 +36,15 @@ runner is a basic interface which hides most of the complexity of the underlying
 
 tidlrunner-cli is the interface script to run model compilation and inference via commandline:
 
+#### Example - import_model with random inputs
 import_model is one of the most basic commands - it needs only the model path to be provided. The given model is imported with TIDL using random inputs. It can be used to quickly check whether a model works in TIDL or not. 
 ```
 tidlrunner-cli import_model --model_path=./data/examples/models/mobilenet_v2.onnx
 ```
 The compiled artifacts will be placed under [./runs/runner](./runs/runner) in a folder with the model name.
 
-More options can be specified to configure the run with compile_model.
-
-#### Examples
+#### Example - compile_model with actual input data
+More options can be specified to configure the run when running with compile_model.
 
 This is the example for an image classification model:
 ```
@@ -61,13 +61,19 @@ This is the example for a semantic detection model:
 tidlrunner-cli compile_model --model_path=./data/models/vision/segmentation/cocoseg21/edgeai-tv/deeplabv3plus_mobilenetv2_edgeailite_512x512_20210405.onnx --data_name coco_segmentation_dataloader --data_path=./data/datasets/vision/coco
 ```
 
-#### Commandline example
+#### Example - a commandline example
 See the commandline example in [example_runner_cli.sh](./example_runner_cli.sh)
 
-#### Running multiple models together 
+#### Example - running multiple models together 
 config files can be provided either as a single config file or as an aggregate config file to operate on multiple models in parallel. They will run in parallel and the log will go into a log file specific to each model (will not be displayed on screen)
 ```
-tidlrunner-cli import_model --config_path ./data/models/configs.yaml
+tidlrunner-cli compile_model --config_path ./data/models/configs.yaml
+```
+
+#### Example - running all the models in the edgeai-modelzoo
+If you have edgeai-tensorlab cloned, it is possible to compile all the models in edgeai-tensorlab/edgeai-modelzoo using the following command.
+```
+tidlrunner-cli compile_model --config_path ../edgeai-tensorlab/edgeai-modelzoo/models/configs.yaml
 ```
 
 #### Detailed help
@@ -90,6 +96,7 @@ kwargs = {
         'model_path': ./data/examples/models/mobilenet_v2.onnx',
     }
     'dataloader': {
+        'name': 'image_classification_dataloader'
         'path': ./data/datasets/vision/imagenetv2c/val',
      }
 }
@@ -104,7 +111,7 @@ Note: that this file lists the options in a flat syntax using '.' separator for 
 
 <hr>
 
-## Usage of runtimes wrappers (advanced interface)
+## Usage of runtimes wrapper (edgeai_tidlrunner.rtwrapper advanced interface)
 
 The runtime wrappers [edgeai_tidlrunner/rtwrapper](edgeai_tidlrunner/rtwrapper) provides an advanced low level interface beyond what the runner provides. 
 An example of this is in [example_advanced_rtwrapper.py](./examples/vision/scripts/example_advanced_rtwrapper.py)
