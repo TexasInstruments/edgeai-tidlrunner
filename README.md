@@ -1,25 +1,27 @@
 # edgeai-tidl-runner
 
-This package provides edgeai-tidl-runner which is a wrapper over the core TIDL and OSRT runtimes - provide functionality to easily compile and infer using TIDL runtimes. 
+This package provides edgeai-tidl-runner which is a wrapper over the core TIDL model compilation and runtimes. This wrapper makes the TIDL model compilation and inference interface easy to use. 
 
-This wrapper makes the tidl model compilation and inference interface easy to use. This will be installed as **edgeai_tidlrunner** Python package.
+This will be installed as **edgeai_tidlrunner** Python package.
 
-**edgeai_tidlrunner package has three parts**:
-* **edgeai_tidlrunner.rtwrapper** - rtwrapper is a thin wrapper over the core OSRT and TIDL-RT runtimes - the wrapper is provided for ease of use and also to make the usage of various runtimes consistent. This low level wrapper does not impose mush restrictions on the usage and the full flexibility and functionality of the underlying runtimes are available to the user. 
-* **edgeai_tidlrunner.runner** - runner has additional pipleline functionalities such as data loaders and preprocess required to run the entire pipeline correctly. This is a high level interface that hides most of the details and provides a Pythonic and command line APIs.
-* **edgeai_tidlrunner.tools** - this is where the TIDL binaries are installed. The runtimes require TIDL_TOOLS_PATH and LD_LIBRARY_PATH to be set to appropriate folder inside this folder. For more details see [set_env.sh](./set_env.sh)
+edgeai_tidlrunner package has two parts:
+* **edgeai_tidlrunner.runner** (high level interface - recommended) - runner has additional pipleline functionalities such as data loaders and preprocess required to run the entire pipeline correctly. This is a high level interface that hides most of the details and provides a Pythonic and command line APIs.
+* **edgeai_tidlrunner.rtwrapper** (advanced interface) - rtwrapper is a thin wrapper over the core OSRT and TIDL-RT runtimes - the wrapper is provided for ease of use and also to make the usage of various runtimes consistent. This low level wrapper does not impose mush restrictions on the usage and the full flexibility and functionality of the underlying runtimes are available to the user. 
+
 
 <hr>
 
 ## Setup
 
-To setup on PC, run:
+### To setup on PC, run:
 
 ```
 ./setup_pc.sh
 ```
 
-Setup with gpu based tidl_tools (faster to run)
+This will download the tidl_tools in the [tools](./tools) folder. The runtimes require TIDL_TOOLS_PATH and LD_LIBRARY_PATH to be set to appropriate folder inside this folder. For more details see [set_env.sh](./set_env.sh)
+
+### Setup with gpu based tidl_tools (faster to run)
 
 Example:
 ```
