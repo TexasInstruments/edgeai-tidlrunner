@@ -42,7 +42,6 @@ def _run(model_command_dict):
     parallel_processes = None
     multiple_models = len(model_command_dict) > 1
     multiple_commands = len(list(model_command_dict.values())[0]) > 1
-    proc_runner = multiple_models or multiple_commands
 
     task_entries = {}
     for model_key, model_command_list in model_command_dict.items():
@@ -63,12 +62,9 @@ def _run(model_command_dict):
         task_entries.update({model_key:task_list})
     #
 
-    # if there is only one model and command, we can directly run it
-    # or else we need to launch in ParallelRunner
-    if not proc_runner:
-        proc_func = list(task_entries.values())[0][0]['proc_func']
-        return proc_func()
-    else:
+    # if there is more than one model or command or parallel_processes is set, we need to launch in ParallelRunner
+    # or else we can directly run it
+    if parallel_processes or multiple_models or multiple_commands:
         # there are multiple commands given to be run back to back - running them on the same process can be problematic
         # so we will run them using multiprocessing - using separate process for each sub-command
         # this is useful for cases like 'compile,accuracy' or 'import,infer'
@@ -86,6 +82,9 @@ def _run(model_command_dict):
             #
         #
         return utils.ParallelRunner(parallel_processes=parallel_processes).run(task_entries)
+    else:
+        proc_func = list(task_entries.values())[0][0]['proc_func']
+        return proc_func()
 
 
 def run(command, **kwargs):

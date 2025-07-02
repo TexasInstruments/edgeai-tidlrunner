@@ -60,9 +60,7 @@ class PipelineRunner(pipeline_base.PipelineBase):
             #
             os.makedirs(os.path.dirname(log_file), exist_ok=True)
             with open(log_file, 'a') as log_fp:
-                stdout_tee = utils.TeeLogWriter(sys.stdout, log_fp) if capture_log == settings_base.CaptureLogModes.CAPTURE_LOG_MODE_TEE else log_fp
-                stderr_tee = utils.TeeLogWriter(sys.stderr, log_fp) if capture_log == settings_base.CaptureLogModes.CAPTURE_LOG_MODE_TEE else log_fp
-                with wurlitzer.pipes(stdout=stdout_tee, stderr=stderr_tee):
+                with wurlitzer.pipes(stdout=log_fp, stderr=log_fp):
                     return self.command_object.run()
                 #
             #

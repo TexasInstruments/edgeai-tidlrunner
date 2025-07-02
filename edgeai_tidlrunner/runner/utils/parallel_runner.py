@@ -40,7 +40,7 @@ from .logger_utils import log_color
 
 
 class ParallelRunner:
-    def __init__(self, parallel_processes, desc='TASKS', mininterval=0.15, maxinterval=2.0, tqdm_obj=None,
+    def __init__(self, parallel_processes, desc='TASKS', mininterval=0.15, maxinterval=5.0, tqdm_obj=None,
             overall_timeout=None, instance_timeout=None, check_errors=False, verbose=False):
         self.parallel_processes = parallel_processes
         self.desc = desc
