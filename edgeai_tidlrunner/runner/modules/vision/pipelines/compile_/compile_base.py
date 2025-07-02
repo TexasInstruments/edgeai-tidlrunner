@@ -57,9 +57,62 @@ class CompileModelPipelineBase(bases.PipelineBase):
         self.postprocess = None
         self.run_data = None
 
+        preprocess_kwargs = self.settings[self.preprocess_prefix]
         session_kwargs = self.settings[self.session_prefix]
         runtime_settings = session_kwargs['runtime_settings']
         runtime_options = runtime_settings['runtime_options']
+
+        if 'session' in self.settings and self.settings[self.session_prefix].get('model_path', None):
+            self.model_source = self.settings[self.session_prefix]['model_path']
+
+            run_dir = self.settings[self.session_prefix]['run_dir']
+            model_basename = os.path.basename(self.model_source)
+            model_basename_wo_ext = os.path.splitext(model_basename)[0]
+            model_id = self.settings[self.session_prefix]['model_id'] or ''
+            model_id_underscore = model_id + '_' if model_id else ''
+
+            tensor_bits = self.kwargs.get('session.runtime_settings.runtime_options.tensor_bits', '')
+            tensor_bits_str = f'{str(tensor_bits)}bits' if tensor_bits else ''
+            tensor_bits_slash = f'{str(tensor_bits)}bits' + os.sep if tensor_bits else ''
+
+            target_device = self.kwargs.get('session.runtime_settings.target_device', 'NONE')
+            target_device_str = target_device if target_device else ''
+            target_device_slash = target_device + os.sep if target_device else ''
+
+            self.run_dir = run_dir.replace('{model_name}', model_basename_wo_ext) \
+                .replace('{model_id}_', model_id_underscore).replace('{model_id}', model_id) \
+                .replace('{tensor_bits}/', tensor_bits_slash).replace('{tensor_bits}', tensor_bits_str) \
+                .replace('{target_device}/', target_device_slash).replace('{target_device}', target_device_str)
+
+            self.model_folder = os.path.join(self.run_dir, 'model')
+            self.model_path = os.path.join(self.model_folder, model_basename)
+            self.settings[self.session_prefix]['model_path'] = self.model_path
+            self.artifacts_folder = self.settings[self.session_prefix].get('artifactrs_folder', os.path.join(self.run_dir, 'artifacts'))
+            self.settings[self.session_prefix]['artifacts_folder'] = self.artifacts_folder
+        else:
+            self.run_dir = None
+            self.model_folder = None
+            self.model_path = None
+            self.artifacts_folder = None
+        #
+
+        model_ext = os.path.splitext(self.model_path)[1] if self.model_path else None
+        if preprocess_kwargs.get('data_layout', None) is None:
+            data_layout_mapping = {
+                '.onnx': presets.DataLayoutType.NCHW,
+                '.tflite': presets.DataLayoutType.NHWC,
+            }
+            data_layout = data_layout_mapping.get(model_ext, None)
+            preprocess_kwargs['data_layout'] = data_layout
+        #
+        if session_kwargs.get('name', None) is None:
+            session_name_mapping = {
+                '.onnx': presets.RuntimeType.RUNTIME_TYPE_ONNXRT,
+                '.tflite': presets.RuntimeType.RUNTIME_TYPE_TFLITERT,
+            }
+            session_name = session_name_mapping.get(model_ext, None)
+            session_kwargs['name'] = session_name
+        #
 
         if not os.environ.get('TIDL_TOOLS_PATH', None):
             target_device = runtime_settings['target_device']
@@ -101,63 +154,31 @@ class CompileModelPipelineBase(bases.PipelineBase):
             shutil.copy2(model_source, model_folder)
         #
 
-    def _set_default_args(self, **kwargs):
-        kwargs_cmd = super()._set_default_args(**kwargs)
-        model_path = kwargs_cmd['session.model_path']
-        model_ext = os.path.splitext(model_path)[1] if model_path else None
-        if kwargs_cmd.get('preprocess.data_layout',None) is None:
-            data_layout_mapping = {
-                '.onnx': presets.DataLayoutType.NCHW,
-                '.tflite': presets.DataLayoutType.NHWC,
-            }
-            data_layout = data_layout_mapping.get(model_ext, None)
-            kwargs_cmd['preprocess.data_layout'] = data_layout
-        #
-        if kwargs_cmd.get('session.name',None) is None:
-            session_name_mapping = {
-                '.onnx': presets.RuntimeType.RUNTIME_TYPE_ONNXRT,
-                '.tflite': presets.RuntimeType.RUNTIME_TYPE_TFLITERT,
-            }
-            session_name = session_name_mapping.get(model_ext, None)
-            kwargs_cmd['session.name'] = session_name
-        #
-        return kwargs_cmd
-
     def _upgrade_kwargs(self, **kwargs):
-        if 'session' in kwargs:
-            if 'runtime_options' in kwargs['session']:
-                runtime_options = kwargs['session'].pop('runtime_options', {})
-                runtime_settings = kwargs['session'].get('runtime_settings', {})
-                runtime_settings.get('runtime_options', {}).update(runtime_options)
-            #
-            if 'target_device' in kwargs['session']:
-                target_device = kwargs['session'].pop('target_device')
-                runtime_settings = kwargs['session'].get('runtime_settings', {})
-                runtime_settings['target_device'] = target_device
-            #
-        #
-        if 'input_dataset' in kwargs:
-            if kwargs['input_dataset'] == 'imagenet':
-                kwargs.pop('input_dataset', None)
-                kwargs.pop('calibration_dataset', None)
-                kwargs.pop('dataset_category', None)
-                kwargs['dataloader']['name'] = 'image_classification_dataloader'
-                kwargs['dataloader']['path'] = './data/datasets/vision/imagenetv2c/val'
-            elif kwargs['input_dataset'] == 'coco':
-                kwargs.pop('input_dataset', None)
-                kwargs.pop('calibration_dataset', None)
-                kwargs.pop('dataset_category', None)
-                kwargs['dataloader']['name'] = 'coco_detection_dataloader'
-                kwargs['dataloader']['path'] = './data/datasets/vision/coco'
-            elif kwargs['input_dataset'] == 'cocoseg21':
-                kwargs.pop('input_dataset', None)
-                kwargs.pop('calibration_dataset', None)
-                kwargs.pop('dataset_category', None)
-                kwargs['dataloader']['name'] = 'coco_segmentation_dataloader'
-                kwargs['dataloader']['path'] = './data/datasets/vision/coco'
+        kwargs_out = {}
+        for k, v in kwargs.items():
+            if k.startswith('session.runtime_options'):
+                new_key = k.replace('session.runtime_options', 'session.runtime_settings.runtime_options')
+                kwargs_out[new_key] = v
+            elif k == 'input_dataset':
+                if v == 'imagenet':
+                    kwargs_out['dataloader.name'] = 'image_classification_dataloader'
+                    kwargs_out['dataloader.path'] = './data/datasets/vision/imagenetv2c/val'
+                elif v == 'coco':
+                    kwargs_out['dataloader.name'] = 'coco_detection_dataloader'
+                    kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
+                elif v == 'cocoseg21':
+                    kwargs_out['dataloader.name'] = 'coco_segmentation_dataloader'
+                    kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
+                #
+            elif k == 'session.target_device':
+                # kwargs_out['session.runtime_settings.target_device'] = v
+                pass
+            else:
+                kwargs_out[k] = v
             #
         #
-        return kwargs
+        return kwargs_out
 
     def info(self):
         print(f'INFO: Model compile base - {__file__}')

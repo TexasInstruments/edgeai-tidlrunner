@@ -41,7 +41,6 @@ class PipelineRunner(pipeline_base.PipelineBase):
     ARGS_DICT = settings_base.SETTING_PIPELINE_RUNNER_ARGS_DICT
     COPY_ARGS = {}
 
-
     def __init__(self, command, **kwargs):
         super().__init__(**kwargs)
         target_module_name = self.settings['common']['target_module']

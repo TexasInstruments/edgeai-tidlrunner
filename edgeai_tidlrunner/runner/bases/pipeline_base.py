@@ -45,13 +45,18 @@ class PipelineBase():
 
     def __init__(self, **kwargs):
         super().__init__()
-        kwargs = self._flatten_dict(**kwargs)
-        kwargs = self._set_default_args(**kwargs)
-        kwargs = self._expand_short_args(**kwargs)
-        self.kwargs = self._copy_args(**kwargs)
+        kwargs_default = self._set_default_args()
+        kwargs_in = self._flatten_dict(**kwargs)
+        kwargs_in = self._expand_short_args(**kwargs_in)
+        kwargs_in = self._upgrade_kwargs(**kwargs_in)
+        kwargs_cmd = copy.deepcopy(kwargs_default)
+        kwargs_cmd.update(kwargs_in)
+        kwargs_cmd = self._copy_args(**kwargs_cmd)
+        self.kwargs = kwargs_cmd
+
         settings = self._parse_to_dict(**self.kwargs)
-        settings = self._upgrade_kwargs(**settings)
         self.settings = attr_dict.AttrDict(settings)
+
         self.run_data = None # last run data, can be used by other pipelines
 
         self.common_prefix = 'common'
@@ -59,23 +64,6 @@ class PipelineBase():
         self.session_prefix = 'session'
         self.preprocess_prefix = 'preprocess'
         self.postprocess_prefix = 'postprocess'
-        if 'session' in self.settings and self.settings[self.session_prefix].get('model_path', None):
-            self.model_source = self.settings[self.session_prefix]['model_path']
-            run_dir = self.settings[self.session_prefix]['run_dir']
-            model_basename = os.path.basename(self.model_source)
-            model_basename_wo_ext = os.path.splitext(model_basename)[0]
-            self.run_dir = run_dir.replace('{model_name}', model_basename_wo_ext)
-            self.model_folder = os.path.join(self.run_dir, 'model')
-            self.model_path = os.path.join(self.model_folder, model_basename)
-            self.settings[self.session_prefix]['model_path'] = self.model_path
-            self.artifacts_folder = self.settings[self.session_prefix].get('artifactrs_folder', os.path.join(self.run_dir, 'artifacts'))
-            self.settings[self.session_prefix]['artifacts_folder'] = self.artifacts_folder
-        else:
-            self.run_dir = None
-            self.model_folder = None
-            self.model_path = None
-            self.artifacts_folder = None
-        #
 
     def info(self):
         print(f'INFO: running - {__file__}')
@@ -157,6 +145,7 @@ class PipelineBase():
         return kwargs_cmd
 
     def _expand_short_args(self, **kwargs):
+        model_id = kwargs.get('session.model_id', None)
         kwargs_cmd = {}
         for k, v in kwargs.items():
             if '.' not in k:
@@ -164,7 +153,7 @@ class PipelineBase():
                     v_dict = self.ARGS_DICT[k]
                     kwargs_cmd[v_dict['dest']] = v
                 else:
-                    print(f'WARNING: unrecognized argument - config may need upgrade: {k}')
+                    print(f'WARNING: unrecognized argument - config {model_id} may need upgrade: {k}')
                     kwargs_cmd[k] = v
                 #
             else:

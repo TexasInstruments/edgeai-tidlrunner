@@ -51,7 +51,7 @@ class MainRunner(runner.bases.PipelineBase):
         target_module = getattr(runner.modules, target_module_name)
         return target_module
 
-    def _create_run_dict(self, command, model_key, **kwargs):
+    def _create_run_dict(self, command, model_key=None, **kwargs):
         config_path = kwargs.get('common.config_path', None)
         # which target module to use
         target_module = self._get_target_module(kwargs['common.target_module'])
@@ -69,7 +69,6 @@ class MainRunner(runner.bases.PipelineBase):
             # remove spaces from command
             command_module_name = target_module.pipelines.command_module_name_dict[command_entry]
             command_module = getattr(target_module.pipelines, command_module_name)
-
             if config_path:
                 with open(config_path) as fp:
                     kwargs_cfg = yaml.safe_load(fp)
@@ -78,13 +77,12 @@ class MainRunner(runner.bases.PipelineBase):
             else:
                 command_args, rest_args = command_module.get_arg_parser().parse_known_args()
                 kwargs_cfg = vars(command_args)
-                rest_args = [arg for arg in rest_args if 'config_path' not in arg]
-                rest_args = [arg for arg in rest_args if '.yaml' not in arg]
-                if rest_args:
-                    raise RuntimeError(f"WARNING: unrecognized arguments for {command_entry}: {rest_args}")
-                #
+                # rest_args = [arg for arg in rest_args if 'config_path' not in arg]
+                # rest_args = [arg for arg in rest_args if '.yaml' not in arg]
+                # if rest_args:
+                #     raise RuntimeError(f"WARNING: unrecognized arguments for {command_entry}: {rest_args}")
+                # #
             #
-
             kwargs_cfg.update(kwargs)
             command_list.append((command_entry,kwargs_cfg))
         #
