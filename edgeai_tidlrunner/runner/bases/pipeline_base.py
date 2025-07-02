@@ -89,8 +89,8 @@ class PipelineBase():
         return self.run_data
 
     def _flatten_dict_fields(self, kwargs_flat, prefix, override_dict_fields=False, **kwargs):
-        dict_keys = [k for k, v in kwargs.items() if isinstance(v, dict)]
-        nondict_keys = [k for k, v in kwargs.items() if not isinstance(v, dict)]
+        dict_keys = [k for k, v in kwargs.items() if isinstance(v, dict) and len(v)>0 and isinstance(list(v.keys())[0], str)]
+        nondict_keys = [k for k, v in kwargs.items() if k not in dict_keys]
         if override_dict_fields:
             for k in dict_keys:
                 key_prefix = prefix + '.' + k if prefix else k
