@@ -78,6 +78,10 @@ class ImportModelPipeline(CompileModelPipelineBase):
         config_path = os.path.dirname(common_kwargs['config_path']) if common_kwargs['config_path'] else None
         self.download_file(self.model_source, model_folder=self.model_folder, source_dir=config_path)
 
+        if self.object_detection_meta_layers_names_list_source:
+            self.download_file(self.object_detection_meta_layers_names_list_source, model_folder=self.model_folder, source_dir=config_path)
+        #
+
         print(f'INFO: running model optimize {self.model_path}')
         optimize_kwargs = common_kwargs.get('optimize', {})
         optimize_model.OptimizeModelPipeline._run(self.model_path, self.model_path, **optimize_kwargs)
@@ -125,8 +129,8 @@ class ImportModelPipeline(CompileModelPipelineBase):
             postprocess_name = postprocess_kwargs['name']
             postprocess_method = getattr(blocks.postprocess, postprocess_name)
             self.postprocess = postprocess_method(self.settings, **postprocess_kwargs)
-        elif postprocess_kwargs['func']:
-            postprocess_method = ast.literal_eval(postprocess_kwargs['func'])
+        elif postprocess_kwargs.get('func', None):
+            self.postprocess = ast.literal_eval(postprocess_kwargs['func'])
         else:
             raise RuntimeError('ERROR: invalid postprocess args')
         
@@ -144,4 +148,5 @@ class ImportModelPipeline(CompileModelPipelineBase):
 
         print(f'INFO: model import done. output is in: {self.run_dir}')
         self.run_data = run_data
+        self._write_params('param.yaml')
         return outputs

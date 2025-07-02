@@ -47,6 +47,7 @@ class PipelineBase():
         super().__init__()
         kwargs = self._flatten_dict(**kwargs)
         kwargs = self._set_default_args(**kwargs)
+        kwargs = self._expand_short_args(**kwargs)
         self.kwargs = self._copy_args(**kwargs)
         settings = self._parse_to_dict(**self.kwargs)
         settings = self._upgrade_kwargs(**settings)
@@ -152,9 +153,24 @@ class PipelineBase():
         kwargs_cmd = {}
         for k_name, v_dict in self.ARGS_DICT.items():
             kwargs_cmd[v_dict['dest']] = v_dict['default']
-
         kwargs_cmd.update(kwargs)
+        return kwargs_cmd
 
+    def _expand_short_args(self, **kwargs):
+        kwargs_cmd = {}
+        for k, v in kwargs.items():
+            if '.' not in k:
+                if k in self.ARGS_DICT:
+                    v_dict = self.ARGS_DICT[k]
+                    kwargs_cmd[v_dict['dest']] = v
+                else:
+                    print(f'WARNING: unrecognized argument - config may need upgrade: {k}')
+                    kwargs_cmd[k] = v
+                #
+            else:
+                kwargs_cmd[k] = v
+            #
+        #
         return kwargs_cmd
 
     def _upgrade_kwargs(self, **kwargs):

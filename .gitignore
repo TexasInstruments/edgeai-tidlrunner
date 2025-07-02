@@ -19,3 +19,4 @@ dist/
 /data/datasets/vision/imagenetv2c*
 /data/datasets/vision/coco*
 *.onnx
+*.prototxt

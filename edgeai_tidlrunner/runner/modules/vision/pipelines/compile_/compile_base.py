@@ -33,6 +33,9 @@ import shutil
 import copy
 import ast
 
+import yaml
+
+from ...blocks.dataloaders import coco_detection_dataloader
 from ...... import rtwrapper
 from ......rtwrapper.core import presets
 from ......rtwrapper.options import attr_dict
@@ -73,6 +76,16 @@ class CompileModelPipelineBase(bases.PipelineBase):
 
         if not runtime_options.get('artifacts_folder', None):
             runtime_options['artifacts_folder'] = self.artifacts_folder
+
+        self.object_detection_meta_layers_names_list_source = session_kwargs['runtime_settings']['runtime_options'].get('object_detection:meta_layers_names_list', None)
+        if self.object_detection_meta_layers_names_list_source:
+            if not (self.object_detection_meta_layers_names_list_source.startswith('/') or self.object_detection_meta_layers_names_list_source.startswith('.')):
+                object_detection_meta_layers_names_path = os.path.join(self.model_folder, self.object_detection_meta_layers_names_list_source)
+            else:
+                object_detection_meta_layers_names_path = self.object_detection_meta_layers_names_list_source
+            #
+            session_kwargs['runtime_settings']['runtime_options']['object_detection:meta_layers_names_list'] = object_detection_meta_layers_names_path
+        #
 
     def download_file(self, model_source, model_folder, source_dir=None):
         is_web_link = model_source.startswith('http')
@@ -123,6 +136,27 @@ class CompileModelPipelineBase(bases.PipelineBase):
                 runtime_settings['target_device'] = target_device
             #
         #
+        if 'input_dataset' in kwargs:
+            if kwargs['input_dataset'] == 'imagenet':
+                kwargs.pop('input_dataset', None)
+                kwargs.pop('calibration_dataset', None)
+                kwargs.pop('dataset_category', None)
+                kwargs['dataloader']['name'] = 'image_classification_dataloader'
+                kwargs['dataloader']['path'] = './data/datasets/vision/imagenetv2c/val'
+            elif kwargs['input_dataset'] == 'coco':
+                kwargs.pop('input_dataset', None)
+                kwargs.pop('calibration_dataset', None)
+                kwargs.pop('dataset_category', None)
+                kwargs['dataloader']['name'] = 'coco_detection_dataloader'
+                kwargs['dataloader']['path'] = './data/datasets/vision/coco'
+            elif kwargs['input_dataset'] == 'cocoseg21':
+                kwargs.pop('input_dataset', None)
+                kwargs.pop('calibration_dataset', None)
+                kwargs.pop('dataset_category', None)
+                kwargs['dataloader']['name'] = 'coco_segmentation_dataloader'
+                kwargs['dataloader']['path'] = './data/datasets/vision/coco'
+            #
+        #
         return kwargs
 
     def info(self):
@@ -130,3 +164,9 @@ class CompileModelPipelineBase(bases.PipelineBase):
 
     def run(self):
         return None
+
+    def _write_params(self, filename):
+        param_file = os.path.join(self.run_dir, filename)
+        with open(param_file, 'w') as fp:
+            yaml.dump(self.settings, fp)
+        #

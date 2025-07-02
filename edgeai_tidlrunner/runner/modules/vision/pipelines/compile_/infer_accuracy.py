@@ -59,5 +59,6 @@ class InferAccuracyPipeline(infer_model.InferModelPipeline):
         # now calculate the accuracy
         accuracy = self.dataloader.evaluate(run_data)
         print(accuracy)
+        self._write_params('result.yaml')
         return accuracy
     

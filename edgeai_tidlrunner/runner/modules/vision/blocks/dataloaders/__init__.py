@@ -33,8 +33,3 @@ from .image_classification import image_classification_dataloader
 from .object_detection import object_detection_dataloader, coco_detection_dataloader
 from .semantic_segmentation import semantic_segmentation_dataloader
 
-try:
-    from .nuscenes_dataset import nuscenes_3dod_dataloader
-except:
-    print('WARNING: nuscenes_3dod_dataloader could not be imported')
-    nuscenes_3dod_dataloader = None

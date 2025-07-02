@@ -56,6 +56,8 @@ class InferModelPipeline(CompileModelPipelineBase):
     def run(self):
         print(f'INFO: starting model infer')
         super().run()
+        self._write_params('config.yaml')
+
         common_kwargs = self.settings[self.common_prefix]
         dataloader_kwargs = self.settings[self.dataloader_prefix]
         session_kwargs = self.settings[self.session_prefix]
@@ -114,8 +116,8 @@ class InferModelPipeline(CompileModelPipelineBase):
             postprocess_name = postprocess_kwargs['name']
             postprocess_method = getattr(blocks.postprocess, postprocess_name)
             self.postprocess = postprocess_method(self.settings, **postprocess_kwargs)
-        elif postprocess_kwargs['func']:
-            postprocess_method = ast.literal_eval(postprocess_kwargs['func'])
+        elif postprocess_kwargs.get('func', None):
+            self.postprocess = ast.literal_eval(postprocess_kwargs['func'])
         else:
             raise RuntimeError('ERROR: invalid postprocess args')
         
@@ -131,5 +133,6 @@ class InferModelPipeline(CompileModelPipelineBase):
 
         print(f'INFO: model infer done. output is in: {self.run_dir}')
         self.run_data = run_data
+        self._write_params('param.yaml')
         return outputs
 

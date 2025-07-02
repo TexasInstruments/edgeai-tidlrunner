@@ -102,8 +102,10 @@ class ObjectDetectionDataLoader:
 
 
 def object_detection_dataloader(name, path, label_path=None):
-    return ObjectDetectionDataLoader(path, label_path)
-
+    dirname = os.path.dirname(path)
+    data_path = path if 'val' in dirname or 'train' in dirname else os.path.join(path, 'images')
+    label_path = label_path or os.path.join(path, 'annotations', 'instances.json')
+    return ObjectDetectionDataLoader(data_path, label_path)
 
 
 class COCODetectionDataLoader(ObjectDetectionDataLoader):
@@ -112,4 +114,7 @@ class COCODetectionDataLoader(ObjectDetectionDataLoader):
 
 
 def coco_detection_dataloader(name, path, label_path=None):
-    return COCODetectionDataLoader(path, label_path)
+    dirname = os.path.dirname(path)
+    data_path = path if 'val' in dirname or 'train' in dirname else os.path.join(path, 'val2017')
+    label_path = label_path or os.path.join(path, 'annotations', 'instances_val2017.json')
+    return COCODetectionDataLoader(data_path, label_path)

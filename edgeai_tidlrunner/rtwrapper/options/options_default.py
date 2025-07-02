@@ -144,6 +144,8 @@ RUNTIME_OPTIONS_DEFAULT = {
     'advanced_options:c7x_firmware_version': None,
 
     # object detection settings
+    'object_detection:meta_layers_names_list': '',
+    'object_detection:meta_arch_type': None,
     'object_detection:nms_threshold': 0.45,
     'object_detection:confidence_threshold': 0.3,
     'object_detection:top_k': 200,
