@@ -34,21 +34,44 @@ runner is a basic interface which hides most of the complexity of the underlying
 
 ### tidlrunner-cli commandline interface
 
-tidl-run is the interface script to run model compilation and inference via commandline:
+tidlrunner-cli is the interface script to run model compilation and inference via commandline:
 
+import_model is one of the most basic commands - it needs only the model path to be provided. The given model is imported with TIDL using random inputs. It can be used to quickly check whether a model works in TIDL or not. 
 ```
 tidlrunner-cli import_model --model_path=./data/examples/models/mobilenet_v2.onnx
 ```
+The compiled artifacts will be placed under [./runs/runner](./runs/runner) in a folder with the model name.
 
-More options can be specified to configure the run:
+More options can be specified to configure the run with compile_model.
 
+#### Examples
+
+This is the example for an image classification model:
 ```
-tidlrunner-cli compile_model --model_path=./data/examples/models/mobilenet_v2.onnx --data_path=./data/datasets/vision/imagenetv2c/val
+tidlrunner-cli compile_model --model_path=./data/examples/models/mobilenet_v2.onnx --data_name image_classification_dataloader --data_path=./data/datasets/vision/imagenetv2c/val
 ```
 
+This is the example for an object detection model:
+```
+tidlrunner-cli compile_model --model_path=./data/models/vision/detection/coco/edgeai-mmdet/ssd_mobilenetv2_lite_512x512_20201214_model.onnx --data_name coco_detection_dataloader --data_path=./data/datasets/vision/coco
+```
+
+This is the example for a semantic detection model:
+```
+tidlrunner-cli compile_model --model_path=./data/models/vision/segmentation/cocoseg21/edgeai-tv/deeplabv3plus_mobilenetv2_edgeailite_512x512_20210405.onnx --data_name coco_segmentation_dataloader --data_path=./data/datasets/vision/coco
+```
+
+#### Commandline example
 See the commandline example in [example_runner_cli.sh](./example_runner_cli.sh)
 
-The options that can be provided can be obtained using the help option. Examples
+#### Running multiple models together 
+config files can be provided either as a single config file or as an aggregate config file to operate on multiple models in parallel. They will run in parallel and the log will go into a log file specific to each model (will not be displayed on screen)
+```
+tidlrunner-cli import_model --config_path ./data/models/configs.yaml
+```
+
+#### Detailed help
+All the options supported can be btained using the help option. Examples
 ```
 tidlrunner-cli --help
 tidlrunner-cli compile_model --help
