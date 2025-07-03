@@ -56,88 +56,57 @@ RUNTIME_SETTINGS_DEFAULT = {
 SETTINGS_DEFAULT = {}
 COPY_SETTINGS_DEFAULT = {}
 
-
-##########################################################################
-##########################################################################
-SETTINGS_DEFAULT['basic'] = settings_base.SETTING_PIPELINE_RUNNER_ARGS_DICT | {
-    'model_id':                {'dest':'session.model_id', 'default': None, 'type': str, 'metavar': 'value', 'help': 'unique id of a model - optional'},
-}
-
-
-COPY_SETTINGS_DEFAULT['basic'] = {
-}
-
-##########################################################################
-# import can be followed by infer
-# compile and import are related - main difference is import is simplistic.
-# we let the model run with random data here.
-##########################################################################
-SETTINGS_DEFAULT['import_model'] = SETTINGS_DEFAULT['basic'] | {
-    'optimize': {'dest': 'common.optimize.model_optimizer', 'default': False, 'type': utils.str_to_bool, 'metavar': 'value'},
-    'shape_inference': {'dest': 'common.optimize.shape_inference', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value'},
-
-    # common options
-    'task_type':               {'dest':'common.task_type', 'default':constants.TaskType.TASK_TYPE_CLASSIFICATION, 'type':str, 'metavar':'value'},
-    'num_frames':              {'dest':'common.num_frames', 'default':1, 'type':int, 'metavar':'value'},
-    'config_path':             {'dest': 'common.config_path', 'default': None, 'type': str, 'metavar': 'value'},
-    # compile/infer session
-    ## --model
-    'artifacts_folder':        {'dest':'session.artifacts_folder', 'default':None, 'type':str, 'metavar':'value'},
-    ## --runtime
-    'runtime_name':            {'dest':'session.name', 'default':None, 'type':str, 'metavar':'value'},
-    'input_mean':              {'dest':'session.input_mean', 'default':(123.675,116.28,103.53), 'type':float, 'nargs':'*', 'metavar':'value'},
-    'input_scale':             {'dest':'session.input_scale', 'default':(0.017125,0.017507,0.017429), 'type':float, 'nargs':'*', 'metavar':'value'},
-    # input_data
-    'data_name':               {'dest':'dataloader.name', 'default':'random_dataloader', 'type':str, 'metavar':'value'},
-    # preprocess
-    'preprocess_name':         {'dest':'preprocess.name', 'default':'no_preprocess', 'type':str, 'metavar':'value', 'group':'preprocess_name'},
-    # postprocess
-    'postprocess_name':        {'dest':'postprocess.name', 'default':'no_postprocess', 'type':str, 'metavar':'value'},
-    # runtime_settings
-    'target_device':           {'dest':'session.runtime_settings.target_device', 'default':presets.TargetDeviceType.TARGET_DEVICE_AM68A, 'type':str, 'metavar':'value'},
-    'tidl_offload':            {'dest':'session.runtime_settings.tidl_offload', 'default':True, 'type':utils.str_to_bool, 'metavar':'value'},
-    # runtime_options
-    'tensor_bits':             {'dest':'session.runtime_settings.runtime_options.tensor_bits', 'default':8, 'type':int, 'metavar':'value'},
-    'quantization_scale_type': {'dest':'session.runtime_settings.runtime_options.advanced_options:quantization_scale_type', 'default':None, 'type':int, 'metavar':'value'},
-    'calibration_frames':      {'dest':'session.runtime_settings.runtime_options.advanced_options:calibration_frames', 'default':12, 'type':int, 'metavar':'value'},
-    'calibration_iterations':  {'dest':'session.runtime_settings.runtime_options.advanced_options:calibration_iterations', 'default':12, 'type':int, 'metavar':'value'},
-}
-
-
-COPY_SETTINGS_DEFAULT['import_model'] = {
-    'session.data_layout': 'preprocess.data_layout'
-}
-
-
-##########################################################################
-SETTINGS_DEFAULT['infer_model'] = SETTINGS_DEFAULT['import_model'] | {
-}
-
-COPY_SETTINGS_DEFAULT['infer_model'] = COPY_SETTINGS_DEFAULT['import_model'] | {
-}
-
-
 ##########################################################################
 # compile can be followed by infer, analyze or accuracy
 # compile is used to indicate a more sophisticated import - populate real data_path for that.
 ##########################################################################
-SETTINGS_DEFAULT['compile_model'] = SETTINGS_DEFAULT['import_model'] | {
-   'data_name':                {'dest': 'dataloader.name', 'default': 'image_files_dataloader', 'type': str, 'metavar': 'value'},
-   'data_path':                {'dest':'dataloader.path', 'default':'./data/datasets/vision/imagenetv2c/val', 'type':str, 'metavar':'path'},
-
+SETTINGS_DEFAULT['compile_model'] = settings_base.SETTING_PIPELINE_RUNNER_ARGS_DICT | {
+    'optimize':                 {'dest': 'common.optimize.model_optimizer', 'default': False, 'type': utils.str_to_bool, 'metavar': 'value'},
+    'shape_inference':          {'dest': 'common.optimize.shape_inference', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value'},
+    # common options
+    'task_type':                {'dest': 'common.task_type', 'default': constants.TaskType.TASK_TYPE_CLASSIFICATION, 'type': str, 'metavar': 'value'},
+    'num_frames':               {'dest': 'common.num_frames', 'default': 1, 'type': int, 'metavar': 'value'},
+    'config_path':              {'dest': 'common.config_path', 'default': None, 'type': str, 'metavar': 'value'},
+    # compile/infer session
+    ## model
+    'model_id':                 {'dest': 'session.model_id', 'default': None, 'type': str, 'metavar': 'value', 'help': 'unique id of a model - optional'},
+    'artifacts_folder':         {'dest': 'session.artifacts_folder', 'default': None, 'type': str, 'metavar': 'value'},
+    ## runtime
+    'runtime_name':             {'dest': 'session.name', 'default': None, 'type': str, 'metavar': 'value'},
+    'input_mean':               {'dest': 'session.input_mean', 'default': (123.675, 116.28, 103.53), 'type': float, 'nargs': '*', 'metavar': 'value'},
+    'input_scale':              {'dest': 'session.input_scale', 'default': (0.017125, 0.017507, 0.017429), 'type': float, 'nargs': '*', 'metavar': 'value'},
+    # input_data
+    'data_name':                {'dest': 'dataloader.name', 'default': None, 'type': str, 'metavar': 'value'},
+    'data_path':                {'dest': 'dataloader.path', 'default': None, 'type': str, 'metavar': 'path'},
+    # runtime_settings
+    'target_device':            {'dest': 'session.runtime_settings.target_device', 'default': presets.TargetDeviceType.TARGET_DEVICE_AM68A, 'type': str, 'metavar': 'value'},
+    'tidl_offload':             {'dest': 'session.runtime_settings.tidl_offload', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value'},
+    # runtime_options
+    'tensor_bits':              {'dest': 'session.runtime_settings.runtime_options.tensor_bits', 'default': 8, 'type': int, 'metavar': 'value'},
+    'quantization_scale_type':  {'dest': 'session.runtime_settings.runtime_options.advanced_options:quantization_scale_type', 'default': None, 'type': int, 'metavar': 'value'},
+    'calibration_frames':       {'dest': 'session.runtime_settings.runtime_options.advanced_options:calibration_frames', 'default': 12, 'type': int, 'metavar': 'value'},
+    'calibration_iterations':   {'dest': 'session.runtime_settings.runtime_options.advanced_options:calibration_iterations', 'default': 12, 'type': int, 'metavar': 'value'},
     # preprocess
-    'preprocess_name':         {'dest':'preprocess.name', 'default':'image_preprocess', 'type':str, 'metavar':'value', 'group':'preprocess_name'},
-    'preprocess_func':         {'dest':'preprocess.func', 'default':None, 'type':utils.str_to_literal, 'metavar':'value', 'group':'preprocess_name'},
+    'preprocess_name':         {'dest':'preprocess.name', 'default':None, 'type':str, 'metavar':'value', 'group':'preprocess_name'},
     'resize':                  {'dest':'preprocess.resize', 'default':None, 'type':int, 'nargs':'*', 'metavar':'value'},
     'crop':                    {'dest':'preprocess.crop', 'default':None, 'type':int, 'nargs':'*', 'metavar':'value'},
     'data_layout':             {'dest':'preprocess.data_layout', 'default':None, 'type':str, 'metavar':'value'},
     'reverse_channels':        {'dest':'preprocess.reverse_channels', 'default':False, 'type':utils.str_to_bool, 'metavar':'value'},
     'resize_with_pad':         {'dest':'preprocess.resize_with_pad', 'default':False, 'type':utils.str_to_bool, 'metavar':'value'},
+    # postprocess
+    'postprocess_name':        {'dest': 'postprocess.name', 'default': None, 'type': str, 'metavar': 'value'},
 }
 
-COPY_SETTINGS_DEFAULT['compile_model'] = COPY_SETTINGS_DEFAULT['import_model'] | {
+COPY_SETTINGS_DEFAULT['compile_model'] = {
+    'session.data_layout': 'preprocess.data_layout'
 }
 
+##########################################################################
+SETTINGS_DEFAULT['infer_model'] = SETTINGS_DEFAULT['compile_model'] | {
+}
+
+COPY_SETTINGS_DEFAULT['infer_model'] = COPY_SETTINGS_DEFAULT['compile_model'] | {
+}
 
 ##########################################################################
 SETTINGS_DEFAULT['infer_analyze'] = SETTINGS_DEFAULT['infer_model'] | {
@@ -150,11 +119,9 @@ COPY_SETTINGS_DEFAULT['infer_analyze'] = COPY_SETTINGS_DEFAULT['infer_model'] | 
 ##########################################################################
 # accuracy requires label_path as well
 SETTINGS_DEFAULT['infer_accuracy'] = SETTINGS_DEFAULT['compile_model'] | {
-    'label_path':{'dest': 'dataloader.label_path', 'default':'./data/datasets/vision/imagenetv2c/val.txt', 'type':str, 'metavar':'path'},
+    'label_path':                         {'dest': 'dataloader.label_path', 'default':None, 'type':str, 'metavar':'path'},
 
     # postprocess
-    'postprocess_name':                   {'dest':'postprocess.name', 'default':'no_postprocess', 'type':str, 'metavar':'value', 'group':'postprocess_name'},
-    'postprocess_func':                   {'dest':'postprocess.func', 'default':None, 'type':utils.str_to_literal, 'metavar':'value', 'group':'postprocess_name'},
     'postprocess_resize_with_pad':        {'dest':'postprocess.resize_with_pad', 'default':False, 'type':utils.str_to_bool, 'metavar':'value'},
     'postprocess_normalized_detections':  {'dest':'postprocess.normalized_detections', 'default':False, 'type':utils.str_to_bool, 'metavar':'value'},
     'postprocess_formatter':              {'dest':'postprocess.formatter', 'default':None, 'type':str, 'metavar':'value'},

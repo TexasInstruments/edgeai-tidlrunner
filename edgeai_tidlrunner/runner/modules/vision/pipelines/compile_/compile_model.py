@@ -27,22 +27,129 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+import os
 import sys
-import argparse
+import shutil
+import copy
+import ast
 
+from ...... import rtwrapper
+from ......rtwrapper.core import presets
+from ......rtwrapper.options import attr_dict
+from ..... import bases
+from ... import blocks
 from ..... import utils
-from . import import_model
 from ...settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
+from .compile_base import CompileModelPipelineBase
+from ..optimize_ import optimize_model
 
 
-class CompileModelPipeline(import_model.ImportModelPipeline):
+class CompileModelPipeline(CompileModelPipelineBase):
     ARGS_DICT=SETTINGS_DEFAULT['compile_model']
     COPY_ARGS=COPY_SETTINGS_DEFAULT['compile_model']
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+    def info(self):
+        print(f'INFO: Model import - {__file__}')
+
     def run(self):
-        print(f'INFO: starting model compile')
-        outputs = super().run()
+        print(f'INFO: starting model import')
+        super().run()
+
+        common_kwargs = self.settings[self.common_prefix]
+        dataloader_kwargs = self.settings[self.dataloader_prefix]
+        session_kwargs = self.settings[self.session_prefix]
+        preprocess_kwargs = self.settings[self.preprocess_prefix]
+        postprocess_kwargs = self.settings[self.postprocess_prefix]
+        runtime_settings = session_kwargs['runtime_settings']
+        runtime_options = runtime_settings['runtime_options']
+
+        if os.path.exists(self.run_dir):
+            print(f'INFO: clearing run_dir folder before compile: {self.run_dir}')
+            shutil.rmtree(self.run_dir, ignore_errors=True)
+        #
+
+        os.makedirs(self.run_dir, exist_ok=True)
+        os.makedirs(self.artifacts_folder, exist_ok=True)
+        os.makedirs(self.model_folder, exist_ok=True)
+
+        config_path = os.path.dirname(common_kwargs['config_path']) if common_kwargs['config_path'] else None
+        self.download_file(self.model_source, model_folder=self.model_folder, source_dir=config_path)
+
+        if self.object_detection_meta_layers_names_list_source:
+            self.download_file(self.object_detection_meta_layers_names_list_source, model_folder=self.model_folder, source_dir=config_path)
+        #
+
+        print(f'INFO: running model optimize {self.model_path}')
+        optimize_kwargs = common_kwargs.get('optimize', {})
+        optimize_model.OptimizeModelPipeline._run(self.model_path, self.model_path, **optimize_kwargs)
+
+        # session
+        session_name = session_kwargs['name']
+        session_type = blocks.sessions.SESSION_TYPES_MAPPING[session_name]
+        self.session = session_type(**session_kwargs)
+        self.session.start_import()
+        
+        # input_data
+        if callable(dataloader_kwargs['name']):
+            self.dataloader = dataloader_kwargs['name']
+        elif hasattr(blocks.dataloaders, dataloader_kwargs['name']):
+            dataloader_method = getattr(blocks.dataloaders, dataloader_kwargs['name'])
+            self.dataloader = dataloader_method(**dataloader_kwargs)
+            if hasattr(self.dataloader, 'set_size_details'):
+                input_details, output_details = self.session.get_input_output_details()
+                self.dataloader.set_size_details(input_details)
+            #
+        else:
+            raise RuntimeError(f'ERROR: invalid dataloader args: {dataloader_kwargs}')
+        #
+            
+        # preprocess
+        if callable(preprocess_kwargs['name']):
+            self.preprocess = preprocess_kwargs['name']
+        elif hasattr(blocks.preprocess, preprocess_kwargs['name']):
+            preprocess_method = getattr(blocks.preprocess, preprocess_kwargs['name'])
+            if not (preprocess_kwargs.get('resize', None) and preprocess_kwargs.get('crop', None)):
+                # input shape was not provided - use the model input size
+                input_details, output_details = self.session.get_input_output_details()
+                if preprocess_kwargs.get('data_layout') == presets.DataLayoutType.NCHW:
+                    preprocess_kwargs['resize'] = copy.deepcopy(tuple(input_details[0]['shape'][-2:]))
+                    preprocess_kwargs['crop'] = copy.deepcopy(tuple(input_details[0]['shape'][-2:]))
+                elif preprocess_kwargs.get('data_layout') == presets.DataLayoutType.NHWC:
+                    preprocess_kwargs['resize'] = copy.deepcopy(tuple(input_details[0]['shape'][-3:-1]))
+                    preprocess_kwargs['crop'] = copy.deepcopy(tuple(input_details[0]['shape'][-3:-1]))
+                #
+            #
+            self.preprocess = preprocess_method(self.settings, **preprocess_kwargs)
+        else:
+            raise RuntimeError(f'ERROR: invalid preprocess args: {preprocess_kwargs}')
+        #
+
+        # postprocess
+        if callable(postprocess_kwargs['name']):
+            self.postprocess = postprocess_kwargs['name']
+        elif hasattr(blocks.postprocess, postprocess_kwargs['name']):
+            postprocess_method = getattr(blocks.postprocess, postprocess_kwargs['name'])
+            self.postprocess = postprocess_method(self.settings, **postprocess_kwargs)
+        else:
+            raise RuntimeError(f'ERROR: invalid postprocess args: {postprocess_kwargs}')
+        #
+        
+        # infer model
+        run_data = []
+        outputs = []
+        print(f'INFO: running model import {self.model_path}')
+        for input_index in range(min(len(self.dataloader), runtime_options['advanced_options:calibration_frames'])):
+            print(f'INFO: import frame: {input_index}')
+            input_data, info_dict = self.preprocess(self.dataloader[input_index], info_dict={})
+            outputs = self.session.run_import(input_data)
+            output, info_dict = self.postprocess(outputs, info_dict=info_dict)
+            outputs.append(output)
+            run_data.append({'input':input_data, 'output':outputs, 'info_dict':info_dict})
+
+        print(f'INFO: model import done. output is in: {self.run_dir}')
+        self.run_data = run_data
+        self._write_params('param.yaml')
         return outputs

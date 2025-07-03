@@ -57,11 +57,25 @@ class CompileModelPipelineBase(bases.PipelineBase):
         self.postprocess = None
         self.run_data = None
 
+        dataloader_kwargs = self.settings[self.dataloader_prefix]
         preprocess_kwargs = self.settings[self.preprocess_prefix]
         session_kwargs = self.settings[self.session_prefix]
+        postprocess_kwargs = self.settings[self.postprocess_prefix]
         runtime_settings = session_kwargs['runtime_settings']
         runtime_options = runtime_settings['runtime_options']
 
+        ###################################################################################
+        if not dataloader_kwargs['name']:
+            dataloader_kwargs['name'] = 'random_dataloader'
+        #
+        if not preprocess_kwargs['name']:
+            preprocess_kwargs['name'] = 'no_preprocess'
+        #
+        if not postprocess_kwargs['name']:
+            postprocess_kwargs['name'] = 'no_postprocess'
+        #
+
+        ###################################################################################
         if 'session' in self.settings and self.settings[self.session_prefix].get('model_path', None):
             self.model_source = self.settings[self.session_prefix]['model_path']
 
@@ -96,6 +110,7 @@ class CompileModelPipelineBase(bases.PipelineBase):
             self.artifacts_folder = None
         #
 
+        ###################################################################################
         model_ext = os.path.splitext(self.model_path)[1] if self.model_path else None
         if preprocess_kwargs.get('data_layout', None) is None:
             data_layout_mapping = {
@@ -114,6 +129,7 @@ class CompileModelPipelineBase(bases.PipelineBase):
             session_kwargs['name'] = session_name
         #
 
+        ###################################################################################
         if not os.environ.get('TIDL_TOOLS_PATH', None):
             target_device = runtime_settings['target_device']
             tools_base_path = os.path.abspath(os.path.normpath(os.path.join(os.path.dirname(rtwrapper.__file__), '..', 'tools')))

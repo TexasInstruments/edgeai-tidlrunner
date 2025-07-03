@@ -8,7 +8,6 @@ edgeai_tidlrunner package has two parts:
 * **edgeai_tidlrunner.runner** (high level interface - recommended) - runner has additional pipleline functionalities such as data loaders and preprocess required to run the entire pipeline correctly. This is a high level interface that hides most of the details and provides a Pythonic and command line APIs.
 * **edgeai_tidlrunner.rtwrapper** (advanced interface) - rtwrapper is a thin wrapper over the core OSRT and TIDL-RT runtimes - the wrapper is provided for ease of use and also to make the usage of various runtimes consistent. This low level wrapper does not impose mush restrictions on the usage and the full flexibility and functionality of the underlying runtimes are available to the user. 
 
-
 <hr>
 
 ## Setup
@@ -34,88 +33,42 @@ Example:
 
 runner is a basic interface which hides most of the complexity of the underlying runtimes. It can be used either from Python script or from command line.
 
-### tidlrunner-cli commandline interface
-
-tidlrunner-cli is the interface script to run model compilation and inference via commandline:
-
-#### Example - import_model with random inputs
-import_model is one of the most basic commands - it needs only the model path to be provided. The given model is imported with TIDL using random inputs. It can be used to quickly check whether a model works in TIDL or not. 
-```
-tidlrunner-cli import_model --model_path=./data/examples/models/mobilenet_v2.onnx
-```
-The compiled artifacts will be placed under [./runs/runner](./runs/runner) in a folder with the model name.
-
-#### Example - compile_model with actual input data
-More options can be specified to configure the run when running with compile_model.
-
-This is the example for an image classification model:
-```
-tidlrunner-cli compile_model --model_path=./data/examples/models/mobilenet_v2.onnx --data_name image_classification_dataloader --data_path=./data/datasets/vision/imagenetv2c/val
-```
-
-This is the example for an object detection model:
-```
-tidlrunner-cli compile_model --model_path=./data/models/vision/detection/coco/edgeai-mmdet/ssd_mobilenetv2_lite_512x512_20201214_model.onnx --data_name coco_detection_dataloader --data_path=./data/datasets/vision/coco
-```
-
-This is the example for a semantic detection model:
-```
-tidlrunner-cli compile_model --model_path=./data/models/vision/segmentation/cocoseg21/edgeai-tv/deeplabv3plus_mobilenetv2_edgeailite_512x512_20210405.onnx --data_name coco_segmentation_dataloader --data_path=./data/datasets/vision/coco
-```
-
-#### Example - a commandline example
-See the commandline example in [example_runner_cli.sh](./example_runner_cli.sh)
-
-#### Example - running multiple models together 
-config files can be provided either as a single config file or as an aggregate config file to operate on multiple models in parallel. They will run in parallel and the log will go into a log file specific to each model (will not be displayed on screen)
-```
-tidlrunner-cli compile_model --config_path ./data/models/configs.yaml
-```
-
-#### Example - running all the models in the edgeai-modelzoo
-If you have edgeai-tensorlab cloned, it is possible to compile all the models in edgeai-tensorlab/edgeai-modelzoo using the following command.
-```
-tidlrunner-cli compile_model --config_path ../edgeai-tensorlab/edgeai-modelzoo/models/configs.yaml
-```
-
-#### Detailed help
-All the options supported can be btained using the help option. Examples
+### See the options supported with help command
+All the options supported can be obtained using the help option. Examples
 ```
 tidlrunner-cli --help
 tidlrunner-cli compile_model --help
 ```
 
-The options that can be passed can also be seen in this file [settings_default.py](./edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py)
-Note: The options can be provided either using the short option that is the key or using the long option that is given against 'dest'
+### tidlrunner-cli Commandline interface
+[runner Commandline interface](./docs/commandline.md)
 
-### edgeai_tidlrunner Pythonic interface
+### tidlrunner-cli Config file interface
+[runner Commandline interface](./docs/configfile.md)
 
-edgeai_tidlrunner.runner.run is the Pythonic API of runner
+### edgeai_tidlrunner.runner Pythonic interface
+[runner Pythonic interface](./docs/pythonic.md)
 
-```
-kwargs = {
-    'session': {
-        'model_path': ./data/examples/models/mobilenet_v2.onnx',
-    }
-    'dataloader': {
-        'name': 'image_classification_dataloader'
-        'path': ./data/datasets/vision/imagenetv2c/val',
-     }
-}
+### Example Arguments / options
 
-edgeai_tidlrunner.runner.run('compile_model', **kwargs)
-```
+| Shortcut Style Names (For Commandline) | Explicit Dot Style Names (Internal Names - Can be used if needed)            | YAML Config file for Commandline (and equivalent dict format for Pythonic interface) |
+|----------------------------------------|------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
+|                                        |                                                                              | session:                                                                             |
+| model_path                             | session.model_path                                                           | &nbsp; model_path: mobilenet_v2.onnx                                                 |
+|                                        |                                                                              | &nbsp; runtime_settings:                                                             |
+| target_device                          | session.runtime_settings.target_device                                       | &nbsp; &nbsp; target_device: AM68A                                                   |
+|                                        |                                                                              | &nbsp; &nbsp; runtime_options:                                                       |
+| tensor_bits                            | session.runtime_settings.runtime_options.target_device                       | &nbsp; &nbsp; &nbsp; tensor_bits: 8                                                  |
+| calibration_frames                     | session.runtime_settings.runtime_options.advanced_options:calibration_frames | &nbsp; &nbsp; &nbsp; advanced_options:calibration_frames: 12                         |
+|                                        |                                                                              |                                                                                      |
 
-See the Pythonic example in [example_runner_py.py](./examples/vision/scripts/example_runner_py.py) which is invoked via [example_runner_py.sh](./example_runner_py.sh)
+As can be seen from this example, there is a one-to-one mapping between the internal Dot style names and the dictionary format. The YAML Config file can be used in the Commandline and the Python dict can be used in Pythonic interface.
 
-The options that can be passed as **kwargs can be seen in this file [settings_default.py](./edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py)
-Note: that this file lists the options in a flat syntax using '.' separator for the fields - it is possible to use the '.' syntax or the nested dict as shown above. 
+All the supported options and how they map to internal names can be seen in this file [settings_default.py](./edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py) and this file [settings_base.py](./edgeai_tidlrunner/runner/bases/settings_base.py)
 
 <hr>
 
-## Usage of runtimes wrapper (edgeai_tidlrunner.rtwrapper advanced interface)
-
-The runtime wrappers [edgeai_tidlrunner/rtwrapper](edgeai_tidlrunner/rtwrapper) provides an advanced low level interface beyond what the runner provides. 
-An example of this is in [example_advanced_rtwrapper.py](./examples/vision/scripts/example_advanced_rtwrapper.py)
+## Usage of rtwrapper (edgeai_tidlrunner.rtwrapper advanced interface)
+[rtwrapper advanced interface](./docs/rtwrapper.md)
 
 <hr>

@@ -27,7 +27,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from .compile_.import_model import ImportModelPipeline
 from .compile_.infer_model import InferModelPipeline
 from .compile_.compile_model import CompileModelPipeline
 from .compile_.infer_analyze import InferAnalyzePipeline
@@ -40,10 +39,8 @@ from .utils_.split_model import SplitModelPipeline
 
 
 command_module_name_dict_base = {
-    'import_model':'ImportModelPipeline',
-    'infer_model':'InferModelPipeline',
-
     'compile_model':'CompileModelPipeline',
+    'infer_model':'InferModelPipeline',
     'infer_analyze':'InferAnalyzePipeline',
     'infer_accuracy':'InferAccuracyPipeline',
 }
@@ -58,8 +55,8 @@ command_module_name_dict = command_module_name_dict_base | command_module_name_d
 command_choices = list(command_module_name_dict.keys())
 command_choices = list(set(command_choices))
 # combined commands
-command_choices += ['[import_model,infer_model]', '[compile_model,infer_model]', '[compile_model,infer_analyze]', '[compile_model,infer_accuracy]']
+command_choices += ['[compile_model,infer_model]', '[compile_model,infer_analyze]', '[compile_model,infer_accuracy]']
 
 
 def get_command_choices():
-    return command_choices + ['run_config']
+    return command_choices
