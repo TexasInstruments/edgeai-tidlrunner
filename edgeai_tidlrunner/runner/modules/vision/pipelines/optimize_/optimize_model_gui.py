@@ -35,14 +35,14 @@ from ..... import utils
 from ..... import bases
 
 
-class OptimizeModelGUIPipeline(bases.PipelineBase):
+class OptimizeModelGUI(bases.PipelineBase):
     ARGS_DICT=SETTINGS_DEFAULT['basic']
     COPY_ARGS=COPY_SETTINGS_DEFAULT['basic']
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
             
-    def run(self):
+    def _run(self):
         print(f'INFO: starting model optimize_gui')
         try:
             import streamlit as st

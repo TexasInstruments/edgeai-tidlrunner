@@ -47,15 +47,23 @@ def _run(model_command_dict):
     for model_key, model_command_list in model_command_dict.items():
         task_list = []
         for model_command_entry in model_command_list:
-            command_key, command_kwargs = model_command_entry
+            command_key, pipeline_name, command_kwargs = model_command_entry
             # while running multiple configs, it is better to use parallel processing
             parallel_processes = command_kwargs['common.parallel_processes']
             if parallel_processes and multiple_models:
                 command_kwargs['common.capture_log'] = bases.settings_base.CaptureLogModes.CAPTURE_LOG_MODE_ON
             #
-            runner_obj = bases.PipelineRunner(command_key, **command_kwargs)
+
+            target_module_name = command_kwargs['common.target_module']
+            target_module = getattr(modules, target_module_name)
+            command_module_name_dict = target_module.pipelines.command_module_name_dict
+            assert command_key in command_module_name_dict, f'ERROR: unknown command: {command_key}'
+            command_module = getattr(target_module.pipelines, pipeline_name)
+            runner_obj = command_module(**command_kwargs)
+
             command_func = runner_obj.run
-            proc_name = model_key+':'+command_key if model_key else command_key
+            model_key = model_key or 'model'
+            proc_name = f'{model_key}:{command_key}:{pipeline_name}'
             task_entry = {'proc_name':proc_name, 'proc_func':command_func}
             task_list.append(task_entry)
         #

@@ -55,20 +55,13 @@ class MainRunner(runner.bases.PipelineBase):
         config_path = kwargs.get('common.config_path', None)
         # which target module to use
         target_module = self._get_target_module(kwargs['common.target_module'])
-        if '[' in command:
-            commands = command.replace('[', '').replace(']', '').split(',')
-        elif isinstance(command, list):
-            commands = command
-        else:
-            commands = [command]
-        #
-        commands = [cmd.lower().replace(' ', '') for cmd in commands]
+        pipeline_names = target_module.pipelines.command_module_name_dict[command]
+        pipeline_names = pipeline_names if isinstance(pipeline_names, list) else [pipeline_names]
 
         command_list = []
-        for command_entry in commands:
+        for pipeline_name in pipeline_names:
             # remove spaces from command
-            command_module_name = target_module.pipelines.command_module_name_dict[command_entry]
-            command_module = getattr(target_module.pipelines, command_module_name)
+            command_module = getattr(target_module.pipelines, pipeline_name)
             if config_path:
                 with open(config_path) as fp:
                     kwargs_cfg = yaml.safe_load(fp)
@@ -84,7 +77,7 @@ class MainRunner(runner.bases.PipelineBase):
                 # #
             #
             kwargs_cfg.update(kwargs)
-            command_list.append((command_entry,kwargs_cfg))
+            command_list.append((command,pipeline_name,kwargs_cfg))
         #
         return command_list
 

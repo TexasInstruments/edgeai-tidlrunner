@@ -35,19 +35,17 @@ import ast
 
 import yaml
 
-from ...blocks.dataloaders import coco_detection_dataloader
 from ...... import rtwrapper
 from ......rtwrapper.core import presets
-from ......rtwrapper.options import attr_dict
 from ..... import bases
 from ... import blocks
 from ..... import utils
 from ...settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
 
 
-class CompileModelPipelineBase(bases.PipelineBase):
-    ARGS_DICT=SETTINGS_DEFAULT['import_model']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['import_model']
+class CompileModelBase(bases.PipelineBase):
+    ARGS_DICT=SETTINGS_DEFAULT['compile_model']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['compile_model']
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -66,6 +64,10 @@ class CompileModelPipelineBase(bases.PipelineBase):
 
         ###################################################################################
         if not dataloader_kwargs['name']:
+            print(f'WARNING: dataloader name is was not provided - will use random_dataloader'
+                  f'\n  and the resultant compiled artifacts may not be accurate.'
+                  f'\n  please specify a dataloader using the argument data_name or dataloader.name'
+                  f'\n  in addition data_path or dataloader.path may need to be provided.')
             dataloader_kwargs['name'] = 'random_dataloader'
         #
         if not preprocess_kwargs['name']:
@@ -119,6 +121,7 @@ class CompileModelPipelineBase(bases.PipelineBase):
             }
             data_layout = data_layout_mapping.get(model_ext, None)
             preprocess_kwargs['data_layout'] = data_layout
+            session_kwargs['data_layout'] = data_layout
         #
         if session_kwargs.get('name', None) is None:
             session_name_mapping = {
@@ -180,14 +183,24 @@ class CompileModelPipelineBase(bases.PipelineBase):
                 if v == 'imagenet':
                     kwargs_out['dataloader.name'] = 'image_classification_dataloader'
                     kwargs_out['dataloader.path'] = './data/datasets/vision/imagenetv2c/val'
+                    if kwargs.get('preprocess.name',None) is None:
+                        kwargs_out['preprocess.name'] = 'image_preprocess'
+                    #
                 elif v == 'coco':
                     kwargs_out['dataloader.name'] = 'coco_detection_dataloader'
                     kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
+                    if kwargs.get('preprocess.name',None) is None:
+                        kwargs_out['preprocess.name'] = 'image_preprocess'
+                    #
                 elif v == 'cocoseg21':
                     kwargs_out['dataloader.name'] = 'coco_segmentation_dataloader'
                     kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
+                    if kwargs.get('preprocess.name',None) is None:
+                        kwargs_out['preprocess.name'] = 'image_preprocess'
+                    #
                 #
             elif k == 'session.target_device':
+                # target_device is specified as an argument - no need to set it here.
                 # kwargs_out['session.runtime_settings.target_device'] = v
                 pass
             else:
@@ -199,7 +212,7 @@ class CompileModelPipelineBase(bases.PipelineBase):
     def info(self):
         print(f'INFO: Model compile base - {__file__}')
 
-    def run(self):
+    def _run(self):
         return None
 
     def _write_params(self, filename):

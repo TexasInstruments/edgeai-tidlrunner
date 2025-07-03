@@ -37,9 +37,9 @@ from ..... import bases
 from ..compile_ import compile_base
 
 
-class OptimizeModelPipeline(compile_base.CompileModelPipelineBase):
-    ARGS_DICT=SETTINGS_DEFAULT['import_model']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['import_model']
+class OptimizeModel(compile_base.CompileModelBase):
+    ARGS_DICT=SETTINGS_DEFAULT['basic']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['basic']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -47,7 +47,7 @@ class OptimizeModelPipeline(compile_base.CompileModelPipelineBase):
     def info():
         print(f'INFO: Model optimize - {__file__}')
 
-    def run(self):
+    def _run(self):
         print(f'INFO: starting model optimize')
 
         common_kwargs = self.settings[self.common_prefix]

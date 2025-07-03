@@ -32,6 +32,7 @@ import os
 import copy
 import argparse
 import json
+import wurlitzer
 
 from ...rtwrapper.options import presets
 from ...rtwrapper.options import attr_dict
@@ -211,3 +212,19 @@ class PipelineBase():
             #
         #
         return parser
+
+    def run(self):
+        capture_log = self.settings['common']['capture_log']
+        log_file = self.settings['common']['log_file']
+        if capture_log and self.run_dir and log_file:
+            if not log_file.startswith('/') and not log_file.startswith('.'):
+                log_file =  os.path.join(self.run_dir, log_file)
+            #
+            os.makedirs(os.path.dirname(log_file), exist_ok=True)
+            with open(log_file, 'a') as log_fp:
+                with wurlitzer.pipes(stdout=log_fp, stderr=log_fp):
+                    return self._run()
+                #
+            #
+        else:
+            return self._run()

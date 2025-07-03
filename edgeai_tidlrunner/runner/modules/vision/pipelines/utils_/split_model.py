@@ -57,7 +57,7 @@ class ONNXNode:
         return f"{self.name} : {self.module} : {self.depth} : {[child.name if isinstance(child,ONNXNode) else child for child in self.children]}"
         
 
-class SplitModelPipeline(bases.PipelineBase):
+class SplitModel(bases.PipelineBase):
     ARGS_DICT=SETTINGS_DEFAULT['basic']
     COPY_ARGS=COPY_SETTINGS_DEFAULT['basic']
 
@@ -240,7 +240,7 @@ class SplitModelPipeline(bases.PipelineBase):
 
 
     #################################################################
-    def run(self):
+    def _run(self):
         print(f'INFO: starting split_model')
         run_dir = self.kwargs.pop('run_dir')
         run_dir = run_dir.replace('{model_name}', os.path.splitext(os.path.basename(self.kwargs['model_path']))[0])

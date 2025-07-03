@@ -33,17 +33,15 @@ import shutil
 import copy
 import ast
 
-from ...... import rtwrapper
 from ......rtwrapper.core import presets
-from ......rtwrapper.options import attr_dict
 from ..... import bases
 from ... import blocks
 from ..... import utils
 from ...settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
-from .compile_base import CompileModelPipelineBase
+from .compile_base import CompileModelBase
 
 
-class InferModelPipeline(CompileModelPipelineBase):
+class InferModel(CompileModelBase):
     ARGS_DICT=SETTINGS_DEFAULT['infer_model']
     COPY_ARGS=COPY_SETTINGS_DEFAULT['infer_model']
 
@@ -53,9 +51,9 @@ class InferModelPipeline(CompileModelPipelineBase):
     def info(self):
         print(f'INFO: Model inference - {__file__}')
 
-    def run(self):
+    def _run(self):
         print(f'INFO: starting model infer')
-        super().run()
+        super()._run()
         self._write_params('config.yaml')
 
         common_kwargs = self.settings[self.common_prefix]

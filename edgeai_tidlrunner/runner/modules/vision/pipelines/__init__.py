@@ -27,22 +27,25 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from .compile_.infer_model import InferModelPipeline
-from .compile_.compile_model import CompileModelPipeline
-from .compile_.infer_analyze import InferAnalyzePipeline
-from .compile_.infer_accuracy import InferAccuracyPipeline
+from .compile_.infer_model import InferModel
+from .compile_.compile_model import CompileModel
+from .compile_.infer_analyze import InferAnalyze
+from .compile_.infer_accuracy import InferAccuracy
 
-from .optimize_.optimize_model import OptimizeModelPipeline
-from .optimize_.optimize_model_gui import OptimizeModelGUIPipeline
+from .optimize_.optimize_model import OptimizeModel
+from .optimize_.optimize_model_gui import OptimizeModelGUI
 
-from .utils_.split_model import SplitModelPipeline
+from .utils_.split_model import SplitModel
 
 
 command_module_name_dict_base = {
-    'compile_model':'CompileModelPipeline',
-    'infer_model':'InferModelPipeline',
-    'infer_analyze':'InferAnalyzePipeline',
-    'infer_accuracy':'InferAccuracyPipeline',
+    'compile_model':'CompileModel',
+    'infer_model':'InferModel',
+    'infer_analyze':'InferAnalyze',
+    'infer_accuracy':'InferAccuracy',
+    'compile_infer': ['CompileModel', 'InferModel'],
+    'compile_analyze': ['CompileModel', 'InferAnalyze'],
+    'compile_accuracy': ['CompileModel', 'InferAccuracy'],
 }
 
 command_module_name_dict_ext = {
@@ -54,8 +57,6 @@ command_module_name_dict_ext = {
 command_module_name_dict = command_module_name_dict_base | command_module_name_dict_ext
 command_choices = list(command_module_name_dict.keys())
 command_choices = list(set(command_choices))
-# combined commands
-command_choices += ['[compile_model,infer_model]', '[compile_model,infer_analyze]', '[compile_model,infer_accuracy]']
 
 
 def get_command_choices():

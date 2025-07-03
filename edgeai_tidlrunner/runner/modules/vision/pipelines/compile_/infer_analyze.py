@@ -37,7 +37,7 @@ from ...settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
 from . import infer_model
 
 
-class InferAnalyzePipeline(bases.PipelineBase):
+class InferAnalyze(bases.PipelineBase):
     ARGS_DICT=SETTINGS_DEFAULT['infer_analyze']
     COPY_ARGS=COPY_SETTINGS_DEFAULT['infer_analyze']
 
@@ -49,7 +49,7 @@ class InferAnalyzePipeline(bases.PipelineBase):
         kargs_copy['tidl_offload'] = False
         self.infer_pipeline_float = infer_model.InferModelPipeline(**kargs_copy)
 
-    def run(self):
+    def _run(self):
         print(f'INFO: starting model analyze')
         print(f'INFO: model inference with offload=False')
         self.infer_pipeline_float.run()

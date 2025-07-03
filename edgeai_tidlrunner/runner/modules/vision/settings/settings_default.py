@@ -56,11 +56,14 @@ RUNTIME_SETTINGS_DEFAULT = {
 SETTINGS_DEFAULT = {}
 COPY_SETTINGS_DEFAULT = {}
 
+SETTINGS_DEFAULT['basic'] = settings_base.SETTING_PIPELINE_RUNNER_ARGS_DICT
+COPY_SETTINGS_DEFAULT['basic'] = {}
+
 ##########################################################################
 # compile can be followed by infer, analyze or accuracy
 # compile is used to indicate a more sophisticated import - populate real data_path for that.
 ##########################################################################
-SETTINGS_DEFAULT['compile_model'] = settings_base.SETTING_PIPELINE_RUNNER_ARGS_DICT | {
+SETTINGS_DEFAULT['compile_model'] = SETTINGS_DEFAULT['basic'] | {
     'optimize':                 {'dest': 'common.optimize.model_optimizer', 'default': False, 'type': utils.str_to_bool, 'metavar': 'value'},
     'shape_inference':          {'dest': 'common.optimize.shape_inference', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value'},
     # common options
@@ -97,7 +100,7 @@ SETTINGS_DEFAULT['compile_model'] = settings_base.SETTING_PIPELINE_RUNNER_ARGS_D
     'postprocess_name':        {'dest': 'postprocess.name', 'default': None, 'type': str, 'metavar': 'value'},
 }
 
-COPY_SETTINGS_DEFAULT['compile_model'] = {
+COPY_SETTINGS_DEFAULT['compile_model'] = COPY_SETTINGS_DEFAULT['basic'] | {
     'session.data_layout': 'preprocess.data_layout'
 }
 

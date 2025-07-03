@@ -42,17 +42,17 @@ from ...blocks import sessions
 from . import infer_model
 
 
-class InferAccuracyPipeline(infer_model.InferModelPipeline):
+class InferAccuracy(infer_model.InferModel):
     ARGS_DICT=SETTINGS_DEFAULT['infer_accuracy']
     COPY_ARGS=COPY_SETTINGS_DEFAULT['infer_accuracy']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def run(self):
+    def _run(self):
         print(f'INFO: starting model accuracy evaluation')
 
-        outputs = super().run()
+        outputs = super()._run()
         run_data = self.get_run_data()
        
         accuracy = {}

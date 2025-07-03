@@ -33,18 +33,16 @@ import shutil
 import copy
 import ast
 
-from ...... import rtwrapper
 from ......rtwrapper.core import presets
-from ......rtwrapper.options import attr_dict
 from ..... import bases
 from ... import blocks
 from ..... import utils
 from ...settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
-from .compile_base import CompileModelPipelineBase
+from .compile_base import CompileModelBase
 from ..optimize_ import optimize_model
 
 
-class CompileModelPipeline(CompileModelPipelineBase):
+class CompileModel(CompileModelBase):
     ARGS_DICT=SETTINGS_DEFAULT['compile_model']
     COPY_ARGS=COPY_SETTINGS_DEFAULT['compile_model']
     
@@ -54,9 +52,9 @@ class CompileModelPipeline(CompileModelPipelineBase):
     def info(self):
         print(f'INFO: Model import - {__file__}')
 
-    def run(self):
+    def _run(self):
         print(f'INFO: starting model import')
-        super().run()
+        super()._run()
 
         common_kwargs = self.settings[self.common_prefix]
         dataloader_kwargs = self.settings[self.dataloader_prefix]
@@ -84,7 +82,7 @@ class CompileModelPipeline(CompileModelPipelineBase):
 
         print(f'INFO: running model optimize {self.model_path}')
         optimize_kwargs = common_kwargs.get('optimize', {})
-        optimize_model.OptimizeModelPipeline._run(self.model_path, self.model_path, **optimize_kwargs)
+        optimize_model.OptimizeModel._run(self.model_path, self.model_path, **optimize_kwargs)
 
         # session
         session_name = session_kwargs['name']
