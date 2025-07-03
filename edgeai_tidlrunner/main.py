@@ -99,7 +99,7 @@ class MainRunner(runner.bases.PipelineBase):
                 configs = kwargs_cfg.pop('configs')
             #
             for model_key, config_entry_file in configs.items():
-                if not (config_entry_file.startswith('/') or config_entry_file.startswith('http')):
+                if not (config_entry_file.startswith('/') or config_entry_file.startswith('.')):
                     config_base_path = os.path.dirname(config_path)
                     config_entry_file = os.path.join(config_base_path, config_entry_file)
                 #

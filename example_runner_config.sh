@@ -32,8 +32,5 @@
 # set target device
 export TARGET_DEVICE="AM68A"
 
-# add environemnt settings as needed
-source ./set_env.sh
-
 ##################################################################
-tidlrunner-cli [import_model,infer_model] --config_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml --target_device ${TARGET_DEVICE}
+tidlrunner-cli compile_infer --config_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml --target_device ${TARGET_DEVICE}
