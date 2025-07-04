@@ -36,12 +36,7 @@ export TARGET_DEVICE="AM68A"
 source ./set_env.sh
 
 ##################################################################
-tidlrunner-cli import_model \
+tidlrunner-cli compile_infer \
     --target_device=${TARGET_DEVICE} \
     --model_path='./vision/examples/models/mobilenet_v2.onnx' \
-    "${@}"
-
-tidlrunner-cli infer_model \
-    --target_device=${TARGET_DEVICE} \
-    --model_path='./examples/vision/models/mobilenet_v2.onnx' \
     "${@}"

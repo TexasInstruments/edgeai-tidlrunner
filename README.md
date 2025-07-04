@@ -33,6 +33,7 @@ Example:
 
 runner is a basic interface which hides most of the complexity of the underlying runtimes. It can be used either from Python script or from command line.
 
+
 ### See the options supported with help command
 All the options supported can be obtained using the help option. Examples
 ```
@@ -40,14 +41,31 @@ tidlrunner-cli --help
 tidlrunner-cli compile_model --help
 ```
 
+
 ### tidlrunner-cli Commandline interface
 [runner Commandline interface](./docs/commandline.md)
+
 
 ### tidlrunner-cli Config file interface
 [runner Commandline interface](./docs/configfile.md)
 
+
 ### edgeai_tidlrunner.runner Pythonic interface
 [runner Pythonic interface](./docs/pythonic.md)
+
+
+### List of commands supported
+| Command          | Internal Pipeline           | Description                                                       |
+|------------------|-----------------------------|-------------------------------------------------------------------|
+| compile_model    | CompileModel                | Compile the given model(s)                                        |
+| infer_analyze    | InferAnalyze                | Run inference and analysis using using compiled model artifacts   |
+| infer_accuracy   | InferAccuracy               | Run inference and compute accuracy using compiled model artifacts |
+| compile_analyze  | CompileModel, InferAnalyze  | Run inference using compiled model artifacts                      |
+| compile_infer    | CompileModel, InferModel    | compile_model, infer_model                                        |
+| compile_analyze  | CompileModel, AnalyzeModel  | compile_model, infer_analyze                                      |
+| compile_accuracy | CompileModel, InferAccuracy | Compile the model, infer and compute accuracy                     |
+| optimize_model   | OptimizeModel               | Optimize - shape inference, layer transformations etc.            |
+
 
 ### Example Arguments / options
 
