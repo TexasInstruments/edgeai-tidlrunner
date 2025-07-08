@@ -55,16 +55,24 @@ tidlrunner-cli compile_model --help
 
 
 ### List of commands supported
-| Command          | Internal Pipeline           | Description                                                       |
-|------------------|-----------------------------|-------------------------------------------------------------------|
-| compile_model    | CompileModel                | Compile the given model(s)                                        |
-| infer_analyze    | InferAnalyze                | Run inference and analysis using using compiled model artifacts   |
-| infer_accuracy   | InferAccuracy               | Run inference and compute accuracy using compiled model artifacts |
-| compile_analyze  | CompileModel, InferAnalyze  | Run inference using compiled model artifacts                      |
-| compile_infer    | CompileModel, InferModel    | compile_model, infer_model                                        |
-| compile_analyze  | CompileModel, AnalyzeModel  | compile_model, infer_analyze                                      |
-| compile_accuracy | CompileModel, InferAccuracy | Compile the model, infer and compute accuracy                     |
-| optimize_model   | OptimizeModel               | Optimize - shape inference, layer transformations etc.            |
+| Command          | Internal Pipeline           | Description                                                               |
+|------------------|-----------------------------|---------------------------------------------------------------------------|
+| compile_model    | CompileModel                | Compile the given model(s)                                                |
+| infer_model      | InferModel                  | Run inference using using already compiled model artifacts                |
+| compile_infer    | CompileModel, InferModel    | compile_model, infer_model                                                |
+
+
+[//]: # (| infer_analyze    | InferAnalyze                | Run inference and analysis using already compiled model artifacts         |)
+
+[//]: # (| infer_accuracy   | InferAccuracy               | Run inference and compute accuracy using already compiled model artifacts |)
+
+[//]: # (| compile_analyze  | CompileModel, InferAnalyze  | Run inference using compiled model artifacts                              |)
+
+[//]: # (| compile_analyze  | CompileModel, AnalyzeModel  | compile_model, infer_analyze                                              |)
+
+[//]: # (| compile_accuracy | CompileModel, InferAccuracy | Compile the model, infer and compute accuracy                             |)
+
+[//]: # (| optimize_model   | OptimizeModel               | Optimize - shape inference, layer transformations etc.                    |)
 
 
 ### Example Arguments / options
