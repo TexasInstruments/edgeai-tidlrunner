@@ -47,7 +47,7 @@ tidlrunner-cli compile_model --help
 
 
 ### tidlrunner-cli Config file interface
-[runner Commandline interface](./docs/configfile.md)
+[runner Commandline config file interface](./docs/configfile.md)
 
 
 ### edgeai_tidlrunner.runner Pythonic interface
