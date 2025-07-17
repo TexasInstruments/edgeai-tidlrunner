@@ -9,6 +9,7 @@ edgeai_tidlrunner package has two parts:
 * **edgeai_tidlrunner.rtwrapper** (advanced interface) - rtwrapper is a thin wrapper over the core OSRT and TIDL-RT runtimes - the wrapper is provided for ease of use and also to make the usage of various runtimes consistent. This low level wrapper does not impose mush restrictions on the usage and the full flexibility and functionality of the underlying runtimes are available to the user. 
 
 <hr>
+<hr>
 
 ## Setup
 
@@ -20,7 +21,7 @@ edgeai_tidlrunner package has two parts:
 
 This will download the tidl_tools in the [tools](./tools) folder. The runtimes require TIDL_TOOLS_PATH and LD_LIBRARY_PATH to be set to appropriate folder inside this folder. For more details see [set_env.sh](./set_env.sh)
 
-### Setup with gpu based tidl_tools (faster to run, but has more dependencies)
+### Setup on PC with gpu based tidl-tools (faster to run, but has more dependencies)
 
 Running with CUDA GPU has dependencies - the details of dependencies are in the file [setup_pc_gpu.sh](./setup_pc_gpu.sh)
 
@@ -32,8 +33,9 @@ Example:
 This script installs the CUDA based tidl-tools and nvidia-hpc-sdk. The user ha to make sure the system has CUDA gpus appropriate nvidia graphics drivers. 
 
 <hr>
+<hr>
 
-## Usage of runner (edgeai_tidlrunner.runner basic interface)
+## Usage of runner (edgeai_tidlrunner.runner interface)
 
 runner is a basic interface which hides most of the complexity of the underlying runtimes. It can be used either from Python script or from command line.
 
@@ -52,21 +54,25 @@ tidlrunner-cli compile_model --help
 tidlrunner-cli infer_model --help
 ```
 
+<hr>
 
 ### tidlrunner-cli Commandline interface
 The commandline interface allows to provide the model and a few arguments dirctly in the commandline.
 [runner Commandline interface](./docs/commandline.md)
 
+<hr>
 
 ### tidlrunner-cli Configfile interface
 The configfile interface allows to parse all parameters from a yaml file. 
 [runner Commandline config file interface](./docs/configfile.md)
 
+<hr>
 
 ### edgeai_tidlrunner.runner Pythonic interface
 There is also a Pythonic interface for the runner module, for more flexibility.
 [runner Pythonic interface](./docs/pythonic.md)
 
+<hr>
 
 ### List of commands supported
 | Command          | Internal Pipeline(s)        | Description                                                               |
@@ -105,19 +111,19 @@ As can be seen from this example, there is a one-to-one mapping between the shor
 All the supported options and how they map to internal names can be seen in this file [settings_default.py](./edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py) and this file [settings_base.py](./edgeai_tidlrunner/runner/bases/settings_base.py)
 
 <hr>
+<hr>
 
 ## Usage of rtwrapper (edgeai_tidlrunner.rtwrapper advanced interface)
 Abstractions are sometimes a hindrance to understand what is really happening under the hood or to easily modify and extend. rtwrapper is a thin, low level interface to the core tidl-tools, without much overhead. Use it to understand how the core tidl-tools work or to integrate into your application.
 
 [rtwrapper advanced interface](./docs/rtwrapper.md)
 
+<hr>
+<hr>
 
-## runtime_settings and runtime_options
+## Settings/Options Deep dive
 
-Which ever interface (runner cli, runner configfile, runner py or rtwrapper) is being used, there are some common parameters that control the core runtimes. These are called runtime_settings and runtime_options
+[More details of settings](./docs/settings.md)
 
-runtime_options: runtime_options control the behaviour of core runtimes - default values are specified in [edgeai_tidlrunner/rtwrapper/options/options_default.py](./edgeai_tidlrunner/rtwrapper/options/options_default.py)
-
-runtime_settings: runtime_settings is primarily used in the runner based interface. runtime_options is part of runtime_settings. It also has additional parameters that are needed in the abstractions in runner. Default runtime_settings are in [edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py](./edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py)
-
+<hr>
 <hr>
