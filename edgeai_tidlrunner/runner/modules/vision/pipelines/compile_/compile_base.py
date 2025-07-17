@@ -156,6 +156,8 @@ class CompileModelBase(CommonPipelineBase):
                 # target_device is specified as an argument - no need to set it here.
                 # kwargs_out['session.runtime_settings.target_device'] = v
                 pass
+            elif k == 'task_type':
+                kwargs_out['common.task_type'] = v
             else:
                 kwargs_out[k] = v
             #

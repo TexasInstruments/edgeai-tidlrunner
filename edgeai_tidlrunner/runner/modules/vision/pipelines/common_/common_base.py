@@ -32,18 +32,16 @@ import sys
 import shutil
 import copy
 import ast
-
 import yaml
 
-from ..... import rtwrapper
-from .....rtwrapper.core import presets
-from .... import bases
-from .. import blocks
-from .... import utils
-from ..settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
+from ..... import utils
+from ..... import bases
+from ...settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
 
 
 class CommonPipelineBase(bases.PipelineBase):
+    ARGS_DICT = SETTINGS_DEFAULT['basic']
+    COPY_ARGS = COPY_SETTINGS_DEFAULT['basic']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

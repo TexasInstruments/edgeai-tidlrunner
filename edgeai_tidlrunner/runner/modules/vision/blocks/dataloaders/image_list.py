@@ -111,7 +111,7 @@ class ImageFilesDataLoader(ImageListDataLoader):
         num_frames = 0
         for prediction, label in zip(predictions, self.labels):
             pred = np.argmax(prediction[0], axis=1)
-            correctly_classified += (pred == label).sum().item()
+            correctly_classified += int(int(pred) == int(label))
             num_frames += len(pred)
 
         accuracy_percentage = correctly_classified * 100 / num_frames

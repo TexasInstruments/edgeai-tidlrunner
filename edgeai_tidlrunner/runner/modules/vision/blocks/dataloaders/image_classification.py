@@ -37,9 +37,6 @@ class ImageClassificationDataLoader(ImageFilesDataLoader):
     def __init__(self, path, label_path=None):
         super().__init__(path, label_path=label_path)
 
-    def evaluate(self, run_data, **kwargs):
-        return self._evaluate_classification(run_data, **kwargs)
-
 
 def image_classification_dataloader(name, path, label_path=None):
     return ImageClassificationDataLoader(path=path, label_path=label_path)
