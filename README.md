@@ -20,12 +20,16 @@ edgeai_tidlrunner package has two parts:
 
 This will download the tidl_tools in the [tools](./tools) folder. The runtimes require TIDL_TOOLS_PATH and LD_LIBRARY_PATH to be set to appropriate folder inside this folder. For more details see [set_env.sh](./set_env.sh)
 
-### Setup with gpu based tidl_tools (faster to run)
+### Setup with gpu based tidl_tools (faster to run, but has more dependencies)
+
+Running with CUDA GPU has dependencies - the details of dependencies are in the file [setup_pc_gpu.sh](./setup_pc_gpu.sh)
 
 Example:
 ```
 ./setup_pc_gpu.sh
 ```
+
+This script installs the CUDA based tidl-tools and nvidia-hpc-sdk. The user ha to make sure the system has CUDA gpus appropriate nvidia graphics drivers. 
 
 <hr>
 
@@ -43,52 +47,53 @@ tidlrunner-cli compile_model --help
 
 
 ### tidlrunner-cli Commandline interface
+The commandline interface allows to provide the model and a few arguments dirctly in the commandline.
 [runner Commandline interface](./docs/commandline.md)
 
 
-### tidlrunner-cli Config file interface
+### tidlrunner-cli Configfile interface
+The configfile interface allows to parse all parameters from a yaml file. 
 [runner Commandline config file interface](./docs/configfile.md)
 
 
 ### edgeai_tidlrunner.runner Pythonic interface
+There is also a Pythonic interface for the runner module, for more flexibility.
 [runner Pythonic interface](./docs/pythonic.md)
 
 
 ### List of commands supported
-| Command          | Internal Pipeline           | Description                                                               |
+| Command          | Internal Pipeline(s)        | Description                                                               |
 |------------------|-----------------------------|---------------------------------------------------------------------------|
 | compile_model    | CompileModel                | Compile the given model(s)                                                |
 | infer_model      | InferModel                  | Run inference using using already compiled model artifacts                |
 | compile_infer    | CompileModel, InferModel    | compile_model, infer_model                                                |
+| infer_accuracy   | InferAccuracy               | Run inference and compute accuracy using already compiled model artifacts |
+| compile_accuracy | CompileModel, InferAccuracy | Compile the model, infer and compute accuracy                             |
+| optimize_model   | OptimizeModel               | Optimize - shape inference, layer transformations etc.                    |
 
 
 [//]: # (| infer_analyze    | InferAnalyze                | Run inference and analysis using already compiled model artifacts         |)
-
-[//]: # (| infer_accuracy   | InferAccuracy               | Run inference and compute accuracy using already compiled model artifacts |)
 
 [//]: # (| compile_analyze  | CompileModel, InferAnalyze  | Run inference using compiled model artifacts                              |)
 
 [//]: # (| compile_analyze  | CompileModel, AnalyzeModel  | compile_model, infer_analyze                                              |)
 
-[//]: # (| compile_accuracy | CompileModel, InferAccuracy | Compile the model, infer and compute accuracy                             |)
-
-[//]: # (| optimize_model   | OptimizeModel               | Optimize - shape inference, layer transformations etc.                    |)
-
 
 ### Example Arguments / options
+The parameters used in the commandline or in the configfile - one is a shortcut style name, second is an explicit style name and third is a proper Python dictionary style. Any of these can be used - wherever appropriate. All the styles given from interface are first converted to a common style internally. But typically the shortcut names are used in the commandline and dictionary style names are used in yaml file or in Pythonic interface. 
 
-| Shortcut Style Names (For Commandline) | Explicit Dot Style Names (Internal Names - Can be used if needed)            | YAML Config file for Commandline (and equivalent dict format for Pythonic interface) |
-|----------------------------------------|------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
-|                                        |                                                                              | session:                                                                             |
-| model_path                             | session.model_path                                                           | &nbsp; model_path: mobilenet_v2.onnx                                                 |
-|                                        |                                                                              | &nbsp; runtime_settings:                                                             |
-| target_device                          | session.runtime_settings.target_device                                       | &nbsp; &nbsp; target_device: AM68A                                                   |
-|                                        |                                                                              | &nbsp; &nbsp; runtime_options:                                                       |
-| tensor_bits                            | session.runtime_settings.runtime_options.target_device                       | &nbsp; &nbsp; &nbsp; tensor_bits: 8                                                  |
-| calibration_frames                     | session.runtime_settings.runtime_options.advanced_options:calibration_frames | &nbsp; &nbsp; &nbsp; advanced_options:calibration_frames: 12                         |
-|                                        |                                                                              |                                                                                      |
+| Shortcut Style Names (For Commandline) | Explicit Dot Style Names (Internal Names - Can be used if needed)            | YAML Configfile (and equivalent dict format for Pythonic interface) |
+|----------------------------------------|------------------------------------------------------------------------------|---------------------------------------------------------------------|
+|                                        |                                                                              | session:                                                            |
+| model_path                             | session.model_path                                                           | &nbsp; model_path: mobilenet_v2.onnx                                |
+|                                        |                                                                              | &nbsp; runtime_settings:                                            |
+| target_device                          | session.runtime_settings.target_device                                       | &nbsp; &nbsp; target_device: AM68A                                  |
+|                                        |                                                                              | &nbsp; &nbsp; runtime_options:                                      |
+| tensor_bits                            | session.runtime_settings.runtime_options.target_device                       | &nbsp; &nbsp; &nbsp; tensor_bits: 8                                 |
+| calibration_frames                     | session.runtime_settings.runtime_options.advanced_options:calibration_frames | &nbsp; &nbsp; &nbsp; advanced_options:calibration_frames: 12        |
+|                                        |                                                                              |                                                                     |
 
-As can be seen from this example, there is a one-to-one mapping between the internal Dot style names and the dictionary format. The YAML Config file can be used in the Commandline and the Python dict can be used in Pythonic interface.
+As can be seen from this example, there is a one-to-one mapping between the shortcut style names, internal dot style names and the dictionary format.
 
 All the supported options and how they map to internal names can be seen in this file [settings_default.py](./edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py) and this file [settings_base.py](./edgeai_tidlrunner/runner/bases/settings_base.py)
 

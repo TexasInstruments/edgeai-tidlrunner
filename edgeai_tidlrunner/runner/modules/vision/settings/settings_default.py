@@ -143,3 +143,12 @@ SETTINGS_DEFAULT['infer_accuracy'] = SETTINGS_DEFAULT['compile_model'] | {
 
 COPY_SETTINGS_DEFAULT['infer_accuracy'] = COPY_SETTINGS_DEFAULT['compile_model'] | {
 }
+
+##########################################################################
+SETTINGS_DEFAULT['optimize_model'] = SETTINGS_DEFAULT['basic'] | {
+    'optimize':                 {'dest': 'common.optimize.model_optimizer', 'default': False, 'type': utils.str_to_bool, 'metavar': 'value'},
+    'shape_inference':          {'dest': 'common.optimize.shape_inference', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value'},
+}
+
+COPY_SETTINGS_DEFAULT['optimize_model'] = COPY_SETTINGS_DEFAULT['basic'] | {
+}

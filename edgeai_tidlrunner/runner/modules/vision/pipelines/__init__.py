@@ -49,9 +49,9 @@ command_module_name_dict_base = {
 }
 
 command_module_name_dict_ext = {
-    'optimize_model':'OptimizeModelPipeline',
-    'optimize_model_gui':'OptimizeModelGuiPipeline',
-    'split_model':'SplitModelPipeline',
+    'optimize_model':'OptimizeModel',
+    'optimize_model_gui':'OptimizeModelGUI',
+    'split_model':'SplitModel',
 }
 
 command_module_name_dict = command_module_name_dict_base | command_module_name_dict_ext

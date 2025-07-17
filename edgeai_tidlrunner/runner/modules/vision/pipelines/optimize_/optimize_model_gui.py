@@ -33,11 +33,12 @@ import shutil
 from ...settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
 from ..... import utils
 from ..... import bases
+from ..common_ import common_base
 
 
-class OptimizeModelGUI(bases.PipelineBase):
-    ARGS_DICT=SETTINGS_DEFAULT['basic']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['basic']
+class OptimizeModelGUI(common_base.CommonPipelineBase):
+    ARGS_DICT=SETTINGS_DEFAULT['optimize_model']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['optimize_model']
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -199,7 +200,7 @@ class OptimizeModelGUI(bases.PipelineBase):
 
 
 if __name__ == '__main__':
-    optimizer = OptimizeGUIPipeline()
+    optimizer = OptimizeModelGUI()
     parser = optimizer.get_arg_parser()
     args = parser.parse_args()
     kwargs = vars(args)

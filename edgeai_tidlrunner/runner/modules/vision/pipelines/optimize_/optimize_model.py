@@ -34,12 +34,12 @@ import shutil
 from ...settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
 from ..... import utils
 from ..... import bases
-from ..compile_ import compile_base
+from ..common_ import common_base
 
 
-class OptimizeModel(compile_base.CompileModelBase):
-    ARGS_DICT=SETTINGS_DEFAULT['basic']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['basic']
+class OptimizeModel(common_base.CommonPipelineBase):
+    ARGS_DICT=SETTINGS_DEFAULT['optimize_model']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['optimize_model']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -67,10 +67,10 @@ class OptimizeModel(compile_base.CompileModelBase):
         config_path = os.path.dirname(common_kwargs['config_path']) if common_kwargs['config_path'] else None
         self.download_file(self.model_source, model_folder=self.model_folder, source_dir=config_path)
 
-        self._run(self.model_path, self.model_path, shape_inference=shape_inference, model_optimizer=model_optimizer)
+        self._run_func(self.model_path, self.model_path, shape_inference=shape_inference, model_optimizer=model_optimizer)
 
     @classmethod
-    def _run(cls, model_source, model_path, shape_inference=True, model_optimizer=False, **kwargs):
+    def _run_func(cls, model_source, model_path, shape_inference=True, model_optimizer=False, **kwargs):
         if shape_inference:
             import onnx
             onnx.shape_inference.infer_shapes_path(model_source, model_path)

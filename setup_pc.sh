@@ -42,6 +42,11 @@ echo "TIDL_TOOLS_VERSION=${TIDL_TOOLS_VERSION}"
 TIDL_TOOLS_TYPE=${TIDL_TOOLS_TYPE:-""}
 echo "TIDL_TOOLS_TYPE=${TIDL_TOOLS_TYPE}"
 
+
+#######################################################################
+pip3 install -r requirements/requirements_pc.txt
+pip3 install --no-input onnx_graphsurgeon==0.3.26 --extra-index-url https://pypi.ngc.nvidia.com
+
 #######################################################################
 TIDL_TOOLS_TYPE=${TIDL_TOOLS_TYPE} TIDL_TOOLS_VERSION=${TIDL_TOOLS_VERSION} pip3 install -e ./
 TIDL_TOOLS_TYPE=${TIDL_TOOLS_TYPE} TIDL_TOOLS_VERSION=${TIDL_TOOLS_VERSION} pip3 install -e ./tools

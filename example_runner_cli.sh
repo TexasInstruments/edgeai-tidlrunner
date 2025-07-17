@@ -37,6 +37,5 @@ source ./set_env.sh
 
 ##################################################################
 tidlrunner-cli compile_infer \
-    --target_device=${TARGET_DEVICE} \
-    --model_path='./vision/examples/models/mobilenet_v2.onnx' \
-    "${@}"
+    --target_device ${TARGET_DEVICE} \
+    --model_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx
