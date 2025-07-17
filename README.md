@@ -107,6 +107,17 @@ All the supported options and how they map to internal names can be seen in this
 <hr>
 
 ## Usage of rtwrapper (edgeai_tidlrunner.rtwrapper advanced interface)
+Abstractions are sometimes a hindrance to understand what is really happening under the hood or to easily modify and extend. rtwrapper is a thin, low level interface to the core tidl-tools, without much overhead. Use it to understand how the core tidl-tools work or to integrate into your application.
+
 [rtwrapper advanced interface](./docs/rtwrapper.md)
+
+
+## runtime_settings and runtime_options
+
+Which ever interface (runner cli, runner configfile, runner py or rtwrapper) is being used, there are some common parameters that control the core runtimes. These are called runtime_settings and runtime_options
+
+runtime_options: runtime_options control the behaviour of core runtimes - default values are specified in [edgeai_tidlrunner/rtwrapper/options/options_default.py](./edgeai_tidlrunner/rtwrapper/options/options_default.py)
+
+runtime_settings: runtime_settings is primarily used in the runner based interface. runtime_options is part of runtime_settings. It also has additional parameters that are needed in the abstractions in runner. Default runtime_settings are in [edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py](./edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py)
 
 <hr>

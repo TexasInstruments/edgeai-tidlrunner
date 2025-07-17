@@ -78,13 +78,13 @@ def run_compilation(args, runtime_type, runtime_settings, model_path, artifacts_
 
     calib_dataset = glob.glob(f'{args.data_path}/*.*')
 
-    onnxruntime_wrapper = runtime_type(
+    runtime_wrapper = runtime_type(
             model_path=model_path,
             **runtime_settings)
 
-    for input_index in range(onnxruntime_wrapper.get_runtime_options()['advanced_options:calibration_frames']):
+    for input_index in range(runtime_wrapper.get_runtime_options()['advanced_options:calibration_frames']):
         input_data = preprocess_input(calib_dataset[input_index])
-        onnxruntime_wrapper.run_import(input_data)
+        runtime_wrapper.run_import(input_data)
     print(f'INFO: model import done')
 
 
@@ -103,13 +103,13 @@ def run_inference(args, runtime_type, runtime_settings, model_path, artifacts_fo
     # dataset parameters for actual inference
     val_dataset = glob.glob(f'{args.data_path}/*.*')
 
-    onnxruntime_wrapper = runtime_type(
+    runtime_wrapper = runtime_type(
             model_path=model_path,
             **runtime_settings)
 
     for input_index in range(num_frames):
         input_data = preprocess_input(val_dataset[input_index])
-        outputs = onnxruntime_wrapper.run_inference(input_data)
+        outputs = runtime_wrapper.run_inference(input_data)
         print(outputs)
 
     print(f'INFO: model inference done')
