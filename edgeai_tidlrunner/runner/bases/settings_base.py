@@ -34,7 +34,7 @@ class CaptureLogModes:
 
 
 class SettingsBaseDefaults:
-    NUM_PARALLEL_PROCESSES = 12
+    NUM_PARALLEL_PROCESSES = 8
     CAPTURE_LOG_MODE = CaptureLogModes.CAPTURE_LOG_MODE_OFF
     CAPTURE_LOG_FILE = 'run.log'
 
