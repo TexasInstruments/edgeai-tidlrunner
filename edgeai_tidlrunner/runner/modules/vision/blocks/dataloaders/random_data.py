@@ -29,8 +29,10 @@
 
 import numpy as np
 
+from . import dataset_base
 
-class RandomDataLoader:
+
+class RandomDataLoader(dataset_base.DatasetBase):
     def __init__(self, **kwargs):
         self.size_details = [{'shape':[1, 3, 224, 224], 'type':'float'}]
 

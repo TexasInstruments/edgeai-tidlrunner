@@ -31,9 +31,11 @@ import PIL
 import numpy as np
 import os
 
+from . import dataset_base
+
 
 #######################################################################
-class ImageListDataLoader:
+class ImageListDataLoader(dataset_base.DatasetBase):
     def __init__(self, files, labels=None, file_types=None):
         self.files = files
         self.labels = labels
@@ -115,7 +117,7 @@ class ImageFilesDataLoader(ImageListDataLoader):
             num_frames += len(pred)
 
         accuracy_percentage = correctly_classified * 100 / num_frames
-        return {'accuracy_percentage': accuracy_percentage}
+        return {'accuracy_top1%': accuracy_percentage}
 
 
 def image_files_dataloader(name, path, label_path=None):

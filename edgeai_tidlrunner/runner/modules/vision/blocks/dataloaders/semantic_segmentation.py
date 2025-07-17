@@ -33,14 +33,29 @@ import numpy as np
 from PIL import Image
 import os
 from pycocotools.coco import COCO
+import json
+
+from . import dataset_base
 
 
-class SemanticSegmentationDataLoader:
-    def __init__(self, img_dir ,annotation_file):
+class SemanticSegmentationDataLoader(dataset_base.DatasetBase):
+    def __init__(self, img_dir, annotation_file, with_background_class=False):
         self.coco = COCO(annotation_file)
         self.img_dir = img_dir
         self.img_ids = self.coco.getImgIds()      
         self.category_map_gt = None       
+        with open(annotation_file) as afp:
+            self.dataset_store = json.load(afp)
+        #
+        self.kwargs['dataset_info'] = self.get_dataset_info()
+
+        self.with_background_class = with_background_class
+        self.min_class_id = min(self.cat_ids)
+        if self.with_background_class and self.min_class_id > 0:
+            self.num_classes = len(self.cat_ids) + 1
+        else:
+            self.num_classes = len(self.cat_ids)
+        #
 
     def __getitem__(self, index):
         img_info = self.coco.loadImgs([self.img_ids[index]])[0]
@@ -51,6 +66,25 @@ class SemanticSegmentationDataLoader:
         num_images = len(self.img_ids)
         return num_images  
 
+    def get_num_classes(self):
+        return self.num_classes
+    
+    def get_dataset_info(self):
+        if 'dataset_info' in self.kwargs:
+            return self.kwargs['dataset_info']
+        #
+        # return only info and categories for now as the whole thing could be quite large.
+        dataset_store = dict()
+        for key in ('info', 'categories'):
+            if key in self.dataset_info.keys():
+                dataset_store.update({key: self.dataset_info[key]})
+            #
+        #
+        if self.kwargs['num_classes'] is not None:
+            dataset_store.update(dict(color_map=self.get_color_map()))
+        #
+        return dataset_store
+    
     def evaluate(self, run_data, **kwargs):
         predictions = []
         inputs = []
@@ -83,6 +117,7 @@ class SemanticSegmentationDataLoader:
                         mask_resized = np.array(Image.fromarray(mask).resize((input.shape[-2],input.shape[-1]), resample=Image.NEAREST))
                         gt_mask[mask_resized == 1] = voc_class
             gt_masks.append(gt_mask)
+            
         metric = EvaluationMetrics()
         for output , gt_mask , input in zip(predictions,gt_masks,inputs):
             output_np = output[0]  # shape: (num_classes, H, W)

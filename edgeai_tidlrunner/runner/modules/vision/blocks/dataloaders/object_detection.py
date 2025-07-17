@@ -32,17 +32,23 @@ import os
 from PIL import Image 
 from pycocotools.cocoeval import COCOeval
 from .....utils.config_utils import dataset_utils
+from . import dataset_base
 
 
-class ObjectDetectionDataLoader:
-    def __init__(self, img_dir, ann_file):
+class ObjectDetectionDataLoader(dataset_base.DatasetBase):
+    def __init__(self, img_dir, annotation_file):
         self.img_dir = img_dir
-        self.ann_file = ann_file
-        coco = COCO(ann_file)
+        self.ann_file = annotation_file
+        coco = COCO(annotation_file)
         self.img_ids = coco.getImgIds()
         self.img_info = coco.loadImgs(self.img_ids[:])[0]
         self.category_map_gt = None
-       
+        with open(annotation_file) as afp:
+            self.dataset_store = json.load(afp)
+        #
+        self.kwargs['dataset_info'] = self.get_dataset_info()
+        self.num_classes = len(self.kwargs['dataset_info']['categories'])
+
     def __getitem__(self, index):
         img_path = os.path.join(self.img_dir, self.img_info['file_name'])
         # img = Image.open(img_path).convert('RGB')
@@ -55,6 +61,25 @@ class ObjectDetectionDataLoader:
              coco_data = json.load(f)
         num_images = len(coco_data['images'])
         return num_images
+    
+    def get_num_classes(self):
+        return self.num_classes
+    
+    def get_dataset_info(self):
+        if 'dataset_info' in self.kwargs:
+            return self.kwargs['dataset_info']
+        #
+        # return only info and categories for now as the whole thing could be quite large.
+        dataset_store = dict()
+        for key in ('info', 'categories'):
+            if key in self.dataset_info.keys():
+                dataset_store.update({key: self.dataset_info[key]})
+            #
+        #
+        if self.kwargs['num_classes'] is not None:
+            dataset_store.update(dict(color_map=self.get_color_map()))
+        #
+        return dataset_store
     
     def evaluate(self, run_data, label_offset_pred=None, **kwargs):
         predictions = []
