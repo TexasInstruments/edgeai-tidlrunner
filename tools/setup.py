@@ -265,9 +265,9 @@ def download_and_extract_archive(
 ###############################################################################
 def download_arm_gcc(tidl_tools_package_path):
     print("INFO: installing gcc arm required for tvm...")
-    GCC_ARM_AARCH64_NAME="gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu"
-    GCC_ARM_AARCH64_FILE=f"{GCC_ARM_AARCH64_NAME}.tar.xz"
-    GCC_ARM_AARCH64_PATH=f"https://developer.arm.com/-/media/Files/downloads/gnu-a/9.2-2019.12/binrel/{GCC_ARM_AARCH64_FILE}"
+    GCC_ARM_AARCH64_NAME="arm-gnu-toolchain-13.2.Rel1-x86_64-aarch64-none-linux-gnu"
+    GCC_ARM_AARCH64_FILE=f"arm-gnu-toolchain-13.2.rel1-x86_64-aarch64-none-linux-gnu.tar.xz"
+    GCC_ARM_AARCH64_PATH=f"https://developer.arm.com/-/media/Files/downloads/gnu/13.2.rel1/binrel/{GCC_ARM_AARCH64_FILE}"
     print(f"INFO: installing {tidl_tools_package_path}/{GCC_ARM_AARCH64_NAME}")
     if not os.path.exists(os.path.join(tidl_tools_package_path,GCC_ARM_AARCH64_NAME)):
         if not os.path.exists(os.path.join(tidl_tools_package_path,GCC_ARM_AARCH64_FILE)):
@@ -281,7 +281,7 @@ def download_arm_gcc(tidl_tools_package_path):
 
 def download_tidl_tools(download_url, download_path, **tidl_version_dict):
     print("INFO: installing tidl_tools_package...")
-    GCC_ARM_AARCH64_NAME="gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu"
+    GCC_ARM_AARCH64_NAME="arm-gnu-toolchain-13.2.Rel1-x86_64-aarch64-none-linux-gnu"
     cwd = os.getcwd()
     # download_path = os.path.join(tidl_tools_package_path, TARGET_SOC)
     download_tidl_tools_path = os.path.join(download_path, 'tidl_tools')
@@ -307,7 +307,7 @@ def download_tidl_tools_package_11_00(install_path, tools_version, tools_type):
     assert tools_version in expected_tools_version, f"ERROR: incorrect tools_version passed:{tools_version} - expected:{expected_tools_version}"
     tidl_tools_version_name=tools_version
     tidl_tools_release_label="r11.0"
-    tidl_tools_release_id="11_00_06_00"
+    tidl_tools_release_id="11_00_08_00"
     c7x_firmware_version="11_00_00_00" #TODO - udpate this for 11.0
     c7x_firmware_version_possible_update=None #TODO - udpate this for 11.0
     print(f"INFO: you have chosen to install tidl_tools version:{tidl_tools_release_id} with default SDK firmware version set to:{c7x_firmware_version}")
@@ -325,7 +325,7 @@ def download_tidl_tools_package_11_00(install_path, tools_version, tools_type):
         "AM68A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM68A",
         "AM69A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
         "AM67A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM67A",
-        "AM62A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/10_01_04_01/TIDL_TOOLS/AM62A", # no update for AM62A in 11.0
+        "AM62A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM62A", # no update for AM62A in 11.0
     }
     tidl_version_dict = dict(version=tidl_tools_version_name, release_label=tidl_tools_release_label,
                              release_id=tidl_tools_release_id, tools_type=tidl_tools_type_suffix,
@@ -447,7 +447,6 @@ def main(args):
         python_requires='>=3.10',
         packages=find_packages(),
         include_package_data=True,
-        setup_rquires=["pip>=24.2", "setuptools>=73.0.0", "numpy==1.23.0", "wheel", "cython"],
         project_urls={
             'Source': 'https://bitbucket.itg.ti.com/projects/EDGEAI-ALGO/repos/edgeai-tidlrunner/browse',
             'Bug Reports': 'https://e2e.ti.com/support/processors-group/processors/tags/TIDL',
@@ -484,15 +483,13 @@ if __name__ == '__main__':
     args.tools_type = os.environ.get("TIDL_TOOLS_TYPE", TIDL_TOOLS_TYPE_DEFAULT)
     args.setup_type = sys.argv[1]
     args.install_path = None
-    args_setup_types = ('develop', 'install')
     main(args)
 
-    if args.setup_type in args_setup_types:
+    if args.setup_type in ('develop', 'install'):
         main_download_tools(args)
     else:
         print("================================================ERROR======================================================")
-        raise RuntimeError(f"ERROR: as of now this tidl_tools_package can be installed only with {args_setup_types}"
-             f"\n    but obtained the command:{args.setup_type}"
+        raise RuntimeError(f"ERROR: as of now this tidl_tools_package can be installed only develop in mode - but obtained the command:{args.setup_type}"
              f"\n    recommend to use one of these instead: "
              f"\n    pip install -e ./tools/"
              f"\n    python setup.py develop ./tools/")

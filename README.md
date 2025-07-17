@@ -42,7 +42,14 @@ runner is a basic interface which hides most of the complexity of the underlying
 All the options supported can be obtained using the help option. Examples
 ```
 tidlrunner-cli --help
+```
+
+Detailed help is available for each command - for example:
+```
 tidlrunner-cli compile_model --help
+```
+```
+tidlrunner-cli infer_model --help
 ```
 
 
