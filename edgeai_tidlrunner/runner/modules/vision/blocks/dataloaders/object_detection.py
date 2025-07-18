@@ -126,20 +126,16 @@ class ObjectDetectionDataLoader(dataset_base.DatasetBase):
         return accuracy
 
 
-def object_detection_dataloader(name, path, label_path=None):
-    dirname = os.path.dirname(path)
-    data_path = path if 'val' in dirname or 'train' in dirname else os.path.join(path, 'images')
-    label_path = label_path or os.path.join(path, 'annotations', 'instances.json')
-    return ObjectDetectionDataLoader(data_path, label_path)
-
-
 class COCODetectionDataLoader(ObjectDetectionDataLoader):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
 
 def coco_detection_dataloader(name, path, label_path=None):
-    dirname = os.path.dirname(path)
-    data_path = path if 'val' in dirname or 'train' in dirname else os.path.join(path, 'val2017')
-    label_path = label_path or os.path.join(path, 'annotations', 'instances_val2017.json')
+    if 'val' in os.path.split(path)[-1]:
+        data_path = path
+    else:
+        data_path = os.path.join(path, 'val2017')
+        label_path = label_path or os.path.join(path, 'annotations', 'instances_val2017.json')
+    #
     return COCODetectionDataLoader(data_path, label_path)

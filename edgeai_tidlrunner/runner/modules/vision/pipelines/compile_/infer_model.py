@@ -54,7 +54,6 @@ class InferModel(CompileModelBase):
     def _run(self):
         print(f'INFO: starting model infer')
         super()._run()
-        self._write_params('config.yaml')
 
         common_kwargs = self.settings[self.common_prefix]
         dataloader_kwargs = self.settings[self.dataloader_prefix]
@@ -76,53 +75,53 @@ class InferModel(CompileModelBase):
         self.session.start_inference()
         
         # input_data
-        dataloader_name = dataloader_kwargs['name']
-        dataloader_func = getattr(blocks.dataloaders, dataloader_name)
-        self.dataloader = dataloader_func(**dataloader_kwargs)
-        if hasattr(self.dataloader, 'set_size_details'):
-            input_details, output_details = self.session.get_input_output_details()
-            self.dataloader.set_size_details(input_details)
+        if callable(dataloader_kwargs['name']):
+            dataloader_method = dataloader_kwargs['name']
+            self.dataloader = dataloader_method()
+        elif hasattr(blocks.dataloaders, dataloader_kwargs['name']):
+            dataloader_method = getattr(blocks.dataloaders, dataloader_kwargs['name'])
+            self.dataloader = dataloader_method(**dataloader_kwargs)
+            if hasattr(self.dataloader, 'set_size_details'):
+                input_details, output_details = self.session.get_input_output_details()
+                self.dataloader.set_size_details(input_details)
+            #
+        else:
+            raise RuntimeError(f'ERROR: invalid dataloader args: {dataloader_kwargs}')
+        #
             
         # preprocess
-        if preprocess_kwargs['name']:
-            preprocess_name = preprocess_kwargs['name']
-            if callable(preprocess_name):
-                self.preprocess = preprocess_name
-            elif isinstance(preprocess_kwargs['name'], str) and preprocess_name in blocks.preprocess.__dict__:
-                preprocess_method = getattr(blocks.preprocess, preprocess_name)
-                if not (preprocess_kwargs.get('resize',None) and preprocess_kwargs.get('crop',None)):
-                    # input shape was not provided - use the model input size
-                    input_details, output_details = self.session.get_input_output_details()
-                    if preprocess_kwargs.get('data_layout') == presets.DataLayoutType.NCHW:
-                        preprocess_kwargs['resize'] = copy.deepcopy(tuple(input_details[0]['shape'][-2:]))
-                        preprocess_kwargs['crop'] = copy.deepcopy(tuple(input_details[0]['shape'][-2:]))
-                    elif preprocess_kwargs.get('data_layout') == presets.DataLayoutType.NHWC:
-                        preprocess_kwargs['resize'] = copy.deepcopy(tuple(input_details[0]['shape'][-3:-1]))
-                        preprocess_kwargs['crop'] = copy.deepcopy(tuple(input_details[0]['shape'][-3:-1]))
-                    #
+        if callable(preprocess_kwargs['name']):
+            preprocess_method = preprocess_kwargs['name']
+            self.preprocess = preprocess_method()
+        elif hasattr(blocks.preprocess, preprocess_kwargs['name']):
+            preprocess_method = getattr(blocks.preprocess, preprocess_kwargs['name'])
+            if not (preprocess_kwargs.get('resize', None) and preprocess_kwargs.get('crop', None)):
+                # input shape was not provided - use the model input size
+                input_details, output_details = self.session.get_input_output_details()
+                if preprocess_kwargs.get('data_layout') == presets.DataLayoutType.NCHW:
+                    preprocess_kwargs['resize'] = copy.deepcopy(tuple(input_details[0]['shape'][-2:]))
+                    preprocess_kwargs['crop'] = copy.deepcopy(tuple(input_details[0]['shape'][-2:]))
+                elif preprocess_kwargs.get('data_layout') == presets.DataLayoutType.NHWC:
+                    preprocess_kwargs['resize'] = copy.deepcopy(tuple(input_details[0]['shape'][-3:-1]))
+                    preprocess_kwargs['crop'] = copy.deepcopy(tuple(input_details[0]['shape'][-3:-1]))
                 #
-                self.preprocess = preprocess_method(self.settings, **preprocess_kwargs) if preprocess_method else None
-            else:
-                print(f'WARNING: ignoring invalid preprocess: {preprocess_name}')
-                self.preprocess = None
             #
+            self.preprocess = preprocess_method(self.settings, **preprocess_kwargs)
+        else:
+            raise RuntimeError(f'ERROR: invalid preprocess args: {preprocess_kwargs}')
         #
 
         # postprocess
-        if postprocess_kwargs['name']:
-            postprocess_name = postprocess_kwargs['name']
-            if callable(postprocess_name):
-                self.postprocess = postprocess_name
-            elif isinstance(postprocess_name, str) and postprocess_name in blocks.postprocess.__dict__:
-                postprocess_name = postprocess_kwargs['name']
-                postprocess_method = getattr(blocks.postprocess, postprocess_name)
-                self.postprocess = postprocess_method(self.settings, **postprocess_kwargs) if postprocess_method else None
-            else:
-                print(f'WARNING: ignoring invalid postprocess: {postprocess_name}')
-                self.postprocess = None
-            #
+        if callable(postprocess_kwargs['name']):
+            postprocess_method = postprocess_kwargs['name']
+            self.postprocess = postprocess_method()
+        elif hasattr(blocks.postprocess, postprocess_kwargs['name']):
+            postprocess_method = getattr(blocks.postprocess, postprocess_kwargs['name'])
+            self.postprocess = postprocess_method(self.settings, **postprocess_kwargs)
+        else:
+            raise RuntimeError(f'ERROR: invalid postprocess args: {postprocess_kwargs}')
         #
-
+        
         # infer model
         run_data = []
         num_frames = min(len(self.dataloader), common_kwargs['num_frames'])

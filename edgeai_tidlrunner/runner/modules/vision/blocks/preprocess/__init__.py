@@ -98,3 +98,9 @@ def object_detection_preprocess(settings, name='object_detection_preprocess', re
     assert settings.task_type == constants.TaskType.TASK_TYPE_DETECTION, \
         'object_detection_preprocess can only be used for object detection task type'
     return image_preprocess(settings, name=name, resize=resize, crop=crop, **kwargs)
+
+
+def semantic_segmentation_preprocess(settings, name='semantic_segmentation_preprocess', resize=(512,512), crop=(512,512), **kwargs):
+    assert settings.task_type == constants.TaskType.TASK_TYPE_SEGMENTATION, \
+        'semantic_segmentation_preprocess can only be used for segmentation task type'
+    return image_preprocess(settings, name=name, resize=resize, crop=crop, **kwargs)

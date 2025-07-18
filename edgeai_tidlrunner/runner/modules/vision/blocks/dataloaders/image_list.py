@@ -122,7 +122,3 @@ class ImageFilesDataLoader(ImageListDataLoader):
 
 def image_files_dataloader(name, path, label_path=None):
     return ImageFilesDataLoader(path, label_path)
-
-
-def image_classification_dataloader(name, path, label_path):
-    return image_files_dataloader(path, label_path)

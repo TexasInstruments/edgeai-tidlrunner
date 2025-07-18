@@ -33,6 +33,14 @@ Example:
 This script installs the CUDA based tidl-tools and nvidia-hpc-sdk. The user ha to make sure the system has CUDA gpus appropriate nvidia graphics drivers. 
 
 <hr>
+
+### Download datasets to run examples in this repository (optional)
+To run example models in this repository, download example datasets:
+```
+./example_download_all.sh
+```
+
+<hr>
 <hr>
 
 ## Usage of runner (edgeai_tidlrunner.runner interface)
@@ -111,12 +119,10 @@ As can be seen from this example, there is a one-to-one mapping between the shor
 All the supported options and how they map to internal names can be seen in this file [settings_default.py](./edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py) and this file [settings_base.py](./edgeai_tidlrunner/runner/bases/settings_base.py)
 
 <hr>
-<hr>
 
-## Usage of rtwrapper (edgeai_tidlrunner.rtwrapper advanced interface)
-Abstractions are sometimes a hindrance to understand what is really happening under the hood or to easily modify and extend. rtwrapper is a thin, low level interface to the core tidl-tools, without much overhead. Use it to understand how the core tidl-tools work or to integrate into your application.
-
-[rtwrapper advanced interface](./docs/rtwrapper.md)
+## Using custom datasets & models
+You have tried the off-the-shelf examples provided in this repository and is ready to compile own models and datasets - then look as this section on custom datasets & models: 
+[Custom datasets and models](./docs/custom.md)
 
 <hr>
 <hr>
@@ -124,6 +130,14 @@ Abstractions are sometimes a hindrance to understand what is really happening un
 ## Settings/Options Deep dive
 
 [More details of settings](./docs/settings.md)
+
+<hr>
+<hr>
+
+## Usage of rtwrapper (edgeai_tidlrunner.rtwrapper advanced interface)
+Abstractions are sometimes a hindrance to understand what is really happening under the hood or to easily modify and extend. rtwrapper is a thin, low level interface to the core tidl-tools, without much overhead. Use it to understand how the core tidl-tools work or to integrate into your application.
+
+[rtwrapper advanced interface](./docs/rtwrapper.md)
 
 <hr>
 <hr>

@@ -55,6 +55,7 @@ class CompileModel(CompileModelBase):
     def _run(self):
         print(f'INFO: starting model import')
         super()._run()
+        self._write_params('config.yaml')
 
         common_kwargs = self.settings[self.common_prefix]
         dataloader_kwargs = self.settings[self.dataloader_prefix]
@@ -91,7 +92,8 @@ class CompileModel(CompileModelBase):
         
         # input_data
         if callable(dataloader_kwargs['name']):
-            self.dataloader = dataloader_kwargs['name']
+            dataloader_method = dataloader_kwargs['name']
+            self.dataloader = dataloader_method()
         elif hasattr(blocks.dataloaders, dataloader_kwargs['name']):
             dataloader_method = getattr(blocks.dataloaders, dataloader_kwargs['name'])
             self.dataloader = dataloader_method(**dataloader_kwargs)
@@ -105,7 +107,8 @@ class CompileModel(CompileModelBase):
             
         # preprocess
         if callable(preprocess_kwargs['name']):
-            self.preprocess = preprocess_kwargs['name']
+            preprocess_method = preprocess_kwargs['name']
+            self.preprocess = preprocess_method()
         elif hasattr(blocks.preprocess, preprocess_kwargs['name']):
             preprocess_method = getattr(blocks.preprocess, preprocess_kwargs['name'])
             if not (preprocess_kwargs.get('resize', None) and preprocess_kwargs.get('crop', None)):
@@ -126,7 +129,8 @@ class CompileModel(CompileModelBase):
 
         # postprocess
         if callable(postprocess_kwargs['name']):
-            self.postprocess = postprocess_kwargs['name']
+            postprocess_method = postprocess_kwargs['name']
+            self.postprocess = postprocess_method()
         elif hasattr(blocks.postprocess, postprocess_kwargs['name']):
             postprocess_method = getattr(blocks.postprocess, postprocess_kwargs['name'])
             self.postprocess = postprocess_method(self.settings, **postprocess_kwargs)

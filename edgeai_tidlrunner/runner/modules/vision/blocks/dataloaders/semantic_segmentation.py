@@ -118,7 +118,7 @@ class SemanticSegmentationDataLoader(dataset_base.DatasetBase):
                         gt_mask[mask_resized == 1] = voc_class
             gt_masks.append(gt_mask)
             
-        metric = EvaluationMetrics()
+        metric = SegmentationEvaluationMetrics()
         for output , gt_mask , input in zip(predictions,gt_masks,inputs):
             output_np = output[0]  # shape: (num_classes, H, W)
             pred = output_np.argmax(axis=1).squeeze()
@@ -127,11 +127,6 @@ class SemanticSegmentationDataLoader(dataset_base.DatasetBase):
         pixel_accuracy = metric.compute_pixel_accuracy()
         accuracy = {'mean_iou':mean_iou , 'pixel_accuracy' : pixel_accuracy}
         return accuracy
-    
-
-
-def semantic_segmentation_dataloader(name, path, label_path=None):
-    return SemanticSegmentationDataLoader(path,label_path)
 
 
 class COCOSegmentationDataLoader(SemanticSegmentationDataLoader):
@@ -167,7 +162,7 @@ def coco_segmentation_dataloader(name, path, label_path=None):
     return COCOSegmentationDataLoader(path,label_path)
 
 
-class EvaluationMetrics:
+class SegmentationEvaluationMetrics:
     def __init__(self , num_classes = 21 , ignore_index = 255):
         self.num_classes = num_classes
         self.ignore_index = ignore_index
