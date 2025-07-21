@@ -51,18 +51,17 @@ class InferAccuracy(infer_model.InferModel):
 
     def _run(self):
         print(f'INFO: starting model accuracy evaluation')
-
         outputs = super()._run()
         run_data = self.get_run_data()
-       
-        accuracy = {}
+
         # now calculate the accuracy
         if hasattr(self.dataloader, 'evaluate'):
             accuracy = self.dataloader.evaluate(run_data)
-            print(accuracy)
+            print(f'INFO: Accuracy - {accuracy}')
+            self.settings['result'].update(accuracy)
             self._write_params('result.yaml')
         else:
             print(f'WARNING: dataloader {self.dataloader.__class__.__name__} does not have evaluate method, skipping accuracy calculation')
         #
-        return accuracy
+        return self.settings['result']
     

@@ -127,37 +127,69 @@ class CompileModelBase(CommonPipelineBase):
 
 
     def _upgrade_kwargs(self, **kwargs):
-        kwargs_out = {}
+        kwargs = copy.deepcopy(kwargs)
+        kwargs_out = copy.deepcopy(kwargs)
+
         for k, v in kwargs.items():
-            if k.startswith('session.runtime_options'):
+            if k.startswith('session.target_device'):
+                # these fields are from edgeai-benchmark - no need to use it here
+                kwargs_out.pop(k, None)
+            elif k.startswith('session.runtime_options'):
+                kwargs_out.pop(k, None)
                 new_key = k.replace('session.runtime_options', 'session.runtime_settings.runtime_options')
                 kwargs_out[new_key] = v
+            elif k == 'dataloader.name':
+                if kwargs[k] is not None:
+                    kwargs_out[k] = kwargs[k]
+                #
+            elif k == 'dataloader.path':
+                if kwargs[k] is not None:
+                    kwargs_out[k] = kwargs[k]
+                #
+            elif k == 'preprocess.name':
+                if kwargs[k] is not None:
+                    kwargs_out[k] = kwargs[k]
+                #
+            elif k == 'dataset_category':
+                kwargs_out.pop(k, None)
+            elif k == 'calibration_dataset':
+                kwargs_out.pop(k, None)
+            elif k == 'task_type':
+                kwargs_out.pop(k, None)
+                kwargs_out['common.task_type'] = v
             elif k == 'input_dataset':
+                kwargs_out.pop(k, None)
                 if v == 'imagenet':
-                    kwargs_out['dataloader.name'] = 'image_classification_dataloader'
-                    kwargs_out['dataloader.path'] = './data/datasets/vision/imagenetv2c/val'
+                    if kwargs_out['dataloader.name'] is None:
+                        kwargs_out['dataloader.name'] = 'image_classification_dataloader'
+                    #
+                    if kwargs_out['dataloader.path'] is None:
+                        kwargs_out['dataloader.path'] = './data/datasets/vision/imagenetv2c/val'
+                    #
                     if kwargs.get('preprocess.name',None) is None:
                         kwargs_out['preprocess.name'] = 'image_preprocess'
                     #
                 elif v == 'coco':
-                    kwargs_out['dataloader.name'] = 'coco_detection_dataloader'
-                    kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
-                    if kwargs.get('preprocess.name',None) is None:
+                    if kwargs_out['dataloader.name'] is None:
+                        kwargs_out['dataloader.name'] = 'coco_detection_dataloader'
+                    #
+                    if kwargs_out['dataloader.path'] is None:
+                        kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
+                    #
+                    if kwargs_out.get('preprocess.name',None) is None:
                         kwargs_out['preprocess.name'] = 'image_preprocess'
                     #
                 elif v == 'cocoseg21':
-                    kwargs_out['dataloader.name'] = 'coco_segmentation_dataloader'
-                    kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
+                    if kwargs_out['dataloader.name'] is None:
+                        kwargs_out['dataloader.name'] = 'coco_segmentation_dataloader'
+                    #
+                    if kwargs_out['dataloader.path'] is None:
+                        kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
+                    #
                     if kwargs.get('preprocess.name',None) is None:
                         kwargs_out['preprocess.name'] = 'image_preprocess'
                     #
                 #
-            elif k == 'session.target_device':
-                # target_device is specified as an argument - no need to set it here.
-                # kwargs_out['session.runtime_settings.target_device'] = v
-                pass
-            elif k == 'task_type':
-                kwargs_out['common.task_type'] = v
             else:
                 kwargs_out[k] = v
             #

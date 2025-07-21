@@ -68,7 +68,7 @@ SETTINGS_DEFAULT['compile_model'] = SETTINGS_DEFAULT['basic'] | {
     'shape_inference':          {'dest': 'common.optimize.shape_inference', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value'},
     # common options
     'task_type':                {'dest': 'common.task_type', 'default': constants.TaskType.TASK_TYPE_CLASSIFICATION, 'type': str, 'metavar': 'value'},
-    'num_frames':               {'dest': 'common.num_frames', 'default': 1, 'type': int, 'metavar': 'value'},
+    'num_frames':               {'dest': 'common.num_frames', 'default': 10, 'type': int, 'metavar': 'value'},
     'config_path':              {'dest': 'common.config_path', 'default': None, 'type': str, 'metavar': 'value'},
     # compile/infer session
     ## model

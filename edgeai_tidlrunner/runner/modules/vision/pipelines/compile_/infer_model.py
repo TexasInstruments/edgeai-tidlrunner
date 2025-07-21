@@ -53,6 +53,8 @@ class InferModel(CompileModelBase):
 
     def _run(self):
         print(f'INFO: starting model infer')
+        self.settings['result'] = dict()
+
         super()._run()
 
         common_kwargs = self.settings[self.common_prefix]
