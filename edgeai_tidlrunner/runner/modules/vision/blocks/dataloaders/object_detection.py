@@ -29,8 +29,12 @@
 import json
 from pycocotools.coco import COCO
 import os
+import numbers
+import numpy as np
 from PIL import Image 
 from pycocotools.cocoeval import COCOeval
+
+
 from .....utils.config_utils import dataset_utils
 from . import dataset_base
 
@@ -43,13 +47,16 @@ class ObjectDetectionDataLoader(dataset_base.DatasetBase):
         coco = COCO(annotation_file)
         self.img_ids = coco.getImgIds()
         self.img_info = coco.loadImgs(self.img_ids[:])[0]
-        self.category_map_gt = None
+        self.cat_ids = coco.getCatIds()
 
         with open(annotation_file) as afp:
             dataset_store = json.load(afp)
         #
         self.get_dataset_info(dataset_store, with_background_class)
         self.with_background_class = with_background_class
+        if with_background_class and self.kwargs['dataset_info']['categories'] > len(self.cat_ids):
+            self.cat_ids.insert(0, 0)
+        #
 
     def __getitem__(self, index):
         img_path = os.path.join(self.img_dir, self.img_info['file_name'])
@@ -64,7 +71,9 @@ class ObjectDetectionDataLoader(dataset_base.DatasetBase):
     def get_num_classes(self):
         return self.kwargs['num_classes']
     
-    def evaluate(self, run_data, label_offset_pred=None, **kwargs):
+    def evaluate(self, run_data, **kwargs):
+        label_offset_pred = kwargs.get('label_offset_pred', 0)
+
         predictions = []
         inputs = []
         for data in run_data:
@@ -74,7 +83,7 @@ class ObjectDetectionDataLoader(dataset_base.DatasetBase):
         results = []
         coco = COCO(self.ann_file)
         img_ids = self.img_ids
-        length = len(self)
+        length = min(len(self), len(predictions))
         for itr in range(length):
             pred = predictions[itr]
             if len(pred) == 2 and pred[0].shape[-1] == 5:
@@ -89,12 +98,14 @@ class ObjectDetectionDataLoader(dataset_base.DatasetBase):
             if boxes.ndim == 2 and boxes.shape[0] > 0:
                 boxes[:, 2:] -= boxes[:, :2]
                 for box, score, label in zip(boxes, scores, labels):
+                    label = self._detection_label_to_catid(label, label_offset_pred)
                     results.append({
                         "image_id": img_ids[itr],
                         "category_id": int(label),
                         "bbox": [float(x) for x in box],
                         "score": float(score)
                     })
+
         coco_dt = coco.loadRes(results)
         coco_eval = COCOeval(coco, coco_dt, iouType='bbox')
         coco_eval.params.imgIds = img_ids[:length]
@@ -105,8 +116,30 @@ class ObjectDetectionDataLoader(dataset_base.DatasetBase):
         coco_ap = coco_eval.stats[0]
         coco_ap50 = coco_eval.stats[1]
         accuracy = {'accuracy_ap[.5:.95]%': coco_ap*100.0, 'accuracy_ap50%': coco_ap50*100.0}
-
         return accuracy
+
+    def _detection_label_to_catid(self, label, label_offset, cat_ids=None):
+        if isinstance(label_offset, (list,tuple)):
+            label = int(label)
+            assert label<len(label_offset), 'label_offset is a list/tuple, but its size is smaller than the detected label'
+            label = label_offset[label]
+        elif isinstance(label_offset, dict):
+            if np.isnan(label) or int(label) not in label_offset.keys():
+                #print(utils.log_color('\nWARNING', 'detection incorrect', f'detected label: {label}'
+                #                                                          f' is not in label_offset dict'))
+                label = 0
+            else:
+                label = label_offset[int(label)]
+            #
+        elif isinstance(label_offset, numbers.Number):
+            label = int(label + label_offset)
+        elif cat_ids:
+            label = int(label)
+            assert label<len(cat_ids), \
+                'the detected label could not be mapped to the 90 COCO categories using the default COCO.getCatIds()'
+            label = cat_ids[label]
+        #
+        return label
 
 
 class COCODetectionDataLoader(ObjectDetectionDataLoader):

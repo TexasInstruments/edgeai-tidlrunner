@@ -56,7 +56,8 @@ class InferAccuracy(infer_model.InferModel):
 
         # now calculate the accuracy
         if hasattr(self.dataloader, 'evaluate'):
-            accuracy = self.dataloader.evaluate(run_data)
+            metric_kwargs = self.settings.get('metric', dict())
+            accuracy = self.dataloader.evaluate(run_data, **metric_kwargs)
             print(f'INFO: Accuracy - {accuracy}')
             self.settings['result'].update(accuracy)
             self._write_params('result.yaml')

@@ -43,7 +43,7 @@ class SemanticSegmentationDataLoader(dataset_base.DatasetBase):
         super().__init__()
         self.coco = COCO(annotation_file)
         self.img_dir = img_dir
-        self.img_ids = self.coco.getImgIds()      
+        self.img_ids = self.coco.getImgIds()
         self.category_map_gt = None
         with open(annotation_file) as afp:
             dataset_store = json.load(afp)
@@ -55,14 +55,14 @@ class SemanticSegmentationDataLoader(dataset_base.DatasetBase):
         img_info = self.coco.loadImgs([self.img_ids[index]])[0]
         img_path = os.path.join(self.img_dir,img_info['file_name'])
         return img_path
-    
+
     def __len__(self):
         num_images = len(self.img_ids)
-        return num_images  
+        return num_images
 
     def get_num_classes(self):
         return self.num_classes
-    
+
     def evaluate(self, run_data, **kwargs):
         predictions = []
         inputs = []
@@ -72,7 +72,7 @@ class SemanticSegmentationDataLoader(dataset_base.DatasetBase):
         ann_ids = []
         anns = []
         gt_masks = []
-        
+
         for id,input in zip(self.img_ids,inputs):
             ann_id = self.coco.getAnnIds(imgIds=id)
             ann=self.coco.loadAnns(ann_id)
@@ -85,7 +85,7 @@ class SemanticSegmentationDataLoader(dataset_base.DatasetBase):
                     coco_class = an['category_id']
                     if self.category_map_gt != None:
                         if coco_class in self.category_map_gt:
-                            voc_class = self.category_map_gt[coco_class] 
+                            voc_class = self.category_map_gt[coco_class]
                             mask = self.coco.annToMask(an)
                             mask_resized = np.array(Image.fromarray(mask).resize((input.shape[-2],input.shape[-1]), resample=Image.NEAREST))
                             gt_mask[mask_resized == 1] = voc_class
@@ -95,7 +95,7 @@ class SemanticSegmentationDataLoader(dataset_base.DatasetBase):
                         mask_resized = np.array(Image.fromarray(mask).resize((input.shape[-2],input.shape[-1]), resample=Image.NEAREST))
                         gt_mask[mask_resized == 1] = voc_class
             gt_masks.append(gt_mask)
-            
+
         metric = SegmentationEvaluationMetrics()
         for output , gt_mask , input in zip(predictions,gt_masks,inputs):
             output_np = output[0]  # shape: (num_classes, H, W)
