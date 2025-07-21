@@ -62,41 +62,17 @@ def modelmaker_detection_dataloader(name, path, label_path=None):
 
 ####################################################################################################
 class ModelMakerClassificationDataset(image_classification.ImageClassificationDataLoader):
-    def __init__(self, img_dir, annotation_file):
+    def __init__(self, img_dir, annotation_file, with_background_class=False):
         super().__init__(img_dir, annotation_file)
-        with open(self.annotation_file) as afp:
-            self.dataset_store = json.load(afp)
-        #
         self.image_dir = img_dir
 
-        classes = self.dataset_store['categories']
-        class_ids = [class_info['id'] for class_info in classes]
-        class_ids_min = min(class_ids)
-        num_classes = max(class_ids) - class_ids_min + 1
-        self.num_classes = num_classes
-
-        self.annotations_info = self._find_annotations_info()
-        self.num_frames = len(self.dataset_store['images'])
-        self.kwargs['dataset_info'] = self.get_dataset_info()
-
-    def get_dataset_info(self):
-        if 'dataset_info' in self.kwargs:
-            return self.kwargs['dataset_info']
+        with open(annotation_file) as afp:
+            dataset_store = json.load(afp)
         #
-        # return only info and categories for now as the whole thing could be quite large.
-        dataset_store = dict()
-        for key in ('info', 'categories'):
-            if key in self.dataset_store.keys():
-                dataset_store.update({key: self.dataset_store[key]})
-            #
-        #
-        if self.kwargs['num_classes'] is not None:
-            dataset_store.update(dict(color_map=self.get_color_map()))
-        #
-        return dataset_store
-
-    def get_num_classes(self):
-        return self.num_classes
+        self.get_dataset_info(dataset_store, with_background_class)
+        self.with_background_class = with_background_class
+        self.annotations_info = self._find_annotations_info(dataset_store)
+        self.dataset_store = dataset_store
 
     def __getitem__(self, idx, with_label=False, **kwargs):
         image_info = self.dataset_store['images'][idx]
@@ -107,8 +83,11 @@ class ModelMakerClassificationDataset(image_classification.ImageClassificationDa
         else:
             return filename
 
+    def get_num_classes(self):
+        return self.kwargs['num_classes']
+
     def __len__(self):
-        return self.num_frames
+        return self.kwargs['num_images']
 
     def evaluate(self, predictions, **kwargs):
         metric_tracker = utils.AverageMeter(name='accuracy_top1%')
@@ -129,17 +108,17 @@ class ModelMakerClassificationDataset(image_classification.ImageClassificationDa
         accuracy = accuracy * multiplier
         return accuracy
 
-    def _find_annotations_info(self):
+    def _find_annotations_info(self, dataset_store):
         image_id_to_file_id_dict = dict()
         file_id_to_image_id_dict = dict()
         annotations_info_list = []
-        for file_id, image_info in enumerate(self.dataset_store['images']):
+        for file_id, image_info in enumerate(dataset_store['images']):
             image_id = image_info['id']
             image_id_to_file_id_dict[image_id] = file_id
             file_id_to_image_id_dict[file_id] = image_id
             annotations_info_list.append([])
         #
-        for annotation_info in self.dataset_store['annotations']:
+        for annotation_info in dataset_store['annotations']:
             if annotation_info:
                 image_id = annotation_info['image_id']
                 file_id = image_id_to_file_id_dict[image_id]

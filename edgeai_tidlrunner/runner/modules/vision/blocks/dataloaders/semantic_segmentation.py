@@ -40,22 +40,16 @@ from . import dataset_base
 
 class SemanticSegmentationDataLoader(dataset_base.DatasetBase):
     def __init__(self, img_dir, annotation_file, with_background_class=False):
+        super().__init__()
         self.coco = COCO(annotation_file)
         self.img_dir = img_dir
         self.img_ids = self.coco.getImgIds()      
-        self.category_map_gt = None       
+        self.category_map_gt = None
         with open(annotation_file) as afp:
-            self.dataset_store = json.load(afp)
+            dataset_store = json.load(afp)
         #
-        self.kwargs['dataset_info'] = self.get_dataset_info()
-
+        self.get_dataset_info(dataset_store, with_background_class)
         self.with_background_class = with_background_class
-        self.min_class_id = min(self.cat_ids)
-        if self.with_background_class and self.min_class_id > 0:
-            self.num_classes = len(self.cat_ids) + 1
-        else:
-            self.num_classes = len(self.cat_ids)
-        #
 
     def __getitem__(self, index):
         img_info = self.coco.loadImgs([self.img_ids[index]])[0]
@@ -68,22 +62,6 @@ class SemanticSegmentationDataLoader(dataset_base.DatasetBase):
 
     def get_num_classes(self):
         return self.num_classes
-    
-    def get_dataset_info(self):
-        if 'dataset_info' in self.kwargs:
-            return self.kwargs['dataset_info']
-        #
-        # return only info and categories for now as the whole thing could be quite large.
-        dataset_store = dict()
-        for key in ('info', 'categories'):
-            if key in self.dataset_info.keys():
-                dataset_store.update({key: self.dataset_info[key]})
-            #
-        #
-        if self.kwargs['num_classes'] is not None:
-            dataset_store.update(dict(color_map=self.get_color_map()))
-        #
-        return dataset_store
     
     def evaluate(self, run_data, **kwargs):
         predictions = []

@@ -68,14 +68,16 @@ class MainRunner(runner.bases.PipelineBase):
                 #
                 kwargs_cfg.pop('command', None)
             else:
-                command_args, rest_args = command_module.get_arg_parser().parse_known_args()
-                kwargs_cfg = vars(command_args)
-                # rest_args = [arg for arg in rest_args if 'config_path' not in arg]
-                # rest_args = [arg for arg in rest_args if '.yaml' not in arg]
-                # if rest_args:
-                #     raise RuntimeError(f"WARNING: unrecognized arguments for {command_entry}: {rest_args}")
-                # #
+                kwargs_cfg = dict()
             #
+            command_args, rest_args = command_module.get_arg_parser().parse_known_args()
+            kwargs_cmd = vars(command_args)
+            # rest_args = [arg for arg in rest_args if 'config_path' not in arg]
+            # rest_args = [arg for arg in rest_args if '.yaml' not in arg]
+            # if rest_args:
+            #     raise RuntimeError(f"WARNING: unrecognized arguments for {command_entry}: {rest_args}")
+            # #
+            kwargs_cfg.update(kwargs_cmd)
             kwargs_cfg.update(kwargs)
             command_list.append((command,pipeline_name,kwargs_cfg))
         #

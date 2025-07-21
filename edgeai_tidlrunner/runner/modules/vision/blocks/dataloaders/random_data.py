@@ -34,6 +34,7 @@ from . import dataset_base
 
 class RandomDataLoader(dataset_base.DatasetBase):
     def __init__(self, **kwargs):
+        super().__init__()
         self.size_details = [{'shape':[1, 3, 224, 224], 'type':'float'}]
 
     def __getitem__(self, index):

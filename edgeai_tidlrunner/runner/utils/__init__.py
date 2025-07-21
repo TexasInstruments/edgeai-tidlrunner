@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from .config_utils.params_base import ParamsBase
+from .config_utils import *
 from .download_utils import *
 from .parse_utils import *
 from .file_utils import *

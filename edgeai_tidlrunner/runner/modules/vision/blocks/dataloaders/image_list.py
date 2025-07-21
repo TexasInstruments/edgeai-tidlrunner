@@ -37,6 +37,7 @@ from . import dataset_base
 #######################################################################
 class ImageListDataLoader(dataset_base.DatasetBase):
     def __init__(self, files, labels=None, file_types=None):
+        super().__init__()
         self.files = files
         self.labels = labels
         self.file_types = file_types
