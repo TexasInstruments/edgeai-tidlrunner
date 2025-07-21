@@ -122,7 +122,8 @@ All the supported options and how they map to internal names can be seen in this
 
 ## Using custom datasets & models
 You have tried the off-the-shelf examples provided in this repository and is ready to compile own models and datasets - then look as this section on custom datasets & models: 
-[Custom datasets and models](./docs/custom_models.md)
+* [Custom models](./docs/custom_models.md)
+* [Custom datasets](./docs/custom_datasets.md)
 
 <hr>
 <hr>

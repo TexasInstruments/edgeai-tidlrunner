@@ -9,11 +9,11 @@ It is fairly easy to compile custom datasets using runner. The user can point da
 ##### Built-in Image dataloaders
 * image_files_dataloader: Generic Image dataset from a folder - if accuracy computation is not needed, then this can be used (this does not provide any ground truth - so not accuracy will be computed when using this).
 * image_classification_dataloader: This can be used in two ways (1) Image classification dataset from a folder of folders - images of each category is in it's own folder. (2) A flat image folder and a txt file listing the image names and the category ids.
-* modelmaker_classification_dataloader: For Generic Image Classification dataset format as supported by [ModelComposer](https://dev.ti.com/modelcomposer/) and ModelMaker(https://github.com/TexasInstruments/edgeai-tensorlab)
-* coco_detection_dataloader: For coco dataset
-* modelmaker_detection_dataloader: For Generic Object Detection dataset format as supported by [ModelComposer](https://dev.ti.com/modelcomposer/) and ModelMaker(https://github.com/TexasInstruments/edgeai-tensorlab)
-* coco_segmentation_dataloader
-* modelmaker_segmentation_dataloader: For Generic Semantic/Instance Segmentation dataset format as supported by [ModelComposer](https://dev.ti.com/modelcomposer/) and ModelMaker(https://github.com/TexasInstruments/edgeai-tensorlab)
+* modelmaker_classification_dataloader: For Generic Image Classification dataset format - for details see [Custom datasets](./custom_datasets.md)
+* coco_detection_dataloader: For COCO dataset Object Detection
+* modelmaker_detection_dataloader: For Generic Object Detection dataset format - for details see [Custom datasets](./custom_datasets.md)
+* coco_segmentation_dataloader: For COCO dataset Semantic Segmentation
+* modelmaker_segmentation_dataloader: For Generic Semantic/Instance Segmentation dataset format - for details see [Custom datasets](./custom_datasets.md)
 
 #### Generic Callable as DataLoader 
 It is also possible to provide a function for dataloader - this function when called should construct an object that supports __getitem__ and __len__ methods.
