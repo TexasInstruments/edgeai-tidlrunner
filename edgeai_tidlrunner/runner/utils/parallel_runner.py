@@ -179,7 +179,7 @@ class ParallelRunner:
         #
         return proc_term_msgs
 
-    def _check_running_status(self, check_errors):
+    def _check_running_status(self, check_errors, num_processes):
         running_tasks = []
         completed_tasks = []
         for task_name, task_list in self.queued_tasks.items():
@@ -247,7 +247,7 @@ class ParallelRunner:
 
         udate_interval = time.time() - self.last_update_time
         update_interval_elapsed = (udate_interval > self.maxinterval)
-        if update_interval_elapsed:
+        if update_interval_elapsed or num_processes == 0:
             self.last_update_time = time.time()
             self.tqdm_obj.update(num_completed - self.tqdm_obj.n)
             desc = self.desc + f' TOTAL={self.num_queued_tasks}, NUM_RUNNING={num_running}'
@@ -260,7 +260,7 @@ class ParallelRunner:
         # wait in a loop until the number of running processes come down        
         num_processes = num_processes or 0
         last_check_time = time.time()
-        num_completed, num_running = self._check_running_status(check_errors=self.check_errors)
+        num_completed, num_running = self._check_running_status(check_errors=self.check_errors, num_processes=num_processes)
         while num_running > 0 and num_running >= num_processes and (not self.terminate_all_flag):
             check_interval = time.time() - last_check_time
             check_interval_elapsed = (check_interval > self.maxinterval)
@@ -269,7 +269,7 @@ class ParallelRunner:
             #
             check_errors = (self.check_errors and check_interval_elapsed)
 
-            num_completed, num_running = self._check_running_status(check_errors=check_errors)
+            num_completed, num_running = self._check_running_status(check_errors=check_errors, num_processes=num_processes)
             if num_running >= num_processes:
                 time.sleep(self.mininterval)
             #
