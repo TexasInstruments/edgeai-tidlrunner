@@ -66,19 +66,19 @@ tidlrunner-cli infer_model --help
 
 ### tidlrunner-cli Commandline interface
 The commandline interface allows to provide the model and a few arguments dirctly in the commandline.
-[runner Commandline interface](./docs/commandline.md)
+[runner Commandline interface](./docs/commandline_interface.md)
 
 <hr>
 
 ### tidlrunner-cli Configfile interface
 The configfile interface allows to parse all parameters from a yaml file. 
-[runner Commandline config file interface](./docs/configfile.md)
+[runner Commandline config file interface](./docs/configfile_interface.md)
 
 <hr>
 
 ### edgeai_tidlrunner.runner Pythonic interface
 There is also a Pythonic interface for the runner module, for more flexibility.
-[runner Pythonic interface](./docs/pythonic.md)
+[runner Pythonic interface](./docs/pythonic_interface.md)
 
 <hr>
 
@@ -122,14 +122,14 @@ All the supported options and how they map to internal names can be seen in this
 
 ## Using custom datasets & models
 You have tried the off-the-shelf examples provided in this repository and is ready to compile own models and datasets - then look as this section on custom datasets & models: 
-[Custom datasets and models](./docs/custom.md)
+[Custom datasets and models](./docs/custom_models.md)
 
 <hr>
 <hr>
 
 ## Settings/Options Deep dive
 
-[More details of settings](./docs/settings.md)
+[More details of settings](./docs/runtime_settings.md)
 
 <hr>
 <hr>
@@ -137,7 +137,7 @@ You have tried the off-the-shelf examples provided in this repository and is rea
 ## Usage of rtwrapper (edgeai_tidlrunner.rtwrapper advanced interface)
 Abstractions are sometimes a hindrance to understand what is really happening under the hood or to easily modify and extend. rtwrapper is a thin, low level interface to the core tidl-tools, without much overhead. Use it to understand how the core tidl-tools work or to integrate into your application.
 
-[rtwrapper advanced interface](./docs/rtwrapper.md)
+[rtwrapper advanced interface](./docs/rtwrapper_interface.md)
 
 <hr>
 <hr>

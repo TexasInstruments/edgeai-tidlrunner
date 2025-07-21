@@ -1,9 +1,9 @@
 configs:
-  od-8020: vision/detection/coco/edgeai-mmdet/ssd_mobilenetv2_lite_512x512_20201214_model_config.yaml
-  od-8220: vision/detection/coco/edgeai-mmdet/yolox_s_lite_640x640_20220221_model_config.yaml
+  # od-8020: vision/detection/coco/edgeai-mmdet/ssd_mobilenetv2_lite_512x512_20201214_model_config.yaml
+  # od-8220: vision/detection/coco/edgeai-mmdet/yolox_s_lite_640x640_20220221_model_config.yaml
   cl-6090: vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml
-  ss-8710: vision/segmentation/cocoseg21/edgeai-tv/deeplabv3plus_mobilenetv2_edgeailite_512x512_20210405_config.yaml
-  cl-6100: vision/classification/imagenet1k/torchvision/resnet18_config.yaml
-  cl-6110: vision/classification/imagenet1k/torchvision/resnet50_config.yaml
-  ss-8740: vision/segmentation/cocoseg21/edgeai-tv/lraspp_mobilenet_v3_large_lite_512x512_20210527_config.yaml
-  od-8970: vision/detection/coco/edgeai-mmdet/efficientdet_effb0_bifpn_lite_512x512_20240612_model_config.yaml
+  # ss-8710: vision/segmentation/cocoseg21/edgeai-tv/deeplabv3plus_mobilenetv2_edgeailite_512x512_20210405_config.yaml
+  # cl-6100: vision/classification/imagenet1k/torchvision/resnet18_config.yaml
+  # cl-6110: vision/classification/imagenet1k/torchvision/resnet50_config.yaml
+  # ss-8740: vision/segmentation/cocoseg21/edgeai-tv/lraspp_mobilenet_v3_large_lite_512x512_20210527_config.yaml
+  # od-8970: vision/detection/coco/edgeai-mmdet/efficientdet_effb0_bifpn_lite_512x512_20240612_model_config.yaml

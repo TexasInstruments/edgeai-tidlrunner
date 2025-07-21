@@ -1,4 +1,4 @@
-## Settings/Options Explained
+## Runtime Settings/Options Explained
 
 <hr>
 <hr>
@@ -7,9 +7,27 @@
 
 Whichever interface (runner cli, runner configfile, runner py or rtwrapper) is being used, there are some common parameters that control the core runtimes. These are called runtime_settings and runtime_options
 
+runtime_settings: runtime_settings is primarily used in the runner based interface. runtime_options is part of runtime_settings. It also has additional parameters that are needed in the abstractions in runner. Default runtime_settings are in [edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py](./edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py)
+
 runtime_options: runtime_options control the behaviour of core runtimes - default values are specified in [edgeai_tidlrunner/rtwrapper/options/options_default.py](./edgeai_tidlrunner/rtwrapper/options/options_default.py)
 
-runtime_settings: runtime_settings is primarily used in the runner based interface. runtime_options is part of runtime_settings. It also has additional parameters that are needed in the abstractions in runner. Default runtime_settings are in [edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py](./edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py)
+Example:<br>
+These settings and options can be passed to the underlying runner interface in one of the several ways as described in the [main documentation](../README.md). Here is an example of the Pythonic form:
+```
+    runtime_settings = {
+        # add any runtime_settings overrides here
+        'target_device': args.target_device,
+        'runtime_options': {
+            # add any runtime_options overrides here
+            'tidl_tools_path': os.environ['TIDL_TOOLS_PATH'],
+            'artifacts_folder': artifacts_folder,
+            'session': {
+                'input_mean': (123.675, 116.28, 103.53),
+                'input_scale': (0.017125, 0.017507, 0.017429)
+            }
+        }
+    }
+```
 
 <hr>
 <hr>
