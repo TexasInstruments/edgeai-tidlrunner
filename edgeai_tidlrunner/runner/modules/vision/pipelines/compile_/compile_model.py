@@ -55,7 +55,6 @@ class CompileModel(CompileModelBase):
     def _run(self):
         print(f'INFO: starting model import')
         super()._run()
-        self._write_params('config.yaml')
 
         common_kwargs = self.settings[self.common_prefix]
         dataloader_kwargs = self.settings[self.dataloader_prefix]
@@ -152,5 +151,7 @@ class CompileModel(CompileModelBase):
 
         print(f'INFO: model import done. output is in: {self.run_dir}')
         self.run_data = run_data
+        self._write_params('config.yaml')
+        # TODO - cleanup the parameters and write param.yaml
         self._write_params('param.yaml')
         return outputs
