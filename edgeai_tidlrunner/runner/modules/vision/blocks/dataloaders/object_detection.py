@@ -46,7 +46,7 @@ class ObjectDetectionDataLoader(dataset_base.DatasetBase):
         self.ann_file = annotation_file
         coco = COCO(annotation_file)
         self.img_ids = coco.getImgIds()
-        self.img_info = coco.loadImgs(self.img_ids[:])[0]
+        self.img_info = coco.loadImgs(self.img_ids[:])
         self.cat_ids = coco.getCatIds()
 
         with open(annotation_file) as afp:
@@ -59,7 +59,7 @@ class ObjectDetectionDataLoader(dataset_base.DatasetBase):
         #
 
     def __getitem__(self, index):
-        img_path = os.path.join(self.img_dir, self.img_info['file_name'])
+        img_path = os.path.join(self.img_dir, self.img_info[index]['file_name'])
         # img = Image.open(img_path).convert('RGB')
         # input_tensor = self.preprocess(img).cpu()  # Add batch dimension
         # batch = torch.stack([input_tensor]).numpy()

@@ -70,6 +70,7 @@ SETTINGS_DEFAULT['compile_model'] = SETTINGS_DEFAULT['basic'] | {
     'task_type':                {'dest': 'common.task_type', 'default': constants.TaskType.TASK_TYPE_CLASSIFICATION, 'type': str, 'metavar': 'value'},
     'num_frames':               {'dest': 'common.num_frames', 'default': 10, 'type': int, 'metavar': 'value'},
     'config_path':              {'dest': 'common.config_path', 'default': None, 'type': str, 'metavar': 'value'},
+    'display_step':             {'dest': 'common.display_step', 'default': 100, 'type': str, 'metavar': 'value'},
     # compile/infer session
     ## model
     'model_id':                 {'dest': 'session.model_id', 'default': None, 'type': str, 'metavar': 'value', 'help': 'unique id of a model - optional'},
@@ -123,6 +124,9 @@ COPY_SETTINGS_DEFAULT['infer_analyze'] = COPY_SETTINGS_DEFAULT['infer_model'] | 
 # accuracy requires label_path as well
 SETTINGS_DEFAULT['infer_accuracy'] = SETTINGS_DEFAULT['compile_model'] | {
     'label_path':                         {'dest': 'dataloader.label_path', 'default':None, 'type':str, 'metavar':'path'},
+
+    # increase number of frames for infer_accuracy
+    'num_frames': {'dest': 'common.num_frames', 'default': 1000, 'type': int, 'metavar': 'value'},
 
     # postprocess
     'postprocess_resize_with_pad':        {'dest':'postprocess.resize_with_pad', 'default':False, 'type':utils.str_to_bool, 'metavar':'value'},

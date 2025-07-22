@@ -32,6 +32,7 @@ import sys
 import shutil
 import copy
 import ast
+import tqdm
 
 from ......rtwrapper.core import presets
 from ..... import bases
@@ -127,12 +128,20 @@ class InferModel(CompileModelBase):
         # infer model
         run_data = []
         num_frames = min(len(self.dataloader), common_kwargs['num_frames'])
+        print(f'INFO: inference starting for {num_frames} frames')
+        input_index = 0
+        display_step = common_kwargs.display_step
+        tqdm_obj = tqdm.tqdm(range(num_frames))
         for input_index in range(num_frames):
-            print(f'INFO: inference frame: {input_index}')
             input_data, info_dict = self.preprocess(self.dataloader[input_index], info_dict={}) if self.preprocess else (self.dataloader[input_index], {})
             outputs = self.session.run_inference(input_data)
             outputs, info_dict = self.postprocess(outputs, info_dict=info_dict) if self.postprocess else (outputs, info_dict)
-            run_data.append({'input':input_data, 'output':outputs, 'info_dict':info_dict})      
+            run_data.append({'input':input_data, 'output':outputs, 'info_dict':info_dict})
+            if input_index % display_step == 0:
+                tqdm_obj.update(input_index - tqdm_obj.n)
+            #
+        #
+        tqdm_obj.update(input_index + 1 - tqdm_obj.n)
 
         print(f'INFO: model infer done. output is in: {self.run_dir}')
         self.run_data = run_data
