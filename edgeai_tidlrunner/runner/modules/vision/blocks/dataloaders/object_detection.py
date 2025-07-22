@@ -80,33 +80,22 @@ class ObjectDetectionDataLoader(dataset_base.DatasetBase):
             predictions.append(data['output'])
             inputs.append(data['input'])
 
-        results = []
         coco = COCO(self.ann_file)
         img_ids = self.img_ids
-        length = min(len(self), len(predictions))
-        for itr in range(length):
-            pred = predictions[itr]
-            if len(pred) == 2 and pred[0].shape[-1] == 5:
-                boxes = pred[0][:,:4]
-                scores = pred[0][:,-1]
-                labels = pred[1]
-            else:
-                boxes = pred[0]
-                scores = pred[1]
-                labels = pred[2]
 
-            if boxes.ndim == 2 and boxes.shape[0] > 0:
-                boxes[:, 2:] -= boxes[:, :2]
-                for box, score, label in zip(boxes, scores, labels):
-                    label = self._detection_label_to_catid(label, label_offset_pred)
-                    results.append({
-                        "image_id": img_ids[itr],
-                        "category_id": int(label),
-                        "bbox": [float(x) for x in box],
-                        "score": float(score)
-                    })
+        detections_formatted_list = []
+        length = len(predictions)
+        for frame_idx, det_frame in enumerate(predictions):
+            for det_id, det in enumerate(det_frame):
+                det = self._format_detections(det, frame_idx, label_offset=label_offset_pred)
+                category_id = det['category_id'] if isinstance(det, dict) else det[4]
+                if category_id >= 1: # final coco categories start from 1
+                    detections_formatted_list.append(det)
+                #
+            #
+        #
 
-        coco_dt = coco.loadRes(results)
+        coco_dt = coco.loadRes(detections_formatted_list)
         coco_eval = COCOeval(coco, coco_dt, iouType='bbox')
         coco_eval.params.imgIds = img_ids[:length]
         coco_eval.evaluate()
@@ -117,6 +106,23 @@ class ObjectDetectionDataLoader(dataset_base.DatasetBase):
         coco_ap50 = coco_eval.stats[1]
         accuracy = {'accuracy_ap[.5:.95]%': coco_ap*100.0, 'accuracy_ap50%': coco_ap50*100.0}
         return accuracy
+
+    def _format_detections(self, bbox_label_score, image_id, label_offset=0, class_map=None):
+        if class_map is not None:
+            assert bbox_label_score[4] in class_map, 'invalid prediction label or class_map'
+            bbox_label_score[4] = class_map[bbox_label_score[4]]
+        #
+        bbox_label_score[4] = self._detection_label_to_catid(bbox_label_score[4], label_offset)
+        output_dict = dict()
+        image_id = self.img_ids[image_id]
+        output_dict['image_id'] = image_id
+        det_bbox = bbox_label_score[:4]      # json is not support for ndarray - convert to list
+        det_bbox = self._xyxy2xywh(det_bbox) # can also be done in postprocess pipeline
+        det_bbox = self._to_list(det_bbox)
+        output_dict['bbox'] = det_bbox
+        output_dict['category_id'] = int(bbox_label_score[4])
+        output_dict['score'] = float(bbox_label_score[5])
+        return output_dict
 
     def _detection_label_to_catid(self, label, label_offset, cat_ids=None):
         if isinstance(label_offset, (list,tuple)):
@@ -140,6 +146,14 @@ class ObjectDetectionDataLoader(dataset_base.DatasetBase):
             label = cat_ids[label]
         #
         return label
+
+    def _to_list(self, bbox):
+        bbox = [float(x) for x in bbox]
+        return bbox
+
+    def _xyxy2xywh(self, bbox):
+        bbox = [bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1]]
+        return bbox
 
 
 class COCODetectionDataLoader(ObjectDetectionDataLoader):

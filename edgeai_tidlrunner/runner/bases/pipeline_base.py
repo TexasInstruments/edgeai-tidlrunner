@@ -122,7 +122,7 @@ class PipelineBase():
         # put the '' entry last
         prefixes = [k for k in prefixes if k != '']
         for prefix in prefixes:
-            prefix_keys = [k for k in keys if k.startswith(prefix)]
+            prefix_keys = [k for k in keys if k.startswith(prefix) and k != prefix]
             prefix_dict = self._parse_dict_fields(prefix_keys, kwargs)
             kwargs[prefix] = prefix_dict
         #
@@ -157,7 +157,7 @@ class PipelineBase():
                     print(f'WARNING: unrecognized argument - config {model_id} may need upgrade: {k}')
                     kwargs_cmd[k] = v
                 #
-            else:
+            elif k not in kwargs_cmd:
                 kwargs_cmd[k] = v
             #
         #

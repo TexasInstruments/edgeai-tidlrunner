@@ -52,6 +52,11 @@ class BaseAttrDict(dict):
 class AttrDict(BaseAttrDict):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        for k, v in self.items():
+            if isinstance(v, dict):
+                self[k] = AttrDict(v)
+            #
+        #
 
     def update(self,  arg, **kwargs):
         if isinstance(arg, dict):

@@ -150,6 +150,10 @@ class CompileModelBase(CommonPipelineBase):
                 if kwargs[k] is not None:
                     kwargs_out[k] = kwargs[k]
                 #
+            elif k == 'postprocess.name':
+                if kwargs[k] is not None:
+                    kwargs_out[k] = kwargs[k]
+                #
             elif k == 'dataset_category':
                 kwargs_out.pop(k, None)
             elif k == 'calibration_dataset':
@@ -178,6 +182,9 @@ class CompileModelBase(CommonPipelineBase):
                     #
                     if kwargs_out.get('preprocess.name',None) is None:
                         kwargs_out['preprocess.name'] = 'image_preprocess'
+                    #
+                    if kwargs_out.get('postprocess.name',None) is None:
+                        kwargs_out['postprocess.name'] = 'object_detection_postprocess'
                     #
                 elif v == 'cocoseg21':
                     if kwargs_out['dataloader.name'] is None:

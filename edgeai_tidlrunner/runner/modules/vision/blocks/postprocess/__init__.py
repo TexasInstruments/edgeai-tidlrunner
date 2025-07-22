@@ -47,23 +47,23 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     @classmethod
     def from_kwargs(cls, settings, **kwargs):
         if isinstance(kwargs.get('formatter', None), str):
-            kwargs['formatter'] = postprocess_utils.get_formatter(settings.task_type, kwargs['formatter'])
+            kwargs['formatter'] = postprocess_utils.get_formatter(settings.common.task_type, kwargs['formatter'])
         #
-        if settings.task_type == constants.TaskType.TASK_TYPE_CLASSIFICATION:
+        if settings.common.task_type == constants.TaskType.TASK_TYPE_CLASSIFICATION:
             transforms, transforms_kwargs = cls.create_transforms_classification(settings, **kwargs)
-        elif settings.task_type == constants.TaskType.TASK_TYPE_DETECTION:
+        elif settings.common.task_type == constants.TaskType.TASK_TYPE_DETECTION:
             transforms, transforms_kwargs = cls.create_transforms_detection_base(settings, **kwargs)
-        elif settings.task_type == constants.TaskType.TASK_TYPE_SEGMENTATION:
+        elif settings.common.task_type == constants.TaskType.TASK_TYPE_SEGMENTATION:
             transforms, transforms_kwargs = cls.create_transforms_segmentation_base(settings, **kwargs)
-        elif settings.task_type == constants.TaskType.TASK_TYPE_KEYPOINT_DETECTION:
+        elif settings.common.task_type == constants.TaskType.TASK_TYPE_KEYPOINT_DETECTION:
             transforms, transforms_kwargs = cls.create_transforms_human_pose_estimation_base(settings, **kwargs)
-        elif settings.task_type == constants.TaskType.TASK_TYPE_DEPTH_ESTIMATION:
+        elif settings.common.task_type == constants.TaskType.TASK_TYPE_DEPTH_ESTIMATION:
             transforms, transforms_kwargs = cls.create_transforms_depth_estimation_base(settings, **kwargs)
-        elif settings.task_type == constants.TaskType.TASK_TYPE_DISPARITY_ESTIMATION:
+        elif settings.common.task_type == constants.TaskType.TASK_TYPE_DISPARITY_ESTIMATION:
             transforms, transforms_kwargs = cls.create_transforms_disparity_estimation_base(settings, **kwargs)
-        elif settings.task_type == constants.TaskType.TASK_TYPE_DETECTION_3DOD:
+        elif settings.common.task_type == constants.TaskType.TASK_TYPE_DETECTION_3DOD:
             transforms, transforms_kwargs = cls.create_transforms_lidar_base(settings, **kwargs)
-        elif settings.task_type == constants.TaskType.TASK_TYPE_OBJECT_6D_POSE_ESTIMATION:
+        elif settings.common.task_type == constants.TaskType.TASK_TYPE_OBJECT_6D_POSE_ESTIMATION:
             transforms, transforms_kwargs = cls.create_transforms_detection_base(settings, object6dpose=True, **kwargs)
         else:
             transforms, transforms_kwargs = cls.create_transforms_none(settings, **kwargs)
@@ -280,7 +280,7 @@ def no_postprocess(settings, **kwargs):
 
 
 def object_detection_postprocess(settings, name='object_detection_postprocess', **kwargs):
-    assert settings.task_type == constants.TaskType.TASK_TYPE_DETECTION, \
+    assert settings.common.task_type == constants.TaskType.TASK_TYPE_DETECTION, \
         'object_detection_postprocess can only be used for object detection task type'
     return PostProcessTransforms.from_kwargs(settings, **kwargs)
 
