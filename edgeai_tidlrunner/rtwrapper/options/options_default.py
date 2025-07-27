@@ -139,9 +139,12 @@ RUNTIME_OPTIONS_DEFAULT = {
 
     # In case you are using firmware released as part of processor SDK RTOS, this field can be ignored. If you are using TIDL firmware release with a new patch release of the same "release line" then it is essential to use c7x_firmware_version explicitly
     # None - c7x_firmware_version not used if this is None
-    # String - for example: 10_01_04_00
-    # Check with edgeai-tidl-tools documentation to understand the latest supported firmware version.
-    'advanced_options:c7x_firmware_version': None,
+    # String - for example: 11_01_00_00
+    # Note: None or '' are not supported values
+    # Check with edgeai-tidl-tools documentation to understand the latest supported firmware versions.
+    # Note: When compiling models custom firmware version, firmware update may be needed in the SDK to run the model. '
+    # See the SDK version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/version_compatibility_table.md
+    #'advanced_options:c7x_firmware_version': ??,
 
     # object detection settings
     'object_detection:meta_layers_names_list': '',
