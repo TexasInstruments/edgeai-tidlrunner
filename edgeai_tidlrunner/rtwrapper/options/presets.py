@@ -37,8 +37,8 @@ TIDL_PLATFORM = "J7"
 
 # TIDL version that is supported by default - however this is not the only version that is supported.
 # This version actually depends on tidl_tools that is being used - so what is populated here is just for guidance.
-TIDL_VERSION = (11,0)
-TIDL_VERSION_STR = '11.0'
+TIDL_VERSION = (11,1)
+TIDL_VERSION_STR = '11.1'
 
 
 MODEL_TYPES = [ModelType.MODEL_TYPE_ONNX, ModelType.MODEL_TYPE_TFLITE, ModelType.MODEL_TYPE_MXNET]

@@ -302,6 +302,45 @@ def download_tidl_tools(download_url, download_path, **tidl_version_dict):
 
 
 ###############################################################################
+def download_tidl_tools_package_11_01(install_path, tools_version, tools_type):
+    expected_tools_version=("11.1",)
+    assert tools_version in expected_tools_version, f"ERROR: incorrect tools_version passed:{tools_version} - expected:{expected_tools_version}"
+    tidl_tools_version_name=tools_version
+    tidl_tools_release_label="r11.1"
+    tidl_tools_release_id="11_01_02_00"
+    c7x_firmware_version="11_01_00_00" #TODO - udpate this for 11.1
+    c7x_firmware_version_possible_update=None #TODO - udpate this for 11.1
+    print(f"INFO: you have chosen to install tidl_tools version:{tidl_tools_release_id} with default SDK firmware version set to:{c7x_firmware_version}")
+    if c7x_firmware_version_possible_update:
+        print(f"INFO: to leverage more features, set advanced_options:c7x_firmware_version while model compialtion and update firmware version in SDK to: {c7x_firmware_version_possible_update}")
+        print(f"INFO: for more info, see version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/version_compatibility_table.md")
+    #
+
+    tidl_tools_package_path = install_path
+    download_arm_gcc(tidl_tools_package_path)
+
+    tidl_tools_type_suffix=("_gpu" if isinstance(tools_type,str) and "gpu" in tools_type else "")
+    target_soc_download_urls = {
+        "TDA4VM": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/TDA4VM",
+        "AM68A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM68A",
+        "AM69A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
+        "AM67A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM67A",
+        "AM62A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM62A",
+    }
+    tidl_version_dict = dict(version=tidl_tools_version_name, release_label=tidl_tools_release_label,
+                             release_id=tidl_tools_release_id, tools_type=tidl_tools_type_suffix,
+                             c7x_firmware_version=c7x_firmware_version)
+    for target_soc in target_soc_download_urls:
+        download_url_base = target_soc_download_urls[target_soc]
+        download_url = f"{download_url_base}/tidl_tools{tidl_tools_type_suffix}.tar.gz"
+        download_path = os.path.join(tidl_tools_package_path, target_soc)
+        download_tidl_tools(download_url, download_path, **tidl_version_dict, target_device=target_soc)
+    #
+    requirements_file = os.path.realpath(os.path.join(os.path.dirname(__file__), f'requirements/requirements_11.1.txt'))
+    return requirements_file
+
+
+###############################################################################
 def download_tidl_tools_package_11_00(install_path, tools_version, tools_type):
     expected_tools_version=("11.0",)
     assert tools_version in expected_tools_version, f"ERROR: incorrect tools_version passed:{tools_version} - expected:{expected_tools_version}"
@@ -340,6 +379,7 @@ def download_tidl_tools_package_11_00(install_path, tools_version, tools_type):
     return requirements_file
 
 
+###############################################################################
 def download_tidl_tools_package_10_01(install_path, tools_version, tools_type):
     expected_tools_version=("10.1",)
     assert tools_version in expected_tools_version, f"ERROR: incorrect tools_version passed:{tools_version} - expected:{expected_tools_version}"
@@ -411,9 +451,10 @@ def download_tidl_tools_package_10_00(install_path, tools_version, tools_type):
 
 ###############################################################################
 down_tidl_tools_package_dict = {
-    "11.0":   download_tidl_tools_package_11_00,
-    "10.1":   download_tidl_tools_package_10_01,
-    "10.0":   download_tidl_tools_package_10_00,
+    "11.1": download_tidl_tools_package_11_01,
+    "11.0": download_tidl_tools_package_11_00,
+    "10.1": download_tidl_tools_package_10_01,
+    "10.0": download_tidl_tools_package_10_00,
 }
 
 
@@ -476,7 +517,7 @@ def main_download_tools(args):
 
 if __name__ == '__main__':
     TIDL_TOOLS_TYPE_DEFAULT = ""
-    TIDL_TOOLS_VERSION_DEFAULT = "11.0"
+    TIDL_TOOLS_VERSION_DEFAULT = "11.1"
 
     args = argparse.Namespace()
     args.tools_version = os.environ.get("TIDL_TOOLS_VERSION", TIDL_TOOLS_VERSION_DEFAULT)
