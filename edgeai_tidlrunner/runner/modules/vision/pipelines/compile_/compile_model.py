@@ -81,7 +81,8 @@ class CompileModel(CompileModelBase):
         #
 
         print(f'INFO: running model optimize {self.model_path}')
-        optimize_model.OptimizeModel._run_func(self.model_path, self.model_path, **common_kwargs)
+        optimize_kwargs = common_kwargs['optimize']
+        optimize_model.OptimizeModel._run_func(self.model_path, self.model_path, **optimize_kwargs)
 
         # session
         session_name = session_kwargs['name']

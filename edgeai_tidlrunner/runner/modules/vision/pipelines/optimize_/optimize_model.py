@@ -70,12 +70,12 @@ class OptimizeModel(common_base.CommonPipelineBase):
         self._run_func(self.model_path, self.model_path, shape_inference=shape_inference, model_optimizer=model_optimizer)
 
     @classmethod
-    def _run_func(cls, model_source, model_path, shape_inference=True, model_optimizer=False, **kwargs):
+    def _run_func(cls, model_source, model_path, shape_inference=True, optimize_model=False, **kwargs):
+        if optimize_model:
+            from osrt_model_tools.onnx_tools import tidl_onnx_model_optimizer
+            tidl_onnx_model_optimizer.optimize(model_source, model_path)
+        #
         if shape_inference:
             import onnx
             onnx.shape_inference.infer_shapes_path(model_source, model_path)
-        #
-        if model_optimizer:
-            from osrt_model_tools.onnx_tools import tidl_onnx_model_optimizer
-            tidl_onnx_model_optimizer.optimize(model_source, model_path)
         #
