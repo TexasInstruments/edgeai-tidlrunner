@@ -9,3 +9,4 @@ colorama
 munkres
 wurlitzer
 pyyaml
+git+https://github.com/TexasInstruments/edgeai-tidl-tools.git@11_00_08_00#subdirectory=osrt-model-tools
