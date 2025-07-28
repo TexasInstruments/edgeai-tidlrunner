@@ -73,6 +73,9 @@ class CompileModel(CompileModelBase):
         os.makedirs(self.artifacts_folder, exist_ok=True)
         os.makedirs(self.model_folder, exist_ok=True)
 
+        # write config to a file
+        self._write_params('config.yaml')
+
         config_path = os.path.dirname(common_kwargs['config_path']) if common_kwargs['config_path'] else None
         self.download_file(self.model_source, model_folder=self.model_folder, source_dir=config_path)
 
@@ -152,7 +155,7 @@ class CompileModel(CompileModelBase):
 
         print(f'INFO: model import done. output is in: {self.run_dir}')
         self.run_data = run_data
-        self._write_params('config.yaml')
+
         # TODO - cleanup the parameters and write param.yaml
         self._write_params('param.yaml')
         return outputs
