@@ -44,8 +44,8 @@ class ONNXRuntimeWrapper(BaseRuntimeWrapper):
             return self.interpreter
         #
         self.is_import = True
+        self.kwargs = self._set_default_options(self.kwargs)
         self._calibration_frames = self.kwargs['runtime_options']['advanced_options:calibration_frames']
-        self.kwargs['runtime_options'] = self._set_default_options(self.kwargs['runtime_options'])
         self.interpreter = self._create_interpreter(is_import=True)
         self.kwargs['input_details'] = self._get_input_details(self.interpreter, self.kwargs.get('input_details', None))
         self.kwargs['output_details'] = self._get_output_details(self.interpreter, self.kwargs.get('output_details', None))
@@ -70,8 +70,8 @@ class ONNXRuntimeWrapper(BaseRuntimeWrapper):
             return self.interpreter
         #
         self.is_import = False
+        self.kwargs = self._set_default_options(self.kwargs)
         self._calibration_frames = self.kwargs['runtime_options']['advanced_options:calibration_frames']
-        self.kwargs['runtime_options'] = self._set_default_options(self.kwargs['runtime_options'])
         self.interpreter = self._create_interpreter(is_import=False)
         self.kwargs['input_details'] = self._get_input_details(self.interpreter, self.kwargs.get('input_details', None))
         self.kwargs['output_details'] = self._get_output_details(self.interpreter, self.kwargs.get('output_details', None))
@@ -97,8 +97,7 @@ class ONNXRuntimeWrapper(BaseRuntimeWrapper):
         return outputs
 
     def _create_interpreter(self, is_import):
-        # move the import inside the function, so that onnxruntime needs to be installed
-        # only if someone wants to use it
+        # move the import inside the function, so that onnxruntime needs to be installed only if someone wants to use it
         import onnxruntime
         # pass options to pybind
         if is_import:
@@ -110,11 +109,10 @@ class ONNXRuntimeWrapper(BaseRuntimeWrapper):
 
         sess_options = onnxruntime.SessionOptions()
 
-        onnxruntime_graph_optimization_level = runtime_options.get('onnxruntime:graph_optimization_level', None)
-        if onnxruntime_graph_optimization_level is not None:
+        if self.kwargs['onnxruntime:graph_optimization_level'] is not None:
             # for transformer models, it is necessary to set graph_optimization_level in session options for onnxruntime
             # to onnxruntime.GraphOptimizationLevel.ORT_DISABLE_ALL so that TIDL can properly handle the model.
-            sess_options.graph_optimization_level = onnxruntime_graph_optimization_level
+            sess_options.graph_optimization_level = onnxruntime.GraphOptimizationLevel(self.kwargs['onnxruntime:graph_optimization_level'])
 
         # suppress warnings
         sess_options.log_severity_level = 3
@@ -147,8 +145,10 @@ class ONNXRuntimeWrapper(BaseRuntimeWrapper):
     def _get_output_details(self, interpreter, output_details=None):
         return super()._get_output_details_onnx(interpreter, output_details)
 
-    def _set_default_options(self, runtime_options):
-        return runtime_options
+    def _set_default_options(self, kwargs):
+        kwargs['onnxruntime:graph_optimization_level'] = self.kwargs.get('onnxruntime:graph_optimization_level', 
+                                                               presets.GraphOptimizationLevel.ORT_DISABLE_ALL)
+        return kwargs
 
     def set_runtime_option(self, option, value):
         self.kwargs['runtime_options'][option] = value

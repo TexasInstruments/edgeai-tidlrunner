@@ -87,6 +87,7 @@ SETTINGS_DEFAULT['compile_model'] = SETTINGS_DEFAULT['basic'] | {
     # runtime_settings
     'target_device':            {'dest': 'session.runtime_settings.target_device', 'default': presets.TargetDeviceType.TARGET_DEVICE_AM68A, 'type': str, 'metavar': 'value'},
     'tidl_offload':             {'dest': 'session.runtime_settings.tidl_offload', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value'},
+    'graph_optimization_level': {'dest': 'session.runtime_settings.onnxruntime:graph_optimization_level', 'default': presets.GraphOptimizationLevel.ORT_DISABLE_ALL, 'type': int, 'metavar': 'value'},
     # runtime_options
     'tensor_bits':              {'dest': 'session.runtime_settings.runtime_options.tensor_bits', 'default': 8, 'type': int, 'metavar': 'value'},
     'quantization_scale_type':  {'dest': 'session.runtime_settings.runtime_options.advanced_options:quantization_scale_type', 'default': None, 'type': int, 'metavar': 'value'},

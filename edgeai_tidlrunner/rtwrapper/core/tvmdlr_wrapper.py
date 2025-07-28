@@ -45,8 +45,8 @@ class TVMDLRRuntimeWrapper(BaseRuntimeWrapper):
             return self.interpreter
         #
         self.is_import = True
+        self.kwargs = self._set_default_options(self.kwargs)
         self._calibration_frames = self.kwargs['runtime_options']['advanced_options:calibration_frames']
-        self.kwargs['runtime_options'] = self._set_default_options(self.kwargs['runtime_options'])
        # tvm/dlr requires input shape in prepare_for_import - so moved this ahead
         self.kwargs['input_details'] = self._get_input_details(None, self.kwargs.get('input_details', None))
         self.kwargs['output_details'] = self._get_output_details(None, self.kwargs.get('output_details', None))
@@ -77,8 +77,8 @@ class TVMDLRRuntimeWrapper(BaseRuntimeWrapper):
             return self.interpreter
         #
         self.is_import = False
+        self.kwargs = self._set_default_options(self.kwargs)
         self._calibration_frames = self.kwargs['runtime_options']['advanced_options:calibration_frames']
-        self.kwargs['runtime_options'] = self._set_default_options(self.kwargs['runtime_options'])
         self.kwargs['input_details'] = self._get_input_details(None, self.kwargs.get('input_details', None))
         self.kwargs['output_details'] = self._get_output_details(None, self.kwargs.get('output_details', None))
         # moved the import inside the function, so that dlr needs to be installed only if someone wants to use it
@@ -207,15 +207,17 @@ class TVMDLRRuntimeWrapper(BaseRuntimeWrapper):
         input_data = {d_name:d for d_name, d in zip(input_keys,input_data)}
         return input_data
 
-    def _set_default_options(self, runtime_options):
+    def _set_default_options(self, kwargs):
         # tvm need advanced settings as a dict
         # convert the entries starting with advanced_options: to a dict
+        runtime_options = kwargs['runtime_options']
         advanced_options_prefix = 'advanced_options:'
         advanced_options = {k.replace(advanced_options_prefix,''):v for k,v in runtime_options.items() \
                             if k.startswith(advanced_options_prefix)}
         runtime_options = {k:v for k,v in runtime_options.items() if not k.startswith(advanced_options_prefix)}
         runtime_options.update(dict(advanced_options=advanced_options))
-        return runtime_options
+        kwargs['runtime_options'] = runtime_options
+        return kwargs
 
     def set_runtime_option(self, option, value):
         advanced_options_prefix = 'advanced_options:'
