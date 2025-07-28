@@ -46,8 +46,8 @@ class InferAccuracy(infer_model.InferModel):
     ARGS_DICT=SETTINGS_DEFAULT['infer_accuracy']
     COPY_ARGS=COPY_SETTINGS_DEFAULT['infer_accuracy']
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, with_postprocess=True, **kwargs):
+        super().__init__(with_postprocess=with_postprocess, **kwargs)
 
     def _run(self):
         print(f'INFO: starting model accuracy evaluation')

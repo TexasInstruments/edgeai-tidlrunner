@@ -48,7 +48,8 @@ class CompileModelBase(CommonPipelineBase):
     ARGS_DICT=SETTINGS_DEFAULT['compile_model']
     COPY_ARGS=COPY_SETTINGS_DEFAULT['compile_model']
     
-    def __init__(self, **kwargs):
+    def __init__(self, with_postprocess=True, **kwargs):
+        self.with_postprocess = with_postprocess
         super().__init__(**kwargs)
         self.dataloader = None
         self.preprocess = None
@@ -125,7 +126,6 @@ class CompileModelBase(CommonPipelineBase):
             session_kwargs['runtime_settings']['runtime_options']['object_detection:meta_layers_names_list'] = object_detection_meta_layers_names_path
         #
 
-
     def _upgrade_kwargs(self, **kwargs):
         kwargs = copy.deepcopy(kwargs)
         kwargs_out = copy.deepcopy(kwargs)
@@ -183,7 +183,7 @@ class CompileModelBase(CommonPipelineBase):
                     if kwargs_out.get('preprocess.name',None) is None:
                         kwargs_out['preprocess.name'] = 'image_preprocess'
                     #
-                    if kwargs_out.get('postprocess.name',None) is None:
+                    if kwargs_out.get('postprocess.name',None) is None and self.with_postprocess:
                         kwargs_out['postprocess.name'] = 'object_detection_postprocess'
                     #
                 elif v == 'cocoseg21':

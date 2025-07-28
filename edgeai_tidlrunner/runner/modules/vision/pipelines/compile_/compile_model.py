@@ -46,8 +46,8 @@ class CompileModel(CompileModelBase):
     ARGS_DICT=SETTINGS_DEFAULT['compile_model']
     COPY_ARGS=COPY_SETTINGS_DEFAULT['compile_model']
     
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, with_postprocess=False, **kwargs):
+        super().__init__(with_postprocess=with_postprocess, **kwargs)
 
     def info(self):
         print(f'INFO: Model import - {__file__}')
