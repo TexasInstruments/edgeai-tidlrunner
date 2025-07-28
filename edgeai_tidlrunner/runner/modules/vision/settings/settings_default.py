@@ -66,7 +66,7 @@ COPY_SETTINGS_DEFAULT['basic'] = {}
 # compile is used to indicate a more sophisticated import - populate real data_path for that.
 ##########################################################################
 SETTINGS_DEFAULT['compile_model'] = SETTINGS_DEFAULT['basic'] | {
-    'optimize_model':          {'dest': 'common.optimize.optimize_model', 'default': False, 'type': utils.str_to_bool, 'metavar': 'value'},
+    'optimize_model':          {'dest': 'common.optimize.optimize_model', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value'},
     'shape_inference':          {'dest': 'common.optimize.shape_inference', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value'},
     # common options
     'task_type':                {'dest': 'common.task_type', 'default': constants.TaskType.TASK_TYPE_CLASSIFICATION, 'type': str, 'metavar': 'value'},
