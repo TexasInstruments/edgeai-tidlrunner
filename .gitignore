@@ -11,14 +11,14 @@ dist/
 /tools/tidl_tools_package/TDA*
 /tools/tidl_tools_package/gcc*
 /tools/tidl_tools_package/arm*
-/tools/tidl_tools_backup/
-/tools/tidl_tools_backup*
-
-/runs/runner
-/runs/rtwrapper
+/tools/tidl_tools_package_*
 
 /data/datasets/vision/backup
 /data/datasets/vision/imagenetv2c*
 /data/datasets/vision/coco*
 *.onnx
 *.prototxt
+
+/work_dirs/runner/modelartifacts/AM*
+/work_dirs/runner/modelartifacts_*
+/work_dirs/rtwrapper
