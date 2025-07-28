@@ -7,3 +7,7 @@ configs:
   # cl-6110: vision/classification/imagenet1k/torchvision/resnet50_config.yaml
   # ss-8740: vision/segmentation/cocoseg21/edgeai-tv/lraspp_mobilenet_v3_large_lite_512x512_20210527_config.yaml
   # od-8970: vision/detection/coco/edgeai-mmdet/efficientdet_effb0_bifpn_lite_512x512_20240612_model_config.yaml
+  # od-9207: vision/detection/coco/edgeai-mmdet/rtmdet_m_coco_orig_640x640_20250310_model_config.yaml
+  # od-9206: vision/detection/coco/edgeai-mmdet/rtmdet_m_coco_lite_640x640_20250404_model_config.yaml
+  # od-9208: vision/detection/coco/edgeai-mmdet/rtmdet_l_coco_orig_640x640_20250310_model_config.yaml
+  # od-9209: vision/detection/coco/edgeai-mmdet/rtmdet_l_coco_lite_640x640_20250310_model_config.yaml
