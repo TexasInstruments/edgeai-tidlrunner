@@ -31,6 +31,8 @@ import copy
 import os
 import sys
 import warnings
+import argparse
+
 from .....rtwrapper.options import options_default
 from . import constants
 from .constants import presets
@@ -90,6 +92,7 @@ SETTINGS_DEFAULT['compile_model'] = SETTINGS_DEFAULT['basic'] | {
     'quantization_scale_type':  {'dest': 'session.runtime_settings.runtime_options.advanced_options:quantization_scale_type', 'default': None, 'type': int, 'metavar': 'value'},
     'calibration_frames':       {'dest': 'session.runtime_settings.runtime_options.advanced_options:calibration_frames', 'default': 12, 'type': int, 'metavar': 'value'},
     'calibration_iterations':   {'dest': 'session.runtime_settings.runtime_options.advanced_options:calibration_iterations', 'default': 12, 'type': int, 'metavar': 'value'},
+    'max_num_subgraph_nodes':   {'dest': 'session.runtime_settings.runtime_options.advanced_options:max_num_subgraph_nodes', 'default': 1536, 'type': int, 'metavar': 'value'},
     # preprocess
     'preprocess_name':         {'dest':'preprocess.name', 'default':None, 'type':str, 'metavar':'value', 'group':'preprocess_name'},
     'resize':                  {'dest':'preprocess.resize', 'default':None, 'type':int, 'nargs':'*', 'metavar':'value'},

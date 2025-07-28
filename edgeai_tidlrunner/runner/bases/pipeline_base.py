@@ -141,7 +141,8 @@ class PipelineBase():
     def _set_default_args(self, **kwargs):
         kwargs_cmd = {}
         for k_name, v_dict in self.ARGS_DICT.items():
-            kwargs_cmd[v_dict['dest']] = v_dict['default']
+            if v_dict['default'] != argparse.SUPPRESS:
+                kwargs_cmd[v_dict['dest']] = v_dict['default']
         kwargs_cmd.update(kwargs)
         return kwargs_cmd
 
@@ -196,6 +197,7 @@ class PipelineBase():
 
         parser = argparse.ArgumentParser(
             description='Runner commandline arguments',
+            argument_default=argparse.SUPPRESS,
             epilog=cls._arg_parser_info()
         )
 

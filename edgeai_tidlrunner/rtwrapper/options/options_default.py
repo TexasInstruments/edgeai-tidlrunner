@@ -137,6 +137,10 @@ RUNTIME_OPTIONS_DEFAULT = {
     # 1 - NC_PERFSIM_ENABLE
     'ti_internal_nc_flag': presets.NCPerfsimFlag.NC_PERFSIM_ENABLE,
 
+    # This option allows the user to specify the maximum number of nodes allowed in a particular subgraph 
+    # (If it exceeds this number, it will try to evenly divide the network)
+    'advanced_options:max_num_subgraph_nodes': 1536,
+
     # In case you are using firmware released as part of processor SDK RTOS, this field can be ignored. If you are using TIDL firmware release with a new patch release of the same "release line" then it is essential to use c7x_firmware_version explicitly
     # None - c7x_firmware_version not used if this is None
     # String - for example: 11_01_00_00
