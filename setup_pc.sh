@@ -45,19 +45,27 @@ echo "TIDL_TOOLS_TYPE=${TIDL_TOOLS_TYPE}"
 
 #######################################################################
 pip3 install --no-input --upgrade pip==24.2 setuptools==73.0.0
-pip3 install -r requirements/requirements_pc.txt
+
+######################################################################
+CURRENT_WORK_DIR=$(pwd)
+
+#######################################################################
+# install tidl_tools_package
+echo "--------------------------------------------------------------------------------------------------------------"
+echo "INFO: installing tidl-tools-package version: ${TIDL_TOOLS_VERSION}"
+cd ${CURRENT_WORK_DIR}
+TIDL_TOOLS_TYPE=${TIDL_TOOLS_TYPE} TIDL_TOOLS_VERSION=${TIDL_TOOLS_VERSION} python3 ./tools/setup.py develop
+cd ${CURRENT_WORK_DIR}
+
+#######################################################################
+pip3 install --no-input -r ./requirements/requirements_pc.txt
 pip3 install --no-input onnx_graphsurgeon==0.3.26 --extra-index-url https://pypi.ngc.nvidia.com
 
 #######################################################################
 # install edgeai_tidlrunner
-TIDL_TOOLS_TYPE=${TIDL_TOOLS_TYPE} TIDL_TOOLS_VERSION=${TIDL_TOOLS_VERSION} pip3 install -e ./
-
-#######################################################################
-# install tidl_tools_package
-CUR_DIR=$(pwd)
-cd ./tools
 TIDL_TOOLS_TYPE=${TIDL_TOOLS_TYPE} TIDL_TOOLS_VERSION=${TIDL_TOOLS_VERSION} python3 setup.py develop
-cd ${CUR_DIR}
+echo "--------------------------------------------------------------------------------------------------------------"
+
 
 #######################################################################
-echo "installation done."
+echo 'Completed installation.'
