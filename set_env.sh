@@ -41,10 +41,12 @@ TARGET_MACHINE=${TARGET_MACHINE:-"pc"}
 export TIDL_TOOLS_PATH=$(realpath "$(pwd)/tools/tidl_tools_package/${TARGET_DEVICE}/tidl_tools")
 echo "TIDL_TOOLS_PATH=${TIDL_TOOLS_PATH}"
 
+export LD_LIBRARY_PATH=${TIDL_TOOLS_PATH:-":"}
 export LD_LIBRARY_PATH=":${TIDL_TOOLS_PATH}:${LD_LIBRARY_PATH}"
 echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}"
 
 # make sure current directory is visible for python import
+export PYTHONPATH=${PYTHONPATH:-":"}
 export PYTHONPATH=:${PYTHONPATH}
 echo "PYTHONPATH=${PYTHONPATH}"
 
@@ -73,34 +75,31 @@ fi
 ################################################################################
 # tvmdlr artifacts are different for pc and evm device
 # point to the right artifact before this script executes
-if [ "${ARTIFACTS_BASE_PATH}" = "" ]; then
-  ARTIFACTS_BASE_PATH="./work_dirs/modelartifacts/${TARGET_DEVICE}/8bits"
-fi
+export ARTIFACTS_BASE_PATH=${ARTIFACTS_BASE_PATH:-"./work_dirs/modelartifacts/${TARGET_DEVICE}/8bits"}
 
-if [ -d "${ARTIFACTS_BASE_PATH}" ]; then
-  echo "INFO: settings the correct symlinks in tvmdlr compiled artifacts"
+echo "INFO: settings the correct symlinks in tvmdlr compiled artifacts"
 
-  artifacts_folders=$(find "${ARTIFACTS_BASE_PATH}/" -maxdepth 1 |grep "_tvmdlr_")
-  cur_dir=$(pwd)
+artifacts_folders=$(find "${ARTIFACTS_BASE_PATH}/" -maxdepth 1 |grep "_tvmdlr_")
+cur_dir=$(pwd)
 
-  declare -a artifact_files=("deploy_lib.so" "deploy_graph.json" "deploy_params.params")
+declare -a artifact_files=("deploy_lib.so" "deploy_graph.json" "deploy_params.params")
 
-  for artifact_folder in ${artifacts_folders}
+for artifact_folder in ${artifacts_folders}
+do
+  echo "Entering: ${artifact_folder}"
+  cd ${artifact_folder}/"artifacts"
+  for artifact_file in "${artifact_files[@]}"
   do
-    echo "Entering: ${artifact_folder}"
-    cd ${artifact_folder}/"artifacts"
-    for artifact_file in "${artifact_files[@]}"
-    do
-      if [[ -f ${artifact_file}.${TARGET_MACHINE} ]]; then
-        echo "creating symbolic link to ${artifact_file}.${TARGET_MACHINE}"
-        ln -snf ${artifact_file}.${TARGET_MACHINE} ${artifact_file}
-      fi
-    done
-    cd ${cur_dir}
+    if [[ -f ${artifact_file}.${TARGET_MACHINE} ]]; then
+      echo "creating symbolic link to ${artifact_file}.${TARGET_MACHINE}"
+      ln -snf ${artifact_file}.${TARGET_MACHINE} ${artifact_file}
+    fi
   done
+  cd ${cur_dir}
+done
 
-  # TIDL_ARTIFACT_SYMLINKS is used to indicate that the symlinks have been set to evm
-  # affects only artifacts created by/for TVM/DLR
-  export TIDL_ARTIFACT_SYMLINKS=1
-fi
+# TIDL_ARTIFACT_SYMLINKS is used to indicate that the symlinks have been set to evm
+# affects only artifacts created by/for TVM/DLR
+export TIDL_ARTIFACT_SYMLINKS=1
+
 ################################################################################
