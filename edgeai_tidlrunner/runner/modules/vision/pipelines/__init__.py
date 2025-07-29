@@ -43,15 +43,15 @@ command_module_name_dict_base = {
     'infer_model':'InferModel',
     'infer_analyze':'InferAnalyze',
     'infer_accuracy':'InferAccuracy',
-    'compile_infer': ['CompileModel', 'InferModel'],
-    'compile_analyze': ['CompileModel', 'InferAnalyze'],
-    'compile_accuracy': ['CompileModel', 'InferAccuracy'],
+    'compile+infer': ['CompileModel', 'InferModel'],
+    'compile+analyze': ['CompileModel', 'InferAnalyze'],
+    'compile+accuracy': ['CompileModel', 'InferAccuracy'],
 }
 
 command_module_name_dict_ext = {
     'optimize_model':'OptimizeModel',
-    'optimize_model_gui':'OptimizeModelGUI',
-    'split_model':'SplitModel',
+    #'optimize_model_gui':'OptimizeModelGUI',
+    #'split_model':'SplitModel',
 }
 
 command_module_name_dict = command_module_name_dict_base | command_module_name_dict_ext
