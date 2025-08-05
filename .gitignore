@@ -19,6 +19,6 @@ dist/
 *.onnx
 *.prototxt
 
-/work_dirs/runner/modelartifacts/AM*
-/work_dirs/runner/modelartifacts_*
+/work_dirs/modelartifacts/*
+/work_dirs/modelartifacts_*
 /work_dirs/rtwrapper
