@@ -56,10 +56,10 @@ tidlrunner-cli --help
 
 Detailed help is available for each command - for example:
 ```
-tidlrunner-cli compile_model --help
+tidlrunner-cli compile --help
 ```
 ```
-tidlrunner-cli infer_model --help
+tidlrunner-cli infer --help
 ```
 
 <hr>
@@ -85,19 +85,14 @@ There is also a Pythonic interface for the runner module, for more flexibility.
 ### List of commands supported
 | Command          | Internal Pipeline(s)        | Description                                                               |
 |------------------|-----------------------------|---------------------------------------------------------------------------|
-| compile_model    | CompileModel                | Compile the given model(s)                                                |
-| infer_model      | InferModel                  | Run inference using using already compiled model artifacts                |
-| compile_infer    | CompileModel, InferModel    | compile_model, infer_model                                                |
-| infer_accuracy   | InferAccuracy               | Run inference and compute accuracy using already compiled model artifacts |
-| compile_accuracy | CompileModel, InferAccuracy | Compile the model, infer and compute accuracy                             |
-| optimize_model   | OptimizeModel               | Optimize - shape inference, layer transformations etc.                    |
-
-
-[//]: # (| infer_analyze    | InferAnalyze                | Run inference and analysis using already compiled model artifacts         |)
-
-[//]: # (| compile_analyze  | CompileModel, InferAnalyze  | Run inference using compiled model artifacts                              |)
-
-[//]: # (| compile_analyze  | CompileModel, AnalyzeModel  | compile_model, infer_analyze                                              |)
+| compile          | CompileModel                | Compile the given model(s)                                                |
+| infer            | InferModel                  | Run inference using using already compiled model artifacts                |
+| analyze          | InferAccuracy               | Run inference and compute accuracy using already compiled model artifacts |
+| accuracy         | InferAnalyze                | Analyze complied artifacts, run inference and analyze layerwise deviations|
+| optimize         | OptimizeModel               | Optimize - simpifier, layer optimizations, shape inference (included in compile)|
+| compile+infer    | CompileModel, InferModel    | compile, infer                                                            |
+| compile+analyze  | CompileModel, InferAnalyze  | Compile the model, infer and analyze                                      |
+| compile+accuracy | CompileModel, InferAccuracy | Compile the model, infer and compute accuracy                             |
 
 
 ### Example Arguments / options

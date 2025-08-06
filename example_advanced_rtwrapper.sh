@@ -43,12 +43,12 @@ export TARGET_DEVICE="AM68A"
 # add environemnt settings as needed
 source ./set_env.sh
 
-python3 ./examples/vision/scripts/example_advanced_rtwrapper.py "compile_model" \
+python3 ./examples/vision/scripts/example_advanced_rtwrapper.py "compile" \
   --target_device ${TARGET_DEVICE} \
   --model_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx \
-  --data_path ./data/datasets/vision/imagenetv2c
+  --data_path ./data/datasets/vision/imagenetv2c/val
 
-python3 ./examples/vision/scripts/example_advanced_rtwrapper.py "infer_model" \
+python3 ./examples/vision/scripts/example_advanced_rtwrapper.py "infer" \
   --target_device ${TARGET_DEVICE} \
   --model_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx \
-  --data_path ./data/datasets/vision/imagenetv2c
+  --data_path ./data/datasets/vision/imagenetv2c/val

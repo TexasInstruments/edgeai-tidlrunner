@@ -33,6 +33,6 @@
 export TARGET_DEVICE="AM68A"
 
 ##################################################################
-tidlrunner-cli compile_infer \
+tidlrunner-cli compile+infer \
   --target_device ${TARGET_DEVICE} \
   --config_path ./data/models/configs.yaml

@@ -36,6 +36,6 @@ export TARGET_DEVICE="AM68A"
 source ./set_env.sh
 
 ##################################################################
-tidlrunner-cli compile_infer \
+tidlrunner-cli compile+infer \
     --target_device ${TARGET_DEVICE} \
     --model_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx

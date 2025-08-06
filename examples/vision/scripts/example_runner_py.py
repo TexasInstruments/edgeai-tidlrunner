@@ -61,19 +61,19 @@ def main(args):
     #########################################################################
     # import and inference can be run in single call if separat3 process is used for them
     # otherwise one would have to choose between either import or inference in one call of this script.,
-    if args.command == "compile_model":
-        edgeai_tidlrunner.run('compile_model', **kwargs)
-    elif args.command == "infer_model":
-        edgeai_tidlrunner.run('infer_model', **kwargs)
+    if args.command == "compile":
+        edgeai_tidlrunner.run('compile', **kwargs)
+    elif args.command == "infer":
+        edgeai_tidlrunner.run('infer', **kwargs)
     else:
         assert False, f"ERROR: please specify a valid command - got: {args.command}"
 
 
 def get_arg_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('command', type=str, choices=('compile_model', 'infer_model'))
-    parser.add_argument('--model_path', type=str, default='./examples/vision/models/mobilenet_v2.onnx')
-    parser.add_argument('--data_path', type=str, default='./examples/vision/datasets/imagenetv2c/val')
+    parser.add_argument('command', type=str, choices=('compile', 'infer'))
+    parser.add_argument('--model_path', type=str, default='./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx')
+    parser.add_argument('--data_path', type=str, default='./data/datasets/vision/imagenetv2c/val')
     parser.add_argument('--target_device', type=str, default='AM68A')
     return parser
 

@@ -39,17 +39,17 @@ from .utils_.split_model import SplitModel
 
 
 command_module_name_dict_base = {
-    'compile_model':'CompileModel',
-    'infer_model':'InferModel',
-    'infer_analyze':'InferAnalyze',
-    'infer_accuracy':'InferAccuracy',
+    'compile':'CompileModel',
+    'infer':'InferModel',
+    'analyze':'InferAnalyze',
+    'accuracy':'InferAccuracy',
     'compile+infer': ['CompileModel', 'InferModel'],
     'compile+analyze': ['CompileModel', 'InferAnalyze'],
     'compile+accuracy': ['CompileModel', 'InferAccuracy'],
 }
 
 command_module_name_dict_ext = {
-    'optimize_model':'OptimizeModel',
+    'optimize':'OptimizeModel',
     #'optimize_model_gui':'OptimizeModelGUI',
     #'split_model':'SplitModel',
 }

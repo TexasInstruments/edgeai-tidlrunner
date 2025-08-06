@@ -64,7 +64,7 @@ def preprocess_input(input_img_file):
     return normalized_data
 
 
-def run_compilation(args, runtime_type, runtime_settings, model_path, artifacts_folder):
+def run_compile(args, runtime_type, runtime_settings, model_path, artifacts_folder):
     '''
     Run the model compilation
     Args:
@@ -88,7 +88,7 @@ def run_compilation(args, runtime_type, runtime_settings, model_path, artifacts_
     print(f'INFO: model import done')
 
 
-def run_inference(args, runtime_type, runtime_settings, model_path, artifacts_folder, num_frames):
+def run_infer(args, runtime_type, runtime_settings, model_path, artifacts_folder, num_frames):
     '''
     Run the model inference. Requires compilation to be run before this is invoked.
     Args:
@@ -146,7 +146,7 @@ def main(args):
     #########################################################################
     # high level settings
     num_frames = 1
-    modelartifacts_path = './run/rtwrapper'
+    modelartifacts_path = './work_dirs/rtwrapper'
 
     #########################################################################
     # prepare the model and artifacts folders
@@ -196,19 +196,19 @@ def main(args):
     #########################################################################
     # import and inference can be run in single call if separat3 process is used for them
     # otherwise one would have to choose between either import or inference in one call of this script.,
-    if args.command == "compile_model":
-        run_compilation(args, runtime_type, runtime_settings, model_path, artifacts_folder)
-    elif args.command == "infer_model":
-        run_inference(args, runtime_type, runtime_settings, model_path, artifacts_folder, num_frames)
+    if args.command == "compile":
+        run_compile(args, runtime_type, runtime_settings, model_path, artifacts_folder)
+    elif args.command == "infer":
+        run_infer(args, runtime_type, runtime_settings, model_path, artifacts_folder, num_frames)
     else:
         assert False, f"ERROR: please specify a valid command - got: {args.command}"
 
 
 def get_arg_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('command', type=str, choices=('compile_model', 'infer_model'))
-    parser.add_argument('--model_path', type=str)
-    parser.add_argument('--data_path', type=str)
+    parser.add_argument('command', type=str, choices=('compile', 'infer'))
+    parser.add_argument('--model_path', type=str, default='./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx')
+    parser.add_argument('--data_path', type=str, default='./data/datasets/vision/imagenetv2c/val')
     parser.add_argument('--target_device', type=str, default='AM68A')
     parser.add_argument('--runtime_name', type=str, default=None)
     return parser
