@@ -100,18 +100,10 @@ class CompileModelBase(CommonPipelineBase):
         #
 
         ###################################################################################
-        if not os.environ.get('TIDL_TOOLS_PATH', None):
-            target_device = runtime_settings['target_device']
-            tools_base_path = os.path.abspath(os.path.normpath(os.path.join(os.path.dirname(rtwrapper.__file__), '..', 'tools')))
-            tools_bin_path = os.path.join(tools_base_path, target_device, 'tidl_tools')
-            os.environ['TIDL_TOOLS_PATH'] = tools_bin_path
-            os.environ['LD_LIBRARY_PATH'] = f":{tools_bin_path}:{os.environ.get('LD_LIBRARY_PATH','')}"
+        assert os.environ.get('TIDL_TOOLS_PATH', None), \
+            f"TIDL_TOOLS_PATH or LD_LIBRARY_PATH is missing in the environment"
 
-        if not runtime_options.get('tidl_tools_path', None):
-            runtime_options['tidl_tools_path'] = os.environ['TIDL_TOOLS_PATH']
-
-        assert runtime_options['tidl_tools_path'] == os.environ['TIDL_TOOLS_PATH'], \
-            f"path mismatch: {runtime_options['tidl_tools_path']}, {os.environ['TIDL_TOOLS_PATH']}"
+        runtime_options['tidl_tools_path'] = os.environ['TIDL_TOOLS_PATH']
 
         if not runtime_options.get('artifacts_folder', None):
             runtime_options['artifacts_folder'] = self.artifacts_folder
