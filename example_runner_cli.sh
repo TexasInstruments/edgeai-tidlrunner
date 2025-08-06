@@ -35,7 +35,24 @@ export TARGET_DEVICE="AM68A"
 # add environemnt settings as needed
 source ./set_env.sh
 
+
 ##################################################################
-tidlrunner-cli compile+infer \
-    --target_device ${TARGET_DEVICE} \
-    --model_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx
+# Example 1: compile by directly using a model path
+# if data_path is not specified, this will use random inputs and it may not be good for accuracy.
+# also there are several paameters for which defaults are assumed - it may not be perfect
+# to understand the options that can be specified, use: tidlrunner-cli compile --help 
+#----------------------------------------------------------------
+tidlrunner-cli compile+infer --model_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx
+
+
+##################################################################
+# Exampe 2: compile using a config file
+#----------------------------------------------------------------
+# tidlrunner-cli compile+infer --config_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml
+
+
+##################################################################
+# Example 3: compile using a wrapper config file that aggregates other config files
+#----------------------------------------------------------------
+# tidlrunner-cli compile+infer --config_path ./data/models/configs.yaml
+

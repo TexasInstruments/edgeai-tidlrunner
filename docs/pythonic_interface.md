@@ -15,7 +15,7 @@ kwargs = {
 edgeai_tidlrunner.runner.run('compile', **kwargs)
 ```
 
-See the Pythonic example in [example_runner_py.py](./examples/vision/scripts/example_runner_py.py) which is invoked via [example_runner_py.sh](./example_runner_py.sh)
+See the Pythonic example in [example_runner_py.py](./examples/vision/scripts/example_runner_py.py) which is invoked via [example_advanced_runner_py.sh](./example_advanced_runner_py.sh)
 
 
 
