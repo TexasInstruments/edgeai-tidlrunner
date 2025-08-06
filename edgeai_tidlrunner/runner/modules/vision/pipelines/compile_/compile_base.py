@@ -100,8 +100,8 @@ class CompileModelBase(CommonPipelineBase):
         #
 
         ###################################################################################
-        assert os.environ.get('TIDL_TOOLS_PATH', None), \
-            f"TIDL_TOOLS_PATH or LD_LIBRARY_PATH is missing in the environment"
+        if os.environ.get('TIDL_TOOLS_PATH', None):
+            print(f"WARNING: TIDL_TOOLS_PATH is missing in the environment")
 
         runtime_options['tidl_tools_path'] = os.environ['TIDL_TOOLS_PATH']
 
