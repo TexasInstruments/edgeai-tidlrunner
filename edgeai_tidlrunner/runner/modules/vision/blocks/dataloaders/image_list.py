@@ -56,20 +56,24 @@ class ImageListDataLoader(dataset_base.DatasetBase):
         paths = os.listdir(path)
         paths = [os.path.join(path,f) for f in paths]
         image_files = [os.path.isfile(f) for f in paths if (not file_types or os.path.splitext(f)[-1].lower() in file_types)]
-        files = None
-        labels = None
-        if not any(image_files):
+        if any(image_files):
+            return image_files, None
+        else:
+            files = None
+            labels = None
             print(f'INFO: could not fild image files in {path}. Searching in sub folders...')
             files = []
             labels = []
             for folder in paths:
-                files_list = [os.path.join(folder, f) for f in os.listdir(folder)]
-                labels_list = [os.path.basename(folder) for f in files_list]
-                files.extend(files_list)
+                paths = os.listdir(folder)
+                paths = [os.path.join(folder,f) for f in paths]
+                image_files = [os.path.isfile(f) for f in paths if (not file_types or os.path.splitext(f)[-1].lower() in file_types)]
+                labels_list = [os.path.basename(folder) for f in image_files]
+                files.extend(image_files)
                 labels.extend(labels_list)
             #
-        #
-        return files, labels
+            return files, labels
+
 
     def _read_file(self, path, label_path, file_types=None):
         files = []
