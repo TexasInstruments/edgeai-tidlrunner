@@ -32,6 +32,9 @@
 # set target device
 export TARGET_DEVICE="AM68A"
 
+# add environemnt settings as needed
+source ./set_env.sh
+
 ##################################################################
 tidlrunner-cli compile+infer \
   --target_device ${TARGET_DEVICE} \
