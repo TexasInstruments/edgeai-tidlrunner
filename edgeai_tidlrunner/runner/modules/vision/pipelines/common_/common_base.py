@@ -45,30 +45,13 @@ class CommonPipelineBase(bases.PipelineBase):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
-        ###################################################################################
         if 'session' in self.settings and self.settings[self.session_prefix].get('model_path', None):
             self.model_source = self.settings[self.session_prefix]['model_path']
 
             run_dir = self.settings[self.session_prefix]['run_dir']
+            self.run_dir = self.build_run_dir(run_dir)
+
             model_basename = os.path.basename(self.model_source)
-            model_basename_wo_ext = os.path.splitext(model_basename)[0]
-            model_id = self.settings[self.session_prefix]['model_id'] or ''
-            model_id_underscore = model_id + '_' if model_id else ''
-
-            tensor_bits = self.kwargs.get('session.runtime_settings.runtime_options.tensor_bits', '')
-            tensor_bits_str = f'{str(tensor_bits)}bits' if tensor_bits else ''
-            tensor_bits_slash = f'{str(tensor_bits)}bits' + os.sep if tensor_bits else ''
-
-            target_device = self.kwargs.get('session.runtime_settings.target_device', 'NONE')
-            target_device_str = target_device if target_device else ''
-            target_device_slash = target_device + os.sep if target_device else ''
-
-            self.run_dir = run_dir.replace('{model_name}', model_basename_wo_ext) \
-                .replace('{model_id}_', model_id_underscore).replace('{model_id}', model_id) \
-                .replace('{tensor_bits}/', tensor_bits_slash).replace('{tensor_bits}', tensor_bits_str) \
-                .replace('{target_device}/', target_device_slash).replace('{target_device}', target_device_str)
-
             self.model_folder = os.path.join(self.run_dir, 'model')
             self.model_path = os.path.join(self.model_folder, model_basename)
             self.settings[self.session_prefix]['model_path'] = self.model_path
@@ -81,6 +64,25 @@ class CommonPipelineBase(bases.PipelineBase):
             self.artifacts_folder = None
         #
 
+    def build_run_dir(self, run_dir):
+        model_basename = os.path.basename(self.model_source)
+        model_basename_wo_ext = os.path.splitext(model_basename)[0]
+        model_id = self.settings[self.session_prefix]['model_id'] or ''
+        model_id_underscore = model_id + '_' if model_id else ''
+
+        tensor_bits = self.kwargs.get('session.runtime_settings.runtime_options.tensor_bits', '')
+        tensor_bits_str = f'{str(tensor_bits)}bits' if tensor_bits else ''
+        tensor_bits_slash = f'{str(tensor_bits)}bits' + os.sep if tensor_bits else ''
+
+        target_device = self.kwargs.get('session.runtime_settings.target_device', 'NONE')
+        target_device_str = target_device if target_device else ''
+        target_device_slash = target_device + os.sep if target_device else ''
+
+        run_dir = run_dir.replace('{model_name}', model_basename_wo_ext) \
+            .replace('{model_id}_', model_id_underscore).replace('{model_id}', model_id) \
+            .replace('{tensor_bits}/', tensor_bits_slash).replace('{tensor_bits}', tensor_bits_str) \
+            .replace('{target_device}/', target_device_slash).replace('{target_device}', target_device_str)
+        return run_dir
 
     def download_file(self, model_source, model_folder, source_dir=None):
         is_web_link = model_source.startswith('http')

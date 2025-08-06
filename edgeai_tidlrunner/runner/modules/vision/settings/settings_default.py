@@ -77,6 +77,7 @@ SETTINGS_DEFAULT['compile_model'] = SETTINGS_DEFAULT['basic'] | {
     ## model
     'model_id':                 {'dest': 'session.model_id', 'default': None, 'type': str, 'metavar': 'value', 'help': 'unique id of a model - optional'},
     'artifacts_folder':         {'dest': 'session.artifacts_folder', 'default': None, 'type': str, 'metavar': 'value'},
+    'packaged_path':            {'dest': 'session.packaged_path', 'default':'./work_dirs/modelpackage/{target_device}/{tensor_bits}/{model_id}_{model_name}', 'type':str, 'metavar':'value', 'help':'packaged model path'},
     ## runtime
     'runtime_name':             {'dest': 'session.name', 'default': None, 'type': str, 'metavar': 'value'},
     'input_mean':               {'dest': 'session.input_mean', 'default': (123.675, 116.28, 103.53), 'type': float, 'nargs': '*', 'metavar': 'value'},

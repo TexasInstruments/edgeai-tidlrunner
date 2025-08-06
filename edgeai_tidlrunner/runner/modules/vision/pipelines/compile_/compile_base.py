@@ -126,6 +126,9 @@ class CompileModelBase(CommonPipelineBase):
             session_kwargs['runtime_settings']['runtime_options']['object_detection:meta_layers_names_list'] = object_detection_meta_layers_names_path
         #
 
+        packaged_path = self.settings[self.session_prefix]['packaged_path']
+        self.packaged_path = self.build_run_dir(packaged_path)
+
     def _upgrade_kwargs(self, **kwargs):
         kwargs = copy.deepcopy(kwargs)
         kwargs_out = copy.deepcopy(kwargs)
