@@ -33,11 +33,9 @@ from . import bases
 from . import modules
 
 
-def _run_command(command_key, pipeline_name, command_kwargs, parallel_processes, multiple_models):
+def _run_command(command_key, pipeline_name, command_kwargs, capture_log):
     command_kwargs = copy.deepcopy(command_kwargs)
-    if parallel_processes and multiple_models:
-        command_kwargs['common.capture_log'] = bases.settings_base.CaptureLogModes.CAPTURE_LOG_MODE_ON
-    #
+    command_kwargs['common.capture_log'] = capture_log
     target_module_name = command_kwargs['common.target_module']
     target_module = getattr(modules, target_module_name)
     command_module_name_dict = target_module.pipelines.command_module_name_dict
@@ -64,7 +62,8 @@ def _run(model_command_dict):
             command_key, pipeline_name, command_kwargs = model_command_entry
             # while running multiple configs, it is better to use parallel processing
             parallel_processes = command_kwargs['common.parallel_processes']
-            task_func = functools.partial(_run_command, command_key, pipeline_name, command_kwargs, parallel_processes, multiple_models)
+            capture_log = bases.settings_base.CaptureLogModes.CAPTURE_LOG_MODE_ON if parallel_processes and multiple_models else command_kwargs['common.capture_log']
+            task_func = functools.partial(_run_command, command_key, pipeline_name, command_kwargs, capture_log)
             model_key = model_key or 'model'
             proc_name = f'{model_key}:{command_key}:{pipeline_name}'
             task_entry = {'proc_name':proc_name, 'proc_func':task_func}

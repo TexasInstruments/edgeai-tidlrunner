@@ -66,7 +66,7 @@ class CompileAnalyzeNoTIDL(compile.CompileModel):
         onnx.save(onnx_model, self.model_path)
 
     def _run(self):
-        super().run()
+        super()._run()
 
 
 class InferAnalyzeNoTIDL(infer.InferModel):
@@ -91,7 +91,7 @@ class CompileAnalyzeTIDL32(compile.CompileModel):
         super().__init__(**kargs_copy)
 
     def _run(self):
-        super().run()
+        super()._run()
 
 
 class InferAnalyzeTIDL32(infer.InferModel):
@@ -116,7 +116,7 @@ class CompileAnalyzeTIDL16(compile.CompileModel):
         super().__init__(**kargs_copy)
 
     def _run(self):
-        super().run()
+        super()._run()
 
 
 class InferAnalyzeTIDL16(infer.InferModel):
@@ -141,7 +141,7 @@ class CompileAnalyzeTIDL8(compile.CompileModel):
         super().__init__(**kargs_copy)
 
     def _run(self):
-        super().run()
+        super()._run()
 
 
 class InferAnalyzeTIDL8(infer.InferModel):

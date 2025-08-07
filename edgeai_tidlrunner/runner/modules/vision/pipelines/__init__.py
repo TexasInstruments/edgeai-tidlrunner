@@ -42,7 +42,8 @@ command_module_name_dict_base = {
     'compile':'CompileModel',
     'infer':'InferModel',
     'accuracy':'InferAccuracy',
-    'analyze': ['CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL32', 'InferAnalyzeTIDL32', 'CompileAnalyzeTIDL16', 'InferAnalyzeTIDL16', 'CompileAnalyzeTIDL8', 'InferAnalyzeTIDL8', 'InferAnalyzeFinal'],
+    #'analyze': ['CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL32', 'InferAnalyzeTIDL32', 'CompileAnalyzeTIDL16', 'InferAnalyzeTIDL16', 'CompileAnalyzeTIDL8', 'InferAnalyzeTIDL8', 'InferAnalyzeFinal'],
+    'analyze': ['CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL32', 'InferAnalyzeTIDL32', 'InferAnalyzeFinal'],
     'compile+infer': ['CompileModel', 'InferModel'],
     'compile+accuracy': ['CompileModel', 'InferAccuracy'],
 }

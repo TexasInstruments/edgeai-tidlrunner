@@ -49,19 +49,6 @@ class CompileModel(CompileModelBase):
     def __init__(self, with_postprocess=False, **kwargs):
         super().__init__(with_postprocess=with_postprocess, **kwargs)
 
-    def info(self):
-        print(f'INFO: Model import - {__file__}')
-
-    def modify_model(self):
-        print(f'INFO: running model optimize {self.model_path}')
-        common_kwargs = self.settings[self.common_prefix]
-        optimize_kwargs = common_kwargs['optimize']
-        optimize.OptimizeModel._run_func(self.model_path, self.model_path, **optimize_kwargs)
-
-    def _run(self):
-        print(f'INFO: starting model import')
-        super()._run()
-
         common_kwargs = self.settings[self.common_prefix]
         dataloader_kwargs = self.settings[self.dataloader_prefix]
         session_kwargs = self.settings[self.session_prefix]
@@ -86,7 +73,8 @@ class CompileModel(CompileModelBase):
         self.download_file(self.model_source, model_folder=self.model_folder, source_dir=config_path)
 
         if self.object_detection_meta_layers_names_list_source:
-            self.download_file(self.object_detection_meta_layers_names_list_source, model_folder=self.model_folder, source_dir=config_path)
+            self.download_file(self.object_detection_meta_layers_names_list_source, model_folder=self.model_folder,
+                               source_dir=config_path)
         #
 
         self.modify_model()
@@ -96,7 +84,7 @@ class CompileModel(CompileModelBase):
         session_type = blocks.sessions.SESSION_TYPES_MAPPING[session_name]
         self.session = session_type(**session_kwargs)
         self.session.start_import()
-        
+
         # input_data
         if callable(dataloader_kwargs['name']):
             dataloader_method = dataloader_kwargs['name']
@@ -111,7 +99,7 @@ class CompileModel(CompileModelBase):
         else:
             raise RuntimeError(f'ERROR: invalid dataloader args: {dataloader_kwargs}')
         #
-            
+
         # preprocess
         if callable(preprocess_kwargs['name']):
             preprocess_method = preprocess_kwargs['name']
@@ -144,23 +132,44 @@ class CompileModel(CompileModelBase):
         else:
             raise RuntimeError(f'ERROR: invalid postprocess args: {postprocess_kwargs}')
         #
-        
+
+    def info(self):
+        print(f'INFO: Model import - {__file__}')
+
+    def modify_model(self):
+        print(f'INFO: running model optimize {self.model_path}')
+        common_kwargs = self.settings[self.common_prefix]
+        optimize_kwargs = common_kwargs['optimize']
+        optimize.OptimizeModel._run_func(self.model_path, self.model_path, **optimize_kwargs)
+
+    def _run(self):
+        print(f'INFO: starting model import')
+        common_kwargs = self.settings[self.common_prefix]
+        dataloader_kwargs = self.settings[self.dataloader_prefix]
+        session_kwargs = self.settings[self.session_prefix]
+        preprocess_kwargs = self.settings[self.preprocess_prefix]
+        postprocess_kwargs = self.settings[self.postprocess_prefix]
+        runtime_settings = session_kwargs['runtime_settings']
+        runtime_options = runtime_settings['runtime_options']
+
+        super()._run()
+
         # infer model
         run_data = []
-        outputs = []
         print(f'INFO: running model import {self.model_path}')
         calibration_frames = runtime_options['advanced_options:calibration_frames']
         for input_index in range(min(len(self.dataloader), calibration_frames)):
             print(f'INFO: import frame: {input_index}')
             input_data, info_dict = self.preprocess(self.dataloader[input_index], info_dict={})
-            outputs = self.session.run_import(input_data)
-            output, info_dict = self.postprocess(outputs, info_dict=info_dict)
-            outputs.append(output)
-            run_data.append({'input':input_data, 'output':outputs, 'info_dict':info_dict})
+            output_dict = self.session.run_import(input_data)
+            outputs = list(output_dict.values())
+            outputs, info_dict = self.postprocess(outputs, info_dict=info_dict)
+            output_dict = {output_key:output for output, output_key in zip(outputs, output_dict.keys())}
+            run_data.append({'input':input_data, 'output':output_dict, 'info_dict':info_dict})
 
         print(f'INFO: model import done. output is in: {self.run_dir}')
         self.run_data = run_data
 
         # TODO - cleanup the parameters and write param.yaml
         self._write_params('param.yaml')
-        return outputs
+        return run_data

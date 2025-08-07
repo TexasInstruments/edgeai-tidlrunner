@@ -49,15 +49,6 @@ class InferModel(CompileModelBase):
     def __init__(self, with_postprocess=False, **kwargs):
         super().__init__(with_postprocess=with_postprocess,**kwargs)
 
-    def info(self):
-        print(f'INFO: Model inference - {__file__}')
-
-    def _run(self):
-        print(f'INFO: starting model infer')
-        self.settings['result'] = dict()
-
-        super()._run()
-
         common_kwargs = self.settings[self.common_prefix]
         dataloader_kwargs = self.settings[self.dataloader_prefix]
         session_kwargs = self.settings[self.session_prefix]
@@ -66,7 +57,8 @@ class InferModel(CompileModelBase):
         runtime_settings = session_kwargs['runtime_settings']
         runtime_options = runtime_settings['runtime_options']
 
-        if not os.path.exists(self.run_dir) and not os.path.exists(self.model_folder) and not os.path.exists(self.artifacts_folder):
+        if not os.path.exists(self.run_dir) and not os.path.exists(self.model_folder) and not os.path.exists(
+                self.artifacts_folder):
             raise RuntimeWarning(f'self.run_dir does not exist {self.run_dir} - compile the model before inference')
 
         # shutil.copy2(self.model_source, self.model_path)
@@ -76,7 +68,7 @@ class InferModel(CompileModelBase):
         session_type = blocks.sessions.SESSION_TYPES_MAPPING[session_name]
         self.session = session_type(**session_kwargs)
         self.session.start_inference()
-        
+
         # input_data
         if callable(dataloader_kwargs['name']):
             dataloader_method = dataloader_kwargs['name']
@@ -91,7 +83,7 @@ class InferModel(CompileModelBase):
         else:
             raise RuntimeError(f'ERROR: invalid dataloader args: {dataloader_kwargs}')
         #
-            
+
         # preprocess
         if callable(preprocess_kwargs['name']):
             preprocess_method = preprocess_kwargs['name']
@@ -124,7 +116,24 @@ class InferModel(CompileModelBase):
         else:
             raise RuntimeError(f'ERROR: invalid postprocess args: {postprocess_kwargs}')
         #
-        
+
+    def info(self):
+        print(f'INFO: Model inference - {__file__}')
+
+    def _run(self):
+        print(f'INFO: starting model infer')
+        self.settings['result'] = dict()
+
+        common_kwargs = self.settings[self.common_prefix]
+        dataloader_kwargs = self.settings[self.dataloader_prefix]
+        session_kwargs = self.settings[self.session_prefix]
+        preprocess_kwargs = self.settings[self.preprocess_prefix]
+        postprocess_kwargs = self.settings[self.postprocess_prefix]
+        runtime_settings = session_kwargs['runtime_settings']
+        runtime_options = runtime_settings['runtime_options']
+
+        super()._run()
+
         # infer model
         run_data = []
         num_frames = min(len(self.dataloader), common_kwargs['num_frames'])
@@ -134,9 +143,11 @@ class InferModel(CompileModelBase):
         tqdm_obj = tqdm.tqdm(range(num_frames))
         for input_index in range(num_frames):
             input_data, info_dict = self.preprocess(self.dataloader[input_index], info_dict={}) if self.preprocess else (self.dataloader[input_index], {})
-            outputs = self.session.run_inference(input_data)
+            output_dict = self.session.run_inference(input_data)
+            outputs = list(output_dict.values())
             outputs, info_dict = self.postprocess(outputs, info_dict=info_dict) if self.postprocess else (outputs, info_dict)
-            run_data.append({'input':input_data, 'output':outputs, 'info_dict':info_dict})
+            output_dict = {output_key:output for output, output_key in zip(outputs, output_dict.keys())}
+            run_data.append({'input':input_data, 'output':output_dict, 'info_dict':info_dict})
             if input_index % display_step == 0:
                 tqdm_obj.update(input_index - tqdm_obj.n)
             #
@@ -147,5 +158,5 @@ class InferModel(CompileModelBase):
         self.run_data = run_data
         # TODO: populate the result entry
         self._write_params('result.yaml')
-        return outputs
+        return run_data
 

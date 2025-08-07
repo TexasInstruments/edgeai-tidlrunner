@@ -100,10 +100,9 @@ class CompileModelBase(CommonPipelineBase):
         #
 
         ###################################################################################
-        if os.environ.get('TIDL_TOOLS_PATH', None):
-            print(f"WARNING: TIDL_TOOLS_PATH is missing in the environment")
-
-        runtime_options['tidl_tools_path'] = os.environ['TIDL_TOOLS_PATH']
+        if runtime_settings['tidl_offload']:
+            assert os.environ.get('TIDL_TOOLS_PATH', None) is not None, f"WARNING: TIDL_TOOLS_PATH is missing in the environment"
+            runtime_options['tidl_tools_path'] = os.environ['TIDL_TOOLS_PATH']
 
         if not runtime_options.get('artifacts_folder', None):
             runtime_options['artifacts_folder'] = self.artifacts_folder
