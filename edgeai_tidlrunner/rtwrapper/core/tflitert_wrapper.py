@@ -97,7 +97,8 @@ class TFLiteRuntimeWrapper(BaseRuntimeWrapper):
         #
         self.interpreter.invoke()
         outputs = [self._get_tensor(output_detail) for output_detail in output_details]
-        return outputs
+        output_dict = {output_key:output for output_key, output in zip(output_keys, outputs)}
+        return output_dict
 
     def _create_interpreter(self, is_import):
         # move the import inside the function, so that tflite_runtime needs to be installed

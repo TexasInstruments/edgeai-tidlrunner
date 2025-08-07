@@ -94,7 +94,8 @@ class ONNXRuntimeWrapper(BaseRuntimeWrapper):
         output_keys = output_keys or [d_info['name'] for d_info in self.kwargs['output_details']]
         # run the actual import step
         outputs = self.interpreter.run(output_keys, input_data)
-        return outputs
+        output_dict = {output_key:output for output_key, output in zip(output_keys, outputs)}
+        return output_dict
 
     def _create_interpreter(self, is_import):
         # move the import inside the function, so that onnxruntime needs to be installed only if someone wants to use it

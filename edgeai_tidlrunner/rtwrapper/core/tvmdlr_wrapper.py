@@ -104,7 +104,9 @@ class TVMDLRRuntimeWrapper(BaseRuntimeWrapper):
             input_data.update(self.kwargs['extra_inputs'])
         #
         outputs = self.interpreter.run(input_data)
-        return outputs
+        output_keys = output_keys or [d_info['name'] for d_info in self.kwargs['output_details']]
+        output_dict = {output_key:output for output_key, output in zip(output_keys, outputs)}
+        return output_dict
 
     def _create_interpreter_for_import(self, calib_list):
         # onnx and tvm are required only for model import
