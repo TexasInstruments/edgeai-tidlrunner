@@ -65,7 +65,7 @@ COPY_SETTINGS_DEFAULT['basic'] = {}
 # compile can be followed by infer, analyze or accuracy
 # compile is used to indicate a more sophisticated import - populate real data_path for that.
 ##########################################################################
-SETTINGS_DEFAULT['compile_model'] = SETTINGS_DEFAULT['basic'] | {
+SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | {
     'simplify_model':          {'dest': 'common.optimize.simplify_model', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value'},
     'optimize_model':          {'dest': 'common.optimize.optimize_model', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value'},
     'shape_inference':          {'dest': 'common.optimize.shape_inference', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value'},
@@ -109,28 +109,28 @@ SETTINGS_DEFAULT['compile_model'] = SETTINGS_DEFAULT['basic'] | {
     'postprocess_name':        {'dest': 'postprocess.name', 'default': None, 'type': str, 'metavar': 'value'},
 }
 
-COPY_SETTINGS_DEFAULT['compile_model'] = COPY_SETTINGS_DEFAULT['basic'] | {
+COPY_SETTINGS_DEFAULT['compile'] = COPY_SETTINGS_DEFAULT['basic'] | {
     'session.data_layout': 'preprocess.data_layout'
 }
 
 ##########################################################################
-SETTINGS_DEFAULT['infer_model'] = SETTINGS_DEFAULT['compile_model'] | {
+SETTINGS_DEFAULT['infer'] = SETTINGS_DEFAULT['compile'] | {
 }
 
-COPY_SETTINGS_DEFAULT['infer_model'] = COPY_SETTINGS_DEFAULT['compile_model'] | {
+COPY_SETTINGS_DEFAULT['infer'] = COPY_SETTINGS_DEFAULT['compile'] | {
 }
 
 ##########################################################################
-SETTINGS_DEFAULT['infer_analyze'] = SETTINGS_DEFAULT['infer_model'] | {
+SETTINGS_DEFAULT['analyze'] = SETTINGS_DEFAULT['infer'] | {
 }
 
-COPY_SETTINGS_DEFAULT['infer_analyze'] = COPY_SETTINGS_DEFAULT['infer_model'] | {
+COPY_SETTINGS_DEFAULT['analyze'] = COPY_SETTINGS_DEFAULT['infer'] | {
 }
 
 
 ##########################################################################
 # accuracy requires label_path as well
-SETTINGS_DEFAULT['infer_accuracy'] = SETTINGS_DEFAULT['compile_model'] | {
+SETTINGS_DEFAULT['accuracy'] = SETTINGS_DEFAULT['compile'] | {
     'label_path':                         {'dest': 'dataloader.label_path', 'default':None, 'type':str, 'metavar':'path'},
 
     # increase number of frames for infer_accuracy
@@ -153,14 +153,15 @@ SETTINGS_DEFAULT['infer_accuracy'] = SETTINGS_DEFAULT['compile_model'] | {
     'postprocess_save_output_frames':     {'dest':'postprocess.save_output_frames', 'default':1, 'type':int, 'metavar':'value'},
 }
 
-COPY_SETTINGS_DEFAULT['infer_accuracy'] = COPY_SETTINGS_DEFAULT['compile_model'] | {
+COPY_SETTINGS_DEFAULT['accuracy'] = COPY_SETTINGS_DEFAULT['compile'] | {
 }
 
 ##########################################################################
-SETTINGS_DEFAULT['optimize_model'] = SETTINGS_DEFAULT['basic'] | {
-    'optimize':                 {'dest': 'common.optimize.model_optimizer', 'default': False, 'type': utils.str_to_bool, 'metavar': 'value'},
-    'shape_inference':          {'dest': 'common.optimize.shape_inference', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value'},
+SETTINGS_DEFAULT['optimize'] = SETTINGS_DEFAULT['basic'] | {
+    'simplify_model':                   {'dest': 'common.optimize.simplify_model', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value'},
+    'optimize_model':                   {'dest': 'common.optimize.optimize_model', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value'},
+    'shape_inference':                  {'dest': 'common.optimize.shape_inference', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value'},
 }
 
-COPY_SETTINGS_DEFAULT['optimize_model'] = COPY_SETTINGS_DEFAULT['basic'] | {
+COPY_SETTINGS_DEFAULT['optimize'] = COPY_SETTINGS_DEFAULT['basic'] | {
 }

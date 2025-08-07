@@ -38,8 +38,8 @@ from ..common_ import common_base
 
 
 class OptimizeModel(common_base.CommonPipelineBase):
-    ARGS_DICT=SETTINGS_DEFAULT['optimize_model']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['optimize_model']
+    ARGS_DICT=SETTINGS_DEFAULT['optimize']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['optimize']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -48,13 +48,10 @@ class OptimizeModel(common_base.CommonPipelineBase):
         print(f'INFO: Model optimize - {__file__}')
 
     def _run(self):
-        print(f'INFO: starting model optimize')
+        print(f'INFO: starting model optimize with parameters: {self.kwargs}')
 
         common_kwargs = self.settings[self.common_prefix]
         optimize_kwargs = common_kwargs.get('optimize', {})
-        simplify_model = optimize_kwargs.get('simplify_model', True)
-        optimize_model = optimize_kwargs.get('optimize_model', True)
-        shape_inference = optimize_kwargs.get('shape_inference', True)
 
         if os.path.exists(self.run_dir):
             print(f'INFO: clearing run_dir folder before compile: {self.run_dir}')
@@ -68,7 +65,7 @@ class OptimizeModel(common_base.CommonPipelineBase):
         config_path = os.path.dirname(common_kwargs['config_path']) if common_kwargs['config_path'] else None
         self.download_file(self.model_source, model_folder=self.model_folder, source_dir=config_path)
 
-        self._run_func(self.model_path, self.model_path, simplify_model=simplify_model, optimize_model=optimize_model, shape_inference=shape_inference)
+        self._run_func(self.model_path, self.model_path, **optimize_kwargs)
 
     @classmethod
     def _run_func(cls, model_source, model_path, simplify_model=True, shape_inference=True, optimize_model=True, **kwargs):

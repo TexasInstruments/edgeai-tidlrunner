@@ -32,6 +32,7 @@ import sys
 import shutil
 import copy
 import ast
+import tqdm
 
 from ......rtwrapper.core import presets
 from ..... import bases
@@ -39,21 +40,22 @@ from ... import blocks
 from ..... import utils
 from ...settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
 from .compile_base import CompileModelBase
-from ..optimize_ import optimize_model
 
 
-class CompileModel(CompileModelBase):
-    ARGS_DICT=SETTINGS_DEFAULT['compile_model']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['compile_model']
-    
+class InferModel(CompileModelBase):
+    ARGS_DICT=SETTINGS_DEFAULT['infer']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['infer']
+
     def __init__(self, with_postprocess=False, **kwargs):
-        super().__init__(with_postprocess=with_postprocess, **kwargs)
+        super().__init__(with_postprocess=with_postprocess,**kwargs)
 
     def info(self):
-        print(f'INFO: Model import - {__file__}')
+        print(f'INFO: Model inference - {__file__}')
 
     def _run(self):
-        print(f'INFO: starting model import')
+        print(f'INFO: starting model infer')
+        self.settings['result'] = dict()
+
         super()._run()
 
         common_kwargs = self.settings[self.common_prefix]
@@ -64,34 +66,16 @@ class CompileModel(CompileModelBase):
         runtime_settings = session_kwargs['runtime_settings']
         runtime_options = runtime_settings['runtime_options']
 
-        if os.path.exists(self.run_dir):
-            print(f'INFO: clearing run_dir folder before compile: {self.run_dir}')
-            shutil.rmtree(self.run_dir, ignore_errors=True)
-        #
+        if not os.path.exists(self.run_dir) and not os.path.exists(self.model_folder) and not os.path.exists(self.artifacts_folder):
+            raise RuntimeWarning(f'self.run_dir does not exist {self.run_dir} - compile the model before inference')
 
-        os.makedirs(self.run_dir, exist_ok=True)
-        os.makedirs(self.artifacts_folder, exist_ok=True)
-        os.makedirs(self.model_folder, exist_ok=True)
-
-        # write config to a file
-        self._write_params('config.yaml')
-
-        config_path = os.path.dirname(common_kwargs['config_path']) if common_kwargs['config_path'] else None
-        self.download_file(self.model_source, model_folder=self.model_folder, source_dir=config_path)
-
-        if self.object_detection_meta_layers_names_list_source:
-            self.download_file(self.object_detection_meta_layers_names_list_source, model_folder=self.model_folder, source_dir=config_path)
-        #
-
-        print(f'INFO: running model optimize {self.model_path}')
-        optimize_kwargs = common_kwargs['optimize']
-        optimize_model.OptimizeModel._run_func(self.model_path, self.model_path, **optimize_kwargs)
+        # shutil.copy2(self.model_source, self.model_path)
 
         # session
         session_name = session_kwargs['name']
         session_type = blocks.sessions.SESSION_TYPES_MAPPING[session_name]
         self.session = session_type(**session_kwargs)
-        self.session.start_import()
+        self.session.start_inference()
         
         # input_data
         if callable(dataloader_kwargs['name']):
@@ -143,19 +127,25 @@ class CompileModel(CompileModelBase):
         
         # infer model
         run_data = []
-        outputs = []
-        print(f'INFO: running model import {self.model_path}')
-        for input_index in range(min(len(self.dataloader), runtime_options['advanced_options:calibration_frames'])):
-            print(f'INFO: import frame: {input_index}')
-            input_data, info_dict = self.preprocess(self.dataloader[input_index], info_dict={})
-            outputs = self.session.run_import(input_data)
-            output, info_dict = self.postprocess(outputs, info_dict=info_dict)
-            outputs.append(output)
+        num_frames = min(len(self.dataloader), common_kwargs['num_frames'])
+        print(f'INFO: inference starting for {num_frames} frames')
+        input_index = 0
+        display_step = common_kwargs.display_step
+        tqdm_obj = tqdm.tqdm(range(num_frames))
+        for input_index in range(num_frames):
+            input_data, info_dict = self.preprocess(self.dataloader[input_index], info_dict={}) if self.preprocess else (self.dataloader[input_index], {})
+            outputs = self.session.run_inference(input_data)
+            outputs, info_dict = self.postprocess(outputs, info_dict=info_dict) if self.postprocess else (outputs, info_dict)
             run_data.append({'input':input_data, 'output':outputs, 'info_dict':info_dict})
+            if input_index % display_step == 0:
+                tqdm_obj.update(input_index - tqdm_obj.n)
+            #
+        #
+        tqdm_obj.update(input_index + 1 - tqdm_obj.n)
 
-        print(f'INFO: model import done. output is in: {self.run_dir}')
+        print(f'INFO: model infer done. output is in: {self.run_dir}')
         self.run_data = run_data
-
-        # TODO - cleanup the parameters and write param.yaml
-        self._write_params('param.yaml')
+        # TODO: populate the result entry
+        self._write_params('result.yaml')
         return outputs
+

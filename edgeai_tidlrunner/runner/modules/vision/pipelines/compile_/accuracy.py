@@ -27,42 +27,42 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+import os
 import sys
+import shutil
 import copy
-import numpy as np
 
-from ..... import utils
-from ..... import bases
+from ...... import rtwrapper
+from ......rtwrapper.core import presets
 from ...settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
-from . import infer_model
+from ..... import utils
+from ...blocks import postprocess
+from ...blocks import dataloaders
+from ...blocks import sessions
+from . import infer
 
 
-class InferAnalyze(bases.PipelineBase):
-    ARGS_DICT=SETTINGS_DEFAULT['infer_analyze']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['infer_analyze']
+class InferAccuracy(infer.InferModel):
+    ARGS_DICT=SETTINGS_DEFAULT['accuracy']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['accuracy']
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.infer_pipeline = infer_model.InferModelPipeline(**kwargs)
-
-        kargs_copy = copy.deepcopy(kwargs)
-        kargs_copy['tidl_offload'] = False
-        self.infer_pipeline_float = infer_model.InferModelPipeline(**kargs_copy)
+    def __init__(self, with_postprocess=True, **kwargs):
+        super().__init__(with_postprocess=with_postprocess, **kwargs)
 
     def _run(self):
-        print(f'INFO: starting model analyze')
-        print(f'INFO: model inference with offload=False')
-        self.infer_pipeline_float.run()
-        print(f'INFO: model inference with offload=True')
-        self.infer_pipeline.run()
+        print(f'INFO: starting model accuracy evaluation')
+        outputs = super()._run()
+        run_data = self.get_run_data()
 
-        input_details, output_details = self.infer_pipeline.session.get_input_output_details()
-        num_frames = len(self.infer_pipeline.run_data)
-        num_outputs = len(output_details)
-
-        for frame_index in range(num_frames):
-            for output_index in range(num_outputs):
-                output = self.infer_pipeline.run_data[frame_index]['output'][output_index]
-                float_output = self.infer_pipeline_float.run_data[frame_index]['output'][output_index]
-                diff =  np.mean(np.abs(output - float_output))
-                print(f'INFO: analyze: frame_index={frame_index} output_index={output_index} MAE={str(round(diff,5))}')
+        # now calculate the accuracy
+        if hasattr(self.dataloader, 'evaluate'):
+            metric_kwargs = self.settings.get('metric', dict())
+            accuracy = self.dataloader.evaluate(run_data, **metric_kwargs)
+            print(f'INFO: Accuracy - {accuracy}')
+            self.settings['result'].update(accuracy)
+            self._write_params('result.yaml')
+        else:
+            print(f'WARNING: dataloader {self.dataloader.__class__.__name__} does not have evaluate method, skipping accuracy calculation')
+        #
+        return self.settings['result']
+    

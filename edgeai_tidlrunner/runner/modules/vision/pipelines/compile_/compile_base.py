@@ -45,8 +45,8 @@ from ..common_.common_base import CommonPipelineBase
 
 
 class CompileModelBase(CommonPipelineBase):
-    ARGS_DICT=SETTINGS_DEFAULT['compile_model']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['compile_model']
+    ARGS_DICT=SETTINGS_DEFAULT['compile']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['compile']
     
     def __init__(self, with_postprocess=True, **kwargs):
         self.with_postprocess = with_postprocess

@@ -27,15 +27,15 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from .compile_.infer_model import InferModel
-from .compile_.compile_model import CompileModel
-from .compile_.infer_analyze import InferAnalyze
-from .compile_.infer_accuracy import InferAccuracy
+from .compile_.infer import InferModel
+from .compile_.compile import CompileModel
+from .compile_.analyze import InferAnalyze
+from .compile_.accuracy import InferAccuracy
 
-from .optimize_.optimize_model import OptimizeModel
-from .optimize_.optimize_model_gui import OptimizeModelGUI
+from .optimize_.optimize import OptimizeModel
 
-from .utils_.split_model import SplitModel
+# from .optimize_.optimize_gui import OptimizeModelGUI
+# from .utils_.split_model import SplitModel
 
 
 command_module_name_dict_base = {

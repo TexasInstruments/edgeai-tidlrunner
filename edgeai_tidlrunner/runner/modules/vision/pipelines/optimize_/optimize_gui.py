@@ -37,8 +37,8 @@ from ..common_ import common_base
 
 
 class OptimizeModelGUI(common_base.CommonPipelineBase):
-    ARGS_DICT=SETTINGS_DEFAULT['optimize_model']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['optimize_model']
+    ARGS_DICT=SETTINGS_DEFAULT['optimize']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['optimize']
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
