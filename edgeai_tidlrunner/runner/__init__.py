@@ -25,13 +25,27 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-
+import copy
 import functools
 
 from . import utils
 from . import bases
 from . import modules
+
+
+def _run_command(command_key, pipeline_name, command_kwargs, parallel_processes, multiple_models):
+    command_kwargs = copy.deepcopy(command_kwargs)
+    if parallel_processes and multiple_models:
+        command_kwargs['common.capture_log'] = bases.settings_base.CaptureLogModes.CAPTURE_LOG_MODE_ON
+    #
+    target_module_name = command_kwargs['common.target_module']
+    target_module = getattr(modules, target_module_name)
+    command_module_name_dict = target_module.pipelines.command_module_name_dict
+    assert command_key in command_module_name_dict, f'ERROR: unknown command: {command_key}'
+    command_module = getattr(target_module.pipelines, pipeline_name)
+    runner_obj = command_module(**command_kwargs)
+    command_func = runner_obj.run
+    command_func()
 
 
 def _run(model_command_dict):
@@ -50,21 +64,10 @@ def _run(model_command_dict):
             command_key, pipeline_name, command_kwargs = model_command_entry
             # while running multiple configs, it is better to use parallel processing
             parallel_processes = command_kwargs['common.parallel_processes']
-            if parallel_processes and multiple_models:
-                command_kwargs['common.capture_log'] = bases.settings_base.CaptureLogModes.CAPTURE_LOG_MODE_ON
-            #
-
-            target_module_name = command_kwargs['common.target_module']
-            target_module = getattr(modules, target_module_name)
-            command_module_name_dict = target_module.pipelines.command_module_name_dict
-            assert command_key in command_module_name_dict, f'ERROR: unknown command: {command_key}'
-            command_module = getattr(target_module.pipelines, pipeline_name)
-            runner_obj = command_module(**command_kwargs)
-
-            command_func = runner_obj.run
+            task_func = functools.partial(_run_command, command_key, pipeline_name, command_kwargs, parallel_processes, multiple_models)
             model_key = model_key or 'model'
             proc_name = f'{model_key}:{command_key}:{pipeline_name}'
-            task_entry = {'proc_name':proc_name, 'proc_func':command_func}
+            task_entry = {'proc_name':proc_name, 'proc_func':task_func}
             task_list.append(task_entry)
         #
         task_entries.update({model_key:task_list})
