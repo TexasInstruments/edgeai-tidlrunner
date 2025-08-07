@@ -32,7 +32,7 @@
 # set target device
 export TARGET_DEVICE="AM68A"
 
-# add environemnt settings as needed
+# add environment settings as needed
 source ./set_env.sh
 
 

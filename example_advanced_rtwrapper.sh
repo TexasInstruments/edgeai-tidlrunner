@@ -40,9 +40,10 @@
 # set target device
 export TARGET_DEVICE="AM68A"
 
-# add environemnt settings as needed
+# add environment settings as needed
 source ./set_env.sh
 
+##################################################################
 python3 ./examples/vision/scripts/example_advanced_rtwrapper.py "compile" \
   --target_device ${TARGET_DEVICE} \
   --model_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx \
