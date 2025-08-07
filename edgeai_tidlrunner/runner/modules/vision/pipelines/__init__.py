@@ -29,8 +29,8 @@
 
 from .compile_.infer import InferModel
 from .compile_.compile import CompileModel
-from .compile_.analyze import InferAnalyze
 from .compile_.accuracy import InferAccuracy
+from .compile_.analyze import *
 
 from .optimize_.optimize import OptimizeModel
 
@@ -41,10 +41,9 @@ from .optimize_.optimize import OptimizeModel
 command_module_name_dict_base = {
     'compile':'CompileModel',
     'infer':'InferModel',
-    'analyze':'InferAnalyze',
     'accuracy':'InferAccuracy',
+    'analyze': ['CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL32', 'InferAnalyzeTIDL32', 'CompileAnalyzeTIDL16', 'InferAnalyzeTIDL16', 'CompileAnalyzeTIDL8', 'InferAnalyzeTIDL8', 'InferAnalyzeFinal'],
     'compile+infer': ['CompileModel', 'InferModel'],
-    'compile+analyze': ['CompileModel', 'InferAnalyze'],
     'compile+accuracy': ['CompileModel', 'InferAccuracy'],
 }
 

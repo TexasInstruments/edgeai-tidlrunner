@@ -27,27 +27,145 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+import os
 import sys
 import copy
 import numpy as np
+import onnx
 
 from ..... import utils
 from ..... import bases
 from ...settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
+from . import compile
 from . import infer
 
 
-class InferAnalyze(bases.PipelineBase):
+class CompileAnalyzeNoTIDL(compile.CompileModel):
+    ARGS_DICT=SETTINGS_DEFAULT['analyze']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['analyze']
+
+    def __init__(self, **kwargs):
+        kargs_copy = copy.deepcopy(kwargs)
+        kargs_copy['tidl_offload'] = False
+        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'notidl')
+        super().__init__(**kargs_copy)
+
+    def modify_model(self):
+        super().modify_model()
+
+        # Load the original ONNX model and add intermediate outputs
+        onnx_model = onnx.load(self.model_path)
+        intermediate_layer_value_info = onnx.helper.ValueInfoProto()
+        intermediate_layer_value_info.name = ''
+
+        for i in range(len(onnx_model.graph.node)):
+            for j in range(len(onnx_model.graph.node[i].output)):
+                intermediate_layer_value_info.name = onnx_model.graph.node[i].output[j]
+                onnx_model.graph.output.append(intermediate_layer_value_info)
+
+        onnx.save(onnx_model, self.model_path)
+
+    def _run(self):
+        super().run()
+
+
+class InferAnalyzeNoTIDL(infer.InferModel):
+    ARGS_DICT=SETTINGS_DEFAULT['analyze']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['analyze']
+
+    def __init__(self, **kwargs):
+        kargs_copy = copy.deepcopy(kwargs)
+        kargs_copy['tidl_offload'] = False
+        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'notidl')
+        super().__init__(**kwargs)
+
+
+class CompileAnalyzeTIDL32(compile.CompileModel):
+    ARGS_DICT = SETTINGS_DEFAULT['analyze']
+    COPY_ARGS = COPY_SETTINGS_DEFAULT['analyze']
+
+    def __init__(self, **kwargs):
+        kargs_copy = copy.deepcopy(kwargs)
+        kargs_copy['tensor_bits'] = 32
+        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'tidl32')
+        super().__init__(**kargs_copy)
+
+    def _run(self):
+        super().run()
+
+
+class InferAnalyzeTIDL32(infer.InferModel):
+    ARGS_DICT=SETTINGS_DEFAULT['analyze']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['analyze']
+
+    def __init__(self, **kwargs):
+        kargs_copy = copy.deepcopy(kwargs)
+        kargs_copy['tensor_bits'] = 32
+        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'tidl32')
+        super().__init__(**kwargs)
+
+
+class CompileAnalyzeTIDL16(compile.CompileModel):
+    ARGS_DICT = SETTINGS_DEFAULT['analyze']
+    COPY_ARGS = COPY_SETTINGS_DEFAULT['analyze']
+
+    def __init__(self, **kwargs):
+        kargs_copy = copy.deepcopy(kwargs)
+        kargs_copy['tensor_bits'] = 16
+        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'tidl16')
+        super().__init__(**kargs_copy)
+
+    def _run(self):
+        super().run()
+
+
+class InferAnalyzeTIDL16(infer.InferModel):
+    ARGS_DICT=SETTINGS_DEFAULT['analyze']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['analyze']
+
+    def __init__(self, **kwargs):
+        kargs_copy = copy.deepcopy(kwargs)
+        kargs_copy['tensor_bits'] = 16
+        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'tidl16')
+        super().__init__(**kwargs)
+
+
+class CompileAnalyzeTIDL8(compile.CompileModel):
+    ARGS_DICT = SETTINGS_DEFAULT['analyze']
+    COPY_ARGS = COPY_SETTINGS_DEFAULT['analyze']
+
+    def __init__(self, **kwargs):
+        kargs_copy = copy.deepcopy(kwargs)
+        kargs_copy['tensor_bits'] = 8
+        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'tidl8')
+        super().__init__(**kargs_copy)
+
+    def _run(self):
+        super().run()
+
+
+class InferAnalyzeTIDL8(infer.InferModel):
+    ARGS_DICT=SETTINGS_DEFAULT['analyze']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['analyze']
+
+    def __init__(self, **kwargs):
+        kargs_copy = copy.deepcopy(kwargs)
+        kargs_copy['tensor_bits'] = 8
+        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'tidl8')
+        super().__init__(**kwargs)
+
+
+class InferAnalyzeFinal(bases.PipelineBase):
     ARGS_DICT=SETTINGS_DEFAULT['analyze']
     COPY_ARGS=COPY_SETTINGS_DEFAULT['analyze']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.infer_pipeline = infer.InferModelPipeline(**kwargs)
+        self.infer_pipeline = infer.InferModel(**kwargs)
 
         kargs_copy = copy.deepcopy(kwargs)
         kargs_copy['tidl_offload'] = False
-        self.infer_pipeline_float = infer.InferModelPipeline(**kargs_copy)
+        self.infer_pipeline_float = infer.InferModel(**kargs_copy)
 
     def _run(self):
         print(f'INFO: starting model analyze')

@@ -52,6 +52,12 @@ class CompileModel(CompileModelBase):
     def info(self):
         print(f'INFO: Model import - {__file__}')
 
+    def modify_model(self):
+        print(f'INFO: running model optimize {self.model_path}')
+        common_kwargs = self.settings[self.common_prefix]
+        optimize_kwargs = common_kwargs['optimize']
+        optimize.OptimizeModel._run_func(self.model_path, self.model_path, **optimize_kwargs)
+
     def _run(self):
         print(f'INFO: starting model import')
         super()._run()
@@ -83,9 +89,7 @@ class CompileModel(CompileModelBase):
             self.download_file(self.object_detection_meta_layers_names_list_source, model_folder=self.model_folder, source_dir=config_path)
         #
 
-        print(f'INFO: running model optimize {self.model_path}')
-        optimize_kwargs = common_kwargs['optimize']
-        optimize.OptimizeModel._run_func(self.model_path, self.model_path, **optimize_kwargs)
+        self.modify_model()
 
         # session
         session_name = session_kwargs['name']
@@ -145,7 +149,8 @@ class CompileModel(CompileModelBase):
         run_data = []
         outputs = []
         print(f'INFO: running model import {self.model_path}')
-        for input_index in range(min(len(self.dataloader), runtime_options['advanced_options:calibration_frames'])):
+        calibration_frames = runtime_options['advanced_options:calibration_frames']
+        for input_index in range(min(len(self.dataloader), calibration_frames)):
             print(f'INFO: import frame: {input_index}')
             input_data, info_dict = self.preprocess(self.dataloader[input_index], info_dict={})
             outputs = self.session.run_import(input_data)
