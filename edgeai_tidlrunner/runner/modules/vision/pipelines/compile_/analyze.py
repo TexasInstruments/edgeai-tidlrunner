@@ -77,81 +77,29 @@ class InferAnalyzeNoTIDL(infer.InferModel):
         kargs_copy = copy.deepcopy(kwargs)
         kargs_copy['tidl_offload'] = False
         kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'notidl')
-        super().__init__(**kwargs)
+        super().__init__(**kargs_copy)
 
+    def _run(self):
+        super()._run()
+        for frame_index in len(self.run_data):
+        #
 
-class CompileAnalyzeTIDL32(compile.CompileModel):
+class CompileAnalyzeTIDL(compile.CompileModel):
     ARGS_DICT = SETTINGS_DEFAULT['analyze']
     COPY_ARGS = COPY_SETTINGS_DEFAULT['analyze']
 
     def __init__(self, **kwargs):
-        kargs_copy = copy.deepcopy(kwargs)
-        kargs_copy['tensor_bits'] = 32
-        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'tidl32')
-        super().__init__(**kargs_copy)
+        super().__init__(**kwargs)
 
     def _run(self):
         super()._run()
 
 
-class InferAnalyzeTIDL32(infer.InferModel):
+class InferAnalyzeTIDL(infer.InferModel):
     ARGS_DICT=SETTINGS_DEFAULT['analyze']
     COPY_ARGS=COPY_SETTINGS_DEFAULT['analyze']
 
     def __init__(self, **kwargs):
-        kargs_copy = copy.deepcopy(kwargs)
-        kargs_copy['tensor_bits'] = 32
-        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'tidl32')
-        super().__init__(**kwargs)
-
-
-class CompileAnalyzeTIDL16(compile.CompileModel):
-    ARGS_DICT = SETTINGS_DEFAULT['analyze']
-    COPY_ARGS = COPY_SETTINGS_DEFAULT['analyze']
-
-    def __init__(self, **kwargs):
-        kargs_copy = copy.deepcopy(kwargs)
-        kargs_copy['tensor_bits'] = 16
-        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'tidl16')
-        super().__init__(**kargs_copy)
-
-    def _run(self):
-        super()._run()
-
-
-class InferAnalyzeTIDL16(infer.InferModel):
-    ARGS_DICT=SETTINGS_DEFAULT['analyze']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['analyze']
-
-    def __init__(self, **kwargs):
-        kargs_copy = copy.deepcopy(kwargs)
-        kargs_copy['tensor_bits'] = 16
-        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'tidl16')
-        super().__init__(**kwargs)
-
-
-class CompileAnalyzeTIDL8(compile.CompileModel):
-    ARGS_DICT = SETTINGS_DEFAULT['analyze']
-    COPY_ARGS = COPY_SETTINGS_DEFAULT['analyze']
-
-    def __init__(self, **kwargs):
-        kargs_copy = copy.deepcopy(kwargs)
-        kargs_copy['tensor_bits'] = 8
-        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'tidl8')
-        super().__init__(**kargs_copy)
-
-    def _run(self):
-        super()._run()
-
-
-class InferAnalyzeTIDL8(infer.InferModel):
-    ARGS_DICT=SETTINGS_DEFAULT['analyze']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['analyze']
-
-    def __init__(self, **kwargs):
-        kargs_copy = copy.deepcopy(kwargs)
-        kargs_copy['tensor_bits'] = 8
-        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'tidl8')
         super().__init__(**kwargs)
 
 
