@@ -87,8 +87,9 @@ def download_tidl_tools_hook():
         print(f"INFO: Using installed package path: {install_path}")
     except ImportError:
         # Fallback to tidl_tools_package subdirectory of current directory
-        install_path = os.path.join(os.path.dirname(__file__), "tidl_tools_package")
-        print(f"INFO: Using package source path: {install_path}")
+        # install_path = os.path.join(os.path.dirname(__file__), "tidl_tools_package")
+        # print(f"INFO: Using package source path: {install_path}")
+        raise RuntimeError("ERROR: tidl_tools_package is not installed. Please install it first.")
     
     try:
         setup_tidl_tools(install_path, tools_version, tools_type)

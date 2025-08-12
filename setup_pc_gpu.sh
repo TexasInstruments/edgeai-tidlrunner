@@ -32,8 +32,8 @@
 
 ######################################################################
 pip3 install --no-input onnx_graphsurgeon==0.3.26 --extra-index-url https://pypi.ngc.nvidia.com
-pip3 install -e ./[pc]
-TIDL_TOOLS_TYPE="gpu" pip3 install -e ./tools
+pip3 install ./[pc] --verbose
+TIDL_TOOLS_TYPE="gpu" pip3 install ./tools --verbose
 
 
 ########################################################
