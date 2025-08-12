@@ -41,4 +41,7 @@ echo "TARGET_DEVICE=${TARGET_DEVICE}"
 # add environment variables as needed
 source ./set_env.sh
 
-RUNNER_INVOKE_NAME=${0} python3 -m edgeai_tidlrunner.main "$@" --target_device ${TARGET_DEVICE}
+# tidlrunner_cli is equivalent to running python3 -m edgeai_tidlrunner.main
+# see pyproject.toml for the script entry point [project.scripts]
+
+RUNNER_INVOKE_NAME=${0} tidlrunner_cli "$@" --target_device ${TARGET_DEVICE}

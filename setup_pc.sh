@@ -30,42 +30,9 @@
 
 
 ######################################################################
-# change default tidl_tools version if needed
-# examples: 11.1 11.0 10.1 10.0
-TIDL_TOOLS_VERSION=${TIDL_TOOLS_VERSION:-"11.1"}
-echo "TIDL_TOOLS_VERSION=${TIDL_TOOLS_VERSION}"
-
-#######################################################################
-# TIDL_TOOLS_TYPE can be "" or "_gpu" from r9.2 onwards
-# TIDL_TOOLS_TYPE="_gpu" (while running this setup) to install tidl-tools compiled with CUDA support
-# requires nvidia-hpc-sdk to be insalled for it to work: https://developer.nvidia.com/nvidia-hpc-sdk-237-downloads
-TIDL_TOOLS_TYPE=${TIDL_TOOLS_TYPE:-""}
-echo "TIDL_TOOLS_TYPE=${TIDL_TOOLS_TYPE}"
-
-
-#######################################################################
-pip3 install --no-input --upgrade pip==24.2 setuptools==73.0.0
-
-######################################################################
-CURRENT_WORK_DIR=$(pwd)
-
-#######################################################################
-# install tidl_tools_package
-echo "--------------------------------------------------------------------------------------------------------------"
-echo "INFO: installing tidl-tools-package version: ${TIDL_TOOLS_VERSION}"
-cd ${CURRENT_WORK_DIR}
-TIDL_TOOLS_TYPE=${TIDL_TOOLS_TYPE} TIDL_TOOLS_VERSION=${TIDL_TOOLS_VERSION} python3 ./tools/setup.py develop
-cd ${CURRENT_WORK_DIR}
-
-#######################################################################
-pip3 install --no-input -r ./requirements/requirements_pc.txt
 pip3 install --no-input onnx_graphsurgeon==0.3.26 --extra-index-url https://pypi.ngc.nvidia.com
-
-#######################################################################
-# install edgeai_tidlrunner
-TIDL_TOOLS_TYPE=${TIDL_TOOLS_TYPE} TIDL_TOOLS_VERSION=${TIDL_TOOLS_VERSION} python3 setup.py develop
-echo "--------------------------------------------------------------------------------------------------------------"
-
+pip3 install -e ./[pc]
+pip3 install -e ./tools
 
 #######################################################################
 echo 'Completed installation.'

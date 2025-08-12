@@ -28,4 +28,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-pip install -r requirements/requirements_evm.txt
+
+######################################################################
+pip3 install -e ./[evm]
+
+#######################################################################
+echo 'Completed installation.'

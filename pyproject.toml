@@ -11,26 +11,112 @@ authors = [
 ]
 license = { text = "BSD 3-Clause" }
 readme = "README.md"
-requires-python = "==3.10.*"
+requires-python = ">=3.10,<3.11"
 classifiers = [
     "Development Status :: 4 - Beta",
-    "Programming Language :: Python :: 3.10"
+    "Programming Language :: Python :: 3.10",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence"
 ]
 dependencies = [
+    "numpy>=1.20.0",
     "cython",
     "requests",
     "tqdm",
-    "pillow"
+    "pillow",
+    "pyyaml",
+    "colorama",
+    "munkres",
+    "wurlitzer"
 ]
 
 [project.urls]
 "Homepage" = "https://bitbucket.itg.ti.com/projects/EDGEAI-ALGO/repos/edgeai-tidlrunner/browse"
+"Bug Reports" = "https://bitbucket.itg.ti.com/projects/EDGEAI-ALGO/repos/edgeai-tidlrunner/issues"
+"Source" = "https://bitbucket.itg.ti.com/projects/EDGEAI-ALGO/repos/edgeai-tidlrunner/browse"
+
+[project.optional-dependencies]
+pc = [
+    "pycocotools",
+    "opencv-python",
+    "onnxsim==0.4.35",
+    "osrt_model_tools @ git+https://github.com/TexasInstruments/edgeai-tidl-tools.git@11_00_08_00#subdirectory=osrt-model-tools"
+]
+evm = [
+    "pycocotools"
+]
+dev = [
+    "pytest",
+    "black",
+    "flake8",
+    "mypy"
+]
+
+[project.scripts]
+tidlrunner_cli = "edgeai_tidlrunner.main:main"
 
 [tool.setuptools]
-include-package-data = false
+include-package-data = true
 
 [tool.setuptools.packages.find]
-where = ["./"]
+where = ["."]
+include = ["edgeai_tidlrunner*"]
 
-[tool.setuptools.dynamic]
-version = {attr = "edgeai_tidlrunner.__version__"}
+[tool.black]
+line-length = 88
+target-version = ['py310']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503"]
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".eggs",
+    "*.egg-info",
+    ".venv",
+    ".tox"
+]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"

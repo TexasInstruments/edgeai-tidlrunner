@@ -36,7 +36,72 @@ import subprocess
 import yaml
 import argparse
 import tqdm
+import hashlib
+import urllib.request
+import urllib.error
+import gzip
 from setuptools import setup, Extension, find_packages
+from setuptools.command.develop import develop
+from setuptools.command.install import install
+from setuptools.command.build_py import build_py
+
+
+###############################################################################
+TIDL_TOOLS_TYPE_DEFAULT = ""
+TIDL_TOOLS_VERSION_DEFAULT = "11.1"
+
+###############################################################################
+# Custom command classes to trigger TIDL tools download
+class PostBuildCommand(build_py):
+    """Post-build command for both regular and editable installs."""
+    def run(self):
+        print("DEBUG: PostBuildCommand.run() called")
+        build_py.run(self)
+        self.download_tidl_tools()
+
+class PostDevelopCommand(develop):
+    """Post-installation for development mode."""
+    def run(self):
+        print("DEBUG: PostDevelopCommand.run() called")
+        develop.run(self)
+        self.download_tidl_tools()
+
+class PostInstallCommand(install):
+    """Post-installation for installation mode."""
+    def run(self):
+        print("DEBUG: PostInstallCommand.run() called")
+        install.run(self)
+        self.download_tidl_tools()
+
+def download_tidl_tools_hook():
+    """Hook to download TIDL tools after installation"""
+    tools_version = os.environ.get("TIDL_TOOLS_VERSION", TIDL_TOOLS_VERSION_DEFAULT)
+    tools_type = os.environ.get("TIDL_TOOLS_TYPE", TIDL_TOOLS_TYPE_DEFAULT)
+    
+    print(f"INFO: Starting TIDL tools download (version: {tools_version}, type: {tools_type})")
+    
+    # Get install path
+    try:
+        import tidl_tools_package
+        install_path = os.path.dirname(tidl_tools_package.__file__)
+        print(f"INFO: Using installed package path: {install_path}")
+    except ImportError:
+        # Fallback to tidl_tools_package subdirectory of current directory
+        install_path = os.path.join(os.path.dirname(__file__), "tidl_tools_package")
+        print(f"INFO: Using package source path: {install_path}")
+    
+    try:
+        setup_tidl_tools(install_path, tools_version, tools_type)
+        print("INFO: TIDL tools download completed successfully!")
+    except Exception as e:
+        print(f"WARNING: TIDL tools download failed: {e}")
+        print("You can manually download later by running:")
+        print(f"TIDL_TOOLS_VERSION={tools_version} python -c \"from setup import setup_tidl_tools; setup_tidl_tools('{install_path}', '{tools_version}', '{tools_type}')\"")
+
+# Add the hook to all command classes
+PostBuildCommand.download_tidl_tools = staticmethod(download_tidl_tools_hook)
+PostDevelopCommand.download_tidl_tools = staticmethod(download_tidl_tools_hook)
+PostInstallCommand.download_tidl_tools = staticmethod(download_tidl_tools_hook)
 
 
 ###############################################################################
@@ -462,18 +527,28 @@ def setup_tidl_tools(install_path, tools_version, tools_type):
     assert tools_version in down_tidl_tools_package_dict.keys(), f"ERROR: unknown tools_version provided: {tools_version} at {__file__}"
     down_tidl_tools_package_func = down_tidl_tools_package_dict[tools_version]
     requirements_file = down_tidl_tools_package_func(install_path, tools_version, tools_type)
-    os.system(f'pip install -r {requirements_file}')
+    
+    # Use sys.executable to ensure we use the same Python interpreter
+    import subprocess
+    try:
+        subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-r', requirements_file])
+    except subprocess.CalledProcessError as e:
+        print(f"WARNING: Failed to install requirements from {requirements_file}: {e}")
+        print(f"Please manually run: {sys.executable} -m pip install -r {requirements_file}")
 
 
 ###############################################################################
 def main(args):
+    tools_version = os.environ.get("TIDL_TOOLS_VERSION", TIDL_TOOLS_VERSION_DEFAULT)
+    tools_type = os.environ.get("TIDL_TOOLS_TYPE", TIDL_TOOLS_TYPE_DEFAULT)
+
     readme_file = os.path.realpath(os.path.join(os.path.dirname(__file__), 'README.md'))
     with open(readme_file,  encoding="utf8") as readme:
         long_description = readme.read()
 
     setup(
         name='tidl_tools_package',
-        version=args.tools_version,
+        version=tools_version,
         description='tidl_tools_package for edgeai-tidlrunner',
         long_description=long_description,
         long_description_content_type='text/markdown',
@@ -481,13 +556,23 @@ def main(args):
         author='EdgeAI, TIDL & Analytics Algo Teams',
         author_email='edgeai-dev@list.ti.com',
         classifiers=[
-            'Development Status :: 4 - Beta'
+            'Development Status :: 4 - Beta',
             'Programming Language :: Python :: 3.10'
         ],
         keywords = 'artifical intelligence, deep learning, image classification, object detection, semantic segmentation, quantization',
         python_requires='>=3.10',
         packages=find_packages(),
         include_package_data=True,
+        install_requires=[
+            'pyyaml',
+            'tqdm',
+            'requests'
+        ],
+        cmdclass={
+            'build_py': PostBuildCommand,
+            'develop': PostDevelopCommand,
+            'install': PostInstallCommand,
+        },
         project_urls={
             'Source': 'https://bitbucket.itg.ti.com/projects/EDGEAI-ALGO/repos/edgeai-tidlrunner/browse',
             'Bug Reports': 'https://e2e.ti.com/support/processors-group/processors/tags/TIDL',
@@ -495,43 +580,7 @@ def main(args):
     )
 
 
-def main_download_tools(args):
-    cur_dir = os.getcwd()
-    repo_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    os.chdir(repo_dir)
-
-    try:
-        import tidl_tools_package
-        install_path = tidl_tools_package.__file__
-    except:
-        install_path = None
-        raise RuntimeError(f"ERROR: FAILED install tidl tools with: {vars(args)}")
-
-    if install_path:
-        args.install_path = os.path.dirname(install_path)
-        print(f'INFO: preparing to install tidl tools with: {vars(args)}')
-        setup_tidl_tools(args.install_path, args.tools_version, args.tools_type)
-    #
-    os.chdir(cur_dir)
-
-
 if __name__ == '__main__':
-    TIDL_TOOLS_TYPE_DEFAULT = ""
-    TIDL_TOOLS_VERSION_DEFAULT = "11.1"
-
     args = argparse.Namespace()
-    args.tools_version = os.environ.get("TIDL_TOOLS_VERSION", TIDL_TOOLS_VERSION_DEFAULT)
-    args.tools_type = os.environ.get("TIDL_TOOLS_TYPE", TIDL_TOOLS_TYPE_DEFAULT)
-    args.setup_type = sys.argv[1]
-    args.install_path = None
     main(args)
-
-    if args.setup_type in ('develop', 'install'):
-        main_download_tools(args)
-    else:
-        print("================================================ERROR======================================================")
-        raise RuntimeError(f"ERROR: as of now this tidl_tools_package can be installed only develop in mode - but obtained the command:{args.setup_type}"
-             f"\n    recommend to use one of these instead: "
-             f"\n    pip install -e ./tools/"
-             f"\n    python setup.py develop ./tools/")
-        print("==========================================================================================================")
+    

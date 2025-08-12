@@ -29,7 +29,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-TIDL_TOOLS_TYPE="gpu" ./setup_pc.sh
+
+######################################################################
+pip3 install --no-input onnx_graphsurgeon==0.3.26 --extra-index-url https://pypi.ngc.nvidia.com
+pip3 install -e ./[pc]
+TIDL_TOOLS_TYPE="gpu" pip3 install -e ./tools
 
 
 ########################################################
@@ -68,3 +72,5 @@ echo "  sudo apt-get install -y cuda-drivers-550"
 echo "============================================================"
 
 
+#######################################################################
+echo 'Completed installation.'

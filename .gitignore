@@ -12,6 +12,7 @@ dist/
 /tools/tidl_tools_package/gcc*
 /tools/tidl_tools_package/arm*
 /tools/tidl_tools_package_*
+/tools/arm*
 
 /data/datasets/vision/backup
 /data/datasets/vision/imagenetv2c*
