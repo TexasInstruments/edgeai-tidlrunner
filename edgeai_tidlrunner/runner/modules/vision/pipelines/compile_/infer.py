@@ -142,10 +142,10 @@ class InferModel(CompileModelBase):
         display_step = common_kwargs.display_step
         tqdm_obj = tqdm.tqdm(range(num_frames))
         for input_index in range(num_frames):
-            input_data, info_dict = self.preprocess(self.dataloader[input_index], info_dict={}) if self.preprocess else (self.dataloader[input_index], {})
+            input_data, info_dict = self._preprocess(self.dataloader[input_index], info_dict={}) if self.preprocess else (self.dataloader[input_index], {})
             output_dict = self.session.run_inference(input_data)
             outputs = list(output_dict.values())
-            outputs, info_dict = self.postprocess(outputs, info_dict=info_dict) if self.postprocess else (outputs, info_dict)
+            outputs, info_dict = self._postprocess(outputs, info_dict=info_dict) if self.postprocess else (outputs, info_dict)
             output_dict = {output_key:output for output, output_key in zip(outputs, output_dict.keys())}
             run_data.append({'input':input_data, 'output':output_dict, 'info_dict':info_dict})
             if input_index % display_step == 0:
