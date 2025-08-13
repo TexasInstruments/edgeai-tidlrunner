@@ -26,60 +26,68 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
 import sys
 import os
-from typing import Callable, Any, Optional
 import importlib
-import traceback
-import shutil
-import subprocess
-import yaml
-import argparse
-import tqdm
-import hashlib
-import urllib.request
-import urllib.error
-import gzip
 from setuptools import setup, Extension, find_packages
+
 from setuptools.command.develop import develop
 from setuptools.command.install import install
 from setuptools.command.build_py import build_py
 
 
 ###############################################################################
-TIDL_TOOLS_TYPE_DEFAULT = ""
-TIDL_TOOLS_VERSION_DEFAULT = "11.1"
+def import_file_folder(file_or_folder_name):
+    if file_or_folder_name.endswith(os.sep):
+        file_or_folder_name = file_or_folder_name[:-1]
+    #
+    parent_folder = os.path.dirname(file_or_folder_name)
+    basename = os.path.splitext(os.path.basename(file_or_folder_name))[0]
+    sys.path.insert(0, parent_folder)
+    imported_module = importlib.import_module(basename, __name__)
+    sys.path.pop(0)
+    return imported_module
+
+
+download_py = import_file_folder(os.path.join(os.path.dirname(__file__), 'tidl_tools_package', 'download.py'))
 
 ###############################################################################
 # Custom command classes to trigger TIDL tools download
 class PostBuildCommand(build_py):
     """Post-build command for both regular and editable installs."""
+
     def run(self):
         print("DEBUG: PostBuildCommand.run() called")
         build_py.run(self)
         self.download_tidl_tools()
 
+
 class PostDevelopCommand(develop):
     """Post-installation for development mode."""
+
     def run(self):
         print("DEBUG: PostDevelopCommand.run() called")
         develop.run(self)
         self.download_tidl_tools()
 
+
 class PostInstallCommand(install):
     """Post-installation for installation mode."""
+
     def run(self):
         print("DEBUG: PostInstallCommand.run() called")
         install.run(self)
         self.download_tidl_tools()
 
+
 def download_tidl_tools_hook():
     """Hook to download TIDL tools after installation"""
-    tools_version = os.environ.get("TIDL_TOOLS_VERSION", TIDL_TOOLS_VERSION_DEFAULT)
-    tools_type = os.environ.get("TIDL_TOOLS_TYPE", TIDL_TOOLS_TYPE_DEFAULT)
-    
+    tools_version = os.environ.get("TIDL_TOOLS_VERSION", download_py.TIDL_TOOLS_VERSION_DEFAULT)
+    tools_type = os.environ.get("TIDL_TOOLS_TYPE", download_py.TIDL_TOOLS_TYPE_DEFAULT)
+
     print(f"INFO: Starting TIDL tools download (version: {tools_version}, type: {tools_type})")
-    
+
     # Get install path
     try:
         import tidl_tools_package
@@ -87,17 +95,19 @@ def download_tidl_tools_hook():
         print(f"INFO: Using installed package path: {install_path}")
     except ImportError:
         # Fallback to tidl_tools_package subdirectory of current directory
-        # install_path = os.path.join(os.path.dirname(__file__), "tidl_tools_package")
-        # print(f"INFO: Using package source path: {install_path}")
-        raise RuntimeError("ERROR: tidl_tools_package is not installed. Please install it first.")
-    
+        install_path = os.path.join(os.path.dirname(__file__), 'tidl_tools_package')
+        print(f"INFO: Using package source path: {install_path}")
+        # raise RuntimeError("ERROR: tidl_tools_package is not installed. Please install it first.")
+
     try:
-        setup_tidl_tools(install_path, tools_version, tools_type)
+        download_py.setup_tidl_tools(install_path, tools_version, tools_type)
         print("INFO: TIDL tools download completed successfully!")
     except Exception as e:
         print(f"WARNING: TIDL tools download failed: {e}")
         print("You can manually download later by running:")
-        print(f"TIDL_TOOLS_VERSION={tools_version} python -c \"from setup import setup_tidl_tools; setup_tidl_tools('{install_path}', '{tools_version}', '{tools_type}')\"")
+        print(
+            f"TIDL_TOOLS_VERSION={tools_version} python -c \"from setup import setup_tidl_tools; setup_tidl_tools('{install_path}', '{tools_version}', '{tools_type}')\"")
+
 
 # Add the hook to all command classes
 PostBuildCommand.download_tidl_tools = staticmethod(download_tidl_tools_hook)
@@ -105,483 +115,17 @@ PostDevelopCommand.download_tidl_tools = staticmethod(download_tidl_tools_hook)
 PostInstallCommand.download_tidl_tools = staticmethod(download_tidl_tools_hook)
 
 
-###############################################################################
-def gen_bar_updater() -> Callable[[int, int, int], None]:
-    pbar = tqdm.tqdm(total=None)
-
-    def bar_update(count, block_size, total_size):
-        if pbar.total is None and total_size:
-            pbar.total = total_size
-        progress_bytes = count * block_size
-        pbar.update(progress_bytes - pbar.n)
-
-    return bar_update
-
-
-def calculate_md5(fpath: str, chunk_size: int = 1024 * 1024) -> str:
-    import hashlib
-    md5 = hashlib.md5()
-    with open(fpath, 'rb') as f:
-        for chunk in iter(lambda: f.read(chunk_size), b''):
-            md5.update(chunk)
-    return md5.hexdigest()
-
-
-def check_md5(fpath: str, md5: str, **kwargs: Any) -> bool:
-    return md5 == calculate_md5(fpath, **kwargs)
-
-
-def check_integrity(fpath: str, md5: Optional[str] = None) -> bool:
-    if not os.path.isfile(fpath):
-        return False
-    if md5 is None:
-        return True
-    return check_md5(fpath, md5)
-
-
-def _get_redirect_url(url: str, max_hops: int = 10) -> str:
-    import requests
-
-    for hop in range(max_hops + 1):
-        response = requests.get(url)
-
-        if response.url == url or response.url is None:
-            return url
-
-        url = response.url
-    else:
-        raise RecursionError(f"ERROR: too many redirects: {max_hops + 1})")
-
-
-def download_url(
-    url: str, root: str, filename: Optional[str] = None, md5: Optional[str] = None,
-    max_redirect_hops: int = 0, force_download: Optional[bool] = False):
-    """Download a file from a url and place it in root.
-
-    Args:
-        url (str): URL to download file from
-        root (str): Directory to place downloaded file in
-        filename (str, optional): Name to save the file under. If None, use the basename of the URL
-        md5 (str, optional): MD5 checksum of the download. If None, do not check
-        max_redirect_hops (int, optional): Maximum number of redirect hops allowed. eg: 3
-        force_download (bool): whether to download even if the file exists
-    """
-    import urllib
-
-    root = os.path.expanduser(root)
-    if not filename:
-        filename = os.path.basename(url)
-    #
-    fpath = os.path.join(root, filename)
-
-    # check if file is already present locally
-    if (not force_download) and check_integrity(fpath, md5):
-        print('INFO: using downloaded and verified file: ' + fpath)
-        sys.stdout.flush()
-        return fpath
-    #
-
-    print('INFO: downloading ' + url + ' to ' + fpath)
-    sys.stdout.flush()
-
-    os.makedirs(root, exist_ok=True)
-
-    # expand redirect chain if needed
-    if max_redirect_hops > 0:
-        url = _get_redirect_url(url, max_hops=max_redirect_hops)
-    #
-
-    # download the file
-    try:
-        urllib.request.urlretrieve(
-            url, fpath,
-            reporthook=gen_bar_updater()
-        )
-    except (urllib.error.URLError, IOError) as e:  # type: ignore[attr-defined]
-        if url[:5] == 'https':
-            url = url.replace('https:', 'http:')
-            print('ERROR: failed download. Trying https -> http instead.'
-                  ' Downloading ' + url + ' to ' + fpath)
-            sys.stdout.flush()
-            urllib.request.urlretrieve(
-                url, fpath,
-                reporthook=gen_bar_updater()
-            )
-        else:
-            raise e
-        #
-    #
-    # check integrity of downloaded file
-    if not check_integrity(fpath, md5):
-        raise RuntimeError("File not found or corrupted.")
-    #
-    #print('done.')
-    return fpath
-
-
-def _is_tarxz(filename: str) -> bool:
-    return filename.endswith(".tar.xz")
-
-
-def _is_tar(filename: str) -> bool:
-    return filename.endswith(".tar")
-
-
-def _is_targz(filename: str) -> bool:
-    return filename.endswith(".tar.gz")
-
-
-def _is_tgz(filename: str) -> bool:
-    return filename.endswith(".tgz")
-
-
-def _is_gzip(filename: str) -> bool:
-    return filename.endswith(".gz") and not filename.endswith(".tar.gz")
-
-
-def _is_zip(filename: str) -> bool:
-    return filename.endswith(".zip")
-
-
-def _is_archive(from_path):
-    return _is_tar(from_path) or _is_targz(from_path) or \
-           _is_gzip(from_path) or _is_zip(from_path) or _is_tgz(from_path)
-
-
-def extract_archive(from_path: str, to_path: Optional[str] = None, remove_finished: bool = False,
-                    verbose: bool = True, mode: Optional[str] = None):
-    if verbose:
-        print(f'INFO: extracting {from_path} to {to_path}')
-        sys.stdout.flush()
-    #
-    if to_path is None:
-        to_path = os.path.dirname(from_path)
-
-    if _is_tar(from_path):
-        import tarfile
-        mode = 'r' if mode is None else mode
-        with tarfile.open(from_path, mode) as tar:
-            tar.extractall(path=to_path, filter='data')
-    elif _is_targz(from_path) or _is_tgz(from_path):
-        import tarfile
-        mode = 'r:gz' if mode is None else mode
-        with tarfile.open(from_path, mode) as tar:
-            tar.extractall(path=to_path, filter='data')
-    elif _is_tarxz(from_path):
-        import tarfile
-        mode = 'r:xz' if mode is None else mode
-        with tarfile.open(from_path, mode) as tar:
-            tar.extractall(path=to_path, filter='data')
-    elif _is_gzip(from_path):
-        mode = 'r' if mode is None else mode
-        to_path = os.path.join(to_path, os.path.splitext(os.path.basename(from_path))[0])
-        with open(to_path, "wb") as out_f, gzip.GzipFile(from_path) as zip_f:
-            out_f.write(zip_f.read())
-    elif _is_zip(from_path):
-        import zipfile
-        mode = 'r' if mode is None else mode
-        with zipfile.ZipFile(from_path, mode) as z:
-            z.extractall(to_path)
-    else:
-        raise ValueError("ERROR: extraction of {} not supported".format(from_path))
-
-    if remove_finished:
-        os.remove(from_path)
-    #
-    if verbose:
-        #print('done.')
-        sys.stdout.flush()
-    #
-    return to_path
-
-
-def download_and_extract_archive(
-    url: str,
-    download_root: str,
-    extract_root: Optional[str] = None,
-    filename: Optional[str] = None,
-    md5: Optional[str] = None,
-    remove_finished: bool = False,
-    mode: Optional[str] = None,
-    force_download: Optional[bool] = False
-):
-    url_files = url.split(' ')
-    url = url_files[0]
-    download_root = os.path.expanduser(download_root)
-    if extract_root is None:
-        extract_root = download_root
-    if not filename:
-        # basename may contain http arguments after a ?. skip them
-        filename = os.path.basename(url).split('?')[0]
-    #
-    if isinstance(url, str) and (url.startswith('http://') or url.startswith('https://')):
-        fpath = download_url(url, download_root, filename, md5, force_download=force_download)
-    else:
-        fpath = url
-    #
-    if os.path.exists(fpath) and _is_archive(fpath):
-        fpath = extract_archive(fpath, extract_root, remove_finished, mode=mode)
-    #
-    if len(url_files) > 1:
-        fpath = os.path.join(fpath, url_files[1])
-    #
-    return fpath
-
-
-###############################################################################
-def download_arm_gcc(tidl_tools_package_path):
-    print("INFO: installing gcc arm required for tvm...")
-    GCC_ARM_AARCH64_NAME="arm-gnu-toolchain-13.2.Rel1-x86_64-aarch64-none-linux-gnu"
-    GCC_ARM_AARCH64_FILE=f"arm-gnu-toolchain-13.2.rel1-x86_64-aarch64-none-linux-gnu.tar.xz"
-    GCC_ARM_AARCH64_PATH=f"https://developer.arm.com/-/media/Files/downloads/gnu/13.2.rel1/binrel/{GCC_ARM_AARCH64_FILE}"
-    print(f"INFO: installing {tidl_tools_package_path}/{GCC_ARM_AARCH64_NAME}")
-    if not os.path.exists(os.path.join(tidl_tools_package_path,GCC_ARM_AARCH64_NAME)):
-        if not os.path.exists(os.path.join(tidl_tools_package_path,GCC_ARM_AARCH64_FILE)):
-            # os.system(f"wget -P {tidl_tools_package_path} {GCC_ARM_AARCH64_PATH} --no-check-certificate")
-            download_url(GCC_ARM_AARCH64_PATH, tidl_tools_package_path)
-        #
-        # os.system(f"tar xf {tidl_tools_package_path}/{GCC_ARM_AARCH64_FILE} -C ${TOOLS_BASE_PATH} > /dev/null")
-        extract_archive(os.path.join(tidl_tools_package_path,GCC_ARM_AARCH64_FILE), tidl_tools_package_path)
-    #
-
-
-def download_tidl_tools(download_url, download_path, **tidl_version_dict):
-    print("INFO: installing tidl_tools_package...")
-    GCC_ARM_AARCH64_NAME="arm-gnu-toolchain-13.2.Rel1-x86_64-aarch64-none-linux-gnu"
-    cwd = os.getcwd()
-    # download_path = os.path.join(tidl_tools_package_path, TARGET_SOC)
-    download_tidl_tools_path = os.path.join(download_path, 'tidl_tools')
-    shutil.rmtree(download_path, ignore_errors=True)
-    os.makedirs(download_path, exist_ok=True)
-    try:
-        download_and_extract_archive(download_url, download_path, download_path)
-        os.chdir(download_tidl_tools_path)
-        os.symlink(os.path.join("..", "..", GCC_ARM_AARCH64_NAME), GCC_ARM_AARCH64_NAME)
-        with open(os.path.join(download_tidl_tools_path, 'version.yaml'), "w") as fp:
-            yaml.safe_dump(tidl_version_dict, fp)
-        #
-    except:
-        print(f"ERROR: download_and_extract_archive: {download_url} - failed")
-    #
-    os.chdir(cwd)
-    return None
-
-
-###############################################################################
-def download_tidl_tools_package_11_01(install_path, tools_version, tools_type):
-    expected_tools_version=("11.1",)
-    assert tools_version in expected_tools_version, f"ERROR: incorrect tools_version passed:{tools_version} - expected:{expected_tools_version}"
-    tidl_tools_version_name=tools_version
-    tidl_tools_release_label="r11.1"
-    tidl_tools_release_id="11_01_02_00"
-    c7x_firmware_version="11_01_00_00" #TODO - udpate this for 11.1
-    c7x_firmware_version_possible_update=None #TODO - udpate this for 11.1
-    print(f"INFO: you have chosen to install tidl_tools version:{tidl_tools_release_id} with default SDK firmware version set to:{c7x_firmware_version}")
-    if c7x_firmware_version_possible_update:
-        print(f"INFO: to leverage more features, set advanced_options:c7x_firmware_version while model compialtion and update firmware version in SDK to: {c7x_firmware_version_possible_update}")
-        print(f"INFO: for more info, see version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/version_compatibility_table.md")
-    #
-
-    tidl_tools_package_path = install_path
-    download_arm_gcc(tidl_tools_package_path)
-
-    tidl_tools_type_suffix=("_gpu" if isinstance(tools_type,str) and "gpu" in tools_type else "")
-    target_soc_download_urls = {
-        "TDA4VM": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/TDA4VM",
-        "AM68A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM68A",
-        "AM69A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
-        "AM67A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM67A",
-        "AM62A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM62A",
-    }
-    tidl_version_dict = dict(version=tidl_tools_version_name, release_label=tidl_tools_release_label,
-                             release_id=tidl_tools_release_id, tools_type=tidl_tools_type_suffix,
-                             c7x_firmware_version=c7x_firmware_version)
-    for target_soc in target_soc_download_urls:
-        download_url_base = target_soc_download_urls[target_soc]
-        download_url = f"{download_url_base}/tidl_tools{tidl_tools_type_suffix}.tar.gz"
-        download_path = os.path.join(tidl_tools_package_path, target_soc)
-        download_tidl_tools(download_url, download_path, **tidl_version_dict, target_device=target_soc)
-    #
-    requirements_file = os.path.realpath(os.path.join(os.path.dirname(__file__), f'requirements/requirements_11.1.txt'))
-    return requirements_file
-
-
-###############################################################################
-def download_tidl_tools_package_11_00(install_path, tools_version, tools_type):
-    expected_tools_version=("11.0",)
-    assert tools_version in expected_tools_version, f"ERROR: incorrect tools_version passed:{tools_version} - expected:{expected_tools_version}"
-    tidl_tools_version_name=tools_version
-    tidl_tools_release_label="r11.0"
-    tidl_tools_release_id="11_00_08_00"
-    c7x_firmware_version="11_00_00_00" #TODO - udpate this for 11.0
-    c7x_firmware_version_possible_update=None #TODO - udpate this for 11.0
-    print(f"INFO: you have chosen to install tidl_tools version:{tidl_tools_release_id} with default SDK firmware version set to:{c7x_firmware_version}")
-    if c7x_firmware_version_possible_update:
-        print(f"INFO: to leverage more features, set advanced_options:c7x_firmware_version while model compialtion and update firmware version in SDK to: {c7x_firmware_version_possible_update}")
-        print(f"INFO: for more info, see version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/version_compatibility_table.md")
-    #
-
-    tidl_tools_package_path = install_path
-    download_arm_gcc(tidl_tools_package_path)
-
-    tidl_tools_type_suffix=("_gpu" if isinstance(tools_type,str) and "gpu" in tools_type else "")
-    target_soc_download_urls = {
-        "TDA4VM": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/TDA4VM",
-        "AM68A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM68A",
-        "AM69A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
-        "AM67A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM67A",
-        "AM62A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM62A", # no update for AM62A in 11.0
-    }
-    tidl_version_dict = dict(version=tidl_tools_version_name, release_label=tidl_tools_release_label,
-                             release_id=tidl_tools_release_id, tools_type=tidl_tools_type_suffix,
-                             c7x_firmware_version=c7x_firmware_version)
-    for target_soc in target_soc_download_urls:
-        download_url_base = target_soc_download_urls[target_soc]
-        download_url = f"{download_url_base}/tidl_tools{tidl_tools_type_suffix}.tar.gz"
-        download_path = os.path.join(tidl_tools_package_path, target_soc)
-        download_tidl_tools(download_url, download_path, **tidl_version_dict, target_device=target_soc)
-    #
-    requirements_file = os.path.realpath(os.path.join(os.path.dirname(__file__), f'requirements/requirements_11.0.txt'))
-    return requirements_file
-
-
-###############################################################################
-def download_tidl_tools_package_10_01(install_path, tools_version, tools_type):
-    expected_tools_version=("10.1",)
-    assert tools_version in expected_tools_version, f"ERROR: incorrect tools_version passed:{tools_version} - expected:{expected_tools_version}"
-    tidl_tools_version_name=tools_version
-    tidl_tools_release_label="r10.1"
-    tidl_tools_release_id="10_01_04_01"
-    c7x_firmware_version="10_01_03_00"
-    c7x_firmware_version_possible_update="10_01_04_00"
-    print(f"INFO: you have chosen to install tidl_tools version:{tidl_tools_release_id} with default SDK firmware version set to:{c7x_firmware_version}")
-    print(f"INFO: to leverage more features, set advanced_options:c7x_firmware_version while model compialtion and update firmware version in SDK to: {c7x_firmware_version_possible_update}")
-    print(f"INFO: for more info, see version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/version_compatibility_table.md")
-
-    tidl_tools_package_path = install_path
-    download_arm_gcc(tidl_tools_package_path)
-
-    tidl_tools_type_suffix=("_gpu" if isinstance(tools_type,str) and "gpu" in tools_type else "")
-    target_soc_download_urls = {
-        "TDA4VM": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/TDA4VM",
-        "AM68A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM68A",
-        "AM69A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
-        "AM67A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM67A",
-        "AM62A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM62A",
-    }
-    tidl_version_dict = dict(version=tidl_tools_version_name, release_label=tidl_tools_release_label,
-                             release_id=tidl_tools_release_id, tools_type=tidl_tools_type_suffix,
-                             c7x_firmware_version=c7x_firmware_version)
-    for target_soc in target_soc_download_urls:
-        download_url_base = target_soc_download_urls[target_soc]
-        download_url = f"{download_url_base}/tidl_tools{tidl_tools_type_suffix}.tar.gz"
-        download_path = os.path.join(tidl_tools_package_path, target_soc)
-        download_tidl_tools(download_url, download_path, **tidl_version_dict, target_device=target_soc)
-    #
-    requirements_file = os.path.realpath(os.path.join(os.path.dirname(__file__), f'requirements/requirements_10.1.txt'))
-    return requirements_file
-
-
-def download_tidl_tools_package_10_00(install_path, tools_version, tools_type):
-    expected_tools_version=("10.0",)
-    assert tools_version in expected_tools_version, f"ERROR: incorrect tools_version passed:{tools_version} - expected:{expected_tools_version}"
-    tidl_tools_version_name=tools_version
-    tidl_tools_release_label="r10.0"
-    tidl_tools_release_id="10_00_08_00"
-    c7x_firmware_version=""
-    print(f"INFO: you have chosen to install tidl_tools version:{tidl_tools_release_id} with default SDK firmware version:{c7x_firmware_version}")
-
-    tidl_tools_package_path = install_path
-    download_arm_gcc(tidl_tools_package_path)
-
-    tidl_tools_type_suffix=("_gpu" if isinstance(tools_type,str) and "gpu" in tools_type else "")
-    target_soc_download_urls = {
-        "TDA4VM": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/TDA4VM",
-        "AM68A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM68A",
-        "AM69A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
-        "AM67A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM67A",
-        "AM62A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM62A",
-    }
-    tidl_version_dict = dict(version=tidl_tools_version_name, release_label=tidl_tools_release_label,
-                             release_id=tidl_tools_release_id, tools_type=tidl_tools_type_suffix,
-                             c7x_firmware_version=c7x_firmware_version)
-    for target_soc in target_soc_download_urls:
-        download_url_base = target_soc_download_urls[target_soc]
-        download_url = f"{download_url_base}/tidl_tools{tidl_tools_type_suffix}.tar.gz"
-        download_path = os.path.join(tidl_tools_package_path, target_soc)
-        download_tidl_tools(download_url, download_path, **tidl_version_dict, target_device=target_soc)
-    #
-    requirements_file = os.path.realpath(os.path.join(os.path.dirname(__file__), f'requirements/requirements_10.0.txt'))
-    return requirements_file
-
-
-###############################################################################
-down_tidl_tools_package_dict = {
-    "11.1": download_tidl_tools_package_11_01,
-    "11.0": download_tidl_tools_package_11_00,
-    "10.1": download_tidl_tools_package_10_01,
-    "10.0": download_tidl_tools_package_10_00,
-}
-
-
-def setup_tidl_tools(install_path, tools_version, tools_type):
-    assert tools_version in down_tidl_tools_package_dict.keys(), f"ERROR: unknown tools_version provided: {tools_version} at {__file__}"
-    down_tidl_tools_package_func = down_tidl_tools_package_dict[tools_version]
-    requirements_file = down_tidl_tools_package_func(install_path, tools_version, tools_type)
-    
-    # Use sys.executable to ensure we use the same Python interpreter
-    import subprocess
-    try:
-        subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-r', requirements_file])
-    except subprocess.CalledProcessError as e:
-        print(f"WARNING: Failed to install requirements from {requirements_file}: {e}")
-        print(f"Please manually run: {sys.executable} -m pip install -r {requirements_file}")
-
-
-###############################################################################
-def main(args):
-    tools_version = os.environ.get("TIDL_TOOLS_VERSION", TIDL_TOOLS_VERSION_DEFAULT)
-    tools_type = os.environ.get("TIDL_TOOLS_TYPE", TIDL_TOOLS_TYPE_DEFAULT)
-
-    readme_file = os.path.realpath(os.path.join(os.path.dirname(__file__), 'README.md'))
-    with open(readme_file,  encoding="utf8") as readme:
-        long_description = readme.read()
-
+def main():
+    # this is a bare minimum setup to enable PostBuild Commands for download of tidl_tools
+    # assuming that rest of the details are in pyproject.toml
     setup(
-        name='tidl_tools_package',
-        version=tools_version,
-        description='tidl_tools_package for edgeai-tidlrunner',
-        long_description=long_description,
-        long_description_content_type='text/markdown',
-        url='https://bitbucket.itg.ti.com/projects/EDGEAI-ALGO/repos/edgeai-tidlrunner/browse',
-        author='EdgeAI, TIDL & Analytics Algo Teams',
-        author_email='edgeai-dev@list.ti.com',
-        classifiers=[
-            'Development Status :: 4 - Beta',
-            'Programming Language :: Python :: 3.10'
-        ],
-        keywords = 'artifical intelligence, deep learning, image classification, object detection, semantic segmentation, quantization',
-        python_requires='>=3.10',
-        packages=find_packages(),
-        include_package_data=True,
-        install_requires=[
-            'pyyaml',
-            'tqdm',
-            'requests'
-        ],
         cmdclass={
             'build_py': PostBuildCommand,
             'develop': PostDevelopCommand,
             'install': PostInstallCommand,
         },
-        project_urls={
-            'Source': 'https://bitbucket.itg.ti.com/projects/EDGEAI-ALGO/repos/edgeai-tidlrunner/browse',
-            'Bug Reports': 'https://e2e.ti.com/support/processors-group/processors/tags/TIDL',
-        },
     )
 
 
 if __name__ == '__main__':
-    args = argparse.Namespace()
-    main(args)
-    
+    main()

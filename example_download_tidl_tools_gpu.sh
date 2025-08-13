@@ -1,6 +1,6 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
-# Copyright (c) 2018-2025, Texas Instruments
+# Copyright (c) 2018-2021, Texas Instruments
 # All Rights Reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,11 +29,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-######################################################################
-pip3 install --no-input onnx_graphsurgeon==0.3.26 --extra-index-url https://pypi.ngc.nvidia.com
+# download_tidl_tools is a script that si defined in pyproject.toml and add while pip install
+# it is equivalent to running python3 -m tidl_tools_package.download
 
-pip3 install -e ./[pc] --verbose
-pip3 install -e ./tools --verbose
-
-#######################################################################
-echo 'Completed installation.'
+TIDL_TOOLS_TYPE="gpu" download_tidl_tools

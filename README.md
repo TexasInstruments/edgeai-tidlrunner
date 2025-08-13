@@ -37,7 +37,7 @@ This script installs the CUDA based tidl-tools and nvidia-hpc-sdk. The user ha t
 ### Download datasets to run examples in this repository (optional)
 To run example models in this repository, download example datasets:
 ```
-./example_download_all.sh
+./example_download_datasets.sh
 ```
 
 <hr>
@@ -112,6 +112,12 @@ The parameters used in the commandline or in the configfile - one is a shortcut 
 As can be seen from this example, there is a one-to-one mapping between the shortcut style names, internal dot style names and the dictionary format.
 
 All the supported options and how they map to internal names can be seen in this file [settings_default.py](./edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py) and this file [settings_base.py](./edgeai_tidlrunner/runner/bases/settings_base.py)
+
+But as explained above, the easiest way to see list of options supported for a command is to use the help - for example:
+```
+tidlrunner-cli compile --help
+```
+
 
 <hr>
 

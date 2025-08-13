@@ -29,12 +29,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-
 ######################################################################
 pip3 install --no-input onnx_graphsurgeon==0.3.26 --extra-index-url https://pypi.ngc.nvidia.com
-pip3 install ./[pc] --verbose
-TIDL_TOOLS_TYPE="gpu" pip3 install ./tools --verbose
 
+pip3 install -e ./[pc] --verbose
+TIDL_TOOLS_TYPE="gpu" pip3 install -e ./tools --verbose
 
 ########################################################
 # NVIDIA-HPC-SDK

@@ -1,3 +1,38 @@
 [build-system]
 requires = ["setuptools>=42", "pyyaml", "tqdm", "requests"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "tidl_tools_package"
+version = "11.1"
+description = "tidl_tools_package for edgeai-tidlrunner"
+authors = [
+    { name = "EdgeAI, TIDL & Analytics Algo Teams", email = "edgeai-dev@list.ti.com" }
+]
+license = { text = "BSD 3-Clause" }
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3.10",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence"
+]
+dependencies = [
+    "pyyaml",
+    "tqdm",
+    "requests"
+]
+
+[project.urls]
+"Homepage" = "https://bitbucket.itg.ti.com/projects/EDGEAI-ALGO/repos/edgeai-tidlrunner/browse"
+"Bug Reports" = "https://e2e.ti.com/support/processors-group/processors/tags/TIDL"
+"Source" = "https://bitbucket.itg.ti.com/projects/EDGEAI-ALGO/repos/edgeai-tidlrunner/browse"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["tidl_tools_package*"]
+
+[project.scripts]
+download_tidl_tools = "tidl_tools_package.download:main"
