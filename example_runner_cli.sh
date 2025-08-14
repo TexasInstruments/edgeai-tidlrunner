@@ -52,7 +52,19 @@ tidlrunner-cli compile+infer --model_path ./data/models/vision/classification/im
 
 
 ##################################################################
-# Example 3: compile using a wrapper config file that aggregates other config files
+# Example 3: compile using a wrapper configs file that aggregates other config files
 #----------------------------------------------------------------
 # tidlrunner-cli compile+infer --config_path ./data/models/configs.yaml
+
+
+##################################################################
+# Example 4: compile and evaluate accuracy using aggregate configs file
+#----------------------------------------------------------------
+# tidlrunner-cli compile+accuracy --config_path ./data/models/configs.yaml
+
+
+##################################################################
+# Example 5: analyze a model using a config file
+#----------------------------------------------------------------
+# tidlrunner-cli analyze --config_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml
 
