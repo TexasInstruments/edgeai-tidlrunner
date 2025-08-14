@@ -66,8 +66,9 @@ class SemanticSegmentationDataLoader(dataset_base.DatasetBaseWithUtils):
         predictions = []
         inputs = []
         for data in run_data:
-            predictions.append(data['output'])
+            predictions.append(list(data['output'].values())[0])
             inputs.append(data['input'])
+        #
         ann_ids = []
         anns = []
         gt_masks = []
@@ -100,13 +101,15 @@ class SemanticSegmentationDataLoader(dataset_base.DatasetBaseWithUtils):
             gt_masks.append(gt_mask)
         #
         metric = SegmentationEvaluationMetrics()
-        for output , gt_mask , input in zip(predictions,gt_masks,inputs):
-            output_np = output[0]  # shape: (num_classes, H, W)
-            pred = output_np.argmax(axis=1).squeeze()
-            metric.update(pred,gt_mask)
+        for output, gt_mask, input in zip(predictions,gt_masks,inputs):
+            # assuming argmax has already happened in postprocess
+            output = output.squeeze(0) if output.shape[0] == 1 else output
+            output = output.squeeze(0) if output.shape[0] == 1 else output
+            metric.update(output, gt_mask)
+        #
         mean_iou = metric.compute_iou()
         pixel_accuracy = metric.compute_pixel_accuracy()
-        accuracy = {'mean_iou':mean_iou , 'pixel_accuracy' : pixel_accuracy}
+        accuracy = {'accuracy_mean_iou%':mean_iou*100, 'accuracy_pixel_accuracy%' : pixel_accuracy*100}
         return accuracy
 
 
@@ -140,7 +143,13 @@ class COCOSegmentationDataLoader(SemanticSegmentationDataLoader):
 
 
 def coco_segmentation_dataloader(name, path, label_path=None):
-    return COCOSegmentationDataLoader(path,label_path)
+    if 'val' in os.path.split(path)[-1]:
+        data_path = path
+    else:
+        data_path = os.path.join(path, 'val2017')
+        label_path = label_path or os.path.join(path, 'annotations', 'instances_val2017.json')
+    #
+    return COCOSegmentationDataLoader(data_path,label_path)
 
 
 class SegmentationEvaluationMetrics:
