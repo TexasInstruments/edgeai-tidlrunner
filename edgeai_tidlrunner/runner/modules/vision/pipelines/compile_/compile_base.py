@@ -196,9 +196,3 @@ class CompileModelBase(CommonPipelineBase):
             #
         #
         return kwargs_out
-
-    def _preprocess(self, *args, **kwargs):
-        return self.preprocess(*args, **kwargs)
-
-    def _postprocess(self, *args, **kwargs):
-        return self.postprocess(*args, **kwargs)

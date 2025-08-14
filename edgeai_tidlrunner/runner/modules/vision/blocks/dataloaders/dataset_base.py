@@ -40,11 +40,21 @@ class DatasetBase(utils.ParamsBase):
         # call the utils.ParamsBase.initialize()
         super().initialize()
 
-    def get_color_map(self, num_classes):
-        color_map = utils.get_color_palette(num_classes)
-        return color_map
+    def __call__(self, index, info_dict=None):
+        return self.__getitem__(index, info_dict)
 
-    def get_dataset_info(self, annotation_file_or_dataset_store, with_background_class=False):
+    def __getitem__(self, index, info_dict=None):
+        raise NotImplementedError('DatasetBase.__getitem__() must be implemented in the derived class')
+
+    def __len__(self):
+        raise NotImplementedError('DatasetBase.__len__() must be implemented in the derived class')
+
+    def evaluate(self, *args, **kwargs):
+        raise NotImplementedError('DatasetBase.evaluate() must be implemented in the derived class')
+
+
+class DatasetBaseWithUtils(DatasetBase):
+    def get_dataset_store(self, annotation_file_or_dataset_store):
         if isinstance(annotation_file_or_dataset_store, str):
             annotation_file = annotation_file_or_dataset_store
             with open(annotation_file) as afp:
@@ -55,6 +65,9 @@ class DatasetBase(utils.ParamsBase):
         else:
             assert False, 'annotation_file_or_dataset_store is in invalid format'
         #
+        return dataset_store
+
+    def get_dataset_info_from_store(self, dataset_store, with_background_class=False):
         if 'dataset_info' in self.kwargs:
             return
         #
@@ -71,16 +84,41 @@ class DatasetBase(utils.ParamsBase):
                 dataset_info['categories'].append(dict(id=0, category=0, supercategory=0))
             #
         #
-        num_classes = len(dataset_info['categories'])
-        # classes = dataset_store['categories']
-        # class_ids = [class_info['id'] for class_info in classes]
-        # class_ids_min = min(class_ids)
-        # num_classes = max(class_ids) - class_ids_min + 1
-
-        if num_classes is not None:
-            dataset_info.update(dict(color_map=self.get_color_map(num_classes)))
-        #
-
         self.kwargs['dataset_info'] = dataset_info
-        self.kwargs['num_classes'] = num_classes
+        self.kwargs['num_classes'] = len(dataset_info['categories'])
         self.kwargs['num_images'] = len(dataset_store['images'])
+
+        if 'color_map' not in self.kwargs:
+            num_classes = self.kwargs['num_classes']
+            if num_classes is not None:
+                dataset_info.update(dict(color_map=self.get_color_map(num_classes)))
+            #
+        #
+        return dataset_info
+
+    def get_dataset_info(self, annotation_file_or_dataset_store, with_background_class=False):
+        dataset_store = self.get_dataset_store(annotation_file_or_dataset_store)
+        return self.get_dataset_info_from_store(dataset_store, with_background_class)
+
+    def get_num_classes(self, annotation_file_or_dataset_store):
+        dataset_store = self.get_dataset_store(annotation_file_or_dataset_store)
+        if 'num_classes' in self.kwargs:
+            return self.kwargs['num_classes']
+        #
+        num_classes = len(dataset_store['categories'])
+        self.kwargs['num_classes'] = num_classes
+        return num_classes
+
+    def get_num_images(self, annotation_file_or_dataset_store):
+        dataset_store = self.get_dataset_store(annotation_file_or_dataset_store)
+        if 'num_images' in self.kwargs:
+            return self.kwargs['num_images']
+        #
+        num_images = len(dataset_store['images'])
+        self.kwargs['num_images'] = num_images
+        return num_images
+
+    def get_color_map(self, num_classes):
+        color_map = utils.get_color_palette(num_classes)
+        return color_map
+    

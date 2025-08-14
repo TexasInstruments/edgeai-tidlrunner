@@ -32,19 +32,22 @@ import numpy as np
 import os
 
 from . import dataset_base
+from . import dataloader_utils
 
 
 #######################################################################
 class ImageListDataLoader(dataset_base.DatasetBase):
-    def __init__(self, files, labels=None, file_types=None):
+    def __init__(self, files, labels=None, file_types=None, backend='pil', bgr_to_rgb=True):
         super().__init__()
         self.files = files
         self.labels = labels
         self.file_types = file_types
+        self.image_reader = dataloader_utils.ImageRead(backend=backend, bgr_to_rgb=bgr_to_rgb)
 
-    def __getitem__(self, index):
+    def __getitem__(self, index, info_dict=None):
         input_img_file = self.files[index]
-        return input_img_file
+        img_data, info_dict = self.image_reader(input_img_file, info_dict)
+        return img_data, info_dict
 
     def __len__(self):
         return len(self.files)
@@ -93,7 +96,7 @@ def image_list_dataloader(name, path):
 
 #######################################################################
 class ImageFilesDataLoader(ImageListDataLoader):
-    def __init__(self, path, label_path=None, file_types=('.png', '.jpg', '.jpeg')):
+    def __init__(self, path, label_path=None, backend='pil', bgr_to_rgb=True, file_types=('.png', '.jpg', '.jpeg')):
         if isinstance(path, list):
             files = path
             labels = label_path if isinstance(label_path, list) else None
@@ -103,22 +106,24 @@ class ImageFilesDataLoader(ImageListDataLoader):
             files, labels = self._read_folder(path, file_types)
         else:
             raise RuntimeError(f'ERROR: invalid path: {path}')
-        super().__init__(files, labels, file_types)
+        super().__init__(files, labels, backend=backend, bgr_to_rgb=bgr_to_rgb, file_types=file_types)
 
     def evaluate(self, run_data, **kwargs):
         predictions = []
         inputs = []
         for data in run_data:
-            predictions.append(data['output'])
+            output_dict = data['output']
+            predictions.append(list(output_dict.values())[0])
             inputs.append(data['input'])
-
+        #
         correctly_classified = 0
         num_frames = 0
         for prediction, label in zip(predictions, self.labels):
-            pred = np.argmax(prediction[0], axis=1)
+            prediction = prediction[0] if isinstance(prediction, list) else prediction
+            pred = np.argmax(prediction, axis=1) if prediction.ndim > 1 else np.argmax(prediction)
             correctly_classified += int(int(pred) == int(label))
             num_frames += len(pred)
-
+        #
         accuracy_percentage = correctly_classified * 100 / num_frames
         return {'accuracy_top1%': accuracy_percentage}
 

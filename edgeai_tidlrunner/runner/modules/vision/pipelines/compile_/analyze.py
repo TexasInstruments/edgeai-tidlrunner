@@ -125,25 +125,18 @@ class InferAnalyzeTIDL(infer.InferModel):
         kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'tidl')
         kargs_copy['session.runtime_settings.runtime_options.debug_level'] = 4
         super().__init__(**kargs_copy)
-        self.frame_idx = 0
 
     def _run(self):
-        self.frame_idx = 0
         super()._run()
         print('INFO: TIDL traces generated')
 
-    def _preprocess(self, *args, **kwargs):
+    def _run_frame(self, input_index, *args, **kwargs):
         os.system('rm -f /tmp/tidl_*.bin')
-        outputs = self.preprocess(*args, **kwargs)
-        return outputs
-
-    def _postprocess(self, *args, **kwargs):
-        outputs = self.postprocess(*args, **kwargs)
-        traces_root = os.path.join(self.run_dir, 'traces', str(self.frame_idx))
+        run_dict = super()._run_frame(input_index, *args, **kwargs)
+        traces_root = os.path.join(self.run_dir, 'traces', str(input_index))
         os.makedirs(traces_root, exist_ok=True)
         os.system(f'mv /tmp/tidl_*.bin {traces_root}')
-        self.frame_idx += 1
-        return outputs
+        return run_dict
 
 
 class InferAnalyzeFinal(compile_base.CompileModelBase):
@@ -162,7 +155,7 @@ class InferAnalyzeFinal(compile_base.CompileModelBase):
         layer_info_files = [f for f in os.listdir(layer_info_dir) if f.endswith('layer_info.txt')]
         layer_info_path = os.path.join(layer_info_dir, layer_info_files[0])
 
-        analyze_xlsx_path = os.path.join(self.run_dir, f"analyze.xlsx")
+        analyze_xlsx_path = os.path.join(self.run_dir, f"result.xlsx")
         analyze_xlsx =  xlsxwriter.Workbook(analyze_xlsx_path, options=dict(nan_inf_to_errors=True))
         num_traces = len(os.listdir(notidl_traces))
         for frame_idx in range(num_traces):
@@ -171,6 +164,7 @@ class InferAnalyzeFinal(compile_base.CompileModelBase):
             tidl_traces_frame_id_dir = os.path.join(tidl_traces, str(frame_idx))
             tidl_onnx_trace_mapping = self.get_traces(notidl_traces_frame_id_dir, tidl_traces_frame_id_dir, layer_info_path)
             layers_diff = self.get_layers_diff(notidl_traces_frame_id_dir, tidl_traces_frame_id_dir, layer_info_path, tidl_onnx_trace_mapping)
+
             frame_worksheet.write_row(0, 0, ['ONNXLayer', 'TIDLDataID'])
             frame_worksheet.write_row(0, 2, layers_diff[0].keys())
             tidl_onnx_trace_mapping_keys = list(tidl_onnx_trace_mapping.keys())
@@ -226,6 +220,8 @@ class InferAnalyzeFinal(compile_base.CompileModelBase):
                 ]
             else:
                 print(f"WARNING: Traces Not found for outdataId: {_tidl_data_id}")
+            #
+        #
         return tidl_onnx_trace_mapping
 
     def get_layers_diff(self, onnx_trace_folder, tidl_trace_folder, layer_info_path, tidl_onnx_trace_mapping):
@@ -250,6 +246,9 @@ class InferAnalyzeFinal(compile_base.CompileModelBase):
             )
             goldenBuffer = np.fromfile(golden, dtype=np.float32).flatten()
             tidlBuffer = np.fromfile(tidl, dtype=np.float32).flatten()
+
+            tidl_onnx_trace_mapping[layer_idx].extend([goldenBuffer, tidlBuffer])
+
             delta = []
             try:
                 delta = goldenBuffer - tidlBuffer

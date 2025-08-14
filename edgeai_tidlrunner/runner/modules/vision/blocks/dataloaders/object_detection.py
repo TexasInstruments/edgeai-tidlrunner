@@ -37,10 +37,11 @@ from pycocotools.cocoeval import COCOeval
 
 from .....utils.config_utils import dataset_utils
 from . import dataset_base
+from . import dataloader_utils
 
 
-class ObjectDetectionDataLoader(dataset_base.DatasetBase):
-    def __init__(self, img_dir, annotation_file, with_background_class=False):
+class ObjectDetectionDataLoader(dataset_base.DatasetBaseWithUtils):
+    def __init__(self, img_dir, annotation_file, with_background_class=False, backend='cv2', bgr_to_rgb=True):
         super().__init__()
         self.img_dir = img_dir
         self.ann_file = annotation_file
@@ -48,22 +49,16 @@ class ObjectDetectionDataLoader(dataset_base.DatasetBase):
         self.img_ids = coco.getImgIds()
         self.img_info = coco.loadImgs(self.img_ids[:])
         self.cat_ids = coco.getCatIds()
-
-        with open(annotation_file) as afp:
-            dataset_store = json.load(afp)
-        #
-        self.get_dataset_info(dataset_store, with_background_class)
+        self.get_dataset_info(annotation_file, with_background_class)
         self.with_background_class = with_background_class
         if with_background_class and self.kwargs['dataset_info']['categories'] > len(self.cat_ids):
             self.cat_ids.insert(0, 0)
         #
+        self.image_reader = dataloader_utils.ImageRead(backend=backend, bgr_to_rgb=bgr_to_rgb)
 
-    def __getitem__(self, index):
+    def __getitem__(self, index, info_dict=None):
         img_path = os.path.join(self.img_dir, self.img_info[index]['file_name'])
-        # img = Image.open(img_path).convert('RGB')
-        # input_tensor = self.preprocess(img).cpu()  # Add batch dimension
-        # batch = torch.stack([input_tensor]).numpy()
-        return img_path
+        return self.image_reader(img_path, info_dict)
     
     def __len__(self):
         return self.kwargs['num_images']

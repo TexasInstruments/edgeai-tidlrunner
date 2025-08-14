@@ -160,16 +160,21 @@ class CompileModel(CompileModelBase):
         calibration_frames = runtime_options['advanced_options:calibration_frames']
         for input_index in range(min(len(self.dataloader), calibration_frames)):
             print(f'INFO: import frame: {input_index}')
-            input_data, info_dict = self._preprocess(self.dataloader[input_index], info_dict={})
-            output_dict = self.session.run_import(input_data)
-            outputs = list(output_dict.values())
-            outputs, info_dict = self._postprocess(outputs, info_dict=info_dict)
-            output_dict = {output_key:output for output, output_key in zip(outputs, output_dict.keys())}
-            run_data.append({'input':input_data, 'output':output_dict, 'info_dict':info_dict})
-
+            run_dict = self._run_frame(input_index)
+            run_data.append(run_dict)
+        #
         print(f'INFO: model import done. output is in: {self.run_dir}')
         self.run_data = run_data
 
         # TODO - cleanup the parameters and write param.yaml
         self._write_params('param.yaml')
         return run_data
+    
+    def _run_frame(self, input_index):
+        input_data, info_dict = self.dataloader(input_index)
+        input_data, info_dict = self.preprocess(input_data, info_dict=info_dict) if self.preprocess else (input_data, info_dict)
+        output_dict = self.session.run_import(input_data)
+        outputs = list(output_dict.values())
+        outputs, info_dict = self.postprocess(outputs, info_dict=info_dict) if self.postprocess else (outputs, info_dict)
+        output_dict = {output_key:output for output, output_key in zip(outputs, output_dict.keys())}
+        return {'input':input_data, 'output':output_dict, 'info_dict':info_dict}
