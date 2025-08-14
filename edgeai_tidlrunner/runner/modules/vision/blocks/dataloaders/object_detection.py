@@ -81,8 +81,8 @@ class ObjectDetectionDataLoader(dataset_base.DatasetBaseWithUtils):
         detections_formatted_list = []
         length = len(predictions)
         for frame_idx, det_frame in enumerate(predictions):
-            for det_id, det in enumerate(det_frame):
-                det = self._format_detections(det, frame_idx, label_offset=label_offset_pred)
+            for det_key, det_value in det_frame.items():
+                det = self._format_detections(det_value, frame_idx, label_offset=label_offset_pred)
                 category_id = det['category_id'] if isinstance(det, dict) else det[4]
                 if category_id >= 1: # final coco categories start from 1
                     detections_formatted_list.append(det)
