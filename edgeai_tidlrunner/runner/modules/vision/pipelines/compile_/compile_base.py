@@ -121,32 +121,33 @@ class CompileModelBase(CommonPipelineBase):
         self.packaged_path = self.build_run_dir(packaged_path)
 
     def _upgrade_kwargs(self, **kwargs):
-        kwargs = copy.deepcopy(kwargs)
-        kwargs_out = copy.deepcopy(kwargs)
+        kwargs_in = copy.deepcopy(kwargs)
+        kwargs_out = dict()
 
-        for k, v in kwargs.items():
+        for k, v in kwargs_in.items():
             if k.startswith('session.target_device'):
                 # these fields are from edgeai-benchmark - no need to use it here
                 kwargs_out.pop(k, None)
             elif k.startswith('session.runtime_options'):
-                kwargs_out.pop(k, None)
-                new_key = k.replace('session.runtime_options', 'session.runtime_settings.runtime_options')
-                kwargs_out[new_key] = v
+                # kwargs_out.pop(k, None)
+                # new_key = k.replace('session.runtime_options', 'session.runtime_settings.runtime_options')
+                # kwargs_out[new_key] = v
+                pass # do not take runtime_options in the old format (directly under session) from the configfile
             elif k == 'dataloader.name':
-                if kwargs[k] is not None:
-                    kwargs_out[k] = kwargs[k]
+                if kwargs_in[k] is not None:
+                    kwargs_out[k] = kwargs_in[k]
                 #
             elif k == 'dataloader.path':
-                if kwargs[k] is not None:
-                    kwargs_out[k] = kwargs[k]
+                if kwargs_in[k] is not None:
+                    kwargs_out[k] = kwargs_in[k]
                 #
             elif k == 'preprocess.name':
-                if kwargs[k] is not None:
-                    kwargs_out[k] = kwargs[k]
+                if kwargs_in[k] is not None:
+                    kwargs_out[k] = kwargs_in[k]
                 #
             elif k == 'postprocess.name':
-                if kwargs[k] is not None:
-                    kwargs_out[k] = kwargs[k]
+                if kwargs_in[k] is not None:
+                    kwargs_out[k] = kwargs_in[k]
                 #
             elif k == 'dataset_category':
                 kwargs_out.pop(k, None)
@@ -158,36 +159,36 @@ class CompileModelBase(CommonPipelineBase):
             elif k == 'input_dataset':
                 kwargs_out.pop(k, None)
                 if v == 'imagenet':
-                    if kwargs_out['dataloader.name'] is None:
+                    if kwargs_in['dataloader.name'] is None:
                         kwargs_out['dataloader.name'] = 'image_classification_dataloader'
                     #
-                    if kwargs_out['dataloader.path'] is None:
+                    if kwargs_in['dataloader.path'] is None:
                         kwargs_out['dataloader.path'] = './data/datasets/vision/imagenetv2c/val'
                     #
-                    if kwargs.get('preprocess.name',None) is None:
+                    if kwargs_in.get('preprocess.name',None) is None:
                         kwargs_out['preprocess.name'] = 'image_preprocess'
                     #
                 elif v == 'coco':
-                    if kwargs_out['dataloader.name'] is None:
+                    if kwargs_in['dataloader.name'] is None:
                         kwargs_out['dataloader.name'] = 'coco_detection_dataloader'
                     #
-                    if kwargs_out['dataloader.path'] is None:
+                    if kwargs_in['dataloader.path'] is None:
                         kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
                     #
-                    if kwargs_out.get('preprocess.name',None) is None:
+                    if kwargs_in.get('preprocess.name',None) is None:
                         kwargs_out['preprocess.name'] = 'image_preprocess'
                     #
-                    if kwargs_out.get('postprocess.name',None) is None and self.with_postprocess:
+                    if kwargs_in.get('postprocess.name',None) is None and self.with_postprocess:
                         kwargs_out['postprocess.name'] = 'object_detection_postprocess'
                     #
                 elif v == 'cocoseg21':
-                    if kwargs_out['dataloader.name'] is None:
+                    if kwargs_in['dataloader.name'] is None:
                         kwargs_out['dataloader.name'] = 'coco_segmentation_dataloader'
                     #
-                    if kwargs_out['dataloader.path'] is None:
+                    if kwargs_in['dataloader.path'] is None:
                         kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
                     #
-                    if kwargs.get('preprocess.name',None) is None:
+                    if kwargs_in.get('preprocess.name',None) is None:
                         kwargs_out['preprocess.name'] = 'image_preprocess'
                     #
                 #

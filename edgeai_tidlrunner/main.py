@@ -51,10 +51,11 @@ class MainRunner(runner.bases.PipelineBase):
         target_module = getattr(runner.modules, target_module_name)
         return target_module
 
-    def _create_run_dict(self, command, model_key=None, **kwargs):
+    @classmethod
+    def _create_run_dict(cls, command, model_key=None, **kwargs):
         config_path = kwargs.get('common.config_path', None)
         # which target module to use
-        target_module = self._get_target_module(kwargs['common.target_module'])
+        target_module = cls._get_target_module(kwargs['common.target_module'])
         pipeline_names = target_module.pipelines.command_module_name_dict[command]
         pipeline_names = pipeline_names if isinstance(pipeline_names, list) else [pipeline_names]
 
