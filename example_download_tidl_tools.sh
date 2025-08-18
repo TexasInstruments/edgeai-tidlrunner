@@ -32,4 +32,4 @@
 # download_tidl_tools is a script that si defined in pyproject.toml and add while pip install
 # it is equivalent to running python3 -m tidl_tools_package.download
 
-download_tidl_tools
+python3 -m tidl_tools_package.download
