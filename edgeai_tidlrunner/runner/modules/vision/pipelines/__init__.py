@@ -33,9 +33,9 @@ from .compile_.accuracy import InferAccuracy
 from .compile_.analyze import *
 
 from .optimize_.optimize import OptimizeModel
-
 # from .optimize_.optimize_gui import OptimizeModelGUI
-# from .utils_.split_model import SplitModel
+
+from .utils_.extract import ExtractModel
 
 
 command_module_name_dict_base = {
@@ -50,7 +50,7 @@ command_module_name_dict_base = {
 command_module_name_dict_ext = {
     'optimize':'OptimizeModel',
     #'optimize_model_gui':'OptimizeModelGUI',
-    #'split_model':'SplitModel',
+    'extract':'ExtractModel',
 }
 
 command_module_name_dict = command_module_name_dict_base | command_module_name_dict_ext

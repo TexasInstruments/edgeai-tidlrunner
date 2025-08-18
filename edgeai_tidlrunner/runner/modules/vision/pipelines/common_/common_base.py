@@ -67,7 +67,7 @@ class CommonPipelineBase(bases.PipelineBase):
     def build_run_dir(self, run_dir):
         model_basename = os.path.basename(self.model_source)
         model_basename_wo_ext = os.path.splitext(model_basename)[0]
-        model_id = self.settings[self.session_prefix]['model_id'] or ''
+        model_id = self.settings[self.session_prefix].get('model_id', '')
         model_id_underscore = model_id + '_' if model_id else ''
 
         tensor_bits = self.kwargs.get('session.runtime_settings.runtime_options.tensor_bits', '')

@@ -36,7 +36,7 @@ import os
 from ..... import utils
 from ..... import bases
 from ...settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
-
+from ..common_.common_base import CommonPipelineBase
 
 #################################################################
 import onnx
@@ -57,12 +57,24 @@ class ONNXNode:
         return f"{self.name} : {self.module} : {self.depth} : {[child.name if isinstance(child,ONNXNode) else child for child in self.children]}"
         
 
-class SplitModel(bases.PipelineBase):
+class ExtractModel(CommonPipelineBase):
     ARGS_DICT=SETTINGS_DEFAULT['basic']
     COPY_ARGS=COPY_SETTINGS_DEFAULT['basic']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        common_kwargs = self.settings['common']
+
+        if os.path.exists(self.run_dir):
+            print(f'INFO: clearing run_dir folder before compile: {self.run_dir}')
+            shutil.rmtree(self.run_dir, ignore_errors=True)
+        #
+
+        os.makedirs(self.run_dir, exist_ok=True)
+        os.makedirs(self.model_folder, exist_ok=True)
+
+        config_path = os.path.dirname(common_kwargs['config_path']) if common_kwargs['config_path'] else None
+        self.download_file(self.model_source, model_folder=self.model_folder, source_dir=config_path)
 
     def info(self):
         print(f'INFO: Model optimize - {__file__}')
@@ -241,21 +253,8 @@ class SplitModel(bases.PipelineBase):
 
     #################################################################
     def _run(self):
-        print(f'INFO: starting split_model')
-        run_dir = self.kwargs.pop('run_dir')
-        run_dir = run_dir.replace('{model_name}', os.path.splitext(os.path.basename(self.kwargs['model_path']))[0])
-        model_folder = os.path.join(run_dir, 'model')
+        print(f'INFO: starting extract model')
+        output_path = os.path.join(self.run_dir, 'extract')
+        os.makedirs(output_path, exist_ok=True)
 
-        if os.path.exists(run_dir):
-            print(f'INFO: clearing run_dir folder before compile: {run_dir}')
-            shutil.rmtree(run_dir, ignore_errors=True)
-        #
-
-        os.makedirs(run_dir, exist_ok=True)
-        os.makedirs(model_folder, exist_ok=True)
-
-        output_path = model_folder
-
-        print(f'INFO: running split_model')
-        self._export_unique_submodules(self.kwargs['model_path'], output_path, max_depth=3)
-
+        self._export_unique_submodules(self.model_path, output_path, max_depth=3)
