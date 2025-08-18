@@ -28,7 +28,8 @@ dependencies = [
     "pyyaml",
     "colorama",
     "munkres",
-    "wurlitzer"
+    "wurlitzer",
+    "xlsxwriter"
 ]
 
 [project.urls]

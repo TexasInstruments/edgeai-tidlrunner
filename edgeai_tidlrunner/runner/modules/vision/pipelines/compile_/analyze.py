@@ -33,7 +33,6 @@ import copy
 import numpy as np
 import onnx
 import glob
-import pickle
 import xlsxwriter
 
 from ..... import utils
