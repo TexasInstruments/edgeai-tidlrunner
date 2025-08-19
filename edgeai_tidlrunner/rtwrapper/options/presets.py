@@ -76,3 +76,10 @@ TIDL_DETECTION_META_ARCH_TYPE_SSD_LIST = [
     TIDLDetectionMetaArchType.TIDL_DETECTION_META_ARCH_TYPE_SSD_TFLITE,
     TIDLDetectionMetaArchType.TIDL_DETECTION_META_ARCH_TYPE_SSD_ONNX,
 ]
+
+
+# other common constants
+MILLI_CONST = 1e3 # multiplication by 1000 is to convert seconds to milliseconds
+MEGA_CONST = 1e6  # convert raw data to mega : example bytes to mega bytes (MB)
+GIGA_CONST = 1e9
+ULTRA_CONST = 1e6

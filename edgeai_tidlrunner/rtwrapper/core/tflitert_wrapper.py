@@ -83,7 +83,10 @@ class TFLiteRuntimeWrapper(BaseRuntimeWrapper):
             self.start_inference()
         #
         input_data = self._format_input_data(input_data)
-        return self._run(input_data, output_keys)
+        super()._pre_inference(input_data, output_keys)
+        outputs = self._run(input_data, output_keys)
+        super()._post_inference(input_data, output_keys)
+        return outputs
 
     def _run(self, input_data, output_keys=None):
         # if model needs additional inputs given in extra_inputs
