@@ -70,7 +70,7 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | {
     'optimize_model':          {'dest': 'common.optimize.optimize_model', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value'},
     'shape_inference':          {'dest': 'common.optimize.shape_inference', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value'},
     # common options
-    'task_type':                {'dest': 'common.task_type', 'default': constants.TaskType.TASK_TYPE_CLASSIFICATION, 'type': str, 'metavar': 'value'},
+    'task_type':                {'dest': 'common.task_type', 'default': None, 'type': str, 'metavar': 'value'},
     'num_frames':               {'dest': 'common.num_frames', 'default': 10, 'type': int, 'metavar': 'value'},
     'config_path':              {'dest': 'common.config_path', 'default': None, 'type': str, 'metavar': 'value'},
     'display_step':             {'dest': 'common.display_step', 'default': 100, 'type': str, 'metavar': 'value'},

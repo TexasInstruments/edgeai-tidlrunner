@@ -37,6 +37,7 @@ import yaml
 from ..... import utils
 from ..... import bases
 from ...settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
+from ...settings import constants
 
 
 class CommonPipelineBase(bases.PipelineBase):
@@ -67,8 +68,10 @@ class CommonPipelineBase(bases.PipelineBase):
     def build_run_dir(self, run_dir):
         model_basename = os.path.basename(self.model_source)
         model_basename_wo_ext = os.path.splitext(model_basename)[0]
-        model_id = self.settings[self.session_prefix].get('model_id', '')
-        model_id_underscore = model_id + '_' if model_id else ''
+        # task_type = self.kwargs['common.task_type']
+        # task_type_short_name = constants.TaskTypeShortName.get(task_type, None)
+        model_id = self.settings[self.session_prefix].get('model_id', '') or None
+        model_id_underscore = model_id + '_' if model_id else None
 
         tensor_bits = self.kwargs.get('session.runtime_settings.runtime_options.tensor_bits', '')
         tensor_bits_str = f'{str(tensor_bits)}bits' if tensor_bits else ''
@@ -78,10 +81,21 @@ class CommonPipelineBase(bases.PipelineBase):
         target_device_str = target_device if target_device else ''
         target_device_slash = target_device + os.sep if target_device else ''
 
-        run_dir = run_dir.replace('{model_name}', model_basename_wo_ext) \
-            .replace('{model_id}_', model_id_underscore).replace('{model_id}', model_id) \
-            .replace('{tensor_bits}/', tensor_bits_slash).replace('{tensor_bits}', tensor_bits_str) \
-            .replace('{target_device}/', target_device_slash).replace('{target_device}', target_device_str)
+        if model_basename_wo_ext:
+            run_dir = run_dir.replace('{model_name}', model_basename_wo_ext)
+        #
+        if model_id:
+            run_dir = run_dir.replace('{model_id}_', model_id_underscore)
+            run_dir = run_dir.replace('{model_id}', model_id)
+        #
+        if tensor_bits:
+            run_dir = run_dir.replace('{tensor_bits}/', tensor_bits_slash)
+            run_dir = run_dir.replace('{tensor_bits}', tensor_bits_str)
+        #
+        if target_device:
+            run_dir = run_dir.replace('{target_device}/', target_device_slash)
+            run_dir = run_dir.replace('{target_device}', target_device_str)
+        #
         return run_dir
 
     def download_file(self, model_source, model_folder, source_dir=None):

@@ -33,19 +33,21 @@ from . import dataset_base
 
 
 class RandomDataLoader(dataset_base.DatasetBase):
-    def __init__(self, **kwargs):
+    def __init__(self, num_frames=1000, size_details=None, **kwargs):
         super().__init__()
-        self.size_details = [{'shape':[1, 3, 224, 224], 'type':'float'}]
+        self.num_frames = num_frames
+        self.size_details = size_details or [{'shape':[1, 3, 224, 224], 'type':'float'}]
 
-    def __getitem__(self, index):
+    def __getitem__(self, index, info_dict=None):
+        info_dict = info_dict or {}
         shape = self.size_details[0]['shape']
         type = self.size_details[0]['type']
         dtype = np.uint8 if 'uint8' in type else np.float32
         tensor = np.random.rand(*shape).astype(dtype=dtype)
-        return tensor
+        return tensor, info_dict
 
     def __len__(self):
-        return 1000
+        return self.num_frames
 
     def set_size_details(self, size_details):
         self.size_details = size_details

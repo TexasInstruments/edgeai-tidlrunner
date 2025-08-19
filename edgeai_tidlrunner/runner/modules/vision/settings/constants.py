@@ -42,3 +42,16 @@ class TaskType:
     TASK_TYPE_OBJECT_6D_POSE_ESTIMATION = 'object_6d_pose_estimation'
     TASK_TYPE_VISUAL_LOCALIZATION = 'visual_localization'
     TASK_TYPE_DISPARITY_ESTIMATION = 'disparity_estimation'
+
+
+TaskTypeShortName = {
+    TaskType.TASK_TYPE_CLASSIFICATION: 'cl',
+    TaskType.TASK_TYPE_DETECTION: 'od',
+    TaskType.TASK_TYPE_SEGMENTATION: 'ss',
+    TaskType.TASK_TYPE_KEYPOINT_DETECTION: 'kd',
+    TaskType.TASK_TYPE_DEPTH_ESTIMATION: 'de',
+    TaskType.TASK_TYPE_DETECTION_3DOD: '3dod',
+    TaskType.TASK_TYPE_OBJECT_6D_POSE_ESTIMATION: '6dpose',
+    TaskType.TASK_TYPE_VISUAL_LOCALIZATION: 'visloc',
+    TaskType.TASK_TYPE_DISPARITY_ESTIMATION: 'sd',
+}
