@@ -68,10 +68,15 @@ class CommonPipelineBase(bases.PipelineBase):
     def build_run_dir(self, run_dir):
         model_basename = os.path.basename(self.model_source)
         model_basename_wo_ext = os.path.splitext(model_basename)[0]
-        # task_type = self.kwargs['common.task_type']
-        # task_type_short_name = constants.TaskTypeShortName.get(task_type, None)
-        model_id = self.settings[self.session_prefix].get('model_id', '') or None
-        model_id_underscore = model_id + '_' if model_id else None
+        model_id = self.settings[self.session_prefix].get('model_id', '')
+        if not model_id:
+            model_id = utils.generate_unique_id(model_basename, num_characters=8)
+            # can also use task_type instead of x-
+            # task_type = self.kwargs['common.task_type']
+            # task_type_short_name = constants.TaskTypeShortName.get(task_type, None)
+            model_id = 'x-' + model_id
+        #
+        model_id_underscore = model_id + '_'
 
         tensor_bits = self.kwargs.get('session.runtime_settings.runtime_options.tensor_bits', '')
         tensor_bits_str = f'{str(tensor_bits)}bits' if tensor_bits else ''
@@ -81,13 +86,9 @@ class CommonPipelineBase(bases.PipelineBase):
         target_device_str = target_device if target_device else ''
         target_device_slash = target_device + os.sep if target_device else ''
 
-        if model_basename_wo_ext:
-            run_dir = run_dir.replace('{model_name}', model_basename_wo_ext)
-        #
-        if model_id:
-            run_dir = run_dir.replace('{model_id}_', model_id_underscore)
-            run_dir = run_dir.replace('{model_id}', model_id)
-        #
+        run_dir = run_dir.replace('{model_name}', model_basename_wo_ext)
+        run_dir = run_dir.replace('{model_id}_', model_id_underscore)
+        run_dir = run_dir.replace('{model_id}', model_id)
         if tensor_bits:
             run_dir = run_dir.replace('{tensor_bits}/', tensor_bits_slash)
             run_dir = run_dir.replace('{tensor_bits}', tensor_bits_str)

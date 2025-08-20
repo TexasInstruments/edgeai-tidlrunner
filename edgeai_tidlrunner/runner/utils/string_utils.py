@@ -27,12 +27,16 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from .config_utils import *
-from .download_utils import *
-from .parse_utils import *
-from .file_utils import *
-from .metric_utils import *
-from .string_utils import *
-from .process_with_queue import *
-from .parallel_runner import *
-from .sequential_runner import *
+import os
+
+
+def generate_unique_id_sha256(name, num_characters=64):
+    import hashlib
+    """Generate using SHA256 hash"""
+    basename = os.path.basename(name)
+    sha256_hash = hashlib.sha256(basename.encode('utf-8')).hexdigest()
+    return sha256_hash[:num_characters]
+
+
+def generate_unique_id(name, num_characters=64):
+    return generate_unique_id_sha256(name, num_characters)
