@@ -134,8 +134,8 @@ class CompileModelBase(CommonPipelineBase):
                 # new_key = k.replace('session.runtime_options', 'session.runtime_settings.runtime_options')
                 # kwargs_out[new_key] = v
                 pass # do not take runtime_options in the old format (directly under session) from the configfile
-            if k == 'session.session_name':
-                kwargs_out['name'] = v           
+            elif k == 'session.session_name':
+                kwargs_out['session.name'] = v           
             elif k == 'dataloader.name':
                 if kwargs_in[k] is not None:
                     kwargs_out[k] = kwargs_in[k]

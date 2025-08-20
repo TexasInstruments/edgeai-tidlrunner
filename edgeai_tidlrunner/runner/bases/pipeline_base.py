@@ -197,6 +197,7 @@ class PipelineBase():
 
         parser = argparse.ArgumentParser(
             description='Runner commandline arguments',
+            allow_abbrev=False,
             argument_default=argparse.SUPPRESS,
             epilog=cls._arg_parser_info()
         )
