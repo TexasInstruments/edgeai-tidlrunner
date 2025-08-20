@@ -177,7 +177,7 @@ COPY_SETTINGS_DEFAULT['optimize'] = COPY_SETTINGS_DEFAULT['basic'] | {
 ##########################################################################
 SETTINGS_DEFAULT['extract'] = SETTINGS_DEFAULT['basic'] | {
     'pipeline_type':          {'dest': 'common.pipeline_type', 'default': 'extract', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'}, 
-    'mode':                   {'dest': 'common.extract.mode', 'default': 'submodules', 'type': str, 'metavar': 'value', 'choices': ['submodules', 'submodule', 'start2end', 'operators']},
+    'mode':                   {'dest': 'common.extract.mode', 'default': 'operators', 'type': str, 'metavar': 'value', 'choices': ['submodules', 'submodule', 'start2end', 'operators']},
     'submodule_name':         {'dest': 'common.extract.submodule_name', 'default': None, 'type': str, 'metavar': 'value'},
     'max_depth':              {'dest': 'common.extract.max_depth', 'default': 3, 'type': int, 'metavar': 'value'},
     'start_names':            {'dest': 'common.extract.start_names', 'default': None, 'type': str, 'metavar': 'value'},
