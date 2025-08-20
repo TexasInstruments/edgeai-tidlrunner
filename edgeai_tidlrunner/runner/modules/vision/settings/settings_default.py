@@ -172,3 +172,16 @@ SETTINGS_DEFAULT['optimize'] = SETTINGS_DEFAULT['basic'] | {
 
 COPY_SETTINGS_DEFAULT['optimize'] = COPY_SETTINGS_DEFAULT['basic'] | {
 }
+
+
+##########################################################################
+SETTINGS_DEFAULT['extract'] = SETTINGS_DEFAULT['basic'] | {
+    'mode':                   {'dest': 'common.extract.mode', 'default': 'submodules', 'type': str, 'metavar': 'value', 'choices': ['submodules', 'submodule', 'start2end']},
+    'submodule_name':         {'dest': 'common.extract.submodule_name', 'default': None, 'type': str, 'metavar': 'value'},
+    'max_depth':              {'dest': 'common.extract.max_depth', 'default': 3, 'type': int, 'metavar': 'value'},
+    'start_names':            {'dest': 'common.extract.start_names', 'default': None, 'type': str, 'metavar': 'value'},
+    'end_names':              {'dest': 'common.extract.end_names', 'default': None, 'type': str, 'metavar': 'value'},
+}
+
+COPY_SETTINGS_DEFAULT['extract'] = COPY_SETTINGS_DEFAULT['basic'] | {
+}
