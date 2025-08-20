@@ -42,8 +42,8 @@ def _run_command(command_key, pipeline_name, command_kwargs, capture_log):
     assert command_key in command_module_name_dict, f'ERROR: unknown command: {command_key}'
     command_module = getattr(target_module.pipelines, pipeline_name)
     runner_obj = command_module(**command_kwargs)
-    command_func = runner_obj.run
-    command_func()
+    runner_obj.prepare()
+    runner_obj.run()
 
 
 def _run(model_command_dict):

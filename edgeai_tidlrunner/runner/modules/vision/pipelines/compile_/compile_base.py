@@ -52,6 +52,9 @@ class CompileModelBase(CommonPipelineBase):
         self.with_postprocess = with_postprocess
         super().__init__(**kwargs)
         
+    def _prepare(self):
+        super()._prepare()
+        
         self.dataloader = None
         self.preprocess = None
         self.session = None
@@ -119,7 +122,7 @@ class CompileModelBase(CommonPipelineBase):
         #
 
         packaged_path = self.settings[self.session_prefix]['packaged_path']
-        self.packaged_path = self.build_run_dir(packaged_path)
+        self.packaged_path = self._build_run_dir(packaged_path)
 
     def _upgrade_kwargs(self, **kwargs):
         kwargs_in = copy.deepcopy(kwargs)

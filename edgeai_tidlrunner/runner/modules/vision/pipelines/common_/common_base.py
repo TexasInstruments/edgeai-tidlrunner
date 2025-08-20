@@ -46,12 +46,11 @@ class CommonPipelineBase(bases.PipelineBase):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-     
         if 'session' in self.settings and self.settings[self.session_prefix].get('model_path', None):
             self.model_source = self.settings[self.session_prefix]['model_path']
 
             run_dir = self.settings[self.session_prefix]['run_dir']
-            self.run_dir = self.build_run_dir(run_dir)
+            self.run_dir = self._build_run_dir(run_dir)
 
             model_basename = os.path.basename(self.model_source)
             self.model_folder = os.path.join(self.run_dir, 'model')
@@ -65,8 +64,11 @@ class CommonPipelineBase(bases.PipelineBase):
             self.model_path = None
             self.artifacts_folder = None
         #
+             
+    def _prepare(self):
+        pass
 
-    def build_run_dir(self, run_dir):
+    def _build_run_dir(self, run_dir):
         model_basename = os.path.basename(self.model_source)
         model_id = self.settings[self.session_prefix].get('model_id', '')
         if not model_id:

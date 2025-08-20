@@ -43,6 +43,9 @@ class OptimizeModelGUI(common_base.CommonPipelineBase):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
             
+    def _prepare(self):
+        super()._prepare()
+        
     def _run(self):
         print(f'INFO: starting model optimize_gui')
         try:

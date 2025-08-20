@@ -49,6 +49,8 @@ class CompileModel(CompileModelBase):
     def __init__(self, with_postprocess=False, **kwargs):
         super().__init__(with_postprocess=with_postprocess, **kwargs)
 
+    def _prepare(self):
+        super()._prepare()
         common_kwargs = self.settings[self.common_prefix]
         dataloader_kwargs = self.settings[self.dataloader_prefix]
         session_kwargs = self.settings[self.session_prefix]

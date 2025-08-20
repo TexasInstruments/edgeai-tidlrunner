@@ -43,7 +43,10 @@ class OptimizeModel(common_base.CommonPipelineBase):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-            
+
+    def _prepare(self):
+        super()._prepare()
+                    
     def info():
         print(f'INFO: Model optimize - {__file__}')
 

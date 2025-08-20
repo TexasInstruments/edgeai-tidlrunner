@@ -29,6 +29,7 @@
 
 
 import os
+import sys
 import copy
 import argparse
 import json
@@ -68,9 +69,6 @@ class PipelineBase():
 
     def info(self):
         print(f'INFO: running - {__file__}')
-
-    def run(self):
-        pass
 
     def get_run_data(self):
         """
@@ -216,18 +214,60 @@ class PipelineBase():
         #
         return parser
 
-    def run(self):
+    def prepare(self):
         capture_log = self.settings['common']['capture_log']
         log_file = self.settings['common']['log_file']
-        if capture_log and self.run_dir and log_file:
+        if log_file:
             if not log_file.startswith('/') and not log_file.startswith('.'):
                 log_file =  os.path.join(self.run_dir, log_file)
             #
+            os.makedirs(os.path.dirname(log_file), exist_ok=True)       
+        # 
+        if capture_log and log_file:
+            with open(log_file, 'a') as log_fp:
+                with wurlitzer.pipes(stdout=log_fp, stderr=log_fp):
+                    return self._prepare()
+                #
+            #
+        # elif log_file:
+        #     with open(log_file, 'a') as log_fp:
+        #         tee_stdout = utils.TeeLogWriter([sys.stdout, log_fp])
+        #         tee_stderr = utils.TeeLogWriter([sys.stderr, log_fp])                
+        #         with wurlitzer.pipes(stdout=tee_stdout, stderr=tee_stderr):
+        #             return self._prepare()
+        #         #
+        #     #
+        else:
+            return self._prepare()
+        
+    def run(self):
+        capture_log = self.settings['common']['capture_log']
+        log_file = self.settings['common']['log_file']
+        if log_file:
+            if not log_file.startswith('/') and not log_file.startswith('.'):
+                log_file =  os.path.join(self.run_dir, log_file)
+            #        
             os.makedirs(os.path.dirname(log_file), exist_ok=True)
+        #        
+        if capture_log and log_file:
             with open(log_file, 'a') as log_fp:
                 with wurlitzer.pipes(stdout=log_fp, stderr=log_fp):
                     return self._run()
                 #
             #
+        # elif log_file:
+        #     with open(log_file, 'a') as log_fp:
+        #         tee_stdout = utils.TeeLogWriter([sys.stdout, log_fp])
+        #         tee_stderr = utils.TeeLogWriter([sys.stderr, log_fp])                
+        #         with wurlitzer.pipes(stdout=tee_stdout, stderr=tee_stderr):
+        #             return self._run()
+        #         #
+        #     #            
         else:
             return self._run()
+        
+    def _prepare(self):
+        raise RuntimeError(f'PipelineBase._prepare() is not implemented in {self.__class__.__name__}. Please implement it in the derived class.')
+
+    def _run(self):
+        raise RuntimeError(f'PipelineBase._run() is not implemented in {self.__class__.__name__}. Please implement it in the derived class.')

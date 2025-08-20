@@ -64,6 +64,9 @@ class ExtractModel(CommonPipelineBase):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+    def _prepare(self):
+        super()._prepare()
         common_kwargs = self.settings['common']
 
         if os.path.exists(self.run_dir):
@@ -80,6 +83,29 @@ class ExtractModel(CommonPipelineBase):
     def info(self):
         print(f'INFO: Model optimize - {__file__}')
 
+    def _run(self):
+        print(f'INFO: starting extract model')
+        onnx.shape_inference.infer_shapes_path(self.model_path)
+        output_path = os.path.join(self.run_dir, 'extract')
+        os.makedirs(output_path, exist_ok=True)
+        if self.kwargs['common.extract.mode']=='submodules':
+            self._export_unique_submodules(self.model_path, output_path, max_depth=3)
+        elif self.kwargs['common.extract.mode']=='submodule':
+            submodule = self.kwargs['common.extract.submodule_name']
+            if submodule is not None:
+                self._export_submodule_start_with(self.model_path, submodule, os.path.join(output_path, submodule.replace('/','__').replace('.','_')+'.onnx'))
+            else:
+                self._export_all_top_level_submodules(self.model_path, output_path)
+        elif self.kwargs['common.extract.mode']=='start2end':
+            start_nodes = self.kwargs['common.extract.start_names']
+            end_nodes = self.kwargs['common.extract.end_names']
+            if start_nodes is None and end_nodes is None:
+                raise RuntimeError('Either start_nodes or end_nodes should be specified')
+            self.extract_from_start_to_end(self.model_path, output_path,start_nodes, end_nodes)
+        elif self.kwargs['common.extract.mode']=='operators':
+            self.extract_all_opearators(self.model_path, output_path)
+
+    #################################################################
     def _get_nodes_start_with(self, graph, prefix):
         return [node for node in graph.nodes if node.name.startswith(prefix)]
 
@@ -314,25 +340,4 @@ class ExtractModel(CommonPipelineBase):
             yaml.safe_dump(details, fp, sort_keys=False)
         
 
-    #################################################################
-    def _run(self):
-        print(f'INFO: starting extract model')
-        onnx.shape_inference.infer_shapes_path(self.model_path)
-        output_path = os.path.join(self.run_dir, 'extract')
-        os.makedirs(output_path, exist_ok=True)
-        if self.kwargs['common.extract.mode']=='submodules':
-            self._export_unique_submodules(self.model_path, output_path, max_depth=3)
-        elif self.kwargs['common.extract.mode']=='submodule':
-            submodule = self.kwargs['common.extract.submodule_name']
-            if submodule is not None:
-                self._export_submodule_start_with(self.model_path, submodule, os.path.join(output_path, submodule.replace('/','__').replace('.','_')+'.onnx'))
-            else:
-                self._export_all_top_level_submodules(self.model_path, output_path)
-        elif self.kwargs['common.extract.mode']=='start2end':
-            start_nodes = self.kwargs['common.extract.start_names']
-            end_nodes = self.kwargs['common.extract.end_names']
-            if start_nodes is None and end_nodes is None:
-                raise RuntimeError('Either start_nodes or end_nodes should be specified')
-            self.extract_from_start_to_end(self.model_path, output_path,start_nodes, end_nodes)
-        elif self.kwargs['common.extract.mode']=='operators':
-            self.extract_all_opearators(self.model_path, output_path)
+
