@@ -30,7 +30,7 @@
 import os
 import sys
 import shutil
-import onnx
+import warnings
 import onnx_graphsurgeon as gs
 import os
 from ..... import utils
@@ -107,6 +107,8 @@ class ExtractModel(CommonPipelineBase):
         original_inputs = list(graph.inputs)
         original_outputs = list(graph.outputs)
         nodes = self._get_nodes_start_with(graph, prefix)
+        if len(nodes) == 0:
+            warnings.warn(f"No node found with prefix {prefix} in model {onnx_path}")
         graph.inputs = []
         graph.outputs = []
         for node in nodes:
@@ -251,22 +253,17 @@ class ExtractModel(CommonPipelineBase):
                 f.write(s)
                 stack.extend(reversed(node.children))
 
-    def extract_from_start_to_end(model_path:str, output_path:str, start_nodes:str=None, end_nodes:str=None):
+    def extract_from_start_to_end(self, model_path:str, output_path:str, start_nodes:str=None, end_nodes:str=None):
+        _, file = os.path.split(model_path)
         model = onnx.load(model_path)
         graph = gs.import_onnx(model)
         start_nodes = start_nodes.split(',') if start_nodes else []
         end_nodes = end_nodes.split(',') if end_nodes else []
         start_end_dict = {}
-        depths = {}
-        queue = graph.inputs
-        while queue:
-            inp = queue.pop(0)
-            nodes = inp.outputs
-            for node in nodes:
-                depths[node.name] = max([depths.get(inp1.inputs[0].name,0) if inp1.inputs else 0 for inp1 in node.inputs if isinstance(inp1, gs.Variable)]+[0] )+1
-                for inp_node in [inp1.inputs[0] for inp1 in node.inputs if isinstance(inp1, gs.Variable) and len(inp1.inputs)]:
-                    depths[inp_node.name] = max(depths[node.name]-1, depths.get(inp_node.name,0))
-                queue.extend([out for out in node.outputs if out.outputs])
+        nodes = list(graph.nodes)
+        depths = {node.name: nodes.index(node) for node in nodes}
+        if len(start_nodes) == 0:
+            start_nodes = list(set([out.name for inp in graph.inputs for out in inp.outputs]))
         for start_node in start_nodes:
             if len(end_nodes)==0:
                 start_end_dict[start_node] = None
@@ -284,13 +281,13 @@ class ExtractModel(CommonPipelineBase):
             for inp in node.inputs:
                 if isinstance(inp, gs.Constant):
                     continue
-                if inp.inputs[0].name not in node_names:
-                    new_graph.inputs.append(inp)
+                if inp in graph.inputs or inp.inputs[0].name not in node_names:
+                    new_graph.inputs.append(inp) if inp not in new_graph.inputs else None
             for outp in node.outputs:
-                if any([ out_node.name not in node_names for out_node in outp.outputs ]):
-                    new_graph.outputs.append(outp)
+                if outp in graph.outputs or any([ out_node.name not in node_names for out_node in outp.outputs ]) :
+                    new_graph.outputs.append(outp) if outp not in new_graph.outputs else None
         final_model = gs.export_onnx(new_graph)
-        onnx.save(final_model, output_path)        
+        onnx.save(final_model, os.path.join(output_path,'extracted_'+file))        
 
     #################################################################
     def _run(self):
@@ -302,13 +299,13 @@ class ExtractModel(CommonPipelineBase):
         elif self.kwargs['common.extract.mode']=='submodule':
             submodule = self.kwargs['common.extract.submodule_name']
             if submodule is not None:
-                self._export_submodule_start_with(self.model_path, submodule, output_path)
+                self._export_submodule_start_with(self.model_path, submodule, os.path.join(output_path, submodule.replace('/','__').replace('.','_')+'.onnx'))
             else:
-                self._export_all_top_level_submodules(self.model_path)
+                self._export_all_top_level_submodules(self.model_path, output_path)
         elif self.kwargs['common.extract.mode']=='start2end':
             start_nodes = self.kwargs['common.extract.start_names']
-            if start_nodes is None:
-                raise RuntimeError('for mode start2end start_names must be specified')
             end_nodes = self.kwargs['common.extract.end_names']
+            if start_nodes is None and end_nodes is None:
+                raise RuntimeError('Either start_nodes or end_nodes should be specified')
             self.extract_from_start_to_end(self.model_path, output_path,start_nodes, end_nodes)
 
