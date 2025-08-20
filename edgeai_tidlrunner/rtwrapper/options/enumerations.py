@@ -154,3 +154,15 @@ class GraphOptimizationLevel:
   ORT_ENABLE_LAYOUT = 3
   ORT_ENABLE_ALL = 99
 
+
+# other common constants
+MILLI_CONST = 1e3 # multiplication by 1000 is to convert seconds to milliseconds
+MEGA_CONST = 1e6  # convert raw data to mega : example bytes to mega bytes (MB)
+GIGA_CONST = 1e9
+ULTRA_CONST = 1e6
+
+# frequency of the core C7x/MMA processor that accelerates Deep Learning Tasks
+# this constant is used to convert cycles to time : time = cycles / DSP_FREQ
+# in future, this will need to be device dependent
+DSP_FREQ = 1e9
+

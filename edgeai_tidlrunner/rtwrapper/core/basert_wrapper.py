@@ -30,6 +30,7 @@
 import os
 import csv
 import time
+import re
 
 from .. import options
 
@@ -156,10 +157,10 @@ class BaseRuntimeWrapper:
         
     def _infer_stats(self):
         stats_dict = self._infer_frame_stats()
-        self.infer_stats_dict['num_frames'] += 1
+        self.infer_stats_dict['num_frames'] = self.infer_stats_dict.get('num_frames', 0) + 1
         # compute and populate final stats so that it can be used in result
         self._infer_stats_sum['num_subgraphs'] = self._infer_stats_sum.get('num_subgraphs', 0) + stats_dict.get('num_subgraphs', 0)
-        if self.settings.target_machine == options.presets.TargetMachineType.TARGET_MACHINE_EVM:
+        if self.kwargs['target_machine'] == options.presets.TargetMachineType.TARGET_MACHINE_EVM:
             # self._infer_stats_sum['infer_time_invoke_ms'] =  ?? # This is handled in run_inference
             self._infer_stats_sum['infer_time_core_ms'] = self._infer_stats_sum.get('infer_time_core_ms', 0) + stats_dict.get('core_time', 0) * options.presets.MILLI_CONST
             self._infer_stats_sum['infer_time_subgraph_ms'] = self._infer_stats_sum.get('infer_time_subgraph_ms', 0) + stats_dict.get('subgraph_time', 0) * options.presets.MILLI_CONST
@@ -213,7 +214,7 @@ class BaseRuntimeWrapper:
         subgraphIds = []
         for stat in benchmark_dict.keys():
             if 'proc_start' in stat:
-                if self.kwargs['session_name'] == 'onnxrt':
+                if self.kwargs['name'] == 'onnxrt':
                     value = stat.split("ts:subgraph_")
                     value = value[1].split("_proc_start")
                     subgraphIds.append(value[0])
@@ -243,7 +244,7 @@ class BaseRuntimeWrapper:
         stats = {
             'num_subgraphs': len(subgraphIds),
         }
-        if self.kwargs['target_machine'] == options.presets.TARGET_MACHINE_EVM:
+        if self.kwargs['target_machine'] == options.presets.TargetMachineType.TARGET_MACHINE_EVM:
             stats.update({
                 'total_time': total_time,
                 'core_time': core_time,
