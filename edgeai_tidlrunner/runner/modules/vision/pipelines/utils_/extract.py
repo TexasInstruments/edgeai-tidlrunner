@@ -58,8 +58,8 @@ class ONNXNode:
         
 
 class ExtractModel(CommonPipelineBase):
-    ARGS_DICT=SETTINGS_DEFAULT['basic']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['basic']
+    ARGS_DICT=SETTINGS_DEFAULT['extract']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['extract']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -135,17 +135,18 @@ class ExtractModel(CommonPipelineBase):
         return export_path
 
 
-    def _export_all_top_level_submodules(self, onnx_path:str):
+    def _export_all_top_level_submodules(self, onnx_path:str, output_path:str=None):
         '''
         onnx exports all top level submodules of the onnx model to new onnx files
         it discards stand alone nodes  which are not part of any submodule
         args:
             onnx_path:      the path of the onnx model
         '''
+        _, file = os.path.split(onnx_path)
         model = onnx.load(onnx_path)
         graph = gs.import_onnx(model)
         top_level_submodule_names = {node.name.split('/')[1] for node in graph.nodes if '/' in node.name[1:]}
-        export_paths = [self._export_submodule_start_with(onnx_path,f'/{name}/') for name in top_level_submodule_names]
+        export_paths = [self._export_submodule_start_with(onnx_path,f'/{name}/', os.path.join(output_path,file.replace('.onnx',f'_{name}.onnx')) if output_path else None) for name in top_level_submodule_names]
         return export_paths
 
 
@@ -203,7 +204,7 @@ class ExtractModel(CommonPipelineBase):
         for name in submodule_names:
             if name in to_be_removed:
                 continue
-            temp = self.get_submodule_dict(name)
+            temp = self._get_submodule_dict(name)
             for name,submodule in temp.items():
                 if name in submodule_dict:
                     submodule_dict[name].append(submodule) if submodule not in submodule_dict[name] else None
@@ -250,11 +251,64 @@ class ExtractModel(CommonPipelineBase):
                 f.write(s)
                 stack.extend(reversed(node.children))
 
+    def extract_from_start_to_end(model_path:str, output_path:str, start_nodes:str=None, end_nodes:str=None):
+        model = onnx.load(model_path)
+        graph = gs.import_onnx(model)
+        start_nodes = start_nodes.split(',') if start_nodes else []
+        end_nodes = end_nodes.split(',') if end_nodes else []
+        start_end_dict = {}
+        depths = {}
+        queue = graph.inputs
+        while queue:
+            inp = queue.pop(0)
+            nodes = inp.outputs
+            for node in nodes:
+                depths[node.name] = max([depths.get(inp1.inputs[0].name,0) if inp1.inputs else 0 for inp1 in node.inputs if isinstance(inp1, gs.Variable)]+[0] )+1
+                for inp_node in [inp1.inputs[0] for inp1 in node.inputs if isinstance(inp1, gs.Variable) and len(inp1.inputs)]:
+                    depths[inp_node.name] = max(depths[node.name]-1, depths.get(inp_node.name,0))
+                queue.extend([out for out in node.outputs if out.outputs])
+        for start_node in start_nodes:
+            if len(end_nodes)==0:
+                start_end_dict[start_node] = None
+                continue
+            for end_node in end_nodes:
+                if depths[start_node] <= depths[end_node]:
+                    start_end_dict[start_node] = end_node
+        from osrt_model_tools.onnx_tools.tidl_onnx_model_utils import get_all_node_names
+        node_names = get_all_node_names(model_path, start_end_dict,)
+        nodes = [node for node in graph.nodes if node.name in node_names]
+        new_graph = gs.Graph()
+        for node in nodes:
+            new_graph.nodes.append(node)
+        for node in nodes:
+            for inp in node.inputs:
+                if isinstance(inp, gs.Constant):
+                    continue
+                if inp.inputs[0].name not in node_names:
+                    new_graph.inputs.append(inp)
+            for outp in node.outputs:
+                if any([ out_node.name not in node_names for out_node in outp.outputs ]):
+                    new_graph.outputs.append(outp)
+        final_model = gs.export_onnx(new_graph)
+        onnx.save(final_model, output_path)        
 
     #################################################################
     def _run(self):
         print(f'INFO: starting extract model')
         output_path = os.path.join(self.run_dir, 'extract')
         os.makedirs(output_path, exist_ok=True)
+        if self.kwargs['common.extract.mode']=='submodules':
+            self._export_unique_submodules(self.model_path, output_path, max_depth=3)
+        elif self.kwargs['common.extract.mode']=='submodule':
+            submodule = self.kwargs['common.extract.submodule_name']
+            if submodule is not None:
+                self._export_submodule_start_with(self.model_path, submodule, output_path)
+            else:
+                self._export_all_top_level_submodules(self.model_path)
+        elif self.kwargs['common.extract.mode']=='start2end':
+            start_nodes = self.kwargs['common.extract.start_names']
+            if start_nodes is None:
+                raise RuntimeError('for mode start2end start_names must be specified')
+            end_nodes = self.kwargs['common.extract.end_names']
+            self.extract_from_start_to_end(self.model_path, output_path,start_nodes, end_nodes)
 
-        self._export_unique_submodules(self.model_path, output_path, max_depth=3)
