@@ -59,6 +59,9 @@ class BaseRuntimeWrapper:
         else:
             return None, None
 
+    def get_stats(self):
+        return self.infer_stats_dict
+    
     def _get_input_details_onnx(self, interpreter, input_details=None):
         if input_details is None:
             properties = {'name':'name', 'shape':'shape', 'type':'type'}

@@ -155,6 +155,7 @@ class InferModel(CompileModelBase):
         print(f'INFO: model infer done. output is in: {self.run_dir}')
         self.run_data = run_data
         # TODO: populate the result entry
+        self.settings['result'] = self.session.get_stats()        
         self._write_params('result.yaml')
         return run_data
 
