@@ -31,6 +31,7 @@ import os
 import sys
 import shutil
 import warnings
+import onnx.shape_inference
 import onnx_graphsurgeon as gs
 import os
 from ..... import utils
@@ -287,11 +288,36 @@ class ExtractModel(CommonPipelineBase):
                 if outp in graph.outputs or any([ out_node.name not in node_names for out_node in outp.outputs ]) :
                     new_graph.outputs.append(outp) if outp not in new_graph.outputs else None
         final_model = gs.export_onnx(new_graph)
-        onnx.save(final_model, os.path.join(output_path,'extracted_'+file))        
+        onnx.save(final_model, os.path.join(output_path,'extracted_'+file))
+    
+    def extract_all_opearators(self, model_path:str, output_path:str):
+        model = onnx.load(model_path)
+        graph = gs.import_onnx(model)
+        unique_operators = sorted(set([node.op for node in graph.nodes]))
+        for operator in unique_operators:
+            os.makedirs(os.path.join(output_path, operator), exist_ok=True)
+        details = {}
+        for node in graph.nodes:
+            output_path_node = os.path.join(output_path, node.op, node.name.replace('/','__').replace('.','_')+'.onnx')
+            graph =  gs.Graph([node], [inp for inp in node.inputs if isinstance(inp, gs.Variable)], [outp for outp in node.outputs])
+            onnx.save(gs.export_onnx(graph), output_path_node)
+            details[node.name]=dict(
+                op = node.op,
+                inputs = {inp.name: (str(inp.shape), str(inp.dtype)) for inp in node.inputs},
+                outputs = {out.name: (str(out.shape), str(out.dtype)) for out in node.outputs},
+                model_path = output_path_node,
+                attributes = {k: str(v) for k,v in node.attrs.items()}
+            )
+        import yaml
+
+        with open(os.path.join(output_path, 'details.yaml'), 'w') as fp:
+            yaml.safe_dump(details, fp, sort_keys=False)
+        
 
     #################################################################
     def _run(self):
         print(f'INFO: starting extract model')
+        onnx.shape_inference.infer_shapes_path(self.model_path)
         output_path = os.path.join(self.run_dir, 'extract')
         os.makedirs(output_path, exist_ok=True)
         if self.kwargs['common.extract.mode']=='submodules':
@@ -308,4 +334,5 @@ class ExtractModel(CommonPipelineBase):
             if start_nodes is None and end_nodes is None:
                 raise RuntimeError('Either start_nodes or end_nodes should be specified')
             self.extract_from_start_to_end(self.model_path, output_path,start_nodes, end_nodes)
-
+        elif self.kwargs['common.extract.mode']=='operators':
+            self.extract_all_opearators(self.model_path, output_path)
