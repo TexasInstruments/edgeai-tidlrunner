@@ -46,6 +46,7 @@ class CommonPipelineBase(bases.PipelineBase):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+     
         if 'session' in self.settings and self.settings[self.session_prefix].get('model_path', None):
             self.model_source = self.settings[self.session_prefix]['model_path']
 
@@ -67,36 +68,33 @@ class CommonPipelineBase(bases.PipelineBase):
 
     def build_run_dir(self, run_dir):
         model_basename = os.path.basename(self.model_source)
-        model_basename_wo_ext = os.path.splitext(model_basename)[0]
         model_id = self.settings[self.session_prefix].get('model_id', '')
         if not model_id:
-            model_id = utils.generate_unique_id(model_basename, num_characters=8)
-            # can also use task_type instead of x-
-            # task_type = self.kwargs['common.task_type']
-            # task_type_short_name = constants.TaskTypeShortName.get(task_type, None)
-            model_id = 'x-' + model_id
+            unique_id = utils.generate_unique_id(model_basename, num_characters=8)
+            pipeline_type = self.kwargs.get('common.pipeline_type', 'x') or 'x'
+            model_id = pipeline_type + '-' + unique_id
         #
         model_id_underscore = model_id + '_'
 
-        tensor_bits = self.kwargs.get('session.runtime_settings.runtime_options.tensor_bits', '')
+        tensor_bits = self.kwargs.get('session.runtime_settings.runtime_options.tensor_bits', '') or ''
         tensor_bits_str = f'{str(tensor_bits)}bits' if tensor_bits else ''
         tensor_bits_slash = f'{str(tensor_bits)}bits' + os.sep if tensor_bits else ''
 
-        target_device = self.kwargs.get('session.runtime_settings.target_device', 'NONE')
+        target_device = self.kwargs.get('session.runtime_settings.target_device', 'NONE') or 'NONE'
         target_device_str = target_device if target_device else ''
         target_device_slash = target_device + os.sep if target_device else ''
+
+        model_basename_wo_ext, model_ext = os.path.splitext(model_basename)
+        model_ext = model_ext[1:] if len(model_ext)>0 else model_ext
 
         run_dir = run_dir.replace('{model_name}', model_basename_wo_ext)
         run_dir = run_dir.replace('{model_id}_', model_id_underscore)
         run_dir = run_dir.replace('{model_id}', model_id)
-        if tensor_bits:
-            run_dir = run_dir.replace('{tensor_bits}/', tensor_bits_slash)
-            run_dir = run_dir.replace('{tensor_bits}', tensor_bits_str)
-        #
-        if target_device:
-            run_dir = run_dir.replace('{target_device}/', target_device_slash)
-            run_dir = run_dir.replace('{target_device}', target_device_str)
-        #
+        run_dir = run_dir.replace('{model_ext}', model_ext)        
+        run_dir = run_dir.replace('{tensor_bits}/', tensor_bits_slash)
+        run_dir = run_dir.replace('{tensor_bits}', tensor_bits_str)
+        run_dir = run_dir.replace('{target_device}/', target_device_slash)
+        run_dir = run_dir.replace('{target_device}', target_device_str)
         return run_dir
 
     def download_file(self, model_source, model_folder, source_dir=None):

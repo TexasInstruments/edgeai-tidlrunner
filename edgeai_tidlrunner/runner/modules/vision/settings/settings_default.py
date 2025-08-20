@@ -58,7 +58,10 @@ RUNTIME_SETTINGS_DEFAULT = {
 SETTINGS_DEFAULT = {}
 COPY_SETTINGS_DEFAULT = {}
 
-SETTINGS_DEFAULT['basic'] = settings_base.SETTING_PIPELINE_RUNNER_ARGS_DICT
+SETTINGS_DEFAULT['basic'] = settings_base.SETTING_PIPELINE_RUNNER_ARGS_DICT | {
+    'pipeline_type': {'dest': 'common.pipeline_type', 'default': None, 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},
+}
+
 COPY_SETTINGS_DEFAULT['basic'] = {}
 
 ##########################################################################
@@ -66,6 +69,8 @@ COPY_SETTINGS_DEFAULT['basic'] = {}
 # compile is used to indicate a more sophisticated import - populate real data_path for that.
 ##########################################################################
 SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | {
+    'pipeline_type':            {'dest': 'common.pipeline_type', 'default': 'compile', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},
+    # optimizations
     'simplify_model':          {'dest': 'common.optimize.simplify_model', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value'},
     'optimize_model':          {'dest': 'common.optimize.optimize_model', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value'},
     'shape_inference':          {'dest': 'common.optimize.shape_inference', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value'},
@@ -78,7 +83,7 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | {
     ## model
     'model_id':                 {'dest': 'session.model_id', 'default': None, 'type': str, 'metavar': 'value', 'help': 'unique id of a model - optional'},
     'artifacts_folder':         {'dest': 'session.artifacts_folder', 'default': None, 'type': str, 'metavar': 'value'},
-    'packaged_path':            {'dest': 'session.packaged_path', 'default':'./work_dirs/modelpackage/{target_device}/{tensor_bits}/{model_id}_{model_name}', 'type':str, 'metavar':'value', 'help':'packaged model path'},
+    'packaged_path':            {'dest': 'session.packaged_path', 'default':'./work_dirs/modelpackage/{target_device}/{tensor_bits}/{model_id}_{model_name}_{model_ext}', 'type':str, 'metavar':'value', 'help':'packaged model path'},
     ## runtime
     'runtime_name':             {'dest': 'session.name', 'default': None, 'type': str, 'metavar': 'value'},
     'input_mean':               {'dest': 'session.input_mean', 'default': (123.675, 116.28, 103.53), 'type': float, 'nargs': '*', 'metavar': 'value'},
@@ -120,13 +125,6 @@ SETTINGS_DEFAULT['infer'] = SETTINGS_DEFAULT['compile'] | {
 COPY_SETTINGS_DEFAULT['infer'] = COPY_SETTINGS_DEFAULT['compile'] | {
 }
 
-##########################################################################
-SETTINGS_DEFAULT['analyze'] = SETTINGS_DEFAULT['infer'] | {
-}
-
-COPY_SETTINGS_DEFAULT['analyze'] = COPY_SETTINGS_DEFAULT['infer'] | {
-}
-
 
 ##########################################################################
 # accuracy requires label_path as well
@@ -157,7 +155,16 @@ COPY_SETTINGS_DEFAULT['accuracy'] = COPY_SETTINGS_DEFAULT['compile'] | {
 }
 
 ##########################################################################
+SETTINGS_DEFAULT['analyze'] = SETTINGS_DEFAULT['infer'] | {
+    'pipeline_type':                    {'dest': 'common.pipeline_type', 'default': 'analyze', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},        
+}
+
+COPY_SETTINGS_DEFAULT['analyze'] = COPY_SETTINGS_DEFAULT['infer'] | {
+}
+
+##########################################################################
 SETTINGS_DEFAULT['optimize'] = SETTINGS_DEFAULT['basic'] | {
+    'pipeline_type':                    {'dest': 'common.pipeline_type', 'default': 'optimize', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},    
     'simplify_model':                   {'dest': 'common.optimize.simplify_model', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value'},
     'optimize_model':                   {'dest': 'common.optimize.optimize_model', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value'},
     'shape_inference':                  {'dest': 'common.optimize.shape_inference', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value'},

@@ -51,6 +51,7 @@ class CompileModelBase(CommonPipelineBase):
     def __init__(self, with_postprocess=True, **kwargs):
         self.with_postprocess = with_postprocess
         super().__init__(**kwargs)
+        
         self.dataloader = None
         self.preprocess = None
         self.session = None
