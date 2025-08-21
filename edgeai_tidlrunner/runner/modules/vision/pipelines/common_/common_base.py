@@ -70,13 +70,19 @@ class CommonPipelineBase(bases.PipelineBase):
 
     def _build_run_dir(self, run_dir):
         pipeline_type = self.kwargs.get('common.pipeline_type', 'modelartifacts') or 'modelartifacts'
-
+        task_type = self.kwargs.get('common.task_type', None) or None
+    
         model_basename = os.path.basename(self.model_source)
         model_id = self.settings[self.session_prefix].get('model_id', '')
         if not model_id:
-            unique_id = utils.generate_unique_id(model_basename, num_characters=8)
-            pipeline_type = self.kwargs.get('common.pipeline_type', 'x') or 'x'
-            model_id = pipeline_type + '-' + unique_id
+            unique_id = utils.generate_unique_id(model_basename, num_characters=8)            
+            if task_type in constants.TaskTypeShortNames:
+                task_type_short_name = constants.TaskTypeShortNames[task_type]
+                model_id = task_type_short_name + '-' + unique_id                
+            else:
+                pipeline_type = self.kwargs.get('common.pipeline_type', 'x') or 'x'
+                model_id = pipeline_type + '-' + unique_id
+            #
         #
         model_id_underscore = model_id + '_'
 

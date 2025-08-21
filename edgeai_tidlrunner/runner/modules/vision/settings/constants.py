@@ -44,7 +44,7 @@ class TaskType:
     TASK_TYPE_DISPARITY_ESTIMATION = 'disparity_estimation'
 
 
-TaskTypeShortName = {
+TaskTypeShortNames = {
     TaskType.TASK_TYPE_CLASSIFICATION: 'cl',
     TaskType.TASK_TYPE_DETECTION: 'od',
     TaskType.TASK_TYPE_SEGMENTATION: 'ss',
