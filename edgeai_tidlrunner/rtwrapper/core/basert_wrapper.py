@@ -151,11 +151,15 @@ class BaseRuntimeWrapper:
         return output_details
 
     def _pre_inference(self, *args, **kwargs):
-        self._infer_stats_sum['invoke_start_time'] = time.time()
-
+        if self.kwargs['target_machine'] == options.presets.TargetMachineType.TARGET_MACHINE_EVM:        
+            self._infer_stats_sum['invoke_start_time'] = time.time()
+        #
+        
     def _post_inference(self, *args, **kwargs):
-        delta_time = time.time() - self._infer_stats_sum['invoke_start_time']
-        self._infer_stats_sum['infer_time_invoke_ms'] = self._infer_stats_sum.get('infer_time_invoke_ms', 0) + delta_time * options.presets.MILLI_CONST
+        if self.kwargs['target_machine'] == options.presets.TargetMachineType.TARGET_MACHINE_EVM:        
+            delta_time = time.time() - self._infer_stats_sum['invoke_start_time']
+            self._infer_stats_sum['infer_time_invoke_ms'] = self._infer_stats_sum.get('infer_time_invoke_ms', 0) + delta_time * options.presets.MILLI_CONST
+        #
         self._infer_stats()
         
     def _infer_stats(self):

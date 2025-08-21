@@ -76,7 +76,11 @@ class OptimizeModel(common_base.CommonPipelineBase):
 
     @classmethod
     def _run_func(cls, model_source, model_path, simplify_model=True, shape_inference=True, optimize_model=True, **kwargs):
-        shutil.copy2(model_source, model_path)
+        try:
+            shutil.copy2(model_source, model_path)
+        except shutil.SameFileError:
+            pass
+        #
         if simplify_model:
             import onnxsim
             onnxsim.simplify(model_path)

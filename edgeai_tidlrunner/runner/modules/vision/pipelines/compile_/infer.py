@@ -124,6 +124,8 @@ class InferModel(CompileModelBase):
 
     def _run(self):
         print(f'INFO: starting model infer')
+        super()._run()
+                
         self.settings['result'] = dict()
 
         common_kwargs = self.settings[self.common_prefix]
@@ -133,8 +135,6 @@ class InferModel(CompileModelBase):
         postprocess_kwargs = self.settings[self.postprocess_prefix]
         runtime_settings = session_kwargs['runtime_settings']
         runtime_options = runtime_settings['runtime_options']
-
-        super()._run()
 
         # infer model
         run_data = []
