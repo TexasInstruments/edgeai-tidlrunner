@@ -60,9 +60,10 @@ class ImageListDataLoader(dataset_base.DatasetBase):
         paths = [os.path.join(path,f) for f in paths]
         image_files = [f for f in paths if os.path.isfile(f) and (not file_types or os.path.splitext(f)[-1].lower() in file_types)]
         if any(image_files):
+            print(f'INFO: found {len(image_files)} image files in {path}')                    
             return image_files, None
         else:
-            print(f'INFO: could not fild image files in {path}. searching in sub folders...')
+            print(f'INFO: could not find image files in {path}. searching in sub folders...')
             files = []
             labels = []
             for folder in paths:
@@ -73,6 +74,7 @@ class ImageListDataLoader(dataset_base.DatasetBase):
                 files.extend(image_files)
                 labels.extend(labels_list)
             #
+            print(f'INFO: found {len(files)} image files in {path}')
             return files, labels
 
 
