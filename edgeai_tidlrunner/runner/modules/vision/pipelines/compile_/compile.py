@@ -38,7 +38,7 @@ from ..... import bases
 from ... import blocks
 from ..... import utils
 from ...settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
-from .compile_base import CompileModelBase
+from ..common_.compile_base import CompileModelBase
 from ..optimize_ import optimize
 
 

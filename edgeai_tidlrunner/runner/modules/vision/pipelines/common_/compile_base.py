@@ -41,7 +41,7 @@ from ..... import bases
 from ... import blocks
 from ..... import utils
 from ...settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
-from ..common_.common_base import CommonPipelineBase
+from .common_base import CommonPipelineBase
 
 
 class CompileModelBase(CommonPipelineBase):

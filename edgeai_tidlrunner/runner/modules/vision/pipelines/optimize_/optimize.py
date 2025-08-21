@@ -61,26 +61,31 @@ class OptimizeModel(common_base.CommonPipelineBase):
             shutil.rmtree(self.run_dir, ignore_errors=True)
         #
 
+        output_path = os.path.join(self.run_dir, 'optimize')
+
         os.makedirs(self.run_dir, exist_ok=True)
-        os.makedirs(self.artifacts_folder, exist_ok=True)
+        # os.makedirs(self.artifacts_folder, exist_ok=True)
         os.makedirs(self.model_folder, exist_ok=True)
+        os.makedirs(output_path, exist_ok=True)
 
         config_path = os.path.dirname(common_kwargs['config_path']) if common_kwargs['config_path'] else None
         self.download_file(self.model_source, model_folder=self.model_folder, source_dir=config_path)
 
-        self._run_func(self.model_path, self.model_path, **optimize_kwargs)
+        output_model = os.path.join(output_path, os.path.basename(self.model_path))
+        self._run_func(self.model_path, output_model, **optimize_kwargs)
 
     @classmethod
     def _run_func(cls, model_source, model_path, simplify_model=True, shape_inference=True, optimize_model=True, **kwargs):
+        shutil.copy2(model_source, model_path)
         if simplify_model:
             import onnxsim
             onnxsim.simplify(model_path)
         #
         if optimize_model:
             from osrt_model_tools.onnx_tools import tidl_onnx_model_optimizer
-            tidl_onnx_model_optimizer.optimize(model_source, model_path)
+            tidl_onnx_model_optimizer.optimize(model_path, model_path)
         #
         if shape_inference:
             import onnx
-            onnx.shape_inference.infer_shapes_path(model_source, model_path)
+            onnx.shape_inference.infer_shapes_path(model_path, model_path)
         #

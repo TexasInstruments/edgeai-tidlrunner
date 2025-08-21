@@ -38,7 +38,7 @@ import xlsxwriter
 from ..... import utils
 from ..... import bases
 from ...settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
-from . import compile_base
+from ..common_ import compile_base
 from . import compile
 from . import infer
 
@@ -71,7 +71,7 @@ class CompileAnalyzeNoTIDL(compile.CompileModel):
     def __init__(self, **kwargs):
         kargs_copy = copy.deepcopy(kwargs)
         kargs_copy['tidl_offload'] = False
-        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'notidl')
+        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'analyze', 'notidl')
         super().__init__(**kargs_copy)
 
     def modify_model(self):
@@ -89,7 +89,7 @@ class InferAnalyzeNoTIDL(infer.InferModel):
     def __init__(self, **kwargs):
         kargs_copy = copy.deepcopy(kwargs)
         kargs_copy['tidl_offload'] = False
-        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'notidl')
+        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'analyze', 'notidl')
         super().__init__(**kargs_copy)
 
     def _run(self):
@@ -108,7 +108,7 @@ class CompileAnalyzeTIDL(compile.CompileModel):
 
     def __init__(self, **kwargs):
         kargs_copy = copy.deepcopy(kwargs)
-        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'tidl')
+        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'analyze', 'tidl')
         super().__init__(**kargs_copy)
 
     def _run(self):
@@ -121,7 +121,7 @@ class InferAnalyzeTIDL(infer.InferModel):
 
     def __init__(self, **kwargs):
         kargs_copy = copy.deepcopy(kwargs)
-        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'tidl')
+        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'analyze', 'tidl')
         kargs_copy['session.runtime_settings.runtime_options.debug_level'] = 4
         super().__init__(**kargs_copy)
 
@@ -146,15 +146,15 @@ class InferAnalyzeFinal(compile_base.CompileModelBase):
         super().__init__(**kwargs)
 
     def _run(self):
-        notidl_run_dir = os.path.join(self.run_dir, 'notidl')
-        tidl_run_dir = os.path.join(self.run_dir, 'tidl')
+        notidl_run_dir = os.path.join(self.run_dir, 'analyze', 'notidl')
+        tidl_run_dir = os.path.join(self.run_dir, 'analyze', 'tidl')
         notidl_traces = os.path.join(notidl_run_dir, 'traces')
         tidl_traces = os.path.join(tidl_run_dir, 'traces')
         layer_info_dir = os.path.join(tidl_run_dir, 'artifacts', 'tempDir')
         layer_info_files = [f for f in os.listdir(layer_info_dir) if f.endswith('layer_info.txt')]
         layer_info_path = os.path.join(layer_info_dir, layer_info_files[0])
 
-        analyze_xlsx_path = os.path.join(self.run_dir, f"result.xlsx")
+        analyze_xlsx_path = os.path.join(self.run_dir, 'analyze', "analyze.xlsx")
         analyze_xlsx =  xlsxwriter.Workbook(analyze_xlsx_path, options=dict(nan_inf_to_errors=True))
         num_traces = len(os.listdir(notidl_traces))
         for frame_idx in range(num_traces):

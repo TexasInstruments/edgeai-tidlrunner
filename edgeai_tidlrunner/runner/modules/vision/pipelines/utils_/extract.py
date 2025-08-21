@@ -336,7 +336,7 @@ class ExtractModel(CommonPipelineBase):
             )
         import yaml
 
-        with open(os.path.join(output_path, 'details.yaml'), 'w') as fp:
+        with open(os.path.join(output_path, 'extract.yaml'), 'w') as fp:
             yaml.safe_dump(details, fp, sort_keys=False)
         
 
