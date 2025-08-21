@@ -47,7 +47,10 @@ class CommonPipelineBase(bases.PipelineBase):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if 'session' in self.settings and self.settings[self.session_prefix].get('model_path', None):
-            self.model_source = self.settings[self.session_prefix]['model_path']
+            common_kwargs = self.settings['common']                 
+            config_path = os.path.dirname(common_kwargs['config_path']) if common_kwargs['config_path'] else None            
+            model_source = self.settings[self.session_prefix]['model_path']       
+            self.model_source = self._get_file_path(model_source, source_dir=config_path)
 
             run_dir = self.settings[self.session_prefix]['run_dir']
             self.run_dir = self._build_run_dir(run_dir)
@@ -98,7 +101,6 @@ class CommonPipelineBase(bases.PipelineBase):
         model_ext = model_ext[1:] if len(model_ext)>0 else model_ext
 
         run_dir = run_dir.replace('{pipeline_type}', pipeline_type)
-        run_dir = run_dir.replace('{model_name}', model_basename_wo_ext)
         run_dir = run_dir.replace('{model_id}_', model_id_underscore)
         run_dir = run_dir.replace('{model_id}', model_id)
         run_dir = run_dir.replace('{model_ext}', model_ext)        
@@ -106,7 +108,25 @@ class CommonPipelineBase(bases.PipelineBase):
         run_dir = run_dir.replace('{tensor_bits}', tensor_bits_str)
         run_dir = run_dir.replace('{target_device}/', target_device_slash)
         run_dir = run_dir.replace('{target_device}', target_device_str)
+        run_dir = run_dir.replace('{model_name}', model_basename_wo_ext)
+
+        run_dir_tree_depth = 3
+        model_path_tree = os.path.abspath(self.model_source).split(os.sep)
+        if len(model_path_tree) > run_dir_tree_depth:
+            model_path_tree = model_path_tree[-run_dir_tree_depth:]
+        #
+        run_dir = run_dir.replace('{model_path}', '_'.join(model_path_tree))
+
         return run_dir
+
+    def _get_file_path(self, model_source, source_dir=None):
+        is_web_link = model_source.startswith('http')
+        is_simple_path = os.sep not in os.path.normpath(model_source)
+        if is_web_link:
+            return model_source
+        else:
+            model_source = os.path.join(source_dir, model_source) if source_dir and is_simple_path else model_source
+            return model_source
 
     def download_file(self, model_source, model_folder, source_dir=None):
         is_web_link = model_source.startswith('http')
