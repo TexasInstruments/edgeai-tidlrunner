@@ -54,7 +54,7 @@ def set_env():
       tidl_tools_path = os.path.abspath(tidl_tools_path)
       os.environ['TIDL_TOOLS_PATH'] = tidl_tools_path
       print('INFO: TIDL_TOOLS_PATH is set to:', os.environ['TIDL_TOOLS_PATH'])
-      os.environ['LD_LIBRARY_PATH'] = tidl_tools_path + ":" + os.environ.get('LD_LIBRARY_PATH', '')        
+      os.environ['LD_LIBRARY_PATH'] = ":" + tidl_tools_path + ":" + os.environ.get('LD_LIBRARY_PATH', '')        
       print('INFO: LD_LIBRARY_PATH is set to:', os.environ['LD_LIBRARY_PATH'])      
     except:
       raise RuntimeError("tidl_tools_package not found. Please ensure it is installed correctly.")
@@ -84,7 +84,7 @@ def set_env():
   if 'TIDL_RT_AVX_REF' not in os.environ:
     try:
         print(f"INFO: model compilation in PC can use AVX instructions (if it is available)")
-        proc_cpuinfo_commmand = 'cat /proc/cpuinfo|grep avx|wc|tail -n 1|awk "{print $1;}"'
+        proc_cpuinfo_commmand = "cat /proc/cpuinfo|grep avx|wc|tail -n 1|awk '{print $1;}'"
         proc = subprocess.Popen([proc_cpuinfo_commmand], stdout=subprocess.PIPE, shell=True)
         out_ret, err_ret = proc.communicate()
         num_avx_cores = int(out_ret)
@@ -97,7 +97,7 @@ def set_env():
   if 'ARM64_GCC_PATH' not in os.environ:
     # Set the ARM64 GCC path for TVM compilation
     # This is needed for compiling models for ARM64 architecture
-    os.environ['ARM64_GCC_PATH'] = os.path.join(os.environ['TIDL_TOOLS_PATH'], 'gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu')
+    os.environ['ARM64_GCC_PATH'] = os.path.join(os.environ['TIDL_TOOLS_PATH'], 'arm-gnu-toolchain-13.2.Rel1-x86_64-aarch64-none-linux-gnu')
     print('INFO: ARM64_GCC_PATH is set to:', os.environ['ARM64_GCC_PATH'])
 
   # if 'PYTHONPATH' not in os.environ:
