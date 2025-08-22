@@ -29,19 +29,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ##################################################################
-# Info: run the cli script
-# Environment variables such as TARGET_DEVICE, TARGET_MACHINE can be set in the commandline
-# Other arguments can be passed additionally.
-# Example 1:
-# ./run_test_cli.sh
-# Example 2:
-# TARGET_DEVICE=AM68A TARGET_MACHINE=pc ./run_test_cli.sh --target_device AM68A
-
 # set target device
 export TARGET_DEVICE="AM68A"
-
-# add environment settings as needed
-source ./set_env.sh
 
 ##################################################################
 python3 ./examples/vision/scripts/example_advanced_rtwrapper.py "compile" \

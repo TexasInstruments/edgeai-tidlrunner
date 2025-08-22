@@ -29,11 +29,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+##################################################################
 # set target device
 export TARGET_DEVICE="AM68A"
-
-# add environment settings as needed
-source ./set_env.sh
 
 ##################################################################
 python ./examples/vision/scripts/example_runner_py.py "compile" \

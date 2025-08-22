@@ -29,12 +29,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+##################################################################
 # set target device
 export TARGET_DEVICE="AM68A"
-
-# add environment settings as needed
-source ./set_env.sh
-
 
 ##################################################################
 # Example 1: compile by directly using a model path
