@@ -45,7 +45,7 @@ class GenReport(bases.PipelineBase):
         super().__init__(**kwargs)
 
     def _prepare(self):
-        super()._prepare()
+        pass
 
     def info(self):
         print(f'INFO: Gen report - {__file__}')
@@ -75,7 +75,7 @@ class GenReport(bases.PipelineBase):
                 with open(result_or_config_yaml) as fp:
                     result = yaml.safe_load(fp)
                     model_id = result['session']['model_id']
-                    session_name = result['session']['session_name']
+                    session_name = result['session'].get('session_name', result['session']['name'])
                     artifact_id = f'{model_id}_{session_name}'
                     results[artifact_id] = result
                 #
@@ -90,14 +90,14 @@ class GenReport(bases.PipelineBase):
 
     def run_report(self, kwargs, rewrite_results=True, skip_pattern=None):
         report_perfsim = kwargs['common.report.mode']
-        modelartifacts_path = kwargs['common.report.path']
-        target_device = kwargs['session.target_device']
+        report_path = kwargs['common.report.path']
+        target_device = kwargs.get('session.runtime_settings.target_device', 'NONE')
 
         if target_device in (None, 'None', 'NONE'):
-            benchmark_dir = os.path.dirname(modelartifacts_path)
+            benchmark_dir = report_path
             target_device_dirs = os.listdir(benchmark_dir)
         else:
-            benchmark_dir = os.path.dirname(modelartifacts_path)
+            benchmark_dir = report_path
             target_device_dirs = [target_device]
         #
 

@@ -131,7 +131,8 @@ class MainRunner(runner.bases.PipelineBase):
             for command_choice in command_choices:
                 print(f'{sys.argv[0]} {command_choice} --help')
             #
-        elif len(sys.argv) == 2 or (len(sys.argv) > 2 and sys.argv[2] in ('help', 'h', '--help', '-h')):
+        elif (len(sys.argv) == 2 and sys.argv[1] != 'report') or \
+            (len(sys.argv) > 2 and sys.argv[2] in ('help', 'h', '--help', '-h')):
             if len(sys.argv) == 2:
                 if sys.argv[1].startswith('-'):
                     sys.argv[1] = '--help'
