@@ -36,7 +36,7 @@ import tidl_tools_package
 
 
 def set_env():
-  print("Setting environment variables for TIDL Runner...")
+  print("INFO: Setting environment variables for TIDL Runner...")
 
   if 'TARGET_DEVICE' not in os.environ:
     os.environ['TARGET_DEVICE'] = os.getenv("TARGET_DEVICE", "AM68A")

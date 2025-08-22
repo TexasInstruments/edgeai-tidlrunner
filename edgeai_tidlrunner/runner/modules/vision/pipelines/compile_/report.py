@@ -95,7 +95,7 @@ class GenReport(bases.PipelineBase):
 
         if target_device in (None, 'None', 'NONE'):
             benchmark_dir = report_path
-            target_device_dirs = os.listdir(benchmark_dir)
+            target_device_dirs = [d for d in os.listdir(benchmark_dir) if os.path.isdir(os.path.join(benchmark_dir,d))]
         else:
             benchmark_dir = report_path
             target_device_dirs = [target_device]
@@ -187,7 +187,7 @@ class GenReport(bases.PipelineBase):
             if pipeline_params_anchor is not None:
                 model_id_from_result = pipeline_params_anchor['session']['model_id']
                 assert model_id == model_id_from_result, f"model_id={model_id} doesnt match model_id_from_result={model_id_from_result}"
-                results_line_dict['runtime_name'] = pipeline_params_anchor['session']['session_name']
+                results_line_dict['runtime_name'] = pipeline_params_anchor['session'].get('session_name', pipeline_params_anchor['session']['name'])
                 preprocess_crop = pipeline_params_anchor['preprocess'].get('crop',None)
                 results_line_dict['input_resolution'] = 'x'.join(map(str, preprocess_crop)) \
                     if isinstance(preprocess_crop, (list,tuple)) else str(preprocess_crop)
@@ -263,10 +263,10 @@ class GenReport(bases.PipelineBase):
                 metric = 'no_compilation'
             #
             if 'model_info' in pipeline_params and pipeline_params['model_info'] is not None:
-                model_info = pipeline_params['model_info']
-                metric_reference_dict = model_info['metric_reference']
+                model_info = pipeline_params.get('model_info', {})
+                metric_reference_dict = model_info.get('metric_reference', None)
                 for metric_key in metric_keys:
-                    if metric_key in metric_reference_dict:
+                    if metric_reference_dict and metric_key in metric_reference_dict:
                         metric_reference = metric_reference_dict[metric_key]
                     #
                 #

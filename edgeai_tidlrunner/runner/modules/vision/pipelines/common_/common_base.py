@@ -100,9 +100,12 @@ class CommonPipelineBase(bases.PipelineBase):
         model_basename_wo_ext, model_ext = os.path.splitext(model_basename)
         model_ext = model_ext[1:] if len(model_ext)>0 else model_ext
 
+        runtime_name = self.kwargs.get('session.name', None)
+
         run_dir = run_dir.replace('{pipeline_type}', pipeline_type)
         run_dir = run_dir.replace('{model_id}_', model_id_underscore)
         run_dir = run_dir.replace('{model_id}', model_id)
+        run_dir = run_dir.replace('{runtime_name}', runtime_name)        
         run_dir = run_dir.replace('{model_ext}', model_ext)        
         run_dir = run_dir.replace('{tensor_bits}/', tensor_bits_slash)
         run_dir = run_dir.replace('{tensor_bits}', tensor_bits_str)
@@ -111,7 +114,7 @@ class CommonPipelineBase(bases.PipelineBase):
         run_dir = run_dir.replace('{model_name}', model_basename_wo_ext)
 
         run_dir_tree_depth = 3
-        model_path_tree = os.path.abspath(self.model_source).split(os.sep)
+        model_path_tree = os.path.abspath(os.path.splitext(self.model_source)[0]).split(os.sep)
         if len(model_path_tree) > run_dir_tree_depth:
             model_path_tree = model_path_tree[-run_dir_tree_depth:]
         #
