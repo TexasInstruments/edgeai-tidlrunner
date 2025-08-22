@@ -31,4 +31,10 @@
 
 
 ##################################################################
-./tidlrunner-cli "$@" --target_machine pc
+# this uses tidlrunnercli which is isntalled 
+# as specified in [project.scripts] in pyproject.toml during pip installed
+#
+# RUNNER_INVOKE_NAME specified here is optional and is used only for
+# logging purposes to indicate which script invoked tidlrunnercli
+#
+RUNNER_INVOKE_NAME=${0} ./tidlrunnercli "$@" --target_machine evm

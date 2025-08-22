@@ -51,26 +51,26 @@ runner is a basic interface which hides most of the complexity of the underlying
 ### See the options supported with help command
 All the options supported can be obtained using the help option. Examples
 ```
-tidlrunner-cli --help
+tidlrunnercli --help
 ```
 
 Detailed help is available for each command - for example:
 ```
-tidlrunner-cli compile --help
+tidlrunnercli compile --help
 ```
 ```
-tidlrunner-cli infer --help
+tidlrunnercli infer --help
 ```
 
 <hr>
 
-### tidlrunner-cli Commandline interface
+### tidlrunnercli Commandline interface
 The commandline interface allows to provide the model and a few arguments dirctly in the commandline.
 [runner Commandline interface](./docs/commandline_interface.md)
 
 <hr>
 
-### tidlrunner-cli Configfile interface
+### tidlrunnercli Configfile interface
 The configfile interface allows to parse all parameters from a yaml file. 
 [runner Commandline config file interface](./docs/configfile_interface.md)
 
@@ -115,7 +115,7 @@ All the supported options and how they map to internal names can be seen in this
 
 But as explained above, the easiest way to see list of options supported for a command is to use the help - for example:
 ```
-tidlrunner-cli compile --help
+tidlrunnercli compile --help
 ```
 
 

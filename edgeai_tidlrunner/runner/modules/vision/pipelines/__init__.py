@@ -51,7 +51,7 @@ command_module_name_dict_base = {
 
 command_module_name_dict_ext = {
     'optimize':'OptimizeModel',
-    'extract':'ExtractNodesPipeline',
+    'extract':'ExtractNodes',
 }
 
 command_module_name_dict = command_module_name_dict_base | command_module_name_dict_ext

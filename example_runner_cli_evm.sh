@@ -38,22 +38,22 @@ source ./set_env.sh
 
 ##################################################################
 # Example 1 - infer using compiled artifacts given a model
-# tidlrunner-cli-evm infer --model_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx
+# tidlrunnercli-evm infer --model_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx
 
 ##################################################################
 # Exampe 2: infer using compiled artifacts and a config file
 #----------------------------------------------------------------
-# tidlrunner-cli-evm infer --config_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml
+# tidlrunnercli-evm infer --config_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml
 
 
 ##################################################################
 # Example 3: infer using compiled artifacts and a wrapper configs file that aggregates other config files
 #----------------------------------------------------------------
-# tidlrunner-cli-evm infer --config_path ./data/models/configs.yaml
+# tidlrunnercli-evm infer --config_path ./data/models/configs.yaml
 
 
 ##################################################################
 # Example 4: evaluate accuracy using compiled artifacts and aggregate configs file
 #----------------------------------------------------------------
-# tidlrunner-cli-evm accuracy --config_path ./data/models/configs.yaml
+# tidlrunnercli-evm accuracy --config_path ./data/models/configs.yaml
 

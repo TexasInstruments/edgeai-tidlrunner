@@ -133,6 +133,11 @@ class MainRunner(runner.bases.PipelineBase):
                 print(f'{sys.argv[0]} {command_choice} --help')
             #
         elif len(sys.argv) == 2 or (len(sys.argv) > 2 and sys.argv[2] in ('help', 'h', '--help', '-h')):
+            if len(sys.argv) == 2:
+                if sys.argv[1].startswith('-'):
+                    sys.argv[1] = '--help'
+                #
+            #
             sys.argv = [sys.argv[0], sys.argv[1]]
             parser = cls.get_arg_parser()
             command_args, rest_args = parser.parse_known_args()
@@ -162,6 +167,22 @@ class MainRunner(runner.bases.PipelineBase):
 def main():
     print(f'INFO: running - {sys.argv}')
     MainRunner.main()
+
+
+def main_pc():
+    has_targe_machine = any([arg for arg in sys.argv if 'targe_machine' in arg])
+    if not has_targe_machine:
+        sys.argv.append('--target_machine=pc')
+    #
+    main()
+
+
+def main_evm():
+    has_targe_machine = any([arg for arg in sys.argv if 'targe_machine' in arg])
+    if not has_targe_machine:
+        sys.argv.append('--target_machine=evm')
+    #
+    main()
 
 
 if __name__ == '__main__':

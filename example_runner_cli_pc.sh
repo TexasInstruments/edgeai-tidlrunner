@@ -40,40 +40,40 @@ source ./set_env.sh
 # Example 1: compile by directly using a model path
 # if data_path is not specified, this will use random inputs and it may not be good for accuracy.
 # also there are several paameters for which defaults are assumed - it may not be perfect
-# to understand the options that can be specified, use: tidlrunner-cli-pc compile --help 
+# to understand the options that can be specified, use: tidlrunnercli-pc compile --help 
 #----------------------------------------------------------------
 # Example 1.1 - compile
-tidlrunner-cli-pc compile --model_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx
+tidlrunnercli-pc compile --model_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx
 
 ##################################################################
 # Example 1.2 - infer
-# tidlrunner-cli-pc infer --model_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx
+# tidlrunnercli-pc infer --model_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx
 
 ##################################################################
 # Example 1.3 - compile+infer in a single command
-# tidlrunner-cli-pc compile+infer --model_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx
+# tidlrunnercli-pc compile+infer --model_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx
 
 
 ##################################################################
 # Exampe 2: compile+infer using a config file
 #----------------------------------------------------------------
-# tidlrunner-cli-pc compile+infer --config_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml
+# tidlrunnercli-pc compile+infer --config_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml
 
 
 ##################################################################
 # Example 3: compile+infer using a wrapper configs file that aggregates other config files
 #----------------------------------------------------------------
-# tidlrunner-cli-pc compile+infer --config_path ./data/models/configs.yaml
+# tidlrunnercli-pc compile+infer --config_path ./data/models/configs.yaml
 
 
 ##################################################################
 # Example 4: compile and evaluate accuracy using aggregate configs file
 #----------------------------------------------------------------
-# tidlrunner-cli-pc compile+accuracy --config_path ./data/models/configs.yaml
+# tidlrunnercli-pc compile+accuracy --config_path ./data/models/configs.yaml
 
 
 ##################################################################
 # Example 5: analyze a model using a config file
 #----------------------------------------------------------------
-# tidlrunner-cli-pc analyze --config_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml
+# tidlrunnercli-pc analyze --config_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml
 
