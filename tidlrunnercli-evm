@@ -29,6 +29,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+##################################################################
+# catch usage of unset variables
+set -u
 
 ##################################################################
 # this uses tidlrunnercli which is isntalled 
@@ -37,4 +40,7 @@
 # RUNNER_INVOKE_NAME specified here is optional and is used only for
 # logging purposes to indicate which script invoked tidlrunnercli
 #
-RUNNER_INVOKE_NAME=${0} ./tidlrunnercli "$@" --target_machine pc
+# alternate invoke method is:
+# RUNNER_INVOKE_NAME=${0} python3 -m edgeai_tidlrunner.main "$@" --target_machine evm
+#
+RUNNER_INVOKE_NAME=${0} tidlrunnercli "$@" --target_machine evm

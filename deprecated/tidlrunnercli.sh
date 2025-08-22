@@ -31,10 +31,21 @@
 
 
 ##################################################################
-# this uses tidlrunnercli which is isntalled 
-# as specified in [project.scripts] in pyproject.toml during pip installed
-#
-# RUNNER_INVOKE_NAME specified here is optional and is used only for
-# logging purposes to indicate which script invoked tidlrunnercli
-#
-RUNNER_INVOKE_NAME=${0} ./tidlrunnercli "$@" --target_machine evm
+# Exit if an unset variable is used
+# To make sure that TARGET_DEVICE is set
+set -u
+
+##################################################################
+# target_device - use one of: TDA4VM AM62A AM68A AM69A AM67A AM62
+export TARGET_DEVICE=${TARGET_DEVICE:-"AM68A"}
+echo "TARGET_DEVICE=${TARGET_DEVICE}"
+
+##################################################################
+# add environment variables as needed
+source ./set_env.sh
+
+##################################################################
+# tidlrunnercli is equivalent to running python3 -m edgeai_tidlrunner.main
+# see pyproject.toml for the script entry point [project.scripts]
+
+RUNNER_INVOKE_NAME=${0} python3 -m edgeai_tidlrunner.main "$@" --target_device ${TARGET_DEVICE}

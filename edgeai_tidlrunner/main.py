@@ -34,6 +34,7 @@ import argparse
 import ast
 import yaml
 import functools
+import subprocess
 
 from edgeai_tidlrunner import rtwrapper, runner
 
@@ -164,26 +165,31 @@ class MainRunner(runner.bases.PipelineBase):
             main_runner.run(command)
 
 
+def restart_with_proper_environment():
+    """
+    Check if LD_LIBRARY_PATH is properly set, and if not, restart the process with correct environment.
+    """
+    rtwrapper.set_environment()
+    
+    # Indicate that the environment has been set
+    os.environ['TIDL_RUNNER_ENV_SET'] = '1'  
+
+    # Prepare the new environment
+    new_env = os.environ.copy()
+    
+    # Restart the current script with the new environment
+    subprocess.run([sys.executable] + sys.argv, env=new_env, check=True)
+    
+
 def main():
     print(f'INFO: running - {sys.argv}')
-    MainRunner.main()
+    if os.environ.get('TIDL_RUNNER_ENV_SET', None) != '1':
+        restart_with_proper_environment()
+    else:
+        # Continue with normal execution
+        print("INFO: Continuing with current process...")    
+        MainRunner.main()
 
 
-def main_pc():
-    has_targe_machine = any([arg for arg in sys.argv if 'targe_machine' in arg])
-    if not has_targe_machine:
-        sys.argv.append('--target_machine=pc')
-    #
-    main()
-
-
-def main_evm():
-    has_targe_machine = any([arg for arg in sys.argv if 'targe_machine' in arg])
-    if not has_targe_machine:
-        sys.argv.append('--target_machine=evm')
-    #
-    main()
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
