@@ -30,6 +30,8 @@
 from . import core
 from . import options
 
+from .set_env import set_environment
+
 
 RUNTIME_TYPES_MAPPING = {
     options.presets.RuntimeType.RUNTIME_TYPE_ONNXRT: core.ONNXRuntimeWrapper,

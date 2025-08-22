@@ -149,17 +149,22 @@ def update_tvm_artifacts():
 
     # TIDL_ARTIFACT_SYMLINKS is used to indicate that the symlinks have been set to evm
     # This flag is not used by TIDL, but it can be used by other scripts or tools
-    os.environ['TIDL_ARTIFACT_SYMLINKS']=1
+    os.environ['TIDL_ARTIFACT_SYMLINKS']="1"
 
 
-def main():
+def set_environment(update_artifacts=True):
     # Set the environment variables for TIDL Runner
     set_env()
 
     # Update the TVM artifacts symlinks based on the target device and machine
-    update_tvm_artifacts()
+    if update_artifacts:
+      update_tvm_artifacts()
 
     print("INFO: Environment variables for TIDL Runner have been set successfully.")
+
+
+def main():
+    set_environment()
 
 
 if __name__ == "__main__":

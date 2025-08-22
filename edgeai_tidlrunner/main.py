@@ -35,8 +35,7 @@ import ast
 import yaml
 import functools
 
-import edgeai_tidlrunner
-from edgeai_tidlrunner import runner
+from edgeai_tidlrunner import rtwrapper, runner
 
 
 class MainRunner(runner.bases.PipelineBase):

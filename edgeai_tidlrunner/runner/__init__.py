@@ -28,6 +28,7 @@
 import copy
 import functools
 
+from .. import rtwrapper
 from . import utils
 from . import bases
 from . import modules
@@ -47,6 +48,9 @@ def _run_command(command_key, pipeline_name, command_kwargs, capture_log):
 
 
 def _run(model_command_dict):
+    print(f'INFO: setting environment variables...')    
+    rtwrapper.set_environment()
+
     assert isinstance(model_command_dict, dict) and \
            isinstance(list(model_command_dict.values())[0],list) and \
             isinstance(list(model_command_dict.values())[0][0], tuple), 'expecting a dict of list of tuples'
