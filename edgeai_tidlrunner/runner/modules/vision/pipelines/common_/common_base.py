@@ -72,7 +72,7 @@ class CommonPipelineBase(bases.PipelineBase):
         pass
 
     def _build_run_dir(self, run_dir):
-        pipeline_type = self.kwargs.get('common.pipeline_type', 'modelartifacts') or 'modelartifacts'
+        pipeline_type = self.kwargs.get('common.pipeline_type', 'compile')
         task_type = self.kwargs.get('common.task_type', None) or None
     
         model_basename = os.path.basename(self.model_source)
@@ -100,7 +100,7 @@ class CommonPipelineBase(bases.PipelineBase):
         model_basename_wo_ext, model_ext = os.path.splitext(model_basename)
         model_ext = model_ext[1:] if len(model_ext)>0 else model_ext
 
-        runtime_name = self.kwargs.get('session.name', None)
+        runtime_name = self.kwargs.get('session.name', '')
 
         run_dir = run_dir.replace('{pipeline_type}', pipeline_type)
         run_dir = run_dir.replace('{model_id}_', model_id_underscore)

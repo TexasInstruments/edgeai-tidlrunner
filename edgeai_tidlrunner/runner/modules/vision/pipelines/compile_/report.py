@@ -183,6 +183,7 @@ class GenReport(bases.PipelineBase):
             results_line_dict['model_id'] = model_id
             results_line_dict['serial_num'] = serial_num+1
 
+            model_path = None
             pipeline_params_anchor = results_anchor.get(artifact_id, None)
             if pipeline_params_anchor is not None:
                 model_id_from_result = pipeline_params_anchor['session']['model_id']
@@ -198,6 +199,9 @@ class GenReport(bases.PipelineBase):
                     if 'task_type' in pipeline_params_anchor else None
                 results_line_dict['model_shortlist'] = pipeline_params_anchor['model_info'].get('model_shortlist', None)
                 results_line_dict['dataset_name'] = pipeline_params_anchor.get('dataset_category', None)
+
+                model_path = pipeline_params_anchor['session']['model_path']
+                # model_path = model_path[0] if isinstance(model_path, (list,tuple))                       
             #
             metric_name, _, metric_reference = self.get_metric(pipeline_params_anchor, metric_keys, compilation_done)
             results_line_dict['metric_name'] = metric_name
@@ -212,13 +216,13 @@ class GenReport(bases.PipelineBase):
                 if performance_line_dict is not None:
                     performance_line_dict = {work_dir_key+'_'+k:v for k, v in performance_line_dict.items()}
                     results_line_dict.update(performance_line_dict)
-                #
+                #        
             #
 
             results_line_dict['run_dir'] = run_dir_basename
 
             artifact_id = '_'.join(run_dir_basename.split('_')[:2])
-            artifact_name = utils.get_artifact_name(artifact_id)
+            artifact_name = utils.get_artifact_name(artifact_id, run_dir)
             artifact_name = '_'.join(run_dir_basename.split('_')[1:]) if artifact_name is None else artifact_name
             results_line_dict['artifact_name'] = artifact_name
 
