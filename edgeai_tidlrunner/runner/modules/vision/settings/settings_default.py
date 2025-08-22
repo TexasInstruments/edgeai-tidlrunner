@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2021, Texas Instruments
+# Copyright (c) 2018-2025, Texas Instruments
 # All Rights Reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -185,4 +185,15 @@ SETTINGS_DEFAULT['extract'] = SETTINGS_DEFAULT['basic'] | {
 }
 
 COPY_SETTINGS_DEFAULT['extract'] = COPY_SETTINGS_DEFAULT['basic'] | {
+}
+
+
+##########################################################################
+SETTINGS_DEFAULT['report'] = SETTINGS_DEFAULT['basic'] | {
+    'pipeline_type':          {'dest': 'common.pipeline_type', 'default': 'compile', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'}, 
+    'report_mode':            {'dest': 'common.report.mode', 'default': 'detailed', 'type': str, 'metavar': 'value', 'choices': ['summary', 'detailed']},
+    'report_path':            {'dest': 'common.report.path', 'default': './work_dirs/compile', 'type': str, 'metavar': 'value'},    
+}
+
+COPY_SETTINGS_DEFAULT['report'] = COPY_SETTINGS_DEFAULT['basic'] | {
 }

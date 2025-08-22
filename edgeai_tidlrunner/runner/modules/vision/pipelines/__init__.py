@@ -31,11 +31,12 @@ from .compile_.infer import InferModel
 from .compile_.compile import CompileModel
 from .compile_.accuracy import InferAccuracy
 from .compile_.analyze import *
+from .compile_.report import GenReport 
 
 from .optimize_.optimize import OptimizeModel
 # from .optimize_.optimize_gui import OptimizeModelGUI
 
-from .utils_.extract import ExtractModel
+from .utils_.extract import ExtractNodes
 
 
 command_module_name_dict_base = {
@@ -45,12 +46,12 @@ command_module_name_dict_base = {
     'analyze': ['CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL', 'InferAnalyzeTIDL', 'InferAnalyzeFinal'],
     'compile+infer': ['CompileModel', 'InferModel'],
     'compile+accuracy': ['CompileModel', 'InferAccuracy'],
+    'report': ['GenReport'],    
 }
 
 command_module_name_dict_ext = {
     'optimize':'OptimizeModel',
-    #'optimize_model_gui':'OptimizeModelGUI',
-    'extract':'ExtractModel',
+    'extract':'ExtractNodesPipeline',
 }
 
 command_module_name_dict = command_module_name_dict_base | command_module_name_dict_ext

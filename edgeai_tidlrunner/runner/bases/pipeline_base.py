@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2021, Texas Instruments
+# Copyright (c) 2018-2025, Texas Instruments
 # All Rights Reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -217,19 +217,19 @@ class PipelineBase():
     def prepare(self):
         capture_log = self.settings['common']['capture_log']
         log_file = self.settings['common']['log_file']
-        if log_file:
+        if log_file and self.run_dir:
             if not log_file.startswith('/') and not log_file.startswith('.'):
                 log_file =  os.path.join(self.run_dir, log_file)
             #
             os.makedirs(os.path.dirname(log_file), exist_ok=True)       
         # 
-        if capture_log and log_file:
+        if capture_log and log_file and self.run_dir:
             with open(log_file, 'a') as log_fp:
                 with wurlitzer.pipes(stdout=log_fp, stderr=log_fp):
                     return self._prepare()
                 #
             #
-        # elif log_file:
+        # elif log_file and self.run_dir:
         #     with open(log_file, 'a') as log_fp:
         #         tee_stdout = utils.TeeLogWriter([sys.stdout, log_fp])
         #         tee_stderr = utils.TeeLogWriter([sys.stderr, log_fp])                

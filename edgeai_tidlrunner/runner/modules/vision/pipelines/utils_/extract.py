@@ -58,7 +58,7 @@ class ONNXNode:
         return f"{self.name} : {self.module} : {self.depth} : {[child.name if isinstance(child,ONNXNode) else child for child in self.children]}"
         
 
-class ExtractModel(CommonPipelineBase):
+class ExtractNodes(CommonPipelineBase):
     ARGS_DICT=SETTINGS_DEFAULT['extract']
     COPY_ARGS=COPY_SETTINGS_DEFAULT['extract']
 
