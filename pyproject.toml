@@ -55,7 +55,9 @@ dev = [
 ]
 
 [project.scripts]
-tidlrunnercli = "edgeai_tidlrunner.main:main"
+tidlrunnercli = "edgeai_tidlrunner.main:main_auto"
+tidlrunnercli-pc = "edgeai_tidlrunner.main:main_pc"
+tidlrunnercli-evm = "edgeai_tidlrunner.main:main_evm"
 
 [tool.setuptools]
 include-package-data = true

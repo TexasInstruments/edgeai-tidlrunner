@@ -28,7 +28,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-##################################################################
+#################################################################################
 # target_device - use one of: TDA4VM AM62A AM68A AM69A AM67A AM62
 TARGET_DEVICE=${TARGET_DEVICE:-"AM68A"}
 

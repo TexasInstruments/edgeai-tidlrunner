@@ -45,7 +45,9 @@ echo "TARGET_DEVICE=${TARGET_DEVICE}"
 source ./set_env.sh
 
 ##################################################################
-# tidlrunnercli is equivalent to running python3 -m edgeai_tidlrunner.main
-# see pyproject.toml for the script entry point [project.scripts]
+# tidlrunnercli sets proper environment and can be used instead of running python3 -m edgeai_tidlrunner.main
+#   see pyproject.toml for the script entry point [project.scripts]
+# Directly using edgeai_tidlrunner.main will need to have the environment set
+#   as is done by the above: source ./set_env.sh
 
 RUNNER_INVOKE_NAME=${0} python3 -m edgeai_tidlrunner.main "$@" --target_device ${TARGET_DEVICE}

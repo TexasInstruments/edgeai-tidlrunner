@@ -28,6 +28,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
 ##################################################################
 # catch usage of unset variables
 set -u
@@ -40,6 +41,6 @@ set -u
 # logging purposes to indicate which script invoked tidlrunnercli
 #
 # alternate invoke method is:
-# RUNNER_INVOKE_NAME=${0} python3 -m edgeai_tidlrunner.main "$@" --target_machine pc
+# RUNNER_INVOKE_NAME=${0} python3 -m edgeai_tidlrunner.main "$@" --target_machine evm
 #
-RUNNER_INVOKE_NAME=${0} tidlrunnercli "$@" --target_machine pc
+RUNNER_INVOKE_NAME=${0} tidlrunnercli.sh "$@" --target_machine evm

@@ -165,7 +165,8 @@ class MainRunner(runner.bases.PipelineBase):
             main_runner.run(command)
 
 
-def main():
+#################################################################################
+def main_with_proper_environment(target_machine='pc'):
     print(f'INFO: running - {sys.argv}')
     if os.environ.get('TIDL_TOOLS_PATH', None) is None or \
        os.environ.get('LD_LIBRARY_PATH', None) is None:
@@ -173,8 +174,35 @@ def main():
         rtwrapper.restart_with_proper_environment()
     else:
         # Continue with normal execution
+        with_target_machine = any(['--target_machine' in arg for arg in sys.argv])
+        if not with_target_machine:
+            sys.argv.append(f'--target_machine={target_machine}')
+        #
         MainRunner.main()
 
+
+def main_pc():
+    main_with_proper_environment(target_machine='pc')
+
+
+def main_evm():
+    main_with_proper_environment(target_machine='evm')
+
+
+def main_auto():
+    print(f"INFO: checking machine architecture")
+    uname_command = "uname -m"
+    proc = subprocess.Popen([uname_command], stdout=subprocess.PIPE, shell=True)
+    out_ret, err_ret = proc.communicate()
+    arch = str(out_ret)    
+    target_machine = 'pc' if 'x86' in arch or 'amd64' in arch else 'evm'
+    main_with_proper_environment(target_machine=target_machine)
+
+
+#################################################################################
+def main():
+    print(f'INFO: running - {sys.argv}')
+    MainRunner.main()
 
 if __name__ == "__main__":
     main()
