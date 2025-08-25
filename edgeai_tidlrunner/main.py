@@ -190,12 +190,12 @@ def main_evm():
 
 
 def main_auto():
-    print(f"INFO: checking machine architecture")
-    uname_command = "uname -m"
-    proc = subprocess.Popen([uname_command], stdout=subprocess.PIPE, shell=True)
-    out_ret, err_ret = proc.communicate()
-    arch = str(out_ret)    
+    print(f"INFO: checking machine architecture...")
+    result = subprocess.run(['uname', '-m'], capture_output=True, text=True)
+    arch = result.stdout.strip()
+    print(f"INFO: machine architecture found: {arch}")   
     target_machine = 'pc' if 'x86' in arch or 'amd64' in arch else 'evm'
+    print(f"INFO: setting target_machine to: {target_machine}")
     main_with_proper_environment(target_machine=target_machine)
 
 
