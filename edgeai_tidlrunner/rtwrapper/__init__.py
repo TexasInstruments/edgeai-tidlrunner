@@ -30,7 +30,7 @@
 from . import core
 from . import options
 
-from .set_env import set_environment
+from .set_env import set_environment, restart_with_proper_environment
 
 
 RUNTIME_TYPES_MAPPING = {

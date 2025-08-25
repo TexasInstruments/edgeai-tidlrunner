@@ -30,6 +30,7 @@
 
 
 import os
+import sys
 import subprocess
 import glob
 import tidl_tools_package
@@ -161,6 +162,20 @@ def set_environment(update_artifacts=True):
       update_tvm_artifacts()
 
     print("INFO: Environment variables for TIDL Runner have been set successfully.")
+
+
+def restart_with_proper_environment():
+    """
+    Restart the process with correct environment.
+    This should be called only if TIDL_TOOLS_PATH or LD_LIBRARY_PATH is not properly set
+    """
+    set_environment()
+
+    # Prepare the new environment
+    new_env = os.environ.copy()
+    
+    # Restart the current script with the new environment
+    subprocess.run([sys.executable] + sys.argv, env=new_env, check=True)
 
 
 def main():

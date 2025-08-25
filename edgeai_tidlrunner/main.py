@@ -165,29 +165,14 @@ class MainRunner(runner.bases.PipelineBase):
             main_runner.run(command)
 
 
-def restart_with_proper_environment():
-    """
-    Check if LD_LIBRARY_PATH is properly set, and if not, restart the process with correct environment.
-    """
-    rtwrapper.set_environment()
-    
-    # Indicate that the environment has been set
-    os.environ['TIDL_RUNNER_ENV_SET'] = '1'  
-
-    # Prepare the new environment
-    new_env = os.environ.copy()
-    
-    # Restart the current script with the new environment
-    subprocess.run([sys.executable] + sys.argv, env=new_env, check=True)
-    
-
 def main():
     print(f'INFO: running - {sys.argv}')
-    if os.environ.get('TIDL_RUNNER_ENV_SET', None) != '1':
-        restart_with_proper_environment()
+    if os.environ.get('TIDL_TOOLS_PATH', None) is None or \
+       os.environ.get('LD_LIBRARY_PATH', None) is None:
+        print("INFO: TIDL_TOOLS_PATH or LD_LIBRARY_PATH is not set, restarting with proper environment...")
+        rtwrapper.restart_with_proper_environment()
     else:
         # Continue with normal execution
-        print("INFO: Continuing with current process...")    
         MainRunner.main()
 
 
