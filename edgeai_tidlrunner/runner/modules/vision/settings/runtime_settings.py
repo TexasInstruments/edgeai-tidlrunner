@@ -76,10 +76,20 @@ class RuntimeSettings(attr_dict.AttrDict):
 
         calibration_iterations_factor = self._get_calibration_iterations_factor(fast_calibration)
 
+        # quant_params_file_path is specified as required, create one based on model_path
+        quant_params_file_path = self['runtime_options'].get('advanced_options:quant_params_proto_path', None)
+        if quant_params_file_path is True:
+            model_path = self['model_path']
+            quant_params_file_path = os.path.splitext(model_path)[0] + "_qparams.prototxt"
+            self['runtime_options']['advanced_options:quant_params_proto_path'] = quant_params_file_path            
+        elif quant_params_file_path is False:
+            self['runtime_options']['advanced_options:quant_params_proto_path'] = None
+        #
+
         runtime_options = RuntimeOptions(
             model_quant_type=model_quant_type, settings_type=settings_type, is_qat=is_qat,
             calibration_iterations_factor=calibration_iterations_factor,
-            det_options=det_options, ext_options=ext_options, **runtime_settings['runtime_options'])
+            det_options=det_options, ext_options=ext_options, **self['runtime_options'])
         self['runtime_options'] = runtime_options
 
         return self

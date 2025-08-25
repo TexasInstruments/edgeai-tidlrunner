@@ -90,6 +90,7 @@ class RuntimeOptions(attr_dict.AttrDict):
                 f'runtime_options provided via kwargs must be dict, got {type(ext_options)}'
             runtime_options.update(ext_options)
         #
+
         object_detection_meta_arch_type = runtime_options.get('object_detection:meta_arch_type', None)
 
         # for tflite models, these options are directly processed inside tidl

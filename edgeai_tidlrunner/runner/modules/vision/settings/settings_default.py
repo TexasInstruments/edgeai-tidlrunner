@@ -102,7 +102,8 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | {
     'calibration_iterations':   {'dest': 'session.runtime_settings.runtime_options.advanced_options:calibration_iterations', 'default': 12, 'type': int, 'metavar': 'value'},
     'max_num_subgraph_nodes':   {'dest': 'session.runtime_settings.runtime_options.advanced_options:max_num_subgraph_nodes', 'default': 1536, 'type': int, 'metavar': 'value'},
     'meta_arch_type':           {'dest': 'session.runtime_settings.runtime_options.object_detection:meta_arch_type', 'default': argparse.SUPPRESS, 'type': int, 'metavar': 'value'},
-    'meta_arch_proto_path':     {'dest': 'session.runtime_settings.runtime_options.object_detection:meta_layers_names_list', 'default': argparse.SUPPRESS, 'type': str, 'metavar': 'value'},
+    'meta_arch_file_path':      {'dest': 'session.runtime_settings.runtime_options.object_detection:meta_layers_names_list', 'default': argparse.SUPPRESS, 'type': str, 'metavar': 'value'},
+    'quant_params_file_path':   {'dest': 'session.runtime_settings.runtime_options.advanced_options:quant_params_proto_path', 'default': argparse.SUPPRESS, 'type': utils.str_or_none_or_bool, 'metavar': 'value'},
     # preprocess
     'preprocess_name':         {'dest':'preprocess.name', 'default':None, 'type':str, 'metavar':'value', 'group':'preprocess_name'},
     'resize':                  {'dest':'preprocess.resize', 'default':None, 'type':int, 'nargs':'*', 'metavar':'value'},

@@ -107,6 +107,21 @@ def str_or_none(v):
     return str(v)
 
 
+def str_or_none_or_bool(v):
+    if v is None:
+        return None
+    elif isinstance(v, str):
+        if v.lower() in ('', 'none', 'null'):
+            return None
+        elif v.lower() in ('false', 'no', '0'):
+            return False
+        elif v.lower() in ('true', 'yes', '1'):
+            return True
+        #
+    #
+    return str(v)
+
+
 def to_int(v):
     try:
         v = int(v)
