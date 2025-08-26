@@ -46,7 +46,14 @@ class BaseRuntimeWrapper:
             self.kwargs = kwargs
         else:
             self.kwargs.update(kwargs)
+        #
 
+        meta_file_path = self.kwargs['runtime_options'].get('object_detection:meta_layers_names_list', None)
+        if meta_file_path is not None and os.path.exists(meta_file_path):
+            # replace confidence_threshold in opject detection prototxt
+            self._replace_confidence_threshold(meta_file_path)
+        #
+                    
         self.infer_stats_dict = {}
         self._infer_stats_sum = {}
 
@@ -212,8 +219,66 @@ class BaseRuntimeWrapper:
             print(f'WARNING: perfsim stats could not be obtained: {e}')
         #
         return stats_dict
-    
 
+
+    def _replace_confidence_threshold(self, filename):
+        if not filename.endswith('.prototxt'):
+            return
+        #
+        detection_threshold = self.kwargs['runtime_options'].get('object_detection:confidence_threshold', None)
+        detection_top_k = self.kwargs['runtime_options'].get('object_detection:top_k', None)
+        detection_nms_threshold = self.kwargs['runtime_options'].get('object_detection:nms_threshold', None)
+        detection_keep_top_k = self.kwargs['runtime_options'].get('object_detection:keep_top_k', None)
+
+        space_string = ' '
+        with open(filename) as fp:
+            lines = fp.readlines()
+        #
+        for line_index, line in enumerate(lines):
+            line = line.rstrip()
+            if detection_threshold is not None:
+                match_str1 = 'confidence_threshold:'
+                replacement_key1 = line.lstrip(space_string).split(space_string)[0]
+                if match_str1 == replacement_key1: # exact match
+                    replacement_str1 = f'{replacement_key1} {detection_threshold}'
+                    leading_spaces = len(line) - len(line.lstrip(space_string))
+                    line = space_string * leading_spaces + replacement_str1
+                #
+            #
+            if detection_top_k is not None:
+                match_str2 = 'top_k:'
+                replacement_key2 = line.lstrip(space_string).split(space_string)[0]
+                if match_str2 == replacement_key2: # exact match
+                    replacement_str2 = f'{replacement_key2} {detection_top_k}'
+                    leading_spaces = len(line) - len(line.lstrip(space_string))
+                    line = space_string * leading_spaces + replacement_str2
+                #
+            #
+            if detection_nms_threshold is not None:
+                match_str3 = 'nms_threshold:'
+                replacement_key3 = line.lstrip(space_string).split(space_string)[0]
+                if match_str3 == replacement_key3: # exact match
+                    replacement_str3 = f'{replacement_key3} {detection_nms_threshold}'
+                    leading_spaces = len(line) - len(line.lstrip(space_string))
+                    line = space_string * leading_spaces + replacement_str3
+                #
+            #
+            if detection_keep_top_k is not None:
+                match_str4 = 'keep_top_k:'
+                replacement_key4 = line.lstrip(space_string).split(space_string)[0]
+                if match_str4 == replacement_key4: # exact match
+                    replacement_str4 = f'{replacement_key4} {detection_keep_top_k}'
+                    leading_spaces = len(line) - len(line.lstrip(space_string))
+                    line = space_string * leading_spaces + replacement_str4
+                #
+            #
+            lines[line_index] = line
+        #
+
+        with open(filename, 'w') as fp:
+            fp.write('\n'.join(lines))
+        #
+        
     def _tidl_infer_stats(self):
         benchmark_dict = self.interpreter.get_TI_benchmark_data()
         subgraph_time = copy_time = 0
