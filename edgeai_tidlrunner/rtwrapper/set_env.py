@@ -175,7 +175,14 @@ def restart_with_proper_environment():
     new_env = os.environ.copy()
     
     # Restart the current script with the new environment
-    subprocess.run([sys.executable] + sys.argv, env=new_env, check=True)
+    result = subprocess.run([sys.executable] + sys.argv, env=new_env, check=True)
+    
+    if result.returncode != 0:
+        print("ERROR: Failed to restart the script with updated environment.")
+        sys.exit(result.returncode)
+    else:
+        print("INFO: Script restarted successfully with updated environment.")
+        sys.exit(0)
 
 
 def main():
