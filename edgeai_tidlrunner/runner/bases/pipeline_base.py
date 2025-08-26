@@ -108,15 +108,15 @@ class PipelineBase():
         prefix_dict = {}
         for k in prefix_keys:
             v = kwargs.pop(k)
-            prefix_dict[k.split('.')[-1]] = v
+            prefix_dict[self._split_fields(k)[-1]] = v
         #
         return prefix_dict
 
     def _parse_to_dict(self, **kwargs):
         kwargs = copy.deepcopy(kwargs)
         keys = kwargs.keys()
-        prefixes = set(['.'.join(k.split('.')[:-1]) for k in keys])
-        prefixes = sorted(prefixes, key=lambda x:len(x.split('.')), reverse=True)
+        prefixes = set(['.'.join(self._split_fields(k)[:-1]) for k in keys])
+        prefixes = sorted(prefixes, key=lambda x:len(self._split_fields(x)), reverse=True)
         # put the '' entry last
         prefixes = [k for k in prefixes if k != '']
         for prefix in prefixes:
@@ -125,7 +125,31 @@ class PipelineBase():
             kwargs[prefix] = prefix_dict
         #
         return kwargs
-        
+
+    def _split_fields(self, key, separator='.'):
+        """
+        Split a key on '.' but keep numeric parts joined.
+        Examples:
+        'common.model_path' -> ['common', 'model_path']
+        'session.model.0' -> ['session', 'model.0']
+        'preprocess.resize.224' -> ['preprocess', 'resize.224']
+        """
+        parts = key.split(separator)
+        if len(parts) <= 1:
+            return parts
+        #
+        result = [parts[0]]  # Start with first part
+        for part in parts[1:]:
+            if part and part[0].isdigit():
+                # Numeric part - join with previous
+                result[-1] += separator + part
+            else:
+                # Non-numeric part - add as new element
+                result.append(part)
+            #
+        #
+        return result
+    
     def _copy_args(self, **kwargs_cmd):
         # copy entries if required
         for k in self.COPY_ARGS:

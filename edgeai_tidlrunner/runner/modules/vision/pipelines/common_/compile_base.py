@@ -200,6 +200,8 @@ class CompileModelBase(CommonPipelineBase):
                         kwargs_out['preprocess.name'] = 'image_preprocess'
                     #
                 #
+            elif k.startswith('model_info'):
+                kwargs_out[k] = v                
             else:
                 kwargs_out[k] = v
             #
