@@ -30,7 +30,7 @@
 from .compile_.infer import InferModel
 from .compile_.compile import CompileModel
 from .compile_.accuracy import InferAccuracy
-from .compile_.analyze import *
+from .compile_.analyze import CompileAnalyzeNoTIDL, InferAnalyzeNoTIDL, CompileAnalyzeTIDL, InferAnalyzeTIDL, InferAnalyzeFinal
 from .compile_.report import GenReport 
 
 from .optimize_.optimize import OptimizeModel

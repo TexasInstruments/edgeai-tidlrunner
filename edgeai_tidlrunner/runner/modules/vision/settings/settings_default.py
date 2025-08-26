@@ -95,15 +95,21 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | {
     'target_device':            {'dest': 'session.runtime_settings.target_device', 'default': presets.TargetDeviceType.TARGET_DEVICE_AM68A, 'type': str, 'metavar': 'value'},
     'tidl_offload':             {'dest': 'session.runtime_settings.tidl_offload', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value'},
     'graph_optimization_level': {'dest': 'session.runtime_settings.onnxruntime:graph_optimization_level', 'default': presets.GraphOptimizationLevel.ORT_DISABLE_ALL, 'type': int, 'metavar': 'value'},
-    # runtime_options
+    # runtime_settings.runtime_options
     'tensor_bits':              {'dest': 'session.runtime_settings.runtime_options.tensor_bits', 'default': 8, 'type': int, 'metavar': 'value'},
     'quantization_scale_type':  {'dest': 'session.runtime_settings.runtime_options.advanced_options:quantization_scale_type', 'default': None, 'type': int, 'metavar': 'value'},
     'calibration_frames':       {'dest': 'session.runtime_settings.runtime_options.advanced_options:calibration_frames', 'default': 12, 'type': int, 'metavar': 'value'},
     'calibration_iterations':   {'dest': 'session.runtime_settings.runtime_options.advanced_options:calibration_iterations', 'default': 12, 'type': int, 'metavar': 'value'},
-    'max_num_subgraph_nodes':   {'dest': 'session.runtime_settings.runtime_options.advanced_options:max_num_subgraph_nodes', 'default': 1536, 'type': int, 'metavar': 'value'},
+    'quant_params_file_path':   {'dest': 'session.runtime_settings.runtime_options.advanced_options:quant_params_proto_path', 'default': argparse.SUPPRESS, 'type': utils.str_or_none_or_bool, 'metavar': 'value'},
+    'max_num_subgraph_nodes':   {'dest': 'session.runtime_settings.runtime_options.advanced_options:max_num_subgraph_nodes', 'default': 1536, 'type': int, 'metavar': 'value'},    
+    'output_feature_16bit_names_list':   {'dest': 'session.runtime_settings.runtime_options.advanced_options:output_feature_16bit_names_list', 'default': argparse.SUPPRESS, 'type': str, 'metavar': 'value'},        
+    # runtime_settings.runtime_options.object_detection
     'meta_arch_type':           {'dest': 'session.runtime_settings.runtime_options.object_detection:meta_arch_type', 'default': argparse.SUPPRESS, 'type': int, 'metavar': 'value'},
     'meta_arch_file_path':      {'dest': 'session.runtime_settings.runtime_options.object_detection:meta_layers_names_list', 'default': argparse.SUPPRESS, 'type': str, 'metavar': 'value'},
-    'quant_params_file_path':   {'dest': 'session.runtime_settings.runtime_options.advanced_options:quant_params_proto_path', 'default': argparse.SUPPRESS, 'type': utils.str_or_none_or_bool, 'metavar': 'value'},
+    'detection_threshold':      {'dest': 'session.runtime_settings.runtime_options.object_detection:confidence_threshold', 'default': 0.3, 'type': float, 'metavar': 'value'},
+    'detection_top_k':          {'dest': 'session.runtime_settings.runtime_options.object_detection:top_k', 'default': 200, 'type': int, 'metavar': 'value'},
+    'nms_threshold':            {'dest': 'session.runtime_settings.runtime_options.object_detection:nms_threshold', 'default': 0.45, 'type': float, 'metavar': 'value'},    
+    'keep_top_k':               {'dest': 'session.runtime_settings.runtime_options.object_detection:keep_top_k', 'default': 200, 'type': int, 'metavar': 'value'},        
     # preprocess
     'preprocess_name':         {'dest':'preprocess.name', 'default':None, 'type':str, 'metavar':'value', 'group':'preprocess_name'},
     'resize':                  {'dest':'preprocess.resize', 'default':None, 'type':int, 'nargs':'*', 'metavar':'value'},
