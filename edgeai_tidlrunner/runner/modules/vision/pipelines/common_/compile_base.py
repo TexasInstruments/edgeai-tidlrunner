@@ -35,6 +35,8 @@ import ast
 
 import yaml
 
+from edgeai_tidlrunner.rtwrapper.options import runtime_options
+
 from ...... import rtwrapper
 from ......rtwrapper.core import presets
 from ..... import bases
@@ -126,17 +128,17 @@ class CompileModelBase(CommonPipelineBase):
 
     def _upgrade_kwargs(self, **kwargs):
         kwargs_in = copy.deepcopy(kwargs)
+        runtime_settings_in = kwargs_in.pop('session.runtime_settings', {})
         kwargs_out = dict()
 
         for k, v in kwargs_in.items():
             if k.startswith('session.target_device'):
                 # these fields are from edgeai-benchmark - no need to use it here
-                kwargs_out.pop(k, None)
+                pass
             elif k.startswith('session.runtime_options'):
-                # kwargs_out.pop(k, None)
-                # new_key = k.replace('session.runtime_options', 'session.runtime_settings.runtime_options')
-                # kwargs_out[new_key] = v
-                pass # do not take runtime_options in the old format (directly under session) from the configfile
+                kwargs_out.pop(k, None)
+                new_key = k.replace('session.runtime_options', 'session.runtime_settings.runtime_options')
+                kwargs_out[new_key] = v
             elif k == 'session.session_name':
                 kwargs_out['session.name'] = v           
             elif k == 'dataloader.name':
@@ -201,5 +203,9 @@ class CompileModelBase(CommonPipelineBase):
             else:
                 kwargs_out[k] = v
             #
+        #
+
+        for k, v in runtime_settings_in.items():
+            kwargs_out[f'session.runtime_settings.{k}'] = v
         #
         return kwargs_out
