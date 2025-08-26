@@ -7,9 +7,9 @@
 
 Whichever interface (runner cli, runner configfile, runner py or rtwrapper) is being used, there are some common parameters that control the core runtimes. These are called runtime_settings and runtime_options
 
-runtime_settings: runtime_settings is primarily used in the runner based interface. runtime_options is part of runtime_settings. It also has additional parameters that are needed in the abstractions in runner. Default runtime_settings are in [edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py](./edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py)
+runtime_settings: runtime_settings is primarily used in the runner based interface. runtime_options is part of runtime_settings. It also has additional parameters that are needed in the abstractions in runner. Default runtime_settings are in [edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py](../edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py)
 
-runtime_options: runtime_options control the behaviour of core runtimes - default values are specified in [edgeai_tidlrunner/rtwrapper/options/options_default.py](./edgeai_tidlrunner/rtwrapper/options/options_default.py)
+runtime_options: runtime_options control the behaviour of core runtimes - default values are specified in [edgeai_tidlrunner/rtwrapper/options/options_default.py](../edgeai_tidlrunner/rtwrapper/options/options_default.py)
 
 Example:<br>
 These settings and options can be passed to the underlying runner interface in one of the several ways as described in the [main documentation](../README.md). Here is an example of the Pythonic form:
@@ -36,7 +36,7 @@ These settings and options can be passed to the underlying runner interface in o
 
 input_mean and input_scale are options that are unique for every model. If there are not provided, default values will be used. input_mean substraction and input_scale is applied to normalize the input and then it is given to the model. Setting correct values for this is important to get a functionally correct model.
 
-In [settings_default.py](./edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py) the values are set as follows:
+In [settings_default.py](../edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py) the values are set as follows:
 ```
 'input_mean': {'dest': 'session.input_mean', 'default': (123.675, 116.28, 103.53), 'type': float, 'nargs': '*', 'metavar': 'value'},
 'input_scale': {'dest': 'session.input_scale', 'default': (0.017125, 0.017507, 0.017429), 'type': float, 'nargs': '*', 'metavar': 'value'},

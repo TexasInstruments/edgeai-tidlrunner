@@ -8,7 +8,7 @@ compile_model is one of the most basic commands - it needs only the model path t
 ```
 tidlrunnercli compile --model_path=./data/examples/models/mobilenet_v2.onnx
 ```
-The compiled artifacts will be placed under [./runs/runner](./runs/runner) in a folder with the model name.
+The compiled artifacts will be placed under [../work_dirs/](../work_dirs/) in a folder with the model name.
 
 #### Example - compile_model with actual input data
 There are several options can be specified to configure the run when running with compile_model.
@@ -29,4 +29,4 @@ tidlrunnercli compile --model_path=./data/models/vision/segmentation/cocoseg21/e
 ```
 
 #### Example - a commandline example
-See the commandline example in [example_runner_cli.sh](./example_runner_cli.sh)
+See the commandline examples in [example_runner_cli_pc.sh](../example_runner_cli_pc.sh) and [example_runner_cli_evm.sh](../example_runner_cli_evm.sh)
