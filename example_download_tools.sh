@@ -33,4 +33,8 @@
 # download_tidl_tools is a script that si defined in pyproject.toml and add while pip install
 # it is equivalent to running python3 -m tidl_tools_package.download
 
-python3 -m tidl_tools_package.download
+# python3 -m edgeai_tidlrunner.download
+download-tidlrunner-tools
+
+# TIDL_TOOLS_TYPE="gpu" python3 -m tidl_tools_package.download
+download-tidl-tools

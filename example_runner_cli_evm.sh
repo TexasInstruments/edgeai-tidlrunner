@@ -35,22 +35,21 @@ export TARGET_DEVICE="AM68A"
 
 ##################################################################
 # Example 1 - infer using compiled artifacts given a model
-# tidlrunnercli-evm infer --model_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx
+# tidlrunnercli infer --model_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx
 
 ##################################################################
 # Exampe 2: infer using compiled artifacts and a config file
 #----------------------------------------------------------------
-# tidlrunnercli-evm infer --config_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml
+# tidlrunnercli infer --config_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml
 
 
 ##################################################################
 # Example 3: infer using compiled artifacts and a wrapper configs file that aggregates other config files
 #----------------------------------------------------------------
-# tidlrunnercli-evm infer --config_path ./data/models/configs.yaml
+# tidlrunnercli infer --config_path ./data/models/configs.yaml
 
 
 ##################################################################
 # Example 4: evaluate accuracy using compiled artifacts and aggregate configs file
 #----------------------------------------------------------------
-# tidlrunnercli-evm accuracy --config_path ./data/models/configs.yaml
-
+# tidlrunnercli accuracy --config_path ./data/models/configs.yaml
