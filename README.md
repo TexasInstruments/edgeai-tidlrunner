@@ -70,24 +70,6 @@ tidlrunnercli infer --help
 
 <hr>
 
-### tidlrunnercli Commandline interface
-The commandline interface allows to provide the model and a few arguments dirctly in the commandline.
-[runner Commandline interface](./docs/commandline_interface.md)
-
-<hr>
-
-### tidlrunnercli Configfile interface
-The configfile interface allows to parse all parameters from a yaml file. 
-[runner Commandline config file interface](./docs/configfile_interface.md)
-
-<hr>
-
-### edgeai_tidlrunner.runner Pythonic interface
-There is also a Pythonic interface for the runner module, for more flexibility.
-[runner Pythonic interface](./docs/pythonic_interface.md)
-
-<hr>
-
 ### List of commands supported
 | Command          | Internal Pipeline(s)        | Description                                                               |
 |------------------|-----------------------------|---------------------------------------------------------------------------|
@@ -109,6 +91,25 @@ But as explained above, the easiest way to see list of options supported for a c
 tidlrunnercli compile --help
 ```
 
+<hr>
+
+### tidlrunnercli Commandline interface
+The commandline interface allows to provide the model and a few arguments dirctly in the commandline.
+[runner Commandline interface](./docs/commandline_interface.md)
+
+The commandline options supported for each command are listed [here](./docs/command_line_arguments.md)
+
+<hr>
+
+### tidlrunnercli Configfile interface
+The configfile interface allows to parse all parameters from a yaml file. 
+[runner Commandline config file interface](./docs/configfile_interface.md)
+
+<hr>
+
+### edgeai_tidlrunner.runner Pythonic interface
+There is also a Pythonic interface for the runner module, for more flexibility.
+[runner Pythonic interface](./docs/pythonic_interface.md)
 
 <hr>
 
