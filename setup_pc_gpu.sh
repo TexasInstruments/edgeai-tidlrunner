@@ -30,12 +30,9 @@
 
 
 ######################################################################
-pip3 install --no-input onnx_graphsurgeon==0.3.26 --extra-index-url https://pypi.ngc.nvidia.com
+TIDL_TOOLS_TYPE="gpu" ./setup_pc.sh
 
-pip3 install -e ./[pc] --verbose
-TIDL_TOOLS_TYPE="gpu" pip3 install -e ./tools --verbose
-
-########################################################
+######################################################################
 # NVIDIA-HPC-SDK
 NVIDIA_HPC_SDK_VERSION="23.7"
 NVIDIA_HPC_SDK_PATH="/opt/nvidia/hpc_sdk/Linux_x86_64/${NVIDIA_HPC_SDK_VERSION}"

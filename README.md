@@ -32,6 +32,12 @@ Example:
 
 This script installs the CUDA based tidl-tools and nvidia-hpc-sdk. The user ha to make sure the system has CUDA gpus appropriate nvidia graphics drivers. 
 
+### To setup on EVM, run:
+
+```
+./setup_evm.sh
+```
+
 <hr>
 
 ### Download datasets to run examples in this repository (optional)

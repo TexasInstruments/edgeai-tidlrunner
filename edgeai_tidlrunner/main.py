@@ -189,7 +189,7 @@ def main_evm():
     main_with_proper_environment(target_machine='evm')
 
 
-def main_auto():
+def main():
     print(f"INFO: checking machine architecture...")
     result = subprocess.run(['uname', '-m'], capture_output=True, text=True)
     arch = result.stdout.strip()
@@ -200,9 +200,6 @@ def main_auto():
 
 
 #################################################################################
-def main():
-    print(f'INFO: running - {sys.argv}')
-    MainRunner.main()
-
 if __name__ == "__main__":
+    print(f'INFO: running {__file__} __main__')  
     main()

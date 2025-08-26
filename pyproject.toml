@@ -1,17 +1,17 @@
 [build-system]
-requires = ["setuptools>=42", "pyyaml", "tqdm"]
+requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "edgeai_tidlrunner"
-version = "11.1"
+name = "edgeai-tidlrunner"
+version = "11.1.0"
 description = "Edge AI TIDL Runner"
 authors = [
     { name = "Edge AI Development Team", email = "edgeai-dev@list.ti.com" }
 ]
-license = { text = "BSD 3-Clause" }
+license = { text = "BSD-3-Clause" }
 readme = "README.md"
-requires-python = ">=3.10,<3.11"
+requires-python = ">=3.10"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Programming Language :: Python :: 3.10",
@@ -41,8 +41,7 @@ dependencies = [
 pc = [
     "pycocotools",
     "opencv-python",
-    "onnxsim==0.4.35",
-    "osrt_model_tools @ git+https://github.com/TexasInstruments/edgeai-tidl-tools.git@11_00_08_00#subdirectory=osrt-model-tools"
+    "onnxsim==0.4.35"
 ]
 evm = [
     "pycocotools"
@@ -55,7 +54,8 @@ dev = [
 ]
 
 [project.scripts]
-tidlrunnercli = "edgeai_tidlrunner.main:main_auto"
+download-tidlrunner-tools = "edgeai_tidlrunner.download:main"
+tidlrunnercli = "edgeai_tidlrunner.main:main"
 tidlrunnercli-pc = "edgeai_tidlrunner.main:main_pc"
 tidlrunnercli-evm = "edgeai_tidlrunner.main:main_evm"
 
