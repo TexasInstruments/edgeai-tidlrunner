@@ -42,9 +42,9 @@ from .utils_.extract import ExtractNodes
 command_module_name_dict_base = {
     'compile':'CompileModel',
     'infer':'InferModel',
-    'accuracy': ['InferAccuracy', 'GenReport'],
-    'compile+infer': ['CompileModel', 'InferModel', 'GenReport'],
-    'compile+accuracy': ['CompileModel', 'InferAccuracy', 'GenReport'],
+    'accuracy': ['InferAccuracy'],
+    'compile+infer': ['CompileModel', 'InferModel'],
+    'compile+accuracy': ['CompileModel', 'InferAccuracy'],
     'analyze': ['CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL', 'InferAnalyzeTIDL', 'InferAnalyzeFinal'],    
     'report': ['GenReport'],    
 }

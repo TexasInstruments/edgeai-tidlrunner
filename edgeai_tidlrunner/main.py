@@ -83,7 +83,7 @@ class MainRunner(runner.bases.PipelineBase):
             if 'configs' not in kwargs_config:
                 configs = {'config':config_path}
             else:
-                configs = kwargs_config.pop('configs')
+                configs = kwargs_config.get('configs')
             #
 
             for model_key, config_entry_file in configs.items():
