@@ -183,7 +183,8 @@ class CompileModelBase(CommonPipelineBase):
             self.packaged_path = self._build_run_dir(packaged_path)
         #
 
-    def _upgrade_kwargs(self, **kwargs):
+    @classmethod
+    def _upgrade_kwargs(cls, **kwargs):
         kwargs_in = copy.deepcopy(kwargs)
         runtime_settings_in = kwargs_in.pop('session.runtime_settings', {})
         kwargs_out = dict()
@@ -225,33 +226,33 @@ class CompileModelBase(CommonPipelineBase):
             elif k == 'input_dataset':
                 kwargs_out.pop(k, None)
                 if v == 'imagenet':
-                    if kwargs_in['dataloader.name'] is None:
+                    if kwargs_in.get('dataloader.name', None) is None:
                         kwargs_out['dataloader.name'] = 'image_classification_dataloader'
                     #
-                    if kwargs_in['dataloader.path'] is None:
+                    if kwargs_in.get('dataloader.path', None) is None:
                         kwargs_out['dataloader.path'] = './data/datasets/vision/imagenetv2c/val'
                     #
                     if kwargs_in.get('preprocess.name',None) is None:
                         kwargs_out['preprocess.name'] = 'image_preprocess'
                     #
                 elif v == 'coco':
-                    if kwargs_in['dataloader.name'] is None:
+                    if kwargs_in.get('dataloader.name', None) is None:
                         kwargs_out['dataloader.name'] = 'coco_detection_dataloader'
                     #
-                    if kwargs_in['dataloader.path'] is None:
+                    if kwargs_in.get('dataloader.path', None) is None:
                         kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
                     #
                     if kwargs_in.get('preprocess.name',None) is None:
                         kwargs_out['preprocess.name'] = 'image_preprocess'
                     #
-                    if kwargs_in.get('postprocess.name',None) is None and self.with_postprocess:
+                    if kwargs_in.get('postprocess.name',None) is None:
                         kwargs_out['postprocess.name'] = 'object_detection_postprocess'
                     #
                 elif v == 'cocoseg21':
-                    if kwargs_in['dataloader.name'] is None:
+                    if kwargs_in.get('dataloader.name', None) is None:
                         kwargs_out['dataloader.name'] = 'coco_segmentation_dataloader'
                     #
-                    if kwargs_in['dataloader.path'] is None:
+                    if kwargs_in.get('dataloader.path', None) is None:
                         kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
                     #
                     if kwargs_in.get('preprocess.name',None) is None:

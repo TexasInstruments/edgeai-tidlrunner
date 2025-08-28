@@ -98,6 +98,8 @@ class MainRunner(runner.bases.PipelineBase):
                 else:
                     kwargs_cfg = dict()
                 #
+                kwargs_cfg = command_module._upgrade_kwargs(**kwargs_cfg)
+
                 kwargs_model = dict()    
 
                 # set defaults+command line args
