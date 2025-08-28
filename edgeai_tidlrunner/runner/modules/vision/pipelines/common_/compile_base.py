@@ -135,49 +135,51 @@ class CompileModelBase(CommonPipelineBase):
         self.postprocess = None
         self.run_data = None
 
-        dataloader_kwargs = self.settings[self.dataloader_prefix]
-        preprocess_kwargs = self.settings[self.preprocess_prefix]
-        session_kwargs = self.settings[self.session_prefix]
-        postprocess_kwargs = self.settings[self.postprocess_prefix]
-        runtime_settings = session_kwargs['runtime_settings']
-        runtime_options = runtime_settings['runtime_options']
+        if 'session' in self.settings and self.settings[self.session_prefix].get('model_path', None):
+            dataloader_kwargs = self.settings[self.dataloader_prefix]
+            preprocess_kwargs = self.settings[self.preprocess_prefix]
+            session_kwargs = self.settings[self.session_prefix]
+            postprocess_kwargs = self.settings[self.postprocess_prefix]
+            runtime_settings = session_kwargs['runtime_settings']
+            runtime_options = runtime_settings['runtime_options']
 
-        ###################################################################################
-        if not dataloader_kwargs['name']:
-            print(f'WARNING: dataloader name is was not provided - will use random_dataloader'
-                  f'\n  and the resultant compiled artifacts may not be accurate.'
-                  f'\n  please specify a dataloader using the argument data_name or dataloader.name'
-                  f'\n  in addition data_path or dataloader.path may need to be provided.')
-            dataloader_kwargs['name'] = 'random_dataloader'
-        #
-        if not preprocess_kwargs['name']:
-            preprocess_kwargs['name'] = 'no_preprocess'
-        #
-        if not postprocess_kwargs['name']:
-            postprocess_kwargs['name'] = 'no_postprocess'
-        #
-
-        ###################################################################################
-        if runtime_settings['tidl_offload']:
-            assert os.environ.get('TIDL_TOOLS_PATH', None) is not None, f"WARNING: TIDL_TOOLS_PATH is missing in the environment"
-            runtime_options['tidl_tools_path'] = os.environ['TIDL_TOOLS_PATH']
-
-        if not runtime_options.get('artifacts_folder', None):
-            runtime_options['artifacts_folder'] = self.artifacts_folder
-
-        self.object_detection_meta_layers_names_list_source = session_kwargs['runtime_settings']['runtime_options'].get('object_detection:meta_layers_names_list', None)
-        if self.object_detection_meta_layers_names_list_source:
-            if not (self.object_detection_meta_layers_names_list_source.startswith('/') or self.object_detection_meta_layers_names_list_source.startswith('.')):
-                object_detection_meta_layers_names_path = os.path.join(self.model_folder, self.object_detection_meta_layers_names_list_source)
-            else:
-                object_detection_meta_layers_names_path = self.object_detection_meta_layers_names_list_source
+            ###################################################################################
+            if not dataloader_kwargs['name']:
+                print(f'WARNING: dataloader name is was not provided - will use random_dataloader'
+                    f'\n  and the resultant compiled artifacts may not be accurate.'
+                    f'\n  please specify a dataloader using the argument data_name or dataloader.name'
+                    f'\n  in addition data_path or dataloader.path may need to be provided.')
+                dataloader_kwargs['name'] = 'random_dataloader'
             #
-            session_kwargs['runtime_settings']['runtime_options']['object_detection:meta_layers_names_list'] = object_detection_meta_layers_names_path
+            if not preprocess_kwargs['name']:
+                preprocess_kwargs['name'] = 'no_preprocess'
+            #
+            if not postprocess_kwargs['name']:
+                postprocess_kwargs['name'] = 'no_postprocess'
+            #
+
+            ###################################################################################
+            if runtime_settings['tidl_offload']:
+                assert os.environ.get('TIDL_TOOLS_PATH', None) is not None, f"WARNING: TIDL_TOOLS_PATH is missing in the environment"
+                runtime_options['tidl_tools_path'] = os.environ['TIDL_TOOLS_PATH']
+
+            if not runtime_options.get('artifacts_folder', None):
+                runtime_options['artifacts_folder'] = self.artifacts_folder
+
+            self.object_detection_meta_layers_names_list_source = session_kwargs['runtime_settings']['runtime_options'].get('object_detection:meta_layers_names_list', None)
+            if self.object_detection_meta_layers_names_list_source:
+                if not (self.object_detection_meta_layers_names_list_source.startswith('/') or self.object_detection_meta_layers_names_list_source.startswith('.')):
+                    object_detection_meta_layers_names_path = os.path.join(self.model_folder, self.object_detection_meta_layers_names_list_source)
+                else:
+                    object_detection_meta_layers_names_path = self.object_detection_meta_layers_names_list_source
+                #
+                session_kwargs['runtime_settings']['runtime_options']['object_detection:meta_layers_names_list'] = object_detection_meta_layers_names_path
+            #
+
+            packaged_path = self.settings[self.session_prefix]['packaged_path']
+            self.packaged_path = self._build_run_dir(packaged_path)
         #
-
-        packaged_path = self.settings[self.session_prefix]['packaged_path']
-        self.packaged_path = self._build_run_dir(packaged_path)
-
+        
     def _upgrade_kwargs(self, **kwargs):
         kwargs_in = copy.deepcopy(kwargs)
         runtime_settings_in = kwargs_in.pop('session.runtime_settings', {})
@@ -266,22 +268,25 @@ class CompileModelBase(CommonPipelineBase):
         #
 
         ###################################################################################
-        model_ext = os.path.splitext(kwargs_out['session.model_path'])[1]
-        if kwargs_out.get('preprocess.data_layout', None) is None:
-            data_layout_mapping = {
-                '.onnx': presets.DataLayoutType.NCHW,
-                '.tflite': presets.DataLayoutType.NHWC,
-            }
-            data_layout = data_layout_mapping.get(model_ext, None)
-            kwargs_out['preprocess.data_layout'] = data_layout
-            kwargs_out['session.data_layout'] = data_layout
-        #
-        if kwargs_out.get('session.name', None) is None:
-            session_name_mapping = {
-                '.onnx': presets.RuntimeType.RUNTIME_TYPE_ONNXRT,
-                '.tflite': presets.RuntimeType.RUNTIME_TYPE_TFLITERT,
-            }
-            session_name = session_name_mapping.get(model_ext, None)
-            kwargs_out['session.name'] = session_name
+        model_path = kwargs_out.get('session.model_path', None)
+        if model_path:
+            model_ext = os.path.splitext(model_path)[1]
+            if kwargs_out.get('preprocess.data_layout', None) is None:
+                data_layout_mapping = {
+                    '.onnx': presets.DataLayoutType.NCHW,
+                    '.tflite': presets.DataLayoutType.NHWC,
+                }
+                data_layout = data_layout_mapping.get(model_ext, None)
+                kwargs_out['preprocess.data_layout'] = data_layout
+                kwargs_out['session.data_layout'] = data_layout
+            #
+            if kwargs_out.get('session.name', None) is None:
+                session_name_mapping = {
+                    '.onnx': presets.RuntimeType.RUNTIME_TYPE_ONNXRT,
+                    '.tflite': presets.RuntimeType.RUNTIME_TYPE_TFLITERT,
+                }
+                session_name = session_name_mapping.get(model_ext, None)
+                kwargs_out['session.name'] = session_name
+            #
         #
         return kwargs_out
