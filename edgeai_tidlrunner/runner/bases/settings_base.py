@@ -52,9 +52,6 @@ SETTINGS_TARGET_MODULE_ARGS_DICT = {
 
 SETTING_PIPELINE_RUNNER_ARGS_DICT = SETTINGS_TARGET_MODULE_ARGS_DICT | {
     # model
-    'model_path':               {'dest': 'session.model_path', 'default': None, 'type': str, 'metavar': 'value', 'help': 'input model'},
-    'output_path':              {'dest': 'session.run_dir', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'output model path'},
-    'config_path':              {'dest': 'common.config_path', 'default': None, 'type': str, 'metavar': 'value'},
     'parallel_processes':       {'dest': 'common.parallel_processes', 'default': SettingsBaseDefaults.NUM_PARALLEL_PROCESSES, 'type': int, 'metavar': 'value'},
     'log_file':                 {'dest': 'common.log_file', 'default': SettingsBaseDefaults.CAPTURE_LOG_FILE, 'type': str, 'metavar': 'value'},
     'capture_log':              {'dest': 'common.capture_log', 'default': SettingsBaseDefaults.CAPTURE_LOG_MODE, 'type': str, 'metavar': 'value'},

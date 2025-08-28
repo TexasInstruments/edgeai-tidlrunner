@@ -44,6 +44,7 @@ from ... import blocks
 from ..... import utils
 from ...settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
 from .common_base import CommonPipelineBase
+from ...settings import constants
 
 
 class CompileModelBase(CommonPipelineBase):
@@ -53,7 +54,78 @@ class CompileModelBase(CommonPipelineBase):
     def __init__(self, with_postprocess=True, **kwargs):
         self.with_postprocess = with_postprocess
         super().__init__(**kwargs)
-        
+        if 'session' in self.settings and self.settings[self.session_prefix].get('model_path', None):
+            common_kwargs = self.settings['common']                 
+            config_path = os.path.dirname(common_kwargs['config_path']) if common_kwargs['config_path'] else None            
+            model_source = self.settings[self.session_prefix]['model_path']       
+            self.model_source = self._get_file_path(model_source, source_dir=config_path)
+
+            run_dir = self.settings[self.session_prefix]['run_dir']
+            self.run_dir = self._build_run_dir(run_dir)
+
+            model_basename = os.path.basename(self.model_source)
+            self.model_folder = os.path.join(self.run_dir, 'model')
+            self.model_path = os.path.join(self.model_folder, model_basename)
+            self.settings[self.session_prefix]['model_path'] = self.model_path
+            self.artifacts_folder = self.settings[self.session_prefix].get('artifactrs_folder', os.path.join(self.run_dir, 'artifacts'))
+            self.settings[self.session_prefix]['artifacts_folder'] = self.artifacts_folder
+        else:
+            self.run_dir = None
+            self.model_folder = None
+            self.model_path = None
+            self.artifacts_folder = None
+        #
+
+    def _build_run_dir(self, run_dir):
+        pipeline_type = self.kwargs.get('common.pipeline_type', 'compile')
+        task_type = self.kwargs.get('common.task_type', None) or None
+    
+        model_basename = os.path.basename(self.model_source)
+        model_id = self.settings[self.session_prefix].get('model_id', '')
+        if not model_id:
+            unique_id = utils.generate_unique_id(model_basename, num_characters=8)            
+            if task_type in constants.TaskTypeShortNames:
+                task_type_short_name = constants.TaskTypeShortNames[task_type]
+                model_id = task_type_short_name + '-' + unique_id                
+            else:
+                pipeline_type = self.kwargs.get('common.pipeline_type', 'x') or 'x'
+                model_id = pipeline_type + '-' + unique_id
+            #
+        #
+        model_id_underscore = model_id + '_'
+
+        tensor_bits = self.kwargs.get('session.runtime_settings.runtime_options.tensor_bits', '') or ''
+        tensor_bits_str = f'{str(tensor_bits)}bits' if tensor_bits else ''
+        tensor_bits_slash = f'{str(tensor_bits)}bits' + os.sep if tensor_bits else ''
+
+        target_device = self.kwargs.get('session.runtime_settings.target_device', 'NONE') or 'NONE'
+        target_device_str = target_device if target_device else ''
+        target_device_slash = target_device + os.sep if target_device else ''
+
+        model_basename_wo_ext, model_ext = os.path.splitext(model_basename)
+        model_ext = model_ext[1:] if len(model_ext)>0 else model_ext
+
+        runtime_name = self.kwargs.get('session.name', '') or ''
+
+        run_dir = run_dir.replace('{pipeline_type}', pipeline_type)
+        run_dir = run_dir.replace('{model_id}_', model_id_underscore)
+        run_dir = run_dir.replace('{model_id}', model_id)
+        run_dir = run_dir.replace('{runtime_name}', runtime_name)        
+        run_dir = run_dir.replace('{model_ext}', model_ext)        
+        run_dir = run_dir.replace('{tensor_bits}/', tensor_bits_slash)
+        run_dir = run_dir.replace('{tensor_bits}', tensor_bits_str)
+        run_dir = run_dir.replace('{target_device}/', target_device_slash)
+        run_dir = run_dir.replace('{target_device}', target_device_str)
+        run_dir = run_dir.replace('{model_name}', model_basename_wo_ext)
+
+        run_dir_tree_depth = 3
+        model_path_tree = os.path.abspath(os.path.splitext(self.model_source)[0]).split(os.sep)
+        if len(model_path_tree) > run_dir_tree_depth:
+            model_path_tree = model_path_tree[-run_dir_tree_depth:]
+        #
+        run_dir = run_dir.replace('{model_path}', '_'.join(model_path_tree))
+        return run_dir
+                
     def _prepare(self):
         super()._prepare()
         
@@ -86,26 +158,6 @@ class CompileModelBase(CommonPipelineBase):
         #
 
         ###################################################################################
-        model_ext = os.path.splitext(self.model_path)[1] if self.model_path else None
-        if preprocess_kwargs.get('data_layout', None) is None:
-            data_layout_mapping = {
-                '.onnx': presets.DataLayoutType.NCHW,
-                '.tflite': presets.DataLayoutType.NHWC,
-            }
-            data_layout = data_layout_mapping.get(model_ext, None)
-            preprocess_kwargs['data_layout'] = data_layout
-            session_kwargs['data_layout'] = data_layout
-        #
-        if session_kwargs.get('name', None) is None:
-            session_name_mapping = {
-                '.onnx': presets.RuntimeType.RUNTIME_TYPE_ONNXRT,
-                '.tflite': presets.RuntimeType.RUNTIME_TYPE_TFLITERT,
-            }
-            session_name = session_name_mapping.get(model_ext, None)
-            session_kwargs['name'] = session_name
-        #
-
-        ###################################################################################
         if runtime_settings['tidl_offload']:
             assert os.environ.get('TIDL_TOOLS_PATH', None) is not None, f"WARNING: TIDL_TOOLS_PATH is missing in the environment"
             runtime_options['tidl_tools_path'] = os.environ['TIDL_TOOLS_PATH']
@@ -131,6 +183,7 @@ class CompileModelBase(CommonPipelineBase):
         runtime_settings_in = kwargs_in.pop('session.runtime_settings', {})
         kwargs_out = dict()
 
+        ###################################################################################
         for k, v in kwargs_in.items():
             if k.startswith('session.target_device'):
                 # these fields are from edgeai-benchmark - no need to use it here
@@ -207,7 +260,28 @@ class CompileModelBase(CommonPipelineBase):
             #
         #
 
+        ###################################################################################
         for k, v in runtime_settings_in.items():
             kwargs_out[f'session.runtime_settings.{k}'] = v
+        #
+
+        ###################################################################################
+        model_ext = os.path.splitext(kwargs_out['session.model_path'])[1]
+        if kwargs_out.get('preprocess.data_layout', None) is None:
+            data_layout_mapping = {
+                '.onnx': presets.DataLayoutType.NCHW,
+                '.tflite': presets.DataLayoutType.NHWC,
+            }
+            data_layout = data_layout_mapping.get(model_ext, None)
+            kwargs_out['preprocess.data_layout'] = data_layout
+            kwargs_out['session.data_layout'] = data_layout
+        #
+        if kwargs_out.get('session.name', None) is None:
+            session_name_mapping = {
+                '.onnx': presets.RuntimeType.RUNTIME_TYPE_ONNXRT,
+                '.tflite': presets.RuntimeType.RUNTIME_TYPE_TFLITERT,
+            }
+            session_name = session_name_mapping.get(model_ext, None)
+            kwargs_out['session.name'] = session_name
         #
         return kwargs_out

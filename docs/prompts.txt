@@ -2,7 +2,7 @@
 
 ## docs/command_line_arguments.md
 
-Create a markdown file that explains the command line argumetns for these commands under the docs folder in this repository. The sections in the markdown file should be the differnt commands - compile, infer, accuracy, analyze, optimize, extract, report. Don't add any other section in the markdown file - the only sections should be these. Make single table under each section. Not additional descriptions or examples or explanations are needed - only the commandline options need to be placed in compact tables. Do not capitalize the section names - keep the command names as it is.
+Create a markdown file docs/command_line_arguments.md that explains the command line argumetns for these commands under the docs folder in this repository. The sections in the markdown file should be the differnt commands - compile, infer, accuracy, analyze, optimize, extract, report. Don't add any other section in the markdown file - the only sections should be these. Make single table under each section. Not additional descriptions or examples or explanations are needed - only the commandline options need to be placed in compact tables. Do not capitalize the section names - keep the command names as it is.
 For example, it is not
 ## Compile
 that I want, but
