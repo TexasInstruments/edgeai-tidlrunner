@@ -41,6 +41,14 @@ from .. import utils
 from . import settings_base
 
 
+class _TrackProvidedAction(argparse._StoreAction):
+    def __call__(self, parser, namespace, values, option_string=None):
+        if not hasattr(namespace, '_provided_args'):
+            namespace._provided_args = set()
+        namespace._provided_args.add(self.dest)
+        super().__call__(parser, namespace, values, option_string)
+
+
 class PipelineBase():
     ARGS_DICT = settings_base.SETTINGS_TARGET_MODULE_ARGS_DICT
     COPY_ARGS = {}
@@ -199,9 +207,9 @@ class PipelineBase():
     def _add_argument(cls, parser, name, **kwargs):
         if 'dest' in kwargs:
             alternate_arg_name = kwargs['dest']
-            parser.add_argument(f'--{name}', f'--{alternate_arg_name}', **kwargs)
+            parser.add_argument(f'--{name}', f'--{alternate_arg_name}', action=_TrackProvidedAction, **kwargs)
         else:
-            parser.add_argument(f'--{name}', **kwargs)
+            parser.add_argument(f'--{name}', action=_TrackProvidedAction, **kwargs)
         #
 
     @classmethod

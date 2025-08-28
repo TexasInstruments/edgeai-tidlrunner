@@ -63,6 +63,7 @@ class MainRunner(runner.bases.PipelineBase):
             command_module = getattr(target_module.pipelines, pipeline_name)
             command_args, rest_args = command_module.get_arg_parser().parse_known_args()    
             kwargs_cmd = vars(command_args)
+            provided_args = kwargs_cmd.pop('_provided_args')
             # rest_args = [arg for arg in rest_args if 'config_path' not in arg]
             # rest_args = [arg for arg in rest_args if '.yaml' not in arg]
             # if rest_args:
@@ -92,15 +93,23 @@ class MainRunner(runner.bases.PipelineBase):
                         config_entry_file = os.path.join(config_base_path, config_entry_file)
                     #
                     with open(config_entry_file) as fp:
-                        kwargs_model = yaml.safe_load(fp)
+                        kwargs_cfg = yaml.safe_load(fp)
                     #                    
                 else:
-                    kwargs_model = dict()
+                    kwargs_cfg = dict()
                 #
-                kwargs_model.update(kwargs_cmd)
-                # kwargs_model.update(kwargs)
+                kwargs_model = dict()    
+
+                # set defaults+command line args
+                kwargs_model.update(kwargs_cmd)  
+                # override with cfg                        
+                kwargs_model.update(kwargs_cfg)  
+                # now override with command line args
+                kwargs_provided = {k:v for k,v in kwargs_cmd.items() if k in provided_args}
+                kwargs_model.update(kwargs_provided)
+                # correct config_path is required to form the full model_path
                 kwargs_model.update({'common.config_path': config_entry_file})
-                
+
                 run_dict_enties = run_dict.get(model_key, [])
                 run_dict_enties.append((command,pipeline_name,kwargs_model))
                 run_dict[model_key] = run_dict_enties
