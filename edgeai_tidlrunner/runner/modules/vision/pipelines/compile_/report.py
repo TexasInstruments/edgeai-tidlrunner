@@ -142,17 +142,17 @@ class GenReport(bases.PipelineBase):
             #
         #
         if len(results_collection) == 0 or work_dir_results_max_name is None:
-            print('no results found - no report to generate.')
+            print('INFO: no results found - no report to generate.')
             return
         #
 
         results_anchor = results_collection[work_dir_results_max_name]
         if results_anchor is None:
-            print('no result found - cannot generate report.')
+            print('INFO: no result found - cannot generate report.')
             return
         #
 
-        print(f'results found for {work_dir_results_max_len} models')
+        print(f'INFO: results found for {work_dir_results_max_len} models')
 
         metric_keys = ['accuracy_top1%', 'accuracy_mean_iou%', 'accuracy_ap[.5:.95]%', 'accuracy_delta_1%',
                     'accuracy_ap_3d_moderate%', 'accuracy_add(s)_p1%', 'accuracy_localization%']

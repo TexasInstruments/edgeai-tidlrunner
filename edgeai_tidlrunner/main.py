@@ -63,7 +63,7 @@ class MainRunner(runner.bases.PipelineBase):
             command_module = getattr(target_module.pipelines, pipeline_name)
             command_args, rest_args = command_module.get_arg_parser().parse_known_args()    
             kwargs_cmd = vars(command_args)
-            provided_args = kwargs_cmd.pop('_provided_args')
+            provided_args = getattr(command_args, '_provided_args', set())
             # rest_args = [arg for arg in rest_args if 'config_path' not in arg]
             # rest_args = [arg for arg in rest_args if '.yaml' not in arg]
             # if rest_args:
