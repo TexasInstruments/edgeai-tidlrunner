@@ -117,15 +117,18 @@ class CompileModelBase(CommonPipelineBase):
         run_dir = run_dir.replace('{target_device}/', target_device_slash)
         run_dir = run_dir.replace('{target_device}', target_device_str)
         run_dir = run_dir.replace('{model_name}', model_basename_wo_ext)
-
+        run_dir = self._replace_model_path(run_dir, '{model_path}', run_dir_tree_depth=3)
+        return run_dir
+    
+    def _replace_model_path(self, run_dir, model_path_str, run_dir_tree_depth):
         run_dir_tree_depth = 3
         model_path_tree = os.path.abspath(os.path.splitext(self.model_source)[0]).split(os.sep)
         if len(model_path_tree) > run_dir_tree_depth:
             model_path_tree = model_path_tree[-run_dir_tree_depth:]
         #
-        run_dir = run_dir.replace('{model_path}', '_'.join(model_path_tree))
-        return run_dir
-                
+        run_dir = run_dir.replace(model_path_str, '_'.join(model_path_tree))    
+        return run_dir    
+
     def _prepare(self):
         super()._prepare()
         
@@ -179,7 +182,7 @@ class CompileModelBase(CommonPipelineBase):
             packaged_path = self.settings[self.session_prefix]['packaged_path']
             self.packaged_path = self._build_run_dir(packaged_path)
         #
-        
+
     def _upgrade_kwargs(self, **kwargs):
         kwargs_in = copy.deepcopy(kwargs)
         runtime_settings_in = kwargs_in.pop('session.runtime_settings', {})
