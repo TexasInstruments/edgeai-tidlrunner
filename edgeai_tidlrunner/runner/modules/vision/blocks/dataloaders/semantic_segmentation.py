@@ -28,6 +28,7 @@
 
 
 import os
+import random
 from PIL import Image 
 import numpy as np
 from PIL import Image
@@ -40,33 +41,79 @@ from . import dataloader_utils
 
 
 class SemanticSegmentationDataLoader(dataset_base.DatasetBaseWithUtils):
-    def __init__(self, img_dir, annotation_file, with_background_class=False, shuffle=False, backend='cv2', bgr_to_rgb=True):
-        super().__init__()
+    def __init__(self, image_dir, annotation_file, with_background_class=False, shuffle=False, backend='cv2', bgr_to_rgb=True):
+        super().__init__(shuffle=shuffle)
         self.coco = COCO(annotation_file)
-        self.img_dir = img_dir
-        self.img_ids = self.coco.getImgIds()
-        self.category_map_gt = None
+        self.image_dir = image_dir
+        self.annotation_file = annotation_file
+        self.category_map_gt = None  
+
+        self._load_dataset()
+
         self.get_dataset_info(annotation_file, with_background_class)
         self.with_background_class = with_background_class
+        if with_background_class and self.kwargs['dataset_info']['categories'] > len(self.cat_ids):
+            self.cat_ids.insert(0, 0)
+        #
+        self.kwargs['num_classes'] = len(self.cat_ids)              
         self.image_reader = dataloader_utils.ImageRead(backend=backend, bgr_to_rgb=bgr_to_rgb)
 
+    def _load_dataset(self):
+        shuffle = self.kwargs.get('shuffle', False)
+        self.coco_dataset = COCO(self.annotation_file)
+        filter_imgs = self.kwargs['filter_imgs'] if 'filter_imgs' in self.kwargs else None
+        if isinstance(filter_imgs, str):
+            # filter images with the given list
+            filter_imgs = os.path.join(self.kwargs['path'], filter_imgs)
+            with open(filter_imgs) as filter_fp:
+                filter = [int(id) for id in list(filter_fp)]
+                orig_keys = list(self.coco_dataset.imgs)
+                orig_keys = [k for k in orig_keys if k in filter]
+                self.coco_dataset.imgs = {k: self.coco_dataset.imgs[k] for k in orig_keys}
+            #
+        elif filter_imgs:
+            # filter and use images with gt only
+            sel_keys = []
+            for img_key, img_anns in self.coco_dataset.imgToAnns.items():
+                if len(img_anns) > 0:
+                    sel_keys.append(img_key)
+                #
+            #
+            self.coco_dataset.imgs = {k: self.coco_dataset.imgs[k] for k in sel_keys}
+        #
+
+        max_frames = len(self.coco_dataset.imgs)
+        num_frames = self.kwargs.get('num_frames', None)
+        num_frames = min(num_frames, max_frames) if num_frames is not None else max_frames
+
+        imgs_list = list(self.coco_dataset.imgs.items())
+        if shuffle:
+            random.seed(int(shuffle))
+            random.shuffle(imgs_list)
+        #
+        self.coco_dataset.imgs = {k:v for k,v in imgs_list[:num_frames]}
+
+        self.cat_ids = self.coco_dataset.getCatIds()
+        self.img_ids = self.coco_dataset.getImgIds()
+        self.num_frames = self.kwargs['num_frames'] = num_frames
+
     def __getitem__(self, index, info_dict=None):
-        img_info = self.coco.loadImgs([self.img_ids[index]])[0]
-        img_path = os.path.join(self.img_dir,img_info['file_name'])
-        return self.image_reader(img_path, info_dict)
+        img_id = self.img_ids[index]
+        img = self.coco_dataset.loadImgs([img_id])[0]
+        image_path = os.path.join(self.image_dir, img['file_name'])
+        return self.image_reader(image_path, info_dict)
 
     def __len__(self):
-        num_images = len(self.img_ids)
-        return num_images
+        return self.kwargs['num_frames']
 
     def get_num_classes(self):
-        return self.num_classes
+        return self.kwargs['num_classes']
 
     def evaluate(self, run_data, **kwargs):
         predictions = []
         inputs = []
         for data in run_data:
-            predictions.append(list(data['output'].values())[0])
+            predictions.append(data['output'])
             inputs.append(data['input'])
         #
         ann_ids = []
@@ -103,8 +150,10 @@ class SemanticSegmentationDataLoader(dataset_base.DatasetBaseWithUtils):
         metric = SegmentationEvaluationMetrics()
         for output, gt_mask, input in zip(predictions,gt_masks,inputs):
             # assuming argmax has already happened in postprocess
-            output = output.squeeze(0) if output.shape[0] == 1 else output
-            output = output.squeeze(0) if output.shape[0] == 1 else output
+            output = output[0] if isinstance(output, list) else output
+            output = output[0] if isinstance(output, list) else output            
+            output = output.squeeze(0) if hasattr(output, 'shape') and output.shape[0] == 1 else output
+            output = output.squeeze(0) if hasattr(output, 'shape') and output.shape[0] == 1 else output
             metric.update(output, gt_mask)
         #
         mean_iou = metric.compute_iou()

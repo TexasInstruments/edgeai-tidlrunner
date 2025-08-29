@@ -43,7 +43,7 @@ from . import dataloader_utils
 
 class ObjectDetectionDataLoader(dataset_base.DatasetBaseWithUtils):
     def __init__(self, image_dir, annotation_file, with_background_class=False, shuffle=False, backend='cv2', bgr_to_rgb=True):
-        super().__init__()
+        super().__init__(shuffle=shuffle)
         self.image_dir = image_dir
         self.annotation_file = annotation_file
 
@@ -54,6 +54,7 @@ class ObjectDetectionDataLoader(dataset_base.DatasetBaseWithUtils):
         if with_background_class and self.kwargs['dataset_info']['categories'] > len(self.cat_ids):
             self.cat_ids.insert(0, 0)
         #
+        self.kwargs['num_classes'] = len(self.cat_ids)
         self.image_reader = dataloader_utils.ImageRead(backend=backend, bgr_to_rgb=bgr_to_rgb)
 
     def _load_dataset(self):
