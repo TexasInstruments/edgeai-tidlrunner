@@ -90,7 +90,7 @@ class GenReport(bases.PipelineBase):
     def run_report(self, kwargs, rewrite_results=True, skip_pattern=None):
         report_perfsim = kwargs['common.report.mode']
         report_path = kwargs['common.report.path']
-        target_device = kwargs.get('session.runtime_settings.target_device', 'NONE')
+        target_device = kwargs.get('session.target_device', 'NONE')
 
         if target_device in (None, 'None', 'NONE'):
             benchmark_dir = report_path

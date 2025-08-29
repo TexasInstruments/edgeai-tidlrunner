@@ -55,12 +55,13 @@ class PipelineBase():
 
     def __init__(self, **kwargs):
         super().__init__()
-        kwargs_default = self._set_default_args()
         kwargs_in = self._flatten_dict(**kwargs)
         kwargs_in = self._expand_short_args(**kwargs_in)
         kwargs_in = self._upgrade_kwargs(**kwargs_in)
-        kwargs_cmd = copy.deepcopy(kwargs_default)
+
+        kwargs_cmd = self._set_default_args()        
         kwargs_cmd.update(kwargs_in)
+
         kwargs_cmd = self._copy_args(**kwargs_cmd)
         self.kwargs = kwargs_cmd
 
@@ -84,13 +85,14 @@ class PipelineBase():
         """
         return self.run_data
 
-    def _flatten_dict_fields(self, kwargs_flat, prefix, override_dict_fields=False, **kwargs):
+    @classmethod
+    def _flatten_dict_fields(cls, kwargs_flat, prefix, override_dict_fields=False, **kwargs):
         dict_keys = [k for k, v in kwargs.items() if isinstance(v, dict) and len(v)>0 and isinstance(list(v.keys())[0], str)]
         nondict_keys = [k for k, v in kwargs.items() if k not in dict_keys]
         if override_dict_fields:
             for k in dict_keys:
                 key_prefix = prefix + '.' + k if prefix else k
-                self._flatten_dict_fields(kwargs_flat, key_prefix, **kwargs[k])
+                cls._flatten_dict_fields(kwargs_flat, key_prefix, **kwargs[k])
             #
             for k in nondict_keys:
                 key_prefix = prefix + '.' + k if prefix else k
@@ -103,38 +105,42 @@ class PipelineBase():
             #
             for k in dict_keys:
                 key_prefix = prefix + '.' + k if prefix else k
-                self._flatten_dict_fields(kwargs_flat, key_prefix, **kwargs[k])
+                cls._flatten_dict_fields(kwargs_flat, key_prefix, **kwargs[k])
             #
 
-    def _flatten_dict(self, **kwargs):
+    @classmethod
+    def _flatten_dict(cls, **kwargs):
         kwargs_flat = {}
         prefix = None
-        self._flatten_dict_fields(kwargs_flat, prefix, **kwargs)
+        cls._flatten_dict_fields(kwargs_flat, prefix, **kwargs)
         return kwargs_flat
 
-    def _parse_dict_fields(self, prefix_keys, kwargs):
+    @classmethod
+    def _parse_dict_fields(cls, prefix_keys, kwargs):
         prefix_dict = {}
         for k in prefix_keys:
             v = kwargs.pop(k)
-            prefix_dict[self._split_fields(k)[-1]] = v
+            prefix_dict[cls._split_fields(k)[-1]] = v
         #
         return prefix_dict
 
-    def _parse_to_dict(self, **kwargs):
+    @classmethod
+    def _parse_to_dict(cls, **kwargs):
         kwargs = copy.deepcopy(kwargs)
         keys = kwargs.keys()
-        prefixes = set(['.'.join(self._split_fields(k)[:-1]) for k in keys])
-        prefixes = sorted(prefixes, key=lambda x:len(self._split_fields(x)), reverse=True)
+        prefixes = set(['.'.join(cls._split_fields(k)[:-1]) for k in keys])
+        prefixes = sorted(prefixes, key=lambda x:len(cls._split_fields(x)), reverse=True)
         # put the '' entry last
         prefixes = [k for k in prefixes if k != '']
         for prefix in prefixes:
             prefix_keys = [k for k in keys if k.startswith(prefix) and k != prefix]
-            prefix_dict = self._parse_dict_fields(prefix_keys, kwargs)
+            prefix_dict = cls._parse_dict_fields(prefix_keys, kwargs)
             kwargs[prefix] = prefix_dict
         #
         return kwargs
 
-    def _split_fields(self, key, separator='.'):
+    @classmethod
+    def _split_fields(cls, key, separator='.'):
         """
         Split a key on '.' but keep numeric parts joined.
         Examples:
@@ -158,31 +164,23 @@ class PipelineBase():
         #
         return result
     
-    def _copy_args(self, **kwargs_cmd):
-        # copy entries if required
-        for k in self.COPY_ARGS:
-            src_key = self.COPY_ARGS[k]
-            if src_key in kwargs_cmd:
-                kwargs_cmd[k] = kwargs_cmd[src_key]
-            #
-        #
-        return kwargs_cmd
-
-    def _set_default_args(self, **kwargs):
+    @classmethod
+    def _set_default_args(cls, **kwargs):
         kwargs_cmd = {}
-        for k_name, v_dict in self.ARGS_DICT.items():
+        for k_name, v_dict in cls.ARGS_DICT.items():
             if v_dict['default'] != argparse.SUPPRESS:
                 kwargs_cmd[v_dict['dest']] = v_dict['default']
         kwargs_cmd.update(kwargs)
         return kwargs_cmd
 
-    def _expand_short_args(self, **kwargs):
+    @classmethod
+    def _expand_short_args(cls, **kwargs):
         model_id = kwargs.get('session.model_id', None)
         kwargs_cmd = {}
         for k, v in kwargs.items():
             if '.' not in k:
-                if k in self.ARGS_DICT:
-                    v_dict = self.ARGS_DICT[k]
+                if k in cls.ARGS_DICT:
+                    v_dict = cls.ARGS_DICT[k]
                     kwargs_cmd[v_dict['dest']] = v
                 else:
                     print(f'WARNING: unrecognized argument - config {model_id} may need upgrade: {k}')
@@ -247,6 +245,16 @@ class PipelineBase():
         #
         return parser
 
+    def _copy_args(self, **kwargs_cmd):
+        # copy entries if required
+        for k in self.COPY_ARGS:
+            src_key = self.COPY_ARGS[k]
+            if src_key in kwargs_cmd:
+                kwargs_cmd[k] = kwargs_cmd[src_key]
+            #
+        #
+        return kwargs_cmd
+    
     def prepare(self):
         capture_log = self.settings['common']['capture_log']
         log_file = self.settings['common']['log_file']

@@ -98,7 +98,8 @@ class MainRunner(runner.bases.PipelineBase):
                 else:
                     kwargs_cfg = dict()
                 #
-                kwargs_cfg = self._flatten_dict(**kwargs_cfg)
+                kwargs_cfg = command_module._flatten_dict(**kwargs_cfg)
+                kwargs_cfg = command_module._expand_short_args(**kwargs_cfg)                
                 kwargs_cfg = command_module._upgrade_kwargs(**kwargs_cfg)
 
                 kwargs_model = dict()    

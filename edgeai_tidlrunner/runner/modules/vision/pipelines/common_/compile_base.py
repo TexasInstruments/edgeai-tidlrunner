@@ -94,11 +94,11 @@ class CompileModelBase(CommonPipelineBase):
         #
         model_id_underscore = model_id + '_'
 
-        tensor_bits = self.kwargs.get('session.runtime_settings.runtime_options.tensor_bits', '') or ''
+        tensor_bits = self.kwargs.get('session.runtime_options.tensor_bits', '') or ''
         tensor_bits_str = f'{str(tensor_bits)}bits' if tensor_bits else ''
         tensor_bits_slash = f'{str(tensor_bits)}bits' + os.sep if tensor_bits else ''
 
-        target_device = self.kwargs.get('session.runtime_settings.target_device', 'NONE') or 'NONE'
+        target_device = self.kwargs.get('session.target_device', 'NONE') or 'NONE'
         target_device_str = target_device if target_device else ''
         target_device_slash = target_device + os.sep if target_device else ''
 
@@ -143,8 +143,7 @@ class CompileModelBase(CommonPipelineBase):
             preprocess_kwargs = self.settings[self.preprocess_prefix]
             session_kwargs = self.settings[self.session_prefix]
             postprocess_kwargs = self.settings[self.postprocess_prefix]
-            runtime_settings = session_kwargs
-            runtime_options = runtime_settings['runtime_options']
+            runtime_options = session_kwargs['runtime_options']
 
             ###################################################################################
             if not dataloader_kwargs['name']:
@@ -162,7 +161,7 @@ class CompileModelBase(CommonPipelineBase):
             #
 
             ###################################################################################
-            if runtime_settings['tidl_offload']:
+            if session_kwargs['tidl_offload']:
                 assert os.environ.get('TIDL_TOOLS_PATH', None) is not None, f"WARNING: TIDL_TOOLS_PATH is missing in the environment"
                 runtime_options['tidl_tools_path'] = os.environ['TIDL_TOOLS_PATH']
 
@@ -186,18 +185,20 @@ class CompileModelBase(CommonPipelineBase):
     @classmethod
     def _upgrade_kwargs(cls, **kwargs):
         kwargs_in = copy.deepcopy(kwargs)
-        runtime_settings_in = kwargs_in.pop('session.runtime_settings', {})
         kwargs_out = dict()
 
         ###################################################################################
         for k, v in kwargs_in.items():
-            if k.startswith('session.target_device'):
-                # these fields are from edgeai-benchmark - no need to use it here
-                pass
-            # elif k.startswith('session.runtime_options'):
-            #     kwargs_out.pop(k, None)
-            #     new_key = k.replace('session.runtime_options', 'session.runtime_settings.runtime_options')
-            #     kwargs_out[new_key] = v
+            if k in ('session.target_device',):
+                # options that are not allowed to be None
+                if v is not None:
+                    kwargs_out[k] = v
+                #
+            elif k.startswith('runtime_options.'):
+                # options that are not allowed to be None
+                if v is not None:
+                    kwargs_out[k] = v
+                #                
             elif k == 'session.session_name':
                 kwargs_out['session.name'] = v           
             elif k == 'dataloader.name':
@@ -264,11 +265,6 @@ class CompileModelBase(CommonPipelineBase):
             else:
                 kwargs_out[k] = v
             #
-        #
-
-        ###################################################################################
-        for k, v in runtime_settings_in.items():
-            kwargs_out[f'session.runtime_settings.{k}'] = v
         #
 
         ###################################################################################

@@ -122,7 +122,7 @@ class InferAnalyzeTIDL(infer.InferModel):
     def __init__(self, **kwargs):
         kargs_copy = copy.deepcopy(kwargs)
         kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'analyze', 'tidl')
-        kargs_copy['session.runtime_settings.runtime_options.debug_level'] = 4
+        kargs_copy['session.runtime_options.debug_level'] = 4
         super().__init__(**kargs_copy)
 
     def _run(self):
