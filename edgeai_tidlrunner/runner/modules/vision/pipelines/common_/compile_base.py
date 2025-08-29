@@ -51,8 +51,7 @@ class CompileModelBase(CommonPipelineBase):
     ARGS_DICT=SETTINGS_DEFAULT['compile']
     COPY_ARGS=COPY_SETTINGS_DEFAULT['compile']
     
-    def __init__(self, with_postprocess=True, **kwargs):
-        self.with_postprocess = with_postprocess
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if 'session' in self.settings and self.settings[self.session_prefix].get('model_path', None):
             common_kwargs = self.settings['common']                 

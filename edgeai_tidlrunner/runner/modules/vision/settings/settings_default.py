@@ -122,6 +122,7 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | {
     'reverse_channels':         {'dest':'preprocess.reverse_channels', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', 'help': 'reverse color channel order (RGB to BGR)'},
     'resize_with_pad':          {'dest':'preprocess.resize_with_pad', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', 'help': 'resize image with padding to maintain aspect ratio'},
     # postprocess
+    'postprocess_enable':       {'dest': 'common.postprocess_enable', 'default': False, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable postprocessing after inference'},
     'postprocess_name':         {'dest': 'postprocess.name', 'default': None, 'type': str, 'metavar': 'value', 'help': 'name of the postprocessing pipeline'},
 }
 
@@ -146,6 +147,7 @@ SETTINGS_DEFAULT['accuracy'] = SETTINGS_DEFAULT['compile'] | {
     'num_frames': {'dest': 'common.num_frames', 'default': 1000, 'type': int, 'metavar': 'value', 'help': 'number of frames to process for accuracy evaluation'},
 
     # postprocess
+    'postprocess_enable':                 {'dest':'common.postprocess_enable', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable postprocessing after inference'},    
     'postprocess_resize_with_pad':        {'dest':'postprocess.resize_with_pad', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', 'help': 'resize output with padding to maintain aspect ratio'},
     'postprocess_normalized_detections':  {'dest':'postprocess.normalized_detections', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', 'help': 'whether detections are normalized coordinates'},
     'postprocess_formatter':              {'dest':'postprocess.formatter', 'default':None, 'type':str, 'metavar':'value', 'help': 'format for postprocessing output'},

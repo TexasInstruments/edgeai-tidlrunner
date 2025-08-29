@@ -46,8 +46,8 @@ class InferModel(CompileModelBase):
     ARGS_DICT=SETTINGS_DEFAULT['infer']
     COPY_ARGS=COPY_SETTINGS_DEFAULT['infer']
 
-    def __init__(self, with_postprocess=False, **kwargs):
-        super().__init__(with_postprocess=with_postprocess,**kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def _prepare(self):
         super()._prepare()
@@ -108,7 +108,7 @@ class InferModel(CompileModelBase):
         #
 
         # postprocess
-        if self.with_postprocess:
+        if self.kwargs['common.postprocess_enable']:
             if callable(postprocess_kwargs['name']):
                 postprocess_method = postprocess_kwargs['name']
                 self.postprocess = postprocess_method()

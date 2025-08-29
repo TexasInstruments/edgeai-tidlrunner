@@ -29,6 +29,7 @@
 
 import os
 import sys
+import shutil
 import copy
 import numpy as np
 import onnx
@@ -43,27 +44,6 @@ from . import compile
 from . import infer
 
 
-def write_outputs_to_bin(root, basename, output_dict):
-    os.makedirs(root, exist_ok=True)
-    for output_name, output_tensor in output_dict.items():
-        out = np.array(output_tensor, dtype=np.float32)
-        out.tofile(os.path.join(root, basename + output_name.replace("/", "_") + '.bin'))
-
-
-def modify_model(model_path):
-    # Load the original ONNX model and add intermediate outputs
-    onnx_model = onnx.load(model_path)
-    intermediate_layer_value_info = onnx.helper.ValueInfoProto()
-    intermediate_layer_value_info.name = ''
-
-    for i in range(len(onnx_model.graph.node)):
-        for j in range(len(onnx_model.graph.node[i].output)):
-            intermediate_layer_value_info.name = onnx_model.graph.node[i].output[j]
-            onnx_model.graph.output.append(intermediate_layer_value_info)
-
-    onnx.save(onnx_model, model_path)
-
-
 class CompileAnalyzeNoTIDL(compile.CompileModel):
     ARGS_DICT=SETTINGS_DEFAULT['analyze']
     COPY_ARGS=COPY_SETTINGS_DEFAULT['analyze']
@@ -72,14 +52,33 @@ class CompileAnalyzeNoTIDL(compile.CompileModel):
         kargs_copy = copy.deepcopy(kwargs)
         kargs_copy['tidl_offload'] = False
         kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'notidl')
-        kargs_copy['with_postprocess'] = False        
+        kargs_copy['common.postprocess_enable'] = False        
         super().__init__(**kargs_copy)
 
     def modify_model(self):
         super().modify_model()
-        modify_model(self.model_path)
+        model_path = self.model_path
+        # Load the original ONNX model and add intermediate outputs
+        onnx_model = onnx.load(model_path)
+        intermediate_layer_value_info = onnx.helper.ValueInfoProto()
+        intermediate_layer_value_info.name = ''
+        for i in range(len(onnx_model.graph.node)):
+            for j in range(len(onnx_model.graph.node[i].output)):
+                intermediate_layer_value_info.name = onnx_model.graph.node[i].output[j]
+                onnx_model.graph.output.append(intermediate_layer_value_info)
+            #
+        #
+        onnx.save(onnx_model, model_path)
 
-    def _run(self):
+    def _prepare(self):     
+        if os.path.exists(self.run_dir):
+            base_dir = os.path.dirname(self.run_dir)
+            print(f'INFO: clearing run_dir folder before analyze: {base_dir}')
+            shutil.rmtree(base_dir, ignore_errors=True)
+        #    
+        super()._prepare()   
+        
+    def _run(self):    
         super()._run()
 
 
@@ -91,7 +90,7 @@ class InferAnalyzeNoTIDL(infer.InferModel):
         kargs_copy = copy.deepcopy(kwargs)
         kargs_copy['tidl_offload'] = False
         kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'notidl')
-        kargs_copy['with_postprocess'] = False            
+        kargs_copy['common.postprocess_enable'] = False            
         super().__init__(**kargs_copy)
 
     def _run(self):
@@ -100,9 +99,16 @@ class InferAnalyzeNoTIDL(infer.InferModel):
         os.makedirs(traces_root, exist_ok=True)
         for frame_idx in range(len(self.run_data)):
             frame_name = str(frame_idx)
-            write_outputs_to_bin(os.path.join(traces_root, frame_name), '', self.run_data[frame_idx]['output'])
+            self.write_outputs_to_bin(os.path.join(traces_root, frame_name), '', self.run_data[frame_idx]['output'])
         #
         print('INFO: onnxruntime traces generated')
+
+    def write_outputs_to_bin(self, root, basename, output_dict):
+        os.makedirs(root, exist_ok=True)
+        for output_name, output_tensor in output_dict.items():
+            out = np.array(output_tensor, dtype=np.float32)
+            out.tofile(os.path.join(root, basename + output_name.replace("/", "_") + '.bin'))
+
 
 class CompileAnalyzeTIDL(compile.CompileModel):
     ARGS_DICT = SETTINGS_DEFAULT['analyze']
@@ -111,7 +117,7 @@ class CompileAnalyzeTIDL(compile.CompileModel):
     def __init__(self, **kwargs):
         kargs_copy = copy.deepcopy(kwargs)
         kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'tidl')
-        kargs_copy['with_postprocess'] = False            
+        kargs_copy['common.postprocess_enable'] = False            
         super().__init__(**kargs_copy)
 
     def _run(self):
@@ -126,7 +132,7 @@ class InferAnalyzeTIDL(infer.InferModel):
         kargs_copy = copy.deepcopy(kwargs)
         kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'tidl')
         kargs_copy['session.runtime_options.debug_level'] = 4
-        kargs_copy['with_postprocess'] = False            
+        kargs_copy['common.postprocess_enable'] = False            
         super().__init__(**kargs_copy)
 
     def _run(self):
