@@ -143,7 +143,7 @@ class CompileModelBase(CommonPipelineBase):
             preprocess_kwargs = self.settings[self.preprocess_prefix]
             session_kwargs = self.settings[self.session_prefix]
             postprocess_kwargs = self.settings[self.postprocess_prefix]
-            runtime_settings = session_kwargs['runtime_settings']
+            runtime_settings = session_kwargs
             runtime_options = runtime_settings['runtime_options']
 
             ###################################################################################
@@ -169,14 +169,14 @@ class CompileModelBase(CommonPipelineBase):
             if not runtime_options.get('artifacts_folder', None):
                 runtime_options['artifacts_folder'] = self.artifacts_folder
 
-            self.object_detection_meta_layers_names_list_source = session_kwargs['runtime_settings']['runtime_options'].get('object_detection:meta_layers_names_list', None)
+            self.object_detection_meta_layers_names_list_source = session_kwargs['runtime_options'].get('object_detection:meta_layers_names_list', None)
             if self.object_detection_meta_layers_names_list_source:
                 if not (self.object_detection_meta_layers_names_list_source.startswith('/') or self.object_detection_meta_layers_names_list_source.startswith('.')):
                     object_detection_meta_layers_names_path = os.path.join(self.model_folder, self.object_detection_meta_layers_names_list_source)
                 else:
                     object_detection_meta_layers_names_path = self.object_detection_meta_layers_names_list_source
                 #
-                session_kwargs['runtime_settings']['runtime_options']['object_detection:meta_layers_names_list'] = object_detection_meta_layers_names_path
+                session_kwargs['runtime_options']['object_detection:meta_layers_names_list'] = object_detection_meta_layers_names_path
             #
 
             packaged_path = self.settings[self.session_prefix]['packaged_path']
@@ -194,10 +194,10 @@ class CompileModelBase(CommonPipelineBase):
             if k.startswith('session.target_device'):
                 # these fields are from edgeai-benchmark - no need to use it here
                 pass
-            elif k.startswith('session.runtime_options'):
-                kwargs_out.pop(k, None)
-                new_key = k.replace('session.runtime_options', 'session.runtime_settings.runtime_options')
-                kwargs_out[new_key] = v
+            # elif k.startswith('session.runtime_options'):
+            #     kwargs_out.pop(k, None)
+            #     new_key = k.replace('session.runtime_options', 'session.runtime_settings.runtime_options')
+            #     kwargs_out[new_key] = v
             elif k == 'session.session_name':
                 kwargs_out['session.name'] = v           
             elif k == 'dataloader.name':

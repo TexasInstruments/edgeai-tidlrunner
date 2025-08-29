@@ -41,13 +41,11 @@ def main(args):
     # 'session.model_path': args.model_path
     # 'runtime_settings.runtime_options.advanced_options:calibration_frames': 5
     kwargs = {
-        'session' : {
-            'model_path': args.model_path,
-        },
         'dataloader': {
             'path': args.data_path,
-        },
-        'runtime_settings': {
+        },        
+        'session' : {
+            'model_path': args.model_path,
             # add any runtime_settings overrides here
             'target_device': args.target_device,
             'runtime_options': {

@@ -108,9 +108,8 @@ class RuntimeSettings(attr_dict.AttrDict):
         runtime_settings_default = runtime_settings_default or runtime_settings_default_module.RUNTIME_SETTINGS_DEFAULT
         runtime_settings = copy.deepcopy(runtime_settings_default)
         for k, v in kwargs.items():
-            if k in runtime_settings:
-                runtime_settings[k] = v
-            elif (verbose is True or (isinstance(verbose, int) and verbose>=2)):
+            runtime_settings[k] = v            
+            if k not in runtime_settings and (verbose is True or (isinstance(verbose, int) and verbose>=2)):
                 warnings.warn(f'\nWARNING: unknown runtime option passed - please check if it is correct: {k}')
             #
         #

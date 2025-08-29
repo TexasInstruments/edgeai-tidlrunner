@@ -55,11 +55,10 @@ def create_input_normalizer(self):
 
 class ONNXRuntimeSession(rtwrapper.core.ONNXRuntimeWrapper):
     def __init__(self, **kwargs):
-        runtime_settings = kwargs.pop('runtime_settings', {'runtime_options':{}})
-        if not isinstance(runtime_settings, settings.RuntimeSettings):
-            runtime_settings = settings.RuntimeSettings(**runtime_settings)
+        if not isinstance(kwargs, settings.RuntimeSettings):
+            kwargs = settings.RuntimeSettings(**kwargs)
         #
-        super().__init__(**kwargs, **runtime_settings)
+        super().__init__(**kwargs)
         self.input_normalizer = create_input_normalizer(self)
 
     def run_import(self, input_data, output_keys=None):
@@ -73,11 +72,10 @@ class ONNXRuntimeSession(rtwrapper.core.ONNXRuntimeWrapper):
 
 class TFLITERuntimeSession(rtwrapper.core.TFLiteRuntimeWrapper):
     def __init__(self, *args, **kwargs):
-        runtime_settings = kwargs.pop('runtime_settings', {'runtime_options':{}})
-        if not isinstance(runtime_settings, settings.RuntimeSettings):
-            runtime_settings = settings.RuntimeSettings(**runtime_settings)
+        if not isinstance(kwargs, settings.RuntimeSettings):
+            kwargs = settings.RuntimeSettings(**kwargs)
         #
-        super().__init__(**kwargs, **runtime_settings)
+        super().__init__(**kwargs)
         self.input_normalizer = create_input_normalizer(self)
 
     def run_import(self, input_data, output_keys=None):

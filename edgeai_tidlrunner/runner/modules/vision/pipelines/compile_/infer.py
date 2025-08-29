@@ -56,7 +56,7 @@ class InferModel(CompileModelBase):
         session_kwargs = self.settings[self.session_prefix]
         preprocess_kwargs = self.settings[self.preprocess_prefix]
         postprocess_kwargs = self.settings[self.postprocess_prefix]
-        runtime_settings = session_kwargs['runtime_settings']
+        runtime_settings = session_kwargs
         runtime_options = runtime_settings['runtime_options']
 
         if not os.path.exists(self.run_dir) and not os.path.exists(self.model_folder) and not os.path.exists(
@@ -135,7 +135,7 @@ class InferModel(CompileModelBase):
         session_kwargs = self.settings[self.session_prefix]
         preprocess_kwargs = self.settings[self.preprocess_prefix]
         postprocess_kwargs = self.settings[self.postprocess_prefix]
-        runtime_settings = session_kwargs['runtime_settings']
+        runtime_settings = session_kwargs
         runtime_options = runtime_settings['runtime_options']
 
         # infer model
