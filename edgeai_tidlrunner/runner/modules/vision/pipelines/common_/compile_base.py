@@ -193,7 +193,7 @@ class CompileModelBase(CommonPipelineBase):
                 if v is not None:
                     kwargs_out[k] = v
                 #
-            elif k.startswith('runtime_options.'):
+            elif k.startswith('session.runtime_options.'):
                 # options that are not allowed to be None
                 if v is not None:
                     kwargs_out[k] = v
@@ -217,14 +217,12 @@ class CompileModelBase(CommonPipelineBase):
                     kwargs_out[k] = kwargs_in[k]
                 #
             elif k == 'dataset_category':
-                kwargs_out.pop(k, None)
+                pass
             elif k == 'calibration_dataset':
-                kwargs_out.pop(k, None)
+                pass
             elif k == 'task_type':
-                kwargs_out.pop(k, None)
                 kwargs_out['common.task_type'] = v
             elif k == 'input_dataset':
-                kwargs_out.pop(k, None)
                 if v == 'imagenet':
                     if kwargs_in.get('dataloader.name', None) is None:
                         kwargs_out['dataloader.name'] = 'image_classification_dataloader'
@@ -258,9 +256,7 @@ class CompileModelBase(CommonPipelineBase):
                     if kwargs_in.get('preprocess.name',None) is None:
                         kwargs_out['preprocess.name'] = 'image_preprocess'
                     #
-                #
-            elif k.startswith('model_info'):
-                kwargs_out[k] = v                
+                #             
             else:
                 kwargs_out[k] = v
             #
