@@ -33,7 +33,7 @@ try:
     from .model_infos import MODEL_INFOS_DICT
 except Exception as e:
     MODEL_INFOS_DICT = {}
-    print(logger_utils.log_color("WARNING", "MODEL_INFOS_DICT is not found", str(e)))
+    # print(logger_utils.log_color("WARNING", "MODEL_INFOS_DICT is not found", str(e)))
     
 
 model_id_artifacts_pair = {v['model_id']+'_'+v['session_name']:v['artifact_name']

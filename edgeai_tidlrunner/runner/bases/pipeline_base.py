@@ -194,7 +194,8 @@ class PipelineBase():
         #
         return kwargs_cmd
 
-    def _upgrade_kwargs(self, **kwargs):
+    @classmethod
+    def _upgrade_kwargs(cls, **kwargs):
         return kwargs
 
     @classmethod
