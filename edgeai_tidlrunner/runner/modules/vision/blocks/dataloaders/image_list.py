@@ -114,8 +114,8 @@ class ImageFilesDataLoader(ImageListDataLoader):
         predictions = []
         inputs = []
         for data in run_data:
-            output_dict = data['output']
-            predictions.append(list(output_dict.values())[0])
+            output = data['output']
+            predictions.append(output)
             inputs.append(data['input'])
         #
         correctly_classified = 0

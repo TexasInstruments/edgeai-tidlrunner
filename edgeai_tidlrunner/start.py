@@ -51,78 +51,8 @@ class MainRunner(runner.bases.PipelineBase):
         target_module = getattr(runner.modules, target_module_name)
         return target_module
 
-    def _create_run_dict(self, command, **kwargs):
-        # which target module to use
-        target_module = self._get_target_module(kwargs['common.target_module'])
-        pipeline_names = target_module.pipelines.command_module_name_dict[command]
-        pipeline_names = pipeline_names if isinstance(pipeline_names, list) else [pipeline_names]
-
-        run_dict = {}
-        for pipeline_name in pipeline_names:
-            # remove spaces from command
-            command_module = getattr(target_module.pipelines, pipeline_name)
-            command_args, rest_args = command_module.get_arg_parser().parse_known_args()    
-            kwargs_cmd = vars(command_args)
-            provided_args = getattr(command_args, '_provided_args', set())
-            # rest_args = [arg for arg in rest_args if 'config_path' not in arg]
-            # rest_args = [arg for arg in rest_args if '.yaml' not in arg]
-            # if rest_args:
-            #     raise RuntimeError(f"WARNING: unrecognized arguments for {command_entry}: {rest_args}")
-            # #
-                        
-            config_path = kwargs_cmd.get('common.config_path', None)
-            if config_path:
-                with open(config_path) as fp:
-                    kwargs_config = yaml.safe_load(fp)
-                #
-                kwargs_config.pop('command', None)
-            else:
-                kwargs_config = dict()
-            #
-            kwargs_config.pop('command', None)
-            if 'configs' not in kwargs_config:
-                configs = {'config':config_path}
-            else:
-                configs = kwargs_config.get('configs')
-            #
-
-            for model_key, config_entry_file in configs.items():
-                if config_entry_file:
-                    if not (config_entry_file.startswith('/') or config_entry_file.startswith('.')):
-                        config_base_path = os.path.dirname(config_path)
-                        config_entry_file = os.path.join(config_base_path, config_entry_file)
-                    #
-                    with open(config_entry_file) as fp:
-                        kwargs_cfg = yaml.safe_load(fp)
-                    #                    
-                else:
-                    kwargs_cfg = dict()
-                #
-                kwargs_cfg = command_module._flatten_dict(**kwargs_cfg)
-                kwargs_cfg = command_module._expand_short_args(**kwargs_cfg)                
-                kwargs_cfg = command_module._upgrade_kwargs(**kwargs_cfg)
-
-                kwargs_model = dict()    
-                # set defaults+command line args
-                kwargs_model.update(kwargs_cmd)  
-                # override with cfg                        
-                kwargs_model.update(kwargs_cfg)  
-                # now override with command line args that were provided
-                kwargs_provided = {k:v for k,v in kwargs_cmd.items() if k in provided_args}
-                kwargs_model.update(kwargs_provided)
-                # correct config_path is required to form the full model_path
-                kwargs_model.update({'common.config_path': config_entry_file})
-
-                # append to command_list for the model
-                model_command_list = run_dict.get(model_key, [])
-                model_command_list.append((command,pipeline_name,kwargs_model))
-                run_dict[model_key] = model_command_list
-            #
-        #
-        return run_dict
-
     def run(self, command):
-        run_dict = self._create_run_dict(command, **self.kwargs)
+        run_dict = runner._create_run_dict(command, argparse=True, **self.kwargs)
         return runner._run(run_dict)
 
     @classmethod

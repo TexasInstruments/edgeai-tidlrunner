@@ -183,7 +183,7 @@ class PipelineBase():
                     v_dict = cls.ARGS_DICT[k]
                     kwargs_cmd[v_dict['dest']] = v
                 else:
-                    print(f'WARNING: unrecognized argument - config {model_id} may need upgrade: {k}')
+                    #print(f'WARNING: unrecognized argument - config {model_id} may need upgrade: {k}')
                     kwargs_cmd[k] = v
                 #
             elif k not in kwargs_cmd:

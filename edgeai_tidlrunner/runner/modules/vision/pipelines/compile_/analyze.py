@@ -72,6 +72,7 @@ class CompileAnalyzeNoTIDL(compile.CompileModel):
         kargs_copy = copy.deepcopy(kwargs)
         kargs_copy['tidl_offload'] = False
         kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'analyze', 'notidl')
+        kargs_copy['with_postprocess'] = False        
         super().__init__(**kargs_copy)
 
     def modify_model(self):
@@ -90,6 +91,7 @@ class InferAnalyzeNoTIDL(infer.InferModel):
         kargs_copy = copy.deepcopy(kwargs)
         kargs_copy['tidl_offload'] = False
         kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'analyze', 'notidl')
+        kargs_copy['with_postprocess'] = False            
         super().__init__(**kargs_copy)
 
     def _run(self):
@@ -109,6 +111,7 @@ class CompileAnalyzeTIDL(compile.CompileModel):
     def __init__(self, **kwargs):
         kargs_copy = copy.deepcopy(kwargs)
         kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'analyze', 'tidl')
+        kargs_copy['with_postprocess'] = False            
         super().__init__(**kargs_copy)
 
     def _run(self):
@@ -123,6 +126,7 @@ class InferAnalyzeTIDL(infer.InferModel):
         kargs_copy = copy.deepcopy(kwargs)
         kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'analyze', 'tidl')
         kargs_copy['session.runtime_options.debug_level'] = 4
+        kargs_copy['with_postprocess'] = False            
         super().__init__(**kargs_copy)
 
     def _run(self):

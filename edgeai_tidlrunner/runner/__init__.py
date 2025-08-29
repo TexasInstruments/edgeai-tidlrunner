@@ -25,13 +25,22 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+import os
 import copy
 import functools
+import yaml
 
 from .. import rtwrapper
 from . import utils
 from . import bases
 from . import modules
+
+
+def _get_target_module(target_module_name):
+    target_module = getattr(modules, target_module_name)
+    return target_module
 
 
 def _run_command(command_key, pipeline_name, command_kwargs, capture_log):
@@ -45,6 +54,88 @@ def _run_command(command_key, pipeline_name, command_kwargs, capture_log):
     runner_obj = command_module(**command_kwargs)
     runner_obj.prepare()
     runner_obj.run()
+
+
+def _create_run_dict(command, argparse=False, **kwargs):
+    # which target module to use
+    target_module = _get_target_module(kwargs['common.target_module'])
+    pipeline_names = target_module.pipelines.command_module_name_dict[command]
+    pipeline_names = pipeline_names if isinstance(pipeline_names, list) else [pipeline_names]
+
+    rest_args_list = []
+    run_dict = {}
+    for pipeline_name in pipeline_names:
+        # remove spaces from command
+        if argparse:
+            command_module = getattr(target_module.pipelines, pipeline_name)
+            command_args, rest_args = command_module.get_arg_parser().parse_known_args()    
+            rest_args_list.append(rest_args)
+
+            kwargs_cmd = vars(command_args)
+            provided_args = kwargs_cmd.pop('_provided_args', set())
+                        
+            config_path = kwargs_cmd.get('common.config_path', None)
+            if config_path:
+                with open(config_path) as fp:
+                    kwargs_config = yaml.safe_load(fp)
+                #
+                kwargs_config.pop('command', None)
+            else:
+                kwargs_config = dict()
+            #
+            kwargs_config.pop('command', None)
+            if 'configs' not in kwargs_config:
+                configs = {'config':config_path}
+            else:
+                configs = kwargs_config.get('configs')
+            #
+        else:
+            configs = {'config': None}
+        #
+
+        for model_key, config_entry_file in configs.items():
+            if config_entry_file:
+                if not (config_entry_file.startswith('/') or config_entry_file.startswith('.')):
+                    config_base_path = os.path.dirname(config_path)
+                    config_entry_file = os.path.join(config_base_path, config_entry_file)
+                #
+                with open(config_entry_file) as fp:
+                    kwargs_cfg = yaml.safe_load(fp)
+                #                    
+            else:
+                kwargs_cfg = kwargs #dict()
+            #
+
+            kwargs_cfg = command_module._flatten_dict(**kwargs_cfg)
+            kwargs_cfg = command_module._expand_short_args(**kwargs_cfg)                
+            kwargs_cfg = command_module._upgrade_kwargs(**kwargs_cfg)
+
+            kwargs_model = dict()    
+            # set defaults+command line args
+            kwargs_model.update(kwargs_cmd)  
+            # override with cfg                        
+            kwargs_model.update(kwargs_cfg)  
+            # now override with command line args that were provided
+            kwargs_provided = {k:v for k,v in kwargs_cmd.items() if k in provided_args}
+            kwargs_model.update(kwargs_provided)
+            # correct config_path is required to form the full model_path
+            kwargs_model.update({'common.config_path': config_entry_file})
+
+            # append to command_list for the model
+            model_command_list = run_dict.get(model_key, [])
+            model_command_list.append((command,pipeline_name,kwargs_model))
+            run_dict[model_key] = model_command_list
+        #
+    #
+
+    rest_args = rest_args_list[0]        
+    for rest_args_i in rest_args_list[1:]:
+        rest_args = [arg for arg in rest_args if arg in rest_args_i]
+    #
+    if rest_args:
+        raise RuntimeError(f'ERROR: unknown args found for command: {command} - {rest_args}')
+    #
+    return run_dict
 
 
 def _run(model_command_dict):
@@ -106,7 +197,8 @@ def run(command, **kwargs):
     :return: The result of the command execution.
     """
     if isinstance(command, str):
-        _run({command:[(command,kwargs)]})
+        run_dict = _create_run_dict(command, argparse=False, **kwargs)
+        return _run(run_dict)
     else:
         raise RuntimeError(f"ERROR: run() got unexpected command {command} with type {type(command)}. Expected str or dict.")
     

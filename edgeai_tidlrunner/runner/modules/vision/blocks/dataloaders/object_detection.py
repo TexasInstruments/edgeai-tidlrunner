@@ -102,7 +102,7 @@ class ObjectDetectionDataLoader(dataset_base.DatasetBaseWithUtils):
         return self.image_reader(image_path, info_dict)
     
     def __len__(self):
-        return self.kwargs['num_images']
+        return self.kwargs['num_frames']
     
     def get_num_classes(self):
         return self.kwargs['num_classes']

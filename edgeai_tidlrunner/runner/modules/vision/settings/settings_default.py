@@ -96,6 +96,7 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | {
     'data_path':                {'dest': 'dataloader.path', 'default': None, 'type': str, 'metavar': 'path', 'help': 'path to the input data directory'},
     # runtime_settings
     'target_device':            {'dest': 'session.target_device', 'default': presets.TargetDeviceType.TARGET_DEVICE_AM68A, 'type': str, 'metavar': 'value', 'help': 'target device for inference (AM68A, AM69A, etc.)'},
+    'target_machine':           {'dest': 'session.target_machine', 'default': presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION, 'type': str, 'metavar': 'value', 'help': 'target machine for running the inference (pc, evm)'},
     'tidl_offload':             {'dest': 'session.tidl_offload', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable TIDL acceleration for inference'},
     'graph_optimization_level': {'dest': 'session.onnxruntime:graph_optimization_level', 'default': presets.GraphOptimizationLevel.ORT_DISABLE_ALL, 'type': int, 'metavar': 'value', 'help': 'ONNX Runtime graph optimization level'},
     # runtime_settings.runtime_options
