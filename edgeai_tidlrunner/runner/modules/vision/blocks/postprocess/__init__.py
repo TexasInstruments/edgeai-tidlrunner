@@ -96,7 +96,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     @classmethod
     def create_transforms_detection_base(cls, settings, formatter=None, resize_with_pad=False, keypoint=False, object6dpose=False, normalized_detections=True,
                                      shuffle_indices=None, squeeze_axis=0, reshape_list=None, ignore_index=None, logits_bbox_to_bbox_ls=False,
-                                     detection_threshold=None, detection_top_k=200, detection_keep_top_k=200, save_output=False, save_output_frames=1):
+                                     detection_threshold=None, detection_top_k=None, detection_keep_top_k=None, save_output=False, save_output_frames=1):
 
         # detection_threshold = detection_threshold or settings.detection_threshold
 
@@ -147,10 +147,11 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
             else:
                 transforms_list += [DetectionImageSave(save_output_frames)]
         #
-        return transforms_list, dict(detection_threshold=detection_threshold,
+        return transforms_list, dict(reshape_list=reshape_list, detection_threshold=detection_threshold,
                                     formatter=formatter, resize_with_pad=resize_with_pad,
                                     normalized_detections=normalized_detections, shuffle_indices=shuffle_indices,
-                                    squeeze_axis=squeeze_axis, ignore_index=ignore_index, logits_bbox_to_bbox_ls=logits_bbox_to_bbox_ls)
+                                    squeeze_axis=squeeze_axis, ignore_index=ignore_index, logits_bbox_to_bbox_ls=logits_bbox_to_bbox_ls,
+                                    keypoint=keypoint, object6dpose=object6dpose)
 
     @classmethod
     def create_transforms_detection_onnx(self, settings, formatter=None, **kwargs):

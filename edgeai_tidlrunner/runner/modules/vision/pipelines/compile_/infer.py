@@ -166,5 +166,5 @@ class InferModel(CompileModelBase):
         output_dict = self.session.run_inference(input_data)
         outputs = list(output_dict.values())
         outputs, info_dict = self.postprocess(outputs, info_dict=info_dict) if self.postprocess else (outputs, info_dict)
-        output_dict = {output_key:output for output, output_key in zip(outputs, output_dict.keys())}
-        return {'input':input_data, 'output':output_dict, 'info_dict':info_dict}
+        # output_dict = {output_key:output for output, output_key in zip(outputs, output_dict.keys())}
+        return {'input':input_data, 'output':outputs, 'info_dict':info_dict}

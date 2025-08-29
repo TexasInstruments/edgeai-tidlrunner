@@ -52,7 +52,12 @@ session:
   output_details: null
   num_inputs: 1
 postprocess:
-  detection_threshold: 0.3
+  reshape_list:
+  - - -1
+    - 5
+  - - -1
+    - 1
+  # detection_threshold: 0.3
   formatter:
     src_indices:
     - 5
@@ -67,6 +72,8 @@ postprocess:
   squeeze_axis: null
   ignore_index: null
   logits_bbox_to_bbox_ls: false
+  keypoint: false
+  object6dpose: false 
 metric:
   label_offset_pred:
     0: 1

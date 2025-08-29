@@ -42,22 +42,13 @@ from . import dataloader_utils
 
 
 class ObjectDetectionDataLoader(dataset_base.DatasetBaseWithUtils):
-    def __init__(self, img_dir, annotation_file, with_background_class=False, shuffle=False, backend='cv2', bgr_to_rgb=True):
+    def __init__(self, image_dir, annotation_file, with_background_class=False, shuffle=False, backend='cv2', bgr_to_rgb=True):
         super().__init__()
-        self.img_dir = img_dir
-        self.ann_file = annotation_file
-        coco = COCO(annotation_file)
+        self.image_dir = image_dir
+        self.annotation_file = annotation_file
 
-        imgs_list = list(coco.imgs.items())
-        if shuffle:
-            random.seed(int(shuffle))
-            random.shuffle(imgs_list)
-        #
-        coco.imgs = {k:v for k,v in imgs_list}
+        self._load_dataset()
 
-        self.img_ids = coco.getImgIds()
-        self.img_info = coco.loadImgs(self.img_ids[:])
-        self.cat_ids = coco.getCatIds()
         self.get_dataset_info(annotation_file, with_background_class)
         self.with_background_class = with_background_class
         if with_background_class and self.kwargs['dataset_info']['categories'] > len(self.cat_ids):
@@ -65,9 +56,50 @@ class ObjectDetectionDataLoader(dataset_base.DatasetBaseWithUtils):
         #
         self.image_reader = dataloader_utils.ImageRead(backend=backend, bgr_to_rgb=bgr_to_rgb)
 
+    def _load_dataset(self):
+        shuffle = self.kwargs.get('shuffle', False)
+        self.coco_dataset = COCO(self.annotation_file)
+        filter_imgs = self.kwargs['filter_imgs'] if 'filter_imgs' in self.kwargs else None
+        if isinstance(filter_imgs, str):
+            # filter images with the given list
+            filter_imgs = os.path.join(self.kwargs['path'], filter_imgs)
+            with open(filter_imgs) as filter_fp:
+                filter = [int(id) for id in list(filter_fp)]
+                orig_keys = list(self.coco_dataset.imgs)
+                orig_keys = [k for k in orig_keys if k in filter]
+                self.coco_dataset.imgs = {k: self.coco_dataset.imgs[k] for k in orig_keys}
+            #
+        elif filter_imgs:
+            # filter and use images with gt only
+            sel_keys = []
+            for img_key, img_anns in self.coco_dataset.imgToAnns.items():
+                if len(img_anns) > 0:
+                    sel_keys.append(img_key)
+                #
+            #
+            self.coco_dataset.imgs = {k: self.coco_dataset.imgs[k] for k in sel_keys}
+        #
+
+        max_frames = len(self.coco_dataset.imgs)
+        num_frames = self.kwargs.get('num_frames', None)
+        num_frames = min(num_frames, max_frames) if num_frames is not None else max_frames
+
+        imgs_list = list(self.coco_dataset.imgs.items())
+        if shuffle:
+            random.seed(int(shuffle))
+            random.shuffle(imgs_list)
+        #
+        self.coco_dataset.imgs = {k:v for k,v in imgs_list[:num_frames]}
+
+        self.cat_ids = self.coco_dataset.getCatIds()
+        self.img_ids = self.coco_dataset.getImgIds()
+        self.num_frames = self.kwargs['num_frames'] = num_frames
+
     def __getitem__(self, index, info_dict=None):
-        img_path = os.path.join(self.img_dir, self.img_info[index]['file_name'])
-        return self.image_reader(img_path, info_dict)
+        img_id = self.img_ids[index]
+        img = self.coco_dataset.loadImgs([img_id])[0]
+        image_path = os.path.join(self.image_dir, img['file_name'])
+        return self.image_reader(image_path, info_dict)
     
     def __len__(self):
         return self.kwargs['num_images']
@@ -84,30 +116,33 @@ class ObjectDetectionDataLoader(dataset_base.DatasetBaseWithUtils):
             predictions.append(data['output'])
             inputs.append(data['input'])
 
-        coco = COCO(self.ann_file)
-        img_ids = self.img_ids
+        num_frames = len(predictions)
 
+        imgs_list = list(self.coco_dataset.imgs.items())
+        self.coco_dataset.imgs = {k:v for k,v in imgs_list[:num_frames]}
+
+        #os.makedirs(run_dir, exist_ok=True)
         detections_formatted_list = []
-        length = len(predictions)
         for frame_idx, det_frame in enumerate(predictions):
-            for det_key, det_value in det_frame.items():
-                det = self._format_detections(det_value, frame_idx, label_offset=label_offset_pred)
+            for det_id, det in enumerate(det_frame):
+                det = self._format_detections(det, frame_idx, label_offset=label_offset_pred)
                 category_id = det['category_id'] if isinstance(det, dict) else det[4]
                 if category_id >= 1: # final coco categories start from 1
                     detections_formatted_list.append(det)
                 #
             #
         #
-
-        coco_dt = coco.loadRes(detections_formatted_list)
-        coco_eval = COCOeval(coco, coco_dt, iouType='bbox')
-        coco_eval.params.imgIds = img_ids[:length]
-        coco_eval.evaluate()
-        coco_eval.accumulate()
-        coco_eval.summarize()
-
-        coco_ap = coco_eval.stats[0]
-        coco_ap50 = coco_eval.stats[1]
+        coco_ap = 0.0
+        coco_ap50 = 0.0
+        if len(detections_formatted_list) > 0:
+            cocoDet = self.coco_dataset.loadRes(detections_formatted_list)
+            cocoEval = COCOeval(self.coco_dataset, cocoDet, iouType='bbox')
+            cocoEval.evaluate()
+            cocoEval.accumulate()
+            cocoEval.summarize()
+            coco_ap = cocoEval.stats[0]
+            coco_ap50 = cocoEval.stats[1]
+        #
         accuracy = {'accuracy_ap[.5:.95]%': coco_ap*100.0, 'accuracy_ap50%': coco_ap50*100.0}
         return accuracy
 
