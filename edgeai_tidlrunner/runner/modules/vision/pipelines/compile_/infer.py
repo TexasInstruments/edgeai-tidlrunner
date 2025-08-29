@@ -109,16 +109,18 @@ class InferModel(CompileModelBase):
         #
 
         # postprocess
-        if callable(postprocess_kwargs['name']):
-            postprocess_method = postprocess_kwargs['name']
-            self.postprocess = postprocess_method()
-        elif hasattr(blocks.postprocess, postprocess_kwargs['name']):
-            postprocess_method = getattr(blocks.postprocess, postprocess_kwargs['name'])
-            self.postprocess = postprocess_method(self.settings, **postprocess_kwargs)
-        else:
-            raise RuntimeError(f'ERROR: invalid postprocess args: {postprocess_kwargs}')
+        if self.with_postprocess:
+            if callable(postprocess_kwargs['name']):
+                postprocess_method = postprocess_kwargs['name']
+                self.postprocess = postprocess_method()
+            elif hasattr(blocks.postprocess, postprocess_kwargs['name']):
+                postprocess_method = getattr(blocks.postprocess, postprocess_kwargs['name'])
+                self.postprocess = postprocess_method(self.settings, **postprocess_kwargs)
+            else:
+                raise RuntimeError(f'ERROR: invalid postprocess args: {postprocess_kwargs}')
+            #
         #
-
+        
     def info(self):
         print(f'INFO: Model inference - {__file__}')
 

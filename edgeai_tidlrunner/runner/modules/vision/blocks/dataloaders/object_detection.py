@@ -30,6 +30,7 @@ import json
 from pycocotools.coco import COCO
 import os
 import numbers
+import random
 import numpy as np
 from PIL import Image 
 from pycocotools.cocoeval import COCOeval
@@ -41,11 +42,19 @@ from . import dataloader_utils
 
 
 class ObjectDetectionDataLoader(dataset_base.DatasetBaseWithUtils):
-    def __init__(self, img_dir, annotation_file, with_background_class=False, backend='cv2', bgr_to_rgb=True):
+    def __init__(self, img_dir, annotation_file, with_background_class=False, shuffle=False, backend='cv2', bgr_to_rgb=True):
         super().__init__()
         self.img_dir = img_dir
         self.ann_file = annotation_file
         coco = COCO(annotation_file)
+
+        imgs_list = list(coco.imgs.items())
+        if shuffle:
+            random.seed(int(shuffle))
+            random.shuffle(imgs_list)
+        #
+        coco.imgs = {k:v for k,v in imgs_list}
+
         self.img_ids = coco.getImgIds()
         self.img_info = coco.loadImgs(self.img_ids[:])
         self.cat_ids = coco.getCatIds()
@@ -156,11 +165,11 @@ class COCODetectionDataLoader(ObjectDetectionDataLoader):
         super().__init__(*args, **kwargs)
 
 
-def coco_detection_dataloader(name, path, label_path=None):
+def coco_detection_dataloader(name, path, label_path=None, shuffle=False):
     if 'val' in os.path.split(path)[-1]:
         data_path = path
     else:
         data_path = os.path.join(path, 'val2017')
         label_path = label_path or os.path.join(path, 'annotations', 'instances_val2017.json')
     #
-    return COCODetectionDataLoader(data_path, label_path)
+    return COCODetectionDataLoader(data_path, label_path, shuffle=shuffle)

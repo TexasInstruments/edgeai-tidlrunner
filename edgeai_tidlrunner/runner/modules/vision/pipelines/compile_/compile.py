@@ -93,7 +93,7 @@ class CompileModel(CompileModelBase):
             self.dataloader = dataloader_method()
         elif hasattr(blocks.dataloaders, dataloader_kwargs['name']):
             dataloader_method = getattr(blocks.dataloaders, dataloader_kwargs['name'])
-            self.dataloader = dataloader_method(**dataloader_kwargs)
+            self.dataloader = dataloader_method(shuffle=True, **dataloader_kwargs)
             if hasattr(self.dataloader, 'set_size_details'):
                 input_details, output_details = self.session.get_input_output_details()
                 self.dataloader.set_size_details(input_details)

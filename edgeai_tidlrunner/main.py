@@ -37,8 +37,7 @@ import functools
 import subprocess
 
 from edgeai_tidlrunner import rtwrapper, runner
-
-from .start import MainRunner
+from edgeai_tidlrunner.start import MainRunner
 
 
 def main_with_proper_environment(target_machine='pc'):

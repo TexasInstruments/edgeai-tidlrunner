@@ -37,7 +37,7 @@ from . import dataloader_utils
 
 #######################################################################
 class ImageListDataLoader(dataset_base.DatasetBase):
-    def __init__(self, files, labels=None, file_types=None, backend='pil', bgr_to_rgb=True):
+    def __init__(self, files, labels=None, file_types=None, shuffle=False, backend='pil', bgr_to_rgb=True):
         super().__init__()
         self.files = files
         self.labels = labels
@@ -98,7 +98,7 @@ def image_list_dataloader(name, path):
 
 #######################################################################
 class ImageFilesDataLoader(ImageListDataLoader):
-    def __init__(self, path, label_path=None, backend='pil', bgr_to_rgb=True, file_types=('.png', '.jpg', '.jpeg')):
+    def __init__(self, path, label_path=None, shuffle=False, backend='pil', bgr_to_rgb=True, file_types=('.png', '.jpg', '.jpeg')):
         if isinstance(path, list):
             files = path
             labels = label_path if isinstance(label_path, list) else None
@@ -130,5 +130,5 @@ class ImageFilesDataLoader(ImageListDataLoader):
         return {'accuracy_top1%': accuracy_percentage}
 
 
-def image_files_dataloader(name, path, label_path=None):
-    return ImageFilesDataLoader(path, label_path)
+def image_files_dataloader(name, path, label_path=None, shuffle=False):
+    return ImageFilesDataLoader(path, label_path, shuffle=shuffle)

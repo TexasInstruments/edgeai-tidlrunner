@@ -40,7 +40,7 @@ from . import dataloader_utils
 
 
 class SemanticSegmentationDataLoader(dataset_base.DatasetBaseWithUtils):
-    def __init__(self, img_dir, annotation_file, with_background_class=False, backend='cv2', bgr_to_rgb=True):
+    def __init__(self, img_dir, annotation_file, with_background_class=False, shuffle=False, backend='cv2', bgr_to_rgb=True):
         super().__init__()
         self.coco = COCO(annotation_file)
         self.img_dir = img_dir
@@ -142,14 +142,14 @@ class COCOSegmentationDataLoader(SemanticSegmentationDataLoader):
         } 
 
 
-def coco_segmentation_dataloader(name, path, label_path=None):
+def coco_segmentation_dataloader(name, path, label_path=None, shuffle=False):
     if 'val' in os.path.split(path)[-1]:
         data_path = path
     else:
         data_path = os.path.join(path, 'val2017')
         label_path = label_path or os.path.join(path, 'annotations', 'instances_val2017.json')
     #
-    return COCOSegmentationDataLoader(data_path,label_path)
+    return COCOSegmentationDataLoader(data_path,label_path, shuffle=shuffle)
 
 
 class SegmentationEvaluationMetrics:

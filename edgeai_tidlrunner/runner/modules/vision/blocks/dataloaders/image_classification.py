@@ -34,9 +34,9 @@ from .image_list import ImageFilesDataLoader
 
 #######################################################################
 class ImageClassificationDataLoader(ImageFilesDataLoader):
-    def __init__(self, path, label_path=None):
-        super().__init__(path, label_path=label_path)
+    def __init__(self, path, label_path=None, shuffle=False):
+        super().__init__(path, label_path=label_path, shuffle=shuffle)
 
 
-def image_classification_dataloader(name, path, label_path=None):
-    return ImageClassificationDataLoader(path=path, label_path=label_path)
+def image_classification_dataloader(name, path, label_path=None, shuffle=False):
+    return ImageClassificationDataLoader(path=path, label_path=label_path, shuffle=shuffle)
