@@ -96,7 +96,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     @classmethod
     def create_transforms_detection_base(cls, settings, formatter=None, resize_with_pad=False, keypoint=False, object6dpose=False, normalized_detections=True,
                                      shuffle_indices=None, squeeze_axis=0, reshape_list=None, ignore_index=None, logits_bbox_to_bbox_ls=False,
-                                     detection_threshold=None, detection_top_k=None, detection_keep_top_k=None, save_output=False, save_output_frames=1):
+                                     detection_threshold=None, detection_top_k=None, detection_keep_top_k=None, save_output=False, save_output_frames=1, **kwargs):
 
         # detection_threshold = detection_threshold or settings.detection_threshold
 
@@ -193,7 +193,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     # post process transforms for segmentation
     ###############################################################
     @classmethod
-    def create_transforms_segmentation_base(cls, settings, data_layout=None, with_argmax=True, **kwargs):
+    def create_transforms_segmentation_base(cls, settings, data_layout=None, with_argmax=True, save_output=False, num_output_frames=50, **kwargs):
         transforms_list = [SqueezeAxis()]
         if with_argmax:
             transforms_list += [ArgMax(axis=None, data_layout=data_layout)]
@@ -201,18 +201,18 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         transforms_list += [NPTensorToImage(data_layout=data_layout),
                                      SegmentationImageResize(),
                                      SegmentationImagetoBytes()]
-        if settings.save_output:
-            transforms_list += [SegmentationImageSave(settings.num_output_frames)]
+        if save_output:
+            transforms_list += [SegmentationImageSave(num_output_frames)]
         #
         return transforms_list, dict(data_layout=data_layout, with_argmax=with_argmax)
 
     @classmethod
-    def create_transforms_segmentation_onnx(cls, data_layout=constants.presets.DataLayoutType.NCHW, with_argmax=True):
-        return cls.create_transforms_segmentation_base(data_layout=data_layout, with_argmax=with_argmax)
+    def create_transforms_segmentation_onnx(cls, data_layout=constants.presets.DataLayoutType.NCHW, with_argmax=True, **kwargs):
+        return cls.create_transforms_segmentation_base(data_layout=data_layout, with_argmax=with_argmax, **kwargs)
 
     @classmethod
-    def create_transforms_segmentation_tflite(cls, data_layout=constants.presets.DataLayoutType.NHWC, with_argmax=True):
-        return cls.create_transforms_segmentation_base(data_layout=data_layout, with_argmax=with_argmax)
+    def create_transforms_segmentation_tflite(cls, data_layout=constants.presets.DataLayoutType.NHWC, with_argmax=True, **kwargs):
+        return cls.create_transforms_segmentation_base(data_layout=data_layout, with_argmax=with_argmax, **kwargs)
 
     ###############################################################
     # post process transforms for human pose estimation
@@ -230,8 +230,8 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         return transforms_list, dict(data_layout=data_layout, with_udp=with_udp)
 
     @classmethod
-    def create_transforms_human_pose_estimation_onnx(cls, settings, data_layout=constants.presets.DataLayoutType.NCHW):
-        return cls.create_transforms_human_pose_estimation_base(data_layout=data_layout, with_udp=settings.with_udp)
+    def create_transforms_human_pose_estimation_onnx(cls, settings, data_layout=constants.presets.DataLayoutType.NCHW, **kwargs):
+        return cls.create_transforms_human_pose_estimation_base(data_layout=data_layout, with_udp=settings.with_udp, **kwargs)
 
     ###############################################################
     # post process transforms for depth estimation
@@ -248,7 +248,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
 
     @classmethod
     def create_transforms_depth_estimation_onnx(cls, settings, data_layout=constants.presets.DataLayoutType.NCHW, **kwargs):
-        return cls.create_transforms_depth_estimation_base(data_layout=data_layout)
+        return cls.create_transforms_depth_estimation_base(data_layout=data_layout, **kwargs)
 
     @classmethod
     def create_transforms_lidar_base(cls, settings, **kwargs):
@@ -261,7 +261,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     # post process transforms for disparity estimation
     ###############################################################
     @classmethod
-    def create_transforms_disparity_estimation_base(cls, settings, data_layout):
+    def create_transforms_disparity_estimation_base(cls, settings, data_layout, **kwargs):
         transforms_list = [SqueezeAxis(), 
                            NPTensorToImage(data_layout=data_layout)]
         
@@ -271,8 +271,8 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         return transforms_list, dict(data_layout=data_layout)
 
     @classmethod
-    def create_transforms_disparity_estimation_onnx(cls, settings, data_layout=constants.presets.DataLayoutType.NCHW):
-        return cls.create_transforms_disparity_estimation_base(data_layout=data_layout)
+    def create_transforms_disparity_estimation_onnx(cls, settings, data_layout=constants.presets.DataLayoutType.NCHW, **kwargs):
+        return cls.create_transforms_disparity_estimation_base(data_layout=data_layout, **kwargs)
 
 
 
@@ -285,3 +285,8 @@ def object_detection_postprocess(settings, name='object_detection_postprocess', 
         'object_detection_postprocess can only be used for object detection task type'
     return PostProcessTransforms.from_kwargs(settings, **kwargs)
 
+
+def segmentation_postprocess(settings, name='segmentation_postprocess', **kwargs):
+    assert settings.common.task_type == constants.TaskType.TASK_TYPE_SEGMENTATION, \
+        'segmentation_postprocess can only be used for segmentation task type'
+    return PostProcessTransforms.from_kwargs(settings, **kwargs)

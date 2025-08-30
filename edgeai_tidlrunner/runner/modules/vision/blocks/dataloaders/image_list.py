@@ -27,9 +27,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+import os
+import random
+import copy
 import PIL
 import numpy as np
-import os
 
 from . import dataset_base
 from . import dataloader_utils
@@ -37,10 +39,18 @@ from . import dataloader_utils
 
 #######################################################################
 class ImageListDataLoader(dataset_base.DatasetBase):
-    def __init__(self, files, labels=None, file_types=None, shuffle=False, backend='pil', bgr_to_rgb=True):
+    def __init__(self, files, labels=None, file_types=None, shuffle=True, backend='pil', bgr_to_rgb=True):
         super().__init__()
-        self.files = files
-        self.labels = labels
+        self.files = copy.deepcopy(files)
+        self.labels = copy.deepcopy(labels)
+        if shuffle:
+            random.seed(int(shuffle))
+            random.shuffle(self.files)
+            if self.labels:
+                random.seed(int(shuffle))
+                random.shuffle(self.labels)
+            #
+        #
         self.file_types = file_types
         self.image_reader = dataloader_utils.ImageRead(backend=backend, bgr_to_rgb=bgr_to_rgb)
 
@@ -92,13 +102,13 @@ class ImageListDataLoader(dataset_base.DatasetBase):
         files = [os.path.join(path, f) for f in files if (not file_types or os.path.splitext(f)[-1].lower() in file_types)]
         return files, labels
 
-def image_list_dataloader(name, path):
-    return ImageListDataLoader(path)
+def image_list_dataloader(name, path, **kwargs):
+    return ImageListDataLoader(path, **kwargs)
 
 
 #######################################################################
 class ImageFilesDataLoader(ImageListDataLoader):
-    def __init__(self, path, label_path=None, shuffle=False, backend='pil', bgr_to_rgb=True, file_types=('.png', '.jpg', '.jpeg')):
+    def __init__(self, path, label_path=None, backend='pil', bgr_to_rgb=True, file_types=('.png', '.jpg', '.jpeg'), **kwargs):
         if isinstance(path, list):
             files = path
             labels = label_path if isinstance(label_path, list) else None
@@ -108,7 +118,7 @@ class ImageFilesDataLoader(ImageListDataLoader):
             files, labels = self._read_folder(path, file_types)
         else:
             raise RuntimeError(f'ERROR: invalid path: {path}')
-        super().__init__(files, labels, backend=backend, bgr_to_rgb=bgr_to_rgb, file_types=file_types)
+        super().__init__(files, labels, backend=backend, bgr_to_rgb=bgr_to_rgb, file_types=file_types, **kwargs)
 
     def evaluate(self, run_data, **kwargs):
         predictions = []
@@ -130,5 +140,5 @@ class ImageFilesDataLoader(ImageListDataLoader):
         return {'accuracy_top1%': accuracy_percentage}
 
 
-def image_files_dataloader(name, path, label_path=None, shuffle=False):
-    return ImageFilesDataLoader(path, label_path, shuffle=shuffle)
+def image_files_dataloader(settings, name, path, label_path=None, **kwargs):
+    return ImageFilesDataLoader(path, label_path, **kwargs)

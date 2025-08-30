@@ -41,7 +41,7 @@ from munkres import Munkres
 from numpy.lib.stride_tricks import as_strided
 import math
 
-from ...settings import constants
+from ...settings.constants import presets
 from .keypoints import *
 
 ##############################################################################
@@ -115,9 +115,9 @@ class ArgMax():
         argmax_axis = None
         if self.axis is None:
             assert self.data_layout is not None, 'data_layout should not be None when axis in None'
-            if self.data_layout == constants.NHWC:
+            if self.data_layout == presets.DataLayoutType.NHWC:
                 argmax_axis = -1
-            elif self.data_layout == constants.NCHW:
+            elif self.data_layout == presets.DataLayoutType.NCHW:
                 argmax_axis = ((tensor.ndim-3) if tensor.ndim >= 3  else None)
             #
         else:

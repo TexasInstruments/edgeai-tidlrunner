@@ -30,7 +30,7 @@
 from ...... import rtwrapper
 from ...settings.constants import presets
 
-from ... import settings
+from ...settings import RuntimeSettings
 from .. import preprocess
 
 
@@ -54,9 +54,9 @@ def create_input_normalizer(self):
 
 
 class ONNXRuntimeSession(rtwrapper.core.ONNXRuntimeWrapper):
-    def __init__(self, **kwargs):
-        if not isinstance(kwargs, settings.RuntimeSettings):
-            kwargs = settings.RuntimeSettings(**kwargs)
+    def __init__(self, settings, **kwargs):
+        if not isinstance(kwargs, RuntimeSettings):
+            kwargs = RuntimeSettings(**kwargs)
         #
         super().__init__(**kwargs)
         self.input_normalizer = create_input_normalizer(self)
@@ -71,9 +71,9 @@ class ONNXRuntimeSession(rtwrapper.core.ONNXRuntimeWrapper):
 
 
 class TFLITERuntimeSession(rtwrapper.core.TFLiteRuntimeWrapper):
-    def __init__(self, *args, **kwargs):
-        if not isinstance(kwargs, settings.RuntimeSettings):
-            kwargs = settings.RuntimeSettings(**kwargs)
+    def __init__(self, settings, **kwargs):
+        if not isinstance(kwargs, RuntimeSettings):
+            kwargs = RuntimeSettings(**kwargs)
         #
         super().__init__(**kwargs)
         self.input_normalizer = create_input_normalizer(self)

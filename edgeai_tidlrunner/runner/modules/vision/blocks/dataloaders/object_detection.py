@@ -201,11 +201,11 @@ class COCODetectionDataLoader(ObjectDetectionDataLoader):
         super().__init__(*args, **kwargs)
 
 
-def coco_detection_dataloader(name, path, label_path=None, shuffle=False):
+def coco_detection_dataloader(settings, name, path, label_path=None, **kwargs):
     if 'val' in os.path.split(path)[-1]:
         data_path = path
     else:
         data_path = os.path.join(path, 'val2017')
         label_path = label_path or os.path.join(path, 'annotations', 'instances_val2017.json')
     #
-    return COCODetectionDataLoader(data_path, label_path, shuffle=shuffle)
+    return COCODetectionDataLoader(data_path, label_path, **kwargs)

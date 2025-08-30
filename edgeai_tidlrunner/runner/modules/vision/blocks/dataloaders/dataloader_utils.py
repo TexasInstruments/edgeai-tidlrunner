@@ -97,3 +97,24 @@ class ImageRead(object):
 
     def __repr__(self):
         return self.__class__.__name__ + f'(backend={self.backend})'
+
+
+def confusion_matrix(cmatrix, output, target, num_classes):
+    output = np.array(output).flatten()
+    target = np.array(target).flatten()
+    mask = (target>=0) & (target<num_classes)
+    merged = target[mask].astype(int) * num_classes + output[mask].astype(int)
+    hist = np.bincount(merged, minlength=num_classes**2)
+    hist = hist.reshape(num_classes, num_classes)
+    cmatrix = cmatrix + hist if (cmatrix is not None) else hist
+    return cmatrix
+
+
+def segmentation_accuracy(cmatrix, multiplier=100.0):
+    eps = np.finfo(np.float32).eps
+    intersection = np.diag(cmatrix)
+    union = np.sum(cmatrix, axis=0) + np.sum(cmatrix, axis=1) - intersection
+    iou = intersection / (union + eps)
+    mean_iou = np.nanmean(iou)
+    metric = {'accuracy_mean_iou%':mean_iou*multiplier}
+    return metric

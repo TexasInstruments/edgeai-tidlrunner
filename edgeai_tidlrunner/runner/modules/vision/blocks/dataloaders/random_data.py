@@ -53,5 +53,5 @@ class RandomDataLoader(dataset_base.DatasetBase):
         self.size_details = size_details
 
 
-def random_dataloader(name, **kwargs):
+def random_dataloader(settings, name, **kwargs):
     return RandomDataLoader(**kwargs)

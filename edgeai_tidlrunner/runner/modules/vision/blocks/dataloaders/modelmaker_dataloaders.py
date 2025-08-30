@@ -49,7 +49,7 @@ class ModelmakerDetectionDataset(object_detection.ObjectDetectionDataLoader):
     pass
 
 
-def modelmaker_detection_dataloader(name, path, label_path=None, shuffle=False):
+def modelmaker_detection_dataloader(settings, name, path, label_path=None, **kwargs):
     is_images_path = 'val' in os.path.split(path)[-1] or 'images' in os.path.split(path)[-1]
     if is_images_path:
         data_path = path
@@ -57,13 +57,13 @@ def modelmaker_detection_dataloader(name, path, label_path=None, shuffle=False):
         data_path = os.path.join(path, 'images')
         label_path = label_path or os.path.join(path, 'annotations', 'instances.json')
     #
-    return ModelmakerDetectionDataset(data_path, label_path, shuffle=shuffle)
+    return ModelmakerDetectionDataset(data_path, label_path, **kwargs)
 
 
 ####################################################################################################
 class ModelMakerClassificationDataset(image_classification.ImageClassificationDataLoader):
-    def __init__(self, img_dir, annotation_file, with_background_class=False, shuffle=False):
-        super().__init__(img_dir, annotation_file)
+    def __init__(self, img_dir, annotation_file, with_background_class=False, **kwargs):
+        super().__init__(img_dir, annotation_file, **kwargs)
         self.image_dir = img_dir
 
         with open(annotation_file) as afp:
@@ -128,7 +128,7 @@ class ModelMakerClassificationDataset(image_classification.ImageClassificationDa
         return annotations_info_list
 
 
-def modelmaker_classification_dataloader(name, path, label_path, shuffle=False):
+def modelmaker_classification_dataloader(settings, name, path, label_path, **kwargs):
     is_images_path = 'val' in os.path.split(path)[-1] or 'images' in os.path.split(path)[-1]
     if is_images_path:
         data_path = path
@@ -136,16 +136,16 @@ def modelmaker_classification_dataloader(name, path, label_path, shuffle=False):
         data_path = os.path.join(path, 'images')
         label_path = label_path or os.path.join(path, 'annotations', 'labels.json')
     #
-    return ModelMakerClassificationDataset(data_path, label_path, shuffle=shuffle)
+    return ModelMakerClassificationDataset(data_path, label_path, **kwargs)
 
 
 ####################################################################################################
 class ModelMakerSegmentationDataset(semantic_segmentation.SemanticSegmentationDataLoader):
-    def __init__(self, img_dir, annotation_file, with_background_class=True, shuffle=False, **kwargs):
-        super().__init__(img_dir, annotation_file, with_background_class, shuffle=shuffle)
+    def __init__(self, img_dir, annotation_file, with_background_class=True, **kwargs):
+        super().__init__(img_dir, annotation_file, with_background_class, **kwargs)
 
 
-def modelmaker_segmentation_dataloader(name, path, label_path, shuffle=False):
+def modelmaker_segmentation_dataloader(settings, name, path, label_path, **kwargs):
     is_images_path = 'val' in os.path.split(path)[-1] or 'images' in os.path.split(path)[-1]
     if is_images_path:
         data_path = path
@@ -153,4 +153,4 @@ def modelmaker_segmentation_dataloader(name, path, label_path, shuffle=False):
         data_path = os.path.join(path, 'images')
         label_path = label_path or os.path.join(path, 'annotations', 'instances.json')
     #
-    return ModelMakerSegmentationDataset(data_path, label_path, shuffle=shuffle)
+    return ModelMakerSegmentationDataset(data_path, label_path, **kwargs)

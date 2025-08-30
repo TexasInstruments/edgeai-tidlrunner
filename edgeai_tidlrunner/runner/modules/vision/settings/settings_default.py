@@ -127,7 +127,8 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | {
 }
 
 COPY_SETTINGS_DEFAULT['compile'] = COPY_SETTINGS_DEFAULT['basic'] | {
-    'session.data_layout': 'preprocess.data_layout' 
+    'session.data_layout': 'preprocess.data_layout', 
+    'postprocess.data_layout': 'preprocess.data_layout'     
 }
 
 ##########################################################################

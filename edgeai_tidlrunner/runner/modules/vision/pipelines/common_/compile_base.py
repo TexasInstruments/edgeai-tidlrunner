@@ -256,6 +256,9 @@ class CompileModelBase(CommonPipelineBase):
                     if kwargs_in.get('preprocess.name',None) is None:
                         kwargs_out['preprocess.name'] = 'image_preprocess'
                     #
+                    if kwargs_in.get('postprocess.name',None) is None:
+                        kwargs_out['postprocess.name'] = 'segmentation_postprocess'
+                    #                    
                 #             
             else:
                 kwargs_out[k] = v

@@ -67,7 +67,7 @@ class InferModel(CompileModelBase):
         # session
         session_name = session_kwargs['name']
         session_type = blocks.sessions.SESSION_TYPES_MAPPING[session_name]
-        self.session = session_type(**session_kwargs)
+        self.session = session_type(self.settings, **session_kwargs)
         self.session.start_inference()
 
         # input_data
@@ -76,7 +76,7 @@ class InferModel(CompileModelBase):
             self.dataloader = dataloader_method()
         elif hasattr(blocks.dataloaders, dataloader_kwargs['name']):
             dataloader_method = getattr(blocks.dataloaders, dataloader_kwargs['name'])
-            self.dataloader = dataloader_method(**dataloader_kwargs)
+            self.dataloader = dataloader_method(self.settings, **dataloader_kwargs)
             if hasattr(self.dataloader, 'set_size_details'):
                 input_details, output_details = self.session.get_input_output_details()
                 self.dataloader.set_size_details(input_details)

@@ -29,19 +29,22 @@
 
 import os
 import random
+import copy
 from PIL import Image 
 import numpy as np
 from PIL import Image
 import os
-from pycocotools.coco import COCO
 import json
+import cv2
+from pycocotools.coco import COCO
+from pycocotools import mask as coco_mask
 
 from . import dataset_base
 from . import dataloader_utils
 
 
 class SemanticSegmentationDataLoader(dataset_base.DatasetBaseWithUtils):
-    def __init__(self, image_dir, annotation_file, with_background_class=False, shuffle=False, backend='cv2', bgr_to_rgb=True):
+    def __init__(self, image_dir, annotation_file, categories=None, with_background_class=False, shuffle=True, backend='cv2', bgr_to_rgb=True):
         super().__init__(shuffle=shuffle)
         self.coco = COCO(annotation_file)
         self.image_dir = image_dir
@@ -54,8 +57,9 @@ class SemanticSegmentationDataLoader(dataset_base.DatasetBaseWithUtils):
         self.with_background_class = with_background_class
         if with_background_class and self.kwargs['dataset_info']['categories'] > len(self.cat_ids):
             self.cat_ids.insert(0, 0)
-        #
-        self.kwargs['num_classes'] = len(self.cat_ids)              
+        #    
+        self.categories = categories or range(categories)     
+        self.kwargs['num_classes'] = len(self.categories) if categories else len(self.cat_ids)     
         self.image_reader = dataloader_utils.ImageRead(backend=backend, bgr_to_rgb=bgr_to_rgb)
 
     def _load_dataset(self):
@@ -97,18 +101,27 @@ class SemanticSegmentationDataLoader(dataset_base.DatasetBaseWithUtils):
         self.img_ids = self.coco_dataset.getImgIds()
         self.num_frames = self.kwargs['num_frames'] = num_frames
 
-    def __getitem__(self, index, info_dict=None):
+    def __getitem__(self, index, info_dict=None, with_label=False):
         img_id = self.img_ids[index]
         img = self.coco_dataset.loadImgs([img_id])[0]
-        image_path = os.path.join(self.image_dir, img['file_name'])
-        return self.image_reader(image_path, info_dict)
-
+        image_path = os.path.join(self.image_dir, img['file_name'])     
+        image, info_dict = self.image_reader(image_path, info_dict)           
+        if with_label:
+            ann_ids = self.coco_dataset.getAnnIds(imgIds=img_id, iscrowd=None)
+            anno = self.coco_dataset.loadAnns(ann_ids)
+            image = Image.open(image_path)
+            image, anno = self._filter_and_remap_categories(image, anno)
+            image, target = self._convert_polys_to_mask(image, anno)
+            return image, info_dict, target
+        else:
+            return image, info_dict
+    
     def __len__(self):
         return self.kwargs['num_frames']
 
     def get_num_classes(self):
         return self.kwargs['num_classes']
-
+    
     def evaluate(self, run_data, **kwargs):
         predictions = []
         inputs = []
@@ -116,55 +129,90 @@ class SemanticSegmentationDataLoader(dataset_base.DatasetBaseWithUtils):
             predictions.append(data['output'])
             inputs.append(data['input'])
         #
-        ann_ids = []
-        anns = []
-        gt_masks = []
 
-        for id,input in zip(self.img_ids,inputs):
-            ann_id = self.coco.getAnnIds(imgIds=id)
-            ann=self.coco.loadAnns(ann_id)
-            ann_ids.append(ann_id)
-            anns.append(ann)
-            gt_mask = np.zeros((input.shape[-2],input.shape[-1]),dtype=np.uint8)
-            gt_mask.fill(255)
-            for an in ann:
-                if 'segmentation' in an:
-                    coco_class = an['category_id']
-                    if self.category_map_gt != None:
-                        if coco_class in self.category_map_gt:
-                            voc_class = self.category_map_gt[coco_class]
-                            mask = self.coco.annToMask(an)
-                            mask_resized = np.array(Image.fromarray(mask).resize((input.shape[-2],input.shape[-1]), resample=Image.NEAREST))
-                            gt_mask[mask_resized == 1] = voc_class
-                        #
-                    else:
-                        voc_class = coco_class
-                        mask = self.coco.annToMask(an)
-                        mask_resized = np.array(Image.fromarray(mask).resize((input.shape[-2],input.shape[-1]), resample=Image.NEAREST))
-                        gt_mask[mask_resized == 1] = voc_class
-                    #
-                #
-            #
-            gt_masks.append(gt_mask)
+        cmatrix = None
+        num_frames = min(self.num_frames, len(predictions))
+        for n in range(num_frames):
+            image, info_dict, label_img = self.__getitem__(n, with_label=True)
+            # reshape prediction is needed
+            output = predictions[n]
+            output = output.astype(np.uint8)
+            output = output[0] if (output.ndim > 2 and output.shape[0] == 1) else output
+            output = output[:2] if (output.ndim > 2 and output.shape[2] == 1) else output
+            # compute metric
+            cmatrix = dataloader_utils.confusion_matrix(cmatrix, output, label_img, self.kwargs['num_classes'])
         #
-        metric = SegmentationEvaluationMetrics()
-        for output, gt_mask, input in zip(predictions,gt_masks,inputs):
-            # assuming argmax has already happened in postprocess
-            output = output[0] if isinstance(output, list) else output
-            output = output[0] if isinstance(output, list) else output            
-            output = output.squeeze(0) if hasattr(output, 'shape') and output.shape[0] == 1 else output
-            output = output.squeeze(0) if hasattr(output, 'shape') and output.shape[0] == 1 else output
-            metric.update(output, gt_mask)
-        #
-        mean_iou = metric.compute_iou()
-        pixel_accuracy = metric.compute_pixel_accuracy()
-        accuracy = {'accuracy_mean_iou%':mean_iou*100, 'accuracy_pixel_accuracy%' : pixel_accuracy*100}
+        accuracy = dataloader_utils.segmentation_accuracy(cmatrix)
         return accuracy
 
+    def _remove_images_without_annotations(self, img_ids):
+        ids = []
+        for ds_idx, img_id in enumerate(img_ids):
+            ann_ids = self.coco_dataset.getAnnIds(imgIds=img_id, iscrowd=None)
+            anno = self.coco_dataset.loadAnns(ann_ids)
+            if self.categories:
+                anno = [obj for obj in anno if obj["category_id"] in self.categories]
+            if self._has_valid_annotation(anno):
+                ids.append(img_id)
+            #
+        #
+        return ids
+
+    def _has_valid_annotation(self, anno):
+        # if it's empty, there is no annotation
+        if len(anno) == 0:
+            return False
+        # if more than 1k pixels occupied in the image
+        return sum(obj["area"] for obj in anno) > 1000
+
+    def _filter_and_remap_categories(self, image, anno, remap=True):
+        anno = [obj for obj in anno if obj["category_id"] in self.categories]
+        if not remap:
+            return image, anno
+        #
+        anno = copy.deepcopy(anno)
+        for obj in anno:
+            obj["category_id"] = self.categories.index(obj["category_id"])
+        #
+        return image, anno
+
+    def _convert_polys_to_mask(self, image, anno):
+        w, h = image.size
+        segmentations = [obj["segmentation"] for obj in anno]
+        cats = [obj["category_id"] for obj in anno]
+        if segmentations:
+            masks = self._convert_poly_to_mask(segmentations, h, w)
+            cats = np.array(cats, dtype=masks.dtype)
+            cats = cats.reshape(-1, 1, 1)
+            # merge all instance masks into a single segmentation map
+            # with its corresponding categories
+            target = (masks * cats).max(axis=0)
+            # discard overlapping instances
+            target[masks.sum(0) > 1] = 255
+        else:
+            target = np.zeros((h, w), dtype=np.uint8)
+        #
+        return image, target
+
+    def _convert_poly_to_mask(self, segmentations, height, width):
+        masks = []
+        for polygons in segmentations:
+            rles = coco_mask.frPyObjects(polygons, height, width)
+            mask = coco_mask.decode(rles)
+            if len(mask.shape) < 3:
+                mask = mask[..., None]
+            mask = mask.any(axis=2)
+            mask = mask.astype(np.uint8)
+            masks.append(mask)
+        if masks:
+            masks = np.stack(masks, axis=0)
+        else:
+            masks = np.zeros((0, height, width), dtype=np.uint8)
+        return masks
+    
 
 class COCOSegmentationDataLoader(SemanticSegmentationDataLoader):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
         # coco_to_voc class mapping
         self.category_map_gt = {
             0:0,
@@ -189,47 +237,15 @@ class COCOSegmentationDataLoader(SemanticSegmentationDataLoader):
             7:19,
             72:20,
         } 
+        categories = list(self.category_map_gt.keys())
+        super().__init__(*args, categories=categories, **kwargs)
 
 
-def coco_segmentation_dataloader(name, path, label_path=None, shuffle=False):
+def coco_segmentation_dataloader(settings, name, path, label_path=None, **kwargs):
     if 'val' in os.path.split(path)[-1]:
         data_path = path
     else:
         data_path = os.path.join(path, 'val2017')
         label_path = label_path or os.path.join(path, 'annotations', 'instances_val2017.json')
     #
-    return COCOSegmentationDataLoader(data_path,label_path, shuffle=shuffle)
-
-
-class SegmentationEvaluationMetrics:
-    def __init__(self , num_classes = 21 , ignore_index = 255):
-        self.num_classes = num_classes
-        self.ignore_index = ignore_index
-        self.reset()
-
-    def reset(self):
-        self.confusion_matrx = np.zeros((self.num_classes,self.num_classes))
-
-    def update(self,pred,target):
-        mask = target != self.ignore_index
-        pred = pred[mask]
-        target = target[mask]
-
-        for t , p in zip(target.flatten(),pred.flatten()):
-            self.confusion_matrx[t,p] += 1
-
-    def compute_iou(self):
-        intersection = np.diag(self.confusion_matrx)
-        ground_truth_set = self.confusion_matrx.sum(axis=1)
-        predicted_Set = self.confusion_matrx.sum(axis=0)
-        union = ground_truth_set + predicted_Set - intersection
-        IoU = intersection / np.maximum(union,1e-10) 
-        valid_classes = ground_truth_set > 0
-        mean_IoU = np.mean(IoU[valid_classes])
-        return mean_IoU
-    
-    def compute_pixel_accuracy(self):
-        correct = np.diag(self.confusion_matrx).sum()
-        total = self.confusion_matrx.sum()
-        return correct / total if total > 0 else 0
-
+    return COCOSegmentationDataLoader(data_path, label_path, **kwargs)
