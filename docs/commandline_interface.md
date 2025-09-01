@@ -1,7 +1,14 @@
 
 ### tidlrunnercli commandline interface
 
-tidlrunnercli is the interface script to run model compilation and inference via commandline:
+tidlrunnercli is the interface script to run model compilation and inference via commandline. The syntax is:
+
+```
+tidlrunnercli <command> [options...]
+```
+
+The commandline options supported for each command are listed [here](./command_line_arguments.md)
+
 
 #### Example - compile_model with random inputs
 compile_model is one of the most basic commands - it needs only the model path to be provided. The given model is compiled with TIDL using random inputs. It can be used to quickly check whether a model works in TIDL or not. 
