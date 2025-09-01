@@ -27,6 +27,7 @@
 | --data_name | str | None | name of the input dataset |
 | --data_path | str | None | path to the input data directory |
 | --target_device | str | TARGET_DEVICE_AM68A | target device for inference (AM68A, AM69A, etc.) |
+| --target_machine | str | TARGET_MACHINE_PC_EMULATION | target machine for running the inference (pc, evm) |
 | --tidl_offload | bool | True | enable TIDL acceleration for inference |
 | --graph_optimization_level | int | ORT_DISABLE_ALL | ONNX Runtime graph optimization level |
 | --tensor_bits | int | 8 | quantization bit-width for tensors (8 or 16) |
@@ -48,6 +49,7 @@
 | --data_layout | str | None | data layout format (NCHW, NHWC) |
 | --reverse_channels | bool | False | reverse color channel order (RGB to BGR) |
 | --resize_with_pad | bool | False | resize image with padding to maintain aspect ratio |
+| --postprocess_enable | bool | False | enable postprocessing after inference |
 | --postprocess_name | str | None | name of the postprocessing pipeline |
 
 ## infer
@@ -77,6 +79,7 @@
 | --data_name | str | None | name of the input dataset |
 | --data_path | str | None | path to the input data directory |
 | --target_device | str | TARGET_DEVICE_AM68A | target device for inference (AM68A, AM69A, etc.) |
+| --target_machine | str | TARGET_MACHINE_PC_EMULATION | target machine for running the inference (pc, evm) |
 | --tidl_offload | bool | True | enable TIDL acceleration for inference |
 | --graph_optimization_level | int | ORT_DISABLE_ALL | ONNX Runtime graph optimization level |
 | --tensor_bits | int | 8 | quantization bit-width for tensors (8 or 16) |
@@ -98,6 +101,7 @@
 | --data_layout | str | None | data layout format (NCHW, NHWC) |
 | --reverse_channels | bool | False | reverse color channel order (RGB to BGR) |
 | --resize_with_pad | bool | False | resize image with padding to maintain aspect ratio |
+| --postprocess_enable | bool | False | enable postprocessing after inference |
 | --postprocess_name | str | None | name of the postprocessing pipeline |
 
 ## accuracy
@@ -127,6 +131,7 @@
 | --data_name | str | None | name of the input dataset |
 | --data_path | str | None | path to the input data directory |
 | --target_device | str | TARGET_DEVICE_AM68A | target device for inference (AM68A, AM69A, etc.) |
+| --target_machine | str | TARGET_MACHINE_PC_EMULATION | target machine for running the inference (pc, evm) |
 | --tidl_offload | bool | True | enable TIDL acceleration for inference |
 | --graph_optimization_level | int | ORT_DISABLE_ALL | ONNX Runtime graph optimization level |
 | --tensor_bits | int | 8 | quantization bit-width for tensors (8 or 16) |
@@ -148,6 +153,7 @@
 | --data_layout | str | None | data layout format (NCHW, NHWC) |
 | --reverse_channels | bool | False | reverse color channel order (RGB to BGR) |
 | --resize_with_pad | bool | False | resize image with padding to maintain aspect ratio |
+| --postprocess_enable | bool | True | enable postprocessing after inference |
 | --postprocess_name | str | None | name of the postprocessing pipeline |
 | --label_path | str | None | path to ground truth labels for accuracy evaluation |
 | --postprocess_resize_with_pad | bool | False | resize output with padding to maintain aspect ratio |
@@ -158,9 +164,6 @@
 | --postprocess_reshape_list | list | None | list of reshape operations for output tensors |
 | --postprocess_ignore_index | str | None | index to ignore during accuracy calculation |
 | --postprocess_logits_bbox_to_bbox_ls | bool | False | convert logits bounding box format to bounding box list |
-| --postprocess_detection_threshold | float | 0.3 | detection confidence threshold for postprocessing |
-| --postprocess_detection_top_k | int | 200 | top-k detections to keep in postprocessing |
-| --postprocess_detection_keep_top_k | float | 200 | number of detections to keep after NMS in postprocessing |
 | --postprocess_keypoint | bool | False | enable keypoint postprocessing |
 | --postprocess_save_output | bool | False | save postprocessed output to files |
 | --postprocess_save_output_frames | int | 1 | number of output frames to save |
@@ -192,6 +195,7 @@
 | --data_name | str | None | name of the input dataset |
 | --data_path | str | None | path to the input data directory |
 | --target_device | str | TARGET_DEVICE_AM68A | target device for inference (AM68A, AM69A, etc.) |
+| --target_machine | str | TARGET_MACHINE_PC_EMULATION | target machine for running the inference (pc, evm) |
 | --tidl_offload | bool | True | enable TIDL acceleration for inference |
 | --graph_optimization_level | int | ORT_DISABLE_ALL | ONNX Runtime graph optimization level |
 | --tensor_bits | int | 8 | quantization bit-width for tensors (8 or 16) |
@@ -213,6 +217,7 @@
 | --data_layout | str | None | data layout format (NCHW, NHWC) |
 | --reverse_channels | bool | False | reverse color channel order (RGB to BGR) |
 | --resize_with_pad | bool | False | resize image with padding to maintain aspect ratio |
+| --postprocess_enable | bool | False | enable postprocessing after inference |
 | --postprocess_name | str | None | name of the postprocessing pipeline |
 
 ## optimize
