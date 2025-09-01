@@ -69,9 +69,9 @@ COPY_SETTINGS_DEFAULT['basic'] = {}
 # compile is used to indicate a more sophisticated import - populate real data_path for that.
 ##########################################################################
 SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | {
-    'model_path':               {'dest': 'session.model_path', 'default': None, 'type': str, 'metavar': 'value', 'help': 'input model'},
+    'model_path':               {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
+    'config_path':              {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'},    
     'output_path':              {'dest': 'session.run_dir', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'output model path'},
-    'config_path':              {'dest': 'common.config_path', 'default': None, 'type': str, 'metavar': 'value'},    
     'pipeline_type':            {'dest': 'common.pipeline_type', 'default': 'compile', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},
     # optimizations
     'simplify_model':           {'dest': 'common.optimize.simplify_model', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable model simplification optimizations'},
@@ -80,7 +80,6 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | {
     # common options
     'task_type':                {'dest': 'common.task_type', 'default': None, 'type': str, 'metavar': 'value', 'help': 'type of AI task (classification, detection, segmentation etc.)'},
     'num_frames':               {'dest': 'common.num_frames', 'default': 10, 'type': int, 'metavar': 'value', 'help': 'number of frames to process'},
-    'config_path':              {'dest': 'common.config_path', 'default': None, 'type': str, 'metavar': 'value', 'help': 'path to configuration file'},
     'display_step':             {'dest': 'common.display_step', 'default': 100, 'type': str, 'metavar': 'value', 'help': 'interval for displaying progress information'},
     # compile/infer session
     ## model
@@ -181,9 +180,9 @@ COPY_SETTINGS_DEFAULT['analyze'] = COPY_SETTINGS_DEFAULT['infer'] | {
 
 ##########################################################################
 SETTINGS_DEFAULT['optimize'] = SETTINGS_DEFAULT['basic'] | {
-    'model_path':                       {'dest': 'session.model_path', 'default': None, 'type': str, 'metavar': 'value', 'help': 'input model'},
+    'model_path':                       {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
+    'config_path':                      {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'},    
     'output_path':                      {'dest': 'session.run_dir', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'output model path'},
-    'config_path':                      {'dest': 'common.config_path', 'default': None, 'type': str, 'metavar': 'value'},
     'pipeline_type':                    {'dest': 'common.pipeline_type', 'default': 'optimize', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},    
     'simplify_model':                   {'dest': 'common.optimize.simplify_model', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable model simplification optimizations'},
     'optimize_model':                   {'dest': 'common.optimize.optimize_model', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable model optimization'},
@@ -196,9 +195,9 @@ COPY_SETTINGS_DEFAULT['optimize'] = COPY_SETTINGS_DEFAULT['basic'] | {
 
 ##########################################################################
 SETTINGS_DEFAULT['extract'] = SETTINGS_DEFAULT['basic'] | {
-    'model_path':             {'dest': 'session.model_path', 'default': None, 'type': str, 'metavar': 'value', 'help': 'input model'},
+    'model_path':             {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
+    'config_path':            {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'},
     'output_path':            {'dest': 'session.run_dir', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'output model path'},
-    'config_path':            {'dest': 'common.config_path', 'default': None, 'type': str, 'metavar': 'value'},
     'pipeline_type':          {'dest': 'common.pipeline_type', 'default': 'extract', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'}, 
     'extract_mode':           {'dest': 'common.extract.mode', 'default': 'operators', 'type': str, 'metavar': 'value', 'choices': ['submodules', 'submodule', 'start2end', 'operators'], 'help': 'extraction mode (submodules, submodule, start2end, operators)'},
     'submodule_name':         {'dest': 'common.extract.submodule_name', 'default': None, 'type': str, 'metavar': 'value', 'help': 'name of specific submodule to extract'},

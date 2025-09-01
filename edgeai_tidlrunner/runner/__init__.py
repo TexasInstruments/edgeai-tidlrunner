@@ -133,7 +133,7 @@ def _create_run_dict(command, argparse=False, **kwargs):
         rest_args = [arg for arg in rest_args if arg in rest_args_i]
     #
     if rest_args:
-        print(f'WARNING: unknown args found for command: {command} - {rest_args}')
+        raise RuntimeError(f'WARNING: unknown args found for command: {command} - {rest_args}')
     #
     return run_dict
 
