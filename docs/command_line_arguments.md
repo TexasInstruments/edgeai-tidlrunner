@@ -10,8 +10,8 @@
 | --capture_log | str | False | - |
 | --pipeline_type | str | compile | type of pipeline to run |
 | --model_path | str | None | input model |
-| --output_path | str | ./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}/{model_id}_{runtime_name}_{model_path}_{model_ext} | output model path |
 | --config_path | str | None | path to configuration file |
+| --output_path | str | ./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}/{model_id}_{runtime_name}_{model_path}_{model_ext} | output model path |
 | --simplify_model | bool | True | enable model simplification optimizations |
 | --optimize_model | bool | True | enable model optimization |
 | --shape_inference | bool | True | enable shape inference during optimization |
@@ -62,8 +62,8 @@
 | --capture_log | str | False | - |
 | --pipeline_type | str | compile | type of pipeline to run |
 | --model_path | str | None | input model |
-| --output_path | str | ./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}/{model_id}_{runtime_name}_{model_path}_{model_ext} | output model path |
 | --config_path | str | None | path to configuration file |
+| --output_path | str | ./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}/{model_id}_{runtime_name}_{model_path}_{model_ext} | output model path |
 | --simplify_model | bool | True | enable model simplification optimizations |
 | --optimize_model | bool | True | enable model optimization |
 | --shape_inference | bool | True | enable shape inference during optimization |
@@ -114,8 +114,8 @@
 | --capture_log | str | False | - |
 | --pipeline_type | str | compile | type of pipeline to run |
 | --model_path | str | None | input model |
-| --output_path | str | ./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}/{model_id}_{runtime_name}_{model_path}_{model_ext} | output model path |
 | --config_path | str | None | path to configuration file |
+| --output_path | str | ./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}/{model_id}_{runtime_name}_{model_path}_{model_ext} | output model path |
 | --simplify_model | bool | True | enable model simplification optimizations |
 | --optimize_model | bool | True | enable model optimization |
 | --shape_inference | bool | True | enable shape inference during optimization |
@@ -160,8 +160,8 @@
 | --postprocess_normalized_detections | bool | False | whether detections are normalized coordinates |
 | --postprocess_formatter | str | None | format for postprocessing output |
 | --postprocess_shuffle_indices | int | None | indices for shuffling postprocess output |
-| --postprocess_squeeze_axis | int | None | axis to squeeze from output tensor |
-| --postprocess_reshape_list | list | None | list of reshape operations for output tensors |
+| --postprocess_squeeze_axis | str | None | axis to squeeze from output tensor |
+| --postprocess_reshape_list | str | None | list of reshape operations for output tensors |
 | --postprocess_ignore_index | str | None | index to ignore during accuracy calculation |
 | --postprocess_logits_bbox_to_bbox_ls | bool | False | convert logits bounding box format to bounding box list |
 | --postprocess_keypoint | bool | False | enable keypoint postprocessing |
@@ -178,8 +178,8 @@
 | --capture_log | str | False | - |
 | --pipeline_type | str | analyze | type of pipeline to run |
 | --model_path | str | None | input model |
-| --output_path | str | ./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}/{model_id}_{runtime_name}_{model_path}_{model_ext} | output model path |
 | --config_path | str | None | path to configuration file |
+| --output_path | str | ./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}/{model_id}_{runtime_name}_{model_path}_{model_ext} | output model path |
 | --simplify_model | bool | True | enable model simplification optimizations |
 | --optimize_model | bool | True | enable model optimization |
 | --shape_inference | bool | True | enable shape inference during optimization |
@@ -230,8 +230,8 @@
 | --capture_log | str | False | - |
 | --pipeline_type | str | optimize | type of pipeline to run |
 | --model_path | str | None | input model |
+| --config_path | str | None | path to configuration file |
 | --output_path | str | ./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}/{model_id}_{runtime_name}_{model_path}_{model_ext} | output model path |
-| --config_path | str | None | - |
 | --simplify_model | bool | True | enable model simplification optimizations |
 | --optimize_model | bool | True | enable model optimization |
 | --shape_inference | bool | True | enable shape inference during optimization |
@@ -246,8 +246,8 @@
 | --capture_log | str | False | - |
 | --pipeline_type | str | extract | type of pipeline to run |
 | --model_path | str | None | input model |
+| --config_path | str | None | path to configuration file |
 | --output_path | str | ./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}/{model_id}_{runtime_name}_{model_path}_{model_ext} | output model path |
-| --config_path | str | None | - |
 | --extract_mode | str | operators | extraction mode (submodules, submodule, start2end, operators) |
 | --submodule_name | str | None | name of specific submodule to extract |
 | --max_depth | int | 3 | maximum depth for submodule extraction |
