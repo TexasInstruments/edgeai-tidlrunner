@@ -1,33 +1,4 @@
-## Runtime Settings/Options Explained
-
-<hr>
-<hr>
-
-### runtime_settings and runtime_options
-
-Whichever interface (runner cli, runner configfile, runner py or rtwrapper) is being used, there are some common parameters that control the core runtimes. These are called runtime_settings and runtime_options
-
-runtime_settings: runtime_settings is primarily used in the runner based interface. runtime_options is part of runtime_settings. It also has additional parameters that are needed in the abstractions in runner. Default runtime_settings are in [edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py](../edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py)
-
-runtime_options: runtime_options control the behaviour of core runtimes - default values are specified in [edgeai_tidlrunner/rtwrapper/options/options_default.py](../edgeai_tidlrunner/rtwrapper/options/options_default.py)
-
-Example:<br>
-These settings and options can be passed to the underlying runner interface in one of the several ways as described in the [main documentation](../README.md). Here is an example of the Pythonic form:
-```
-    runtime_settings = {
-        # add any runtime_settings overrides here
-        'target_device': args.target_device,
-        'runtime_options': {
-            # add any runtime_options overrides here
-            'tidl_tools_path': os.environ['TIDL_TOOLS_PATH'],
-            'artifacts_folder': artifacts_folder,
-            'session': {
-                'input_mean': (123.675, 116.28, 103.53),
-                'input_scale': (0.017125, 0.017507, 0.017429)
-            }
-        }
-    }
-```
+## Runtime Session Settings/Options Explained
 
 <hr>
 <hr>
@@ -77,6 +48,37 @@ input_scale = 1/{ (0.229, 0.224, 0.225) * 255 } = (0.017125, 0.017507, 0.017429)
 #### Conclusion about input_mean and input_scale
 Setting the input_mean and input_scale needs careful consideration. If these values are incorrectly set, model compilation and inference may work, but the inference accuracy may not be good. Understanding what is really happening in the model training code and mapping them correctly to input_mean and input_scale is important to get a functionally correct model. 
 
+<hr>
+<hr>
+
+### runtime_settings and runtime_options
+
+Whichever interface (runner cli, runner configfile, runner py or rtwrapper) is being used, there are some common parameters that control the core runtimes. These are called runtime_settings and runtime_options
+
+runtime_settings: runtime_settings consists of runtime_options that go directly into the underlying inference runtime and also some additional arguments. runtime_settings is basically the key words arguments dict that can be passed to [session interface](../edgeai_tidlrunner/runner/modules/vision/blocks/sessions/) or the [rtwrapper interface](../edgeai_tidlrunner/rtwrapper/core/). runtime_options is part of runtime_settings. It also has additional parameters that are needed in the abstractions in runner. Default runtime_settings are in [edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py](../edgeai_tidlrunner/runner/modules/vision/settings/runtime_settings.py)
+
+runtime_options: runtime_options control the behaviour of core runtimes - default values are specified in [edgeai_tidlrunner/rtwrapper/options/options_default.py](../edgeai_tidlrunner/rtwrapper/options/options_default.py)
+
+Example:<br>
+These settings and options can be passed to the underlying runner interface in one of the several ways - for example in a config file or in the Pythonic interface. Here is an example of the Pythonic form:
+```
+    runtime_settings = {
+        # add any runtime_settings overrides here
+        'target_device': args.target_device,
+        'input_mean': (123.675, 116.28, 103.53),
+        'input_scale': (0.017125, 0.017507, 0.017429),
+        'runtime_options': {
+            # add any runtime_options overrides here
+            'tidl_tools_path': os.environ['TIDL_TOOLS_PATH'],
+            'artifacts_folder': artifacts_folder,
+        }
+    }
+```
+
+And here is an example usage through rtwrapper interface:
+```
+session = rtwrapper.core.ONNXRuntimeWrapper(model_path='model.onnx', **runtime_settings)
+```
 
 <hr>
 <hr>

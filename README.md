@@ -75,19 +75,18 @@ tidlrunnercli infer --help
 <hr>
 
 ### List of commands supported
-| Command          | Internal Pipeline(s)        | Description                                                               |
-|------------------|-----------------------------|---------------------------------------------------------------------------|
-| compile          | CompileModel                | Compile the given model(s)                                                |
-| infer            | InferModel                  | Run inference using using already compiled model artifacts                |
-| accuracy         | InferAnalyze                | Analyze complied artifacts, run inference and analyze layerwise deviations|
-| optimize         | OptimizeModel               | Optimize - simpifier, layer optimizations, shape inference (included in compile)|
-| compile+infer    | CompileModel, InferModel    | compile, infer                                                            |
-| compile+analyze  | CompileModel, InferAnalyze  | Compile the model, infer and analyze                                      |
-| compile+accuracy | CompileModel, InferAccuracy | Compile the model, infer and compute accuracy                             |
-| analyze          | <multiple pipelines>        | Analyze layer oiutputs, compare them to onnxruntime and write statistics  |
-| report           | GenReport                   | Generate overall csv report of infer or accuracy                          |
-| extract          | ExtractNodes                | Extract layers or submodules from a model                                 |
-
+| Command          | Description                                                               |
+|------------------|---------------------------------------------------------------------------|
+| compile          | Compile the given model(s)                                                |
+| infer            | Run inference using using already compiled model artifacts                |
+| accuracy         | Analyze complied artifacts, run inference and analyze layerwise deviations|
+| optimize         | Optimize - simpifier, layer optimizations, shape inference (included in compile)|
+| analyze          | Analyze layer oiutputs, compare them to onnxruntime and write statistics  |
+| report           | Generate overall csv report of infer or accuracy                          |
+| extract          | Extract layers or submodules from a model                                 |
+| compile+infer    | compile the model and run inference                                       |
+| compile+analyze  | Compile the model and analyze the outputs of different layers             |
+| compile+accuracy | Compile the model, run inference and compute accuracy                     |
 
 
 But as explained above, the easiest way to see list of options supported for a command is to use the help - for example:
@@ -97,7 +96,7 @@ tidlrunnercli compile --help
 
 <hr>
 
-### tidlrunnercli Commandline interface
+### Basic intercface - tidlrunnercli Commandline interface
 The commandline interface allows to provide the model and a few arguments dirctly in the commandline.
 [runner Commandline interface](./docs/commandline_interface.md)
 
@@ -105,19 +104,31 @@ The commandline options supported for each command are listed [here](./docs/comm
 
 <hr>
 
-### tidlrunnercli Configfile interface
+### Basic interface - tidlrunnercli Configfile interface
 The configfile interface allows to parse all parameters from a yaml file. 
 [runner Commandline config file interface](./docs/configfile_interface.md)
 
 <hr>
+<hr>
 
-### edgeai_tidlrunner.runner Pythonic interface
+### report generation after model compilation
+
+As consoliated csv report will be generated with the report command.
+```
+tidlrunnercli report
+```
+
+<hr>
+<hr>
+
+### Flexible interface - edgeai_tidlrunner.runner Pythonic interface
 There is also a Pythonic interface for the runner module, for more flexibility.
 [runner Pythonic interface](./docs/pythonic_interface.md)
 
 <hr>
+<hr>
 
-## Using custom datasets & models
+## Extensions - Using custom datasets & models
 You have tried the off-the-shelf examples provided in this repository and is ready to compile own models and datasets - then look as this section on custom datasets & models: 
 * [Custom models](./docs/custom_models.md)
 * [Custom datasets](./docs/custom_datasets.md)
@@ -125,14 +136,14 @@ You have tried the off-the-shelf examples provided in this repository and is rea
 <hr>
 <hr>
 
-## Settings/Options Deep dive
+## Deep dive - details of Settings/Options
 
 [More details of settings](./docs/runtime_settings.md)
 
 <hr>
 <hr>
 
-## Usage of rtwrapper (edgeai_tidlrunner.rtwrapper advanced interface)
+## Advanced - Usage of rtwrapper (edgeai_tidlrunner.rtwrapper advanced interface)
 Abstractions are sometimes a hindrance to understand what is really happening under the hood or to easily modify and extend. rtwrapper is a thin, low level interface to the core tidl-tools, without much overhead. Use it to understand how the core tidl-tools work or to integrate into your application.
 
 [rtwrapper advanced interface](./docs/rtwrapper_interface.md)
