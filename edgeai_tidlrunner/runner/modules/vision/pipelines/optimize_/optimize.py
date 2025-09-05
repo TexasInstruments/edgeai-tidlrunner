@@ -46,7 +46,8 @@ class OptimizeModel(common_base.CommonPipelineBase):
 
     def _prepare(self):
         super()._prepare()
-                    
+        os.makedirs(self.run_dir, exist_ok=True)
+
     def info():
         print(f'INFO: Model optimize - {__file__}')
 
@@ -61,7 +62,7 @@ class OptimizeModel(common_base.CommonPipelineBase):
             shutil.rmtree(self.run_dir, ignore_errors=True)
         #
 
-        output_path = os.path.join(self.run_dir, 'optimize')
+        output_path = self.model_folder
 
         os.makedirs(self.run_dir, exist_ok=True)
         # os.makedirs(self.artifacts_folder, exist_ok=True)
@@ -86,8 +87,29 @@ class OptimizeModel(common_base.CommonPipelineBase):
             onnxsim.simplify(model_path)
         #
         if optimize_model:
+            print('INFO: optimize_model can be set to True for defaults OR a dictionary of options')
+            print('INFO:   as specified in osrt_model_tools.onnx_tools.tidl_onnx_model_optimizer.ops.get_optimizers()')
+        #
+        if optimize_model is True:
             from osrt_model_tools.onnx_tools import tidl_onnx_model_optimizer
             tidl_onnx_model_optimizer.optimize(model_path, model_path)
+        elif isinstance(optimize_model, dict):
+            from osrt_model_tools.onnx_tools import tidl_onnx_model_optimizer
+            # from osrt_model_tools.onnx_tools.tidl_onnx_model_optimizer.ops import get_optimizers
+            # with_default = optimize_model.pop('with_default', True)
+            # optimizers = get_optimizers()
+            # for key, value in optimizers.items():
+            #     optimizers[key] = (with_default and value)
+            # #
+            # for key, value in optimize_model.items():
+            #     if key in optimizers:
+            #         optimizers[key] = value       
+            #     else:
+            #         print(f"INFO: The given transformation {key} has not been implemented yet.")
+            #     #
+            # #
+            # tidl_onnx_model_optimizer.optimize(model_path, model_path, custom_optimizers=optimizers)
+            tidl_onnx_model_optimizer.optimize(model_path, model_path, **optimize_model)
         #
         if shape_inference:
             import onnx

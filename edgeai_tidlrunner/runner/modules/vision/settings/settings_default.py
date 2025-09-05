@@ -185,7 +185,7 @@ SETTINGS_DEFAULT['optimize'] = SETTINGS_DEFAULT['basic'] | {
     'output_path':                      {'dest': 'session.run_dir', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'output model path'},
     'pipeline_type':                    {'dest': 'common.pipeline_type', 'default': 'optimize', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},    
     'simplify_model':                   {'dest': 'common.optimize.simplify_model', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable model simplification optimizations'},
-    'optimize_model':                   {'dest': 'common.optimize.optimize_model', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable model optimization'},
+    'optimize_model':                   {'dest': 'common.optimize.optimize_model', 'default': True, 'type': utils.str_to_bool_or_none_or_dict, 'metavar': 'value', 'help': 'enable model optimization'},
     'shape_inference':                  {'dest': 'common.optimize.shape_inference', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable shape inference during optimization'},
 }
 

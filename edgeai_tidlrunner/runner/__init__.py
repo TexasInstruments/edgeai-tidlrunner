@@ -132,6 +132,8 @@ def _create_run_dict(command, argparse=False, **kwargs):
     for rest_args_i in rest_args_list[1:]:
         rest_args = [arg for arg in rest_args if arg in rest_args_i]
     #
+    # ignore the option --target_machine since it could have been added in main.py
+    rest_args = [arg for arg in rest_args if '--target_machine' not in arg]
     if rest_args:
         raise RuntimeError(f'WARNING: unknown args found for command: {command} - {rest_args}')
     #

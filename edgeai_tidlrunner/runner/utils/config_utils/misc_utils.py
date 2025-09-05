@@ -225,6 +225,27 @@ def str_or_none(v):
     return str(v)
 
 
+def str_to_bool_or_none_or_dict(v):
+    if v is None:
+        return None
+    elif isinstance(v, dict):
+        return v
+    elif isinstance(v, list):
+        v = ' '.join(v)
+    #
+    if isinstance(v, str):
+        if v.lower() in ('', 'none', 'null', 'false', 'no', '0'):
+            return False
+        elif v.lower() in ('true', 'yes', '1'):
+            return True
+        else: 
+            d = yaml.safe_load(v)
+            return d
+        #
+    #
+    return bool(v)
+
+
 def cleanup_dict(inp_dict, template_dict):
     if template_dict is None:
         return inp_dict

@@ -54,79 +54,11 @@ class CompileModelBase(CommonPipelineBase):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if 'session' in self.settings and self.settings[self.session_prefix].get('model_path', None):
-            common_kwargs = self.settings['common']                 
-            config_path = os.path.dirname(common_kwargs['config_path']) if common_kwargs['config_path'] else None            
-            model_source = self.settings[self.session_prefix]['model_path']       
-            self.model_source = self._get_file_path(model_source, source_dir=config_path)
-
-            run_dir = self.settings[self.session_prefix]['run_dir']
-            self.run_dir = self._build_run_dir(run_dir)
-
-            model_basename = os.path.basename(self.model_source)
-            self.model_folder = os.path.join(self.run_dir, 'model')
-            self.model_path = os.path.join(self.model_folder, model_basename)
-            self.settings[self.session_prefix]['model_path'] = self.model_path
             self.artifacts_folder = self.settings[self.session_prefix].get('artifactrs_folder', os.path.join(self.run_dir, 'artifacts'))
             self.settings[self.session_prefix]['artifacts_folder'] = self.artifacts_folder
         else:
-            self.run_dir = None
-            self.model_folder = None
-            self.model_path = None
             self.artifacts_folder = None
         #
-
-    def _build_run_dir(self, run_dir):
-        pipeline_type = self.kwargs.get('common.pipeline_type', 'compile')
-        task_type = self.kwargs.get('common.task_type', None) or None
-    
-        model_basename = os.path.basename(self.model_source)
-        model_id = self.settings[self.session_prefix].get('model_id', '')
-        if not model_id:
-            unique_id = utils.generate_unique_id(model_basename, num_characters=8)            
-            if task_type in constants.TaskTypeShortNames:
-                task_type_short_name = constants.TaskTypeShortNames[task_type]
-                model_id = task_type_short_name + '-' + unique_id                
-            else:
-                pipeline_type = self.kwargs.get('common.pipeline_type', 'x') or 'x'
-                model_id = pipeline_type + '-' + unique_id
-            #
-        #
-        model_id_underscore = model_id + '_'
-
-        tensor_bits = self.kwargs.get('session.runtime_options.tensor_bits', '') or ''
-        tensor_bits_str = f'{str(tensor_bits)}bits' if tensor_bits else ''
-        tensor_bits_slash = f'{str(tensor_bits)}bits' + os.sep if tensor_bits else ''
-
-        target_device = self.kwargs.get('session.target_device', 'NONE') or 'NONE'
-        target_device_str = target_device if target_device else ''
-        target_device_slash = target_device + os.sep if target_device else ''
-
-        model_basename_wo_ext, model_ext = os.path.splitext(model_basename)
-        model_ext = model_ext[1:] if len(model_ext)>0 else model_ext
-
-        runtime_name = self.kwargs.get('session.name', '') or ''
-
-        run_dir = run_dir.replace('{pipeline_type}', pipeline_type)
-        run_dir = run_dir.replace('{model_id}_', model_id_underscore)
-        run_dir = run_dir.replace('{model_id}', model_id)
-        run_dir = run_dir.replace('{runtime_name}', runtime_name)        
-        run_dir = run_dir.replace('{model_ext}', model_ext)        
-        run_dir = run_dir.replace('{tensor_bits}/', tensor_bits_slash)
-        run_dir = run_dir.replace('{tensor_bits}', tensor_bits_str)
-        run_dir = run_dir.replace('{target_device}/', target_device_slash)
-        run_dir = run_dir.replace('{target_device}', target_device_str)
-        run_dir = run_dir.replace('{model_name}', model_basename_wo_ext)
-        run_dir = self._replace_model_path(run_dir, '{model_path}', run_dir_tree_depth=3)
-        return run_dir
-    
-    def _replace_model_path(self, run_dir, model_path_str, run_dir_tree_depth):
-        run_dir_tree_depth = 3
-        model_path_tree = os.path.abspath(os.path.splitext(self.model_source)[0]).split(os.sep)
-        if len(model_path_tree) > run_dir_tree_depth:
-            model_path_tree = model_path_tree[-run_dir_tree_depth:]
-        #
-        run_dir = run_dir.replace(model_path_str, '_'.join(model_path_tree))    
-        return run_dir    
 
     def _prepare(self):
         super()._prepare()
