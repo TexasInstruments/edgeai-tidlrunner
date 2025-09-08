@@ -14,7 +14,6 @@ dist/
 /tools/tidl_tools_package_*
 /tools/arm*
 
-/data/datasets/vision/backup
 /data/datasets/vision/imagenetv2c*
 /data/datasets/vision/coco*
 *.onnx
