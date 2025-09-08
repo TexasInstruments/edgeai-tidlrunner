@@ -6,7 +6,7 @@ tidlrunnercli can also accept a config file as input. The syntax is:
 tidlrunnercli <command> --config_path <configfile> [overrideoptions...]
 ```
 
-The configfile can be an aggregate config file listing multiple config files as in [this exammple](../data/models/configs.yaml) or it can be individual config files provided [under this directory here](../data/models/vision/)
+The configfile can be an aggregate config file listing multiple config files as in [this example](../data/models/configs.yaml) or it can be individual config files provided [under this directory here](../data/models/vision/)
 
 
 #### Example - running using config file

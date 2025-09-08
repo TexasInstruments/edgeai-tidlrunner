@@ -5,7 +5,7 @@
 
 ### input_mean and input_scale 
 
-input_mean and input_scale are options that are unique for every model. If there are not provided, default values will be used. input_mean substraction and input_scale is applied to normalize the input and then it is given to the model. Setting correct values for this is important to get a functionally correct model.
+input_mean and input_scale are options that are unique for every model. If there are not provided, default values will be used. input_mean subtraction and input_scale is applied to normalize the input and then it is given to the model. Setting correct values for this is important to get a functionally correct model.
 
 In [settings_default.py](../edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py) the values are set as follows:
 ```

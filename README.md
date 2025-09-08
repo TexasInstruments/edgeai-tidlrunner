@@ -8,9 +8,9 @@ This will be installed as **edgeai_tidlrunner** Python package.
 
 edgeai_tidlrunner package has two parts:
 
-* **edgeai_tidlrunner.runner** (high level interface) - runner has additional pipleline functionalities such as data loaders and preprocess required to run the entire pipeline correctly. This is a high level interface that hides most of the details and provides a Pythonic and command line APIs. (Recommended for beginners)
+* **edgeai_tidlrunner.runner** (high level interface) - runner has additional pipeline functionalities such as data loaders and preprocess required to run the entire pipeline correctly. This is a high level interface that hides most of the details and provides a Pythonic and command line APIs. (Recommended for beginners)
 
-* **edgeai_tidlrunner.rtwrapper** (advanced interface) - rtwrapper is a thin wrapper over the core OSRT and TIDL-RT runtimes - the wrapper is provided for ease of use and also to make the usage of various runtimes consistent. This is an advanced wrapper does not impose mush restrictions on the usage and the full flexibility and functionality of the underlying runtimes are available to the user. 
+* **edgeai_tidlrunner.rtwrapper** (advanced interface) - rtwrapper is a thin wrapper over the core OSRT and TIDL-RT runtimes - the wrapper is provided for ease of use and also to make the usage of various runtimes consistent. This is an advanced wrapper does not impose much restrictions on the usage and the full flexibility and functionality of the underlying runtimes are available to the user. 
 
 <hr>
 <hr>
@@ -34,7 +34,7 @@ Example:
 ./setup_pc_gpu.sh
 ```
 
-This script installs the CUDA based tidl-tools and nvidia-hpc-sdk. The user ha to make sure the system has CUDA gpus appropriate nvidia graphics drivers. 
+This script installs the CUDA based tidl-tools and nvidia-hpc-sdk. The user has to make sure the system has CUDA gpus appropriate nvidia graphics drivers. 
 
 ### To setup on EVM, run:
 
@@ -79,9 +79,9 @@ tidlrunnercli infer --help
 |------------------|---------------------------------------------------------------------------|
 | compile          | Compile the given model(s)                                                |
 | infer            | Run inference using using already compiled model artifacts                |
-| accuracy         | Analyze complied artifacts, run inference and analyze layerwise deviations|
-| optimize         | Optimize - simpifier, layer optimizations, shape inference (included in compile)|
-| analyze          | Analyze layer oiutputs, compare them to onnxruntime and write statistics  |
+| accuracy         | Analyze compiled artifacts, run inference and analyze layerwise deviations|
+| optimize         | Optimize - simplifier, layer optimizations, shape inference (included in compile)|
+| analyze          | Analyze layer outputs, compare them to onnxruntime and write statistics  |
 | report           | Generate overall csv report of infer or accuracy                          |
 | extract          | Extract layers or submodules from a model                                 |
 | compile+infer    | compile the model and run inference                                       |
@@ -96,8 +96,8 @@ tidlrunnercli compile --help
 
 <hr>
 
-### Basic intercface - tidlrunnercli Commandline interface
-The commandline interface allows to provide the model and a few arguments dirctly in the commandline.
+### Basic interface - tidlrunnercli Commandline interface
+The commandline interface allows to provide the model and a few arguments directly in the commandline.
 [runner Commandline interface](./docs/commandline_interface.md)
 
 The commandline options supported for each command are listed [here](./docs/command_line_arguments.md)
@@ -111,9 +111,9 @@ The configfile interface allows to parse all parameters from a yaml file.
 <hr>
 <hr>
 
-### report generation after model compilation
+### Report generation after model compilation
 
-As consoliated csv report will be generated with the report command.
+A consolidated csv report will be generated with the report command.
 ```
 tidlrunnercli report
 ```

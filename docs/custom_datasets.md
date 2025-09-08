@@ -13,7 +13,7 @@ The format is as follows:
  * annotations
    * instances.json
 
-Afield called category_id in each of the entries in the 'images' entry of the json file indicates the Ground Truth category for each image.
+A field called category_id in each of the entries in the 'images' entry of the json file indicates the Ground Truth category for each image.
 
 An example for this dataset is here: http://software-dl.ti.com/jacinto7/esd/modelzoo/11_00_00/datasets/vision/animal_classification.zip
 
@@ -26,7 +26,7 @@ The format is as follows:
  * annotations
    * instances.json
 
-The 'bbox' fields in the json file indicates the bounding boxe for Object Detection Ground Truth.
+The 'bbox' fields in the json file indicates the bounding boxes for Object Detection Ground Truth.
 
 An example for this dataset is here: http://software-dl.ti.com/jacinto7/esd/modelzoo/11_00_00/datasets/vision/tiscapes2017_driving.zip
 

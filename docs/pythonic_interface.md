@@ -17,10 +17,10 @@ The parameters used in the commandline or in the configfile - one is a shortcut 
 
 As can be seen from this example, there is a one-to-one mapping between the shortcut style names, internal dot style names and the dictionary format.
 
-Ther are many more arguments that are supported. All the supported options and how they map to internal names can be seen in this file [settings_default.py](../edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py) and this file [settings_base.py](../edgeai_tidlrunner/runner/bases/settings_base.py)
+There are many more arguments that are supported. All the supported options and how they map to internal names can be seen in this file [settings_default.py](../edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py) and this file [settings_base.py](../edgeai_tidlrunner/runner/bases/settings_base.py)
 
 
-### How to use the Pythonic intrface 
+### How to use the Pythonic interface 
 
 The arguments can be provided as Shortcut Style Names in a Dictionary, Explicit Dot Style Names in a Dictionary Or as proper Python Dictionary. Here we use a proper Python Dictionary for clarity of explanation:
 
