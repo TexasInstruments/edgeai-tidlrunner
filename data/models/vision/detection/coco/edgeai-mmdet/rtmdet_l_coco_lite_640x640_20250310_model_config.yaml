@@ -9,9 +9,7 @@ preprocess:
   reverse_channels: true
   backend: cv2
   interpolation: null
-  resize_with_pad:
-  - true
-  - corner
+  resize_with_pad: true
   pad_color:
   - 114
   - 114
@@ -40,18 +38,22 @@ session:
     advanced_options:activation_clipping: 1
     advanced_options:weight_clipping: 1
     advanced_options:bias_calibration: 1
-    advanced_options:output_feature_16bit_names_list: 455,472,489,448,465,482
+    advanced_options:output_feature_16bit_names_list: 187,319,332,345,324,337,350
     advanced_options:params_16bit_names_list: ''
     advanced_options:add_data_convert_ops: 3
     object_detection:meta_arch_type: 8
-    object_detection:meta_layers_names_list: rtmdet_l_coco_orig_640x640_20250310_model.prototxt
-  model_path: rtmdet_l_coco_orig_640x640_20250310_model.onnx
-  model_id: od-9208
+    object_detection:meta_layers_names_list: rtmdet_l_coco_lite_640x640_20250310_model.prototxt
+  model_path: rtmdet_l_coco_lite_640x640_20250310_model.onnx
+  model_id: od-9209
   input_details: null
   output_details: null
   num_inputs: 1
 postprocess:
-  detection_threshold: 0.3
+  reshape_list:
+  - - -1
+    - 5
+  - - -1
+    - 1
   formatter:
     src_indices:
     - 5
@@ -60,14 +62,14 @@ postprocess:
     - 4
     - 5
     name: DetectionBoxSL2BoxLS
-  resize_with_pad:
-  - true
-  - corner
+  resize_with_pad: true
   normalized_detections: false
   shuffle_indices: null
   squeeze_axis: null
   ignore_index: null
   logits_bbox_to_bbox_ls: false
+  keypoint: false
+  object6dpose: false
 metric:
   label_offset_pred:
     0: 1
@@ -153,8 +155,8 @@ metric:
     80: 91
 model_info:
   metric_reference:
-    accuracy_ap[.5:.95]%: 51.5
+    accuracy_ap[.5:.95]%: 49.0
   model_shortlist: 100
-  compact_name: rtmdet-l-orig-mmdet-coco-640x640
+  compact_name: rtmdet-l-lite-mmdet-coco-640x640
   shortlisted: true
   recommended: true
