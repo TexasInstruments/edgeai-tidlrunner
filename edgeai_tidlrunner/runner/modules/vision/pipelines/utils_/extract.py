@@ -32,7 +32,6 @@ import sys
 import shutil
 import warnings
 import onnx.shape_inference
-import onnx_graphsurgeon as gs
 import os
 from ..... import utils
 from ..... import bases
@@ -41,8 +40,14 @@ from ..common_.common_base import CommonPipelineBase
 
 #################################################################
 import onnx
-import onnx_graphsurgeon as gs
 import os
+
+
+try:
+    import onnx_graphsurgeon as gs
+except ImportError:
+    gs = None
+    warnings.warn("onnx-graphsurgeon is not installed. Please install it via pip")
 
 
 class ONNXNode:
