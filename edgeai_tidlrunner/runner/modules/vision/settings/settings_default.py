@@ -100,6 +100,10 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | {
     'graph_optimization_level': {'dest': 'session.onnxruntime:graph_optimization_level', 'default': presets.GraphOptimizationLevel.ORT_DISABLE_ALL, 'type': int, 'metavar': 'value', 'help': 'ONNX Runtime graph optimization level'},
     # runtime_settings.runtime_options
     'tensor_bits':              {'dest': 'session.runtime_options.tensor_bits', 'default': 8, 'type': int, 'metavar': 'value', 'help': 'quantization bit-width for tensors (8 or 16)'},
+    'accuracy_level':           {'dest': 'session.runtime_options.accuracy_level', 'default': 1, 'type': int, 'metavar': 'value', 'help': 'accuracy level for TIDL offload (0, 1, 2)'},
+    'debug_level':              {'dest': 'session.runtime_options.debug_level', 'default': 0, 'type': int, 'metavar': 'value', 'help': 'debug level for compile and infer'},
+    'deny_list_layer_type':     {'dest': 'session.runtime_options.deny_list:layer_type', 'default': '', 'type': str, 'metavar': 'value', 'help': 'comma separated layer types to exclude from TIDL offload'},
+    'deny_list_layer_name':     {'dest': 'session.runtime_options.deny_list:layer_name', 'default': '', 'type': str, 'metavar': 'value', 'help': 'comma separated layer names to exclude from TIDL offload'},
     'quantization_scale_type':  {'dest': 'session.runtime_options.advanced_options:quantization_scale_type', 'default': None, 'type': int, 'metavar': 'value', 'help': 'type of quantization scale to use'},
     'calibration_frames':       {'dest': 'session.runtime_options.advanced_options:calibration_frames', 'default': 12, 'type': int, 'metavar': 'value', 'help': 'number of frames for quantization calibration'},
     'calibration_iterations':   {'dest': 'session.runtime_options.advanced_options:calibration_iterations', 'default': 12, 'type': int, 'metavar': 'value', 'help': 'number of calibration iterations'},
