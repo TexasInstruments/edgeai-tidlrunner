@@ -58,12 +58,13 @@ def download_imagenetv2(path, split='val', force_download=False):
     print(f'INFO: downloading and preparing dataset: {url} This may take some time.')
     print(notice)
 
-    split_file=f'{split}.txt'
-    root = _get_root(path)
+    root = path
+    split_file=os.path.join(root, f'{split}.txt')
     download_root = os.path.join(root, 'download')
     extract_root = os.path.join(download_root, 'rawdata')
     extract_path = utils.download_file(url, root=download_root, extract_root=extract_root, mode='r',
                                         force_download=force_download)
+    split_path = os.path.join(root, split)
 
     folders = utils.list_dir(os.path.join(extract_path, 'imagenetv2-top-images-format-val'))
     basename_to_int = lambda f:int(os.path.basename(f))
@@ -72,7 +73,7 @@ def download_imagenetv2(path, split='val', force_download=False):
     for folder_id, folder in enumerate(folders):
         src_files = utils.list_files(folder)
         files = [os.path.join(os.path.basename(folder), os.path.basename(f)) for f in src_files]
-        dst_files = [os.path.join(path, f) for f in files]
+        dst_files = [os.path.join(split_path, f) for f in files]
         for src_f, dst_f in zip(src_files, dst_files):
             os.makedirs(os.path.dirname(dst_f), exist_ok=True)
             shutil.copy2(src_f, dst_f)
@@ -115,8 +116,8 @@ def download_coco(path, split='val', force_download=False):
 
 
 def main():
-    download_imagenetv2()
-    download_coco()
+    download_imagenetv2('./data/datasets/vision/imagenetv2c')
+    download_coco('./data/datasets/vision/coco')
 
 
 if __name__ == '__main__':
