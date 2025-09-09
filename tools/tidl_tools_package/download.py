@@ -291,19 +291,29 @@ def download_tidl_tools(download_url, download_path, **tidl_version_dict):
     print("INFO: installing tidl_tools_package...")
     GCC_ARM_AARCH64_NAME="arm-gnu-toolchain-13.2.Rel1-x86_64-aarch64-none-linux-gnu"
     cwd = os.getcwd()
-    # download_path = os.path.join(tidl_tools_package_path, TARGET_SOC)
+    download_path = os.path.abspath(download_path)
     download_tidl_tools_path = os.path.join(download_path, 'tidl_tools')
     shutil.rmtree(download_path, ignore_errors=True)
     os.makedirs(download_path, exist_ok=True)
     try:
         download_and_extract_archive(download_url, download_path, download_path)
         os.chdir(download_tidl_tools_path)
-        os.symlink(os.path.join("..", "..", GCC_ARM_AARCH64_NAME), GCC_ARM_AARCH64_NAME)
+        os.symlink(os.path.join("..", "..", "..", GCC_ARM_AARCH64_NAME), GCC_ARM_AARCH64_NAME)
         with open(os.path.join(download_tidl_tools_path, 'version.yaml'), "w") as fp:
             yaml.safe_dump(tidl_version_dict, fp)
         #
     except:
         print(f"ERROR: download_and_extract_archive: {download_url} - failed")
+    #
+    try:
+        download_tidl_tools_path_until_rel, tidl_tools_name = os.path.split(download_tidl_tools_path)
+        download_tidl_tools_path_until_dev, rel_name = os.path.split(download_tidl_tools_path_until_rel)
+        download_tidl_tools_path_symlink_src = os.path.join(rel_name, tidl_tools_name)
+        os.chdir(download_tidl_tools_path_until_dev)
+        os.remove(tidl_tools_name)
+        os.symlink(download_tidl_tools_path_symlink_src, tidl_tools_name)
+    except:
+        print(f"ERROR: symlink failed: {download_tidl_tools_path} to {download_tidl_tools_path_symlink_src}")
     #
     os.chdir(cwd)
     return None
@@ -341,7 +351,7 @@ def download_tidl_tools_package_11_01(install_path, tools_version, tools_type):
     for target_soc in target_soc_download_urls:
         download_url_base = target_soc_download_urls[target_soc]
         download_url = f"{download_url_base}/tidl_tools{tidl_tools_type_suffix}.tar.gz"
-        download_path = os.path.join(tidl_tools_package_path, target_soc)
+        download_path = os.path.join(tidl_tools_package_path, target_soc, tidl_tools_release_id)
         download_tidl_tools(download_url, download_path, **tidl_version_dict, target_device=target_soc)
     #
     requirements_file = os.path.realpath(os.path.join(os.path.dirname(__file__), f'requirements/requirements_11.1.txt'))
@@ -380,7 +390,7 @@ def download_tidl_tools_package_11_00(install_path, tools_version, tools_type):
     for target_soc in target_soc_download_urls:
         download_url_base = target_soc_download_urls[target_soc]
         download_url = f"{download_url_base}/tidl_tools{tidl_tools_type_suffix}.tar.gz"
-        download_path = os.path.join(tidl_tools_package_path, target_soc)
+        download_path = os.path.join(tidl_tools_package_path, target_soc, tidl_tools_release_id)
         download_tidl_tools(download_url, download_path, **tidl_version_dict, target_device=target_soc)
     #
     requirements_file = os.path.realpath(os.path.join(os.path.dirname(__file__), f'requirements/requirements_11.0.txt'))
@@ -417,7 +427,7 @@ def download_tidl_tools_package_10_01(install_path, tools_version, tools_type):
     for target_soc in target_soc_download_urls:
         download_url_base = target_soc_download_urls[target_soc]
         download_url = f"{download_url_base}/tidl_tools{tidl_tools_type_suffix}.tar.gz"
-        download_path = os.path.join(tidl_tools_package_path, target_soc)
+        download_path = os.path.join(tidl_tools_package_path, target_soc, tidl_tools_release_id)
         download_tidl_tools(download_url, download_path, **tidl_version_dict, target_device=target_soc)
     #
     requirements_file = os.path.realpath(os.path.join(os.path.dirname(__file__), f'requirements/requirements_10.1.txt'))
@@ -450,7 +460,7 @@ def download_tidl_tools_package_10_00(install_path, tools_version, tools_type):
     for target_soc in target_soc_download_urls:
         download_url_base = target_soc_download_urls[target_soc]
         download_url = f"{download_url_base}/tidl_tools{tidl_tools_type_suffix}.tar.gz"
-        download_path = os.path.join(tidl_tools_package_path, target_soc)
+        download_path = os.path.join(tidl_tools_package_path, target_soc, tidl_tools_release_id)
         download_tidl_tools(download_url, download_path, **tidl_version_dict, target_device=target_soc)
     #
     requirements_file = os.path.realpath(os.path.join(os.path.dirname(__file__), f'requirements/requirements_10.0.txt'))
