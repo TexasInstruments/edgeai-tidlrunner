@@ -38,7 +38,7 @@ import importlib.util
 def install_package(*install_args):
     """Install osrt_model_tools package."""
     
-    package_name = install_args[0].split('==')[0]
+    package_name = install_args[0].split('@')[0].split('==')[0]
     # Check if package is already installed
     if importlib.util.find_spec(package_name) is not None:
         print(f"INFO: {package_name} is already installed")
@@ -46,8 +46,9 @@ def install_package(*install_args):
     try:
         print(f"INFO: Installing {package_name}")
         install_options = [str(arg) for arg in install_args]
-        result = subprocess.run(["python3", "-m", "pip", "install", "--no-input"] + install_options, 
-                                check=True, capture_output=True, text=True)
+        install_cmd_list = ["python3", "-m", "pip", "install", "--no-input"] + install_options
+        print("INFO: installing {package_name} using:", " ".join(install_cmd_list))
+        result = subprocess.run(install_cmd_list, check=True, capture_output=True, text=True)
         
         print(f"SUCCESS: {package_name} installed successfully")
         if result.stdout:
@@ -67,7 +68,7 @@ def install_package(*install_args):
 
 
 def main():
-    install_package("osrt_model_tools", " @ git+https://github.com/TexasInstruments/edgeai-tidl-tools.git@11_00_08_00#subdirectory=osrt-model-tools")
+    install_package("osrt_model_tools@git+https://github.com/TexasInstruments/edgeai-tidl-tools.git@11_00_08_00#subdirectory=osrt-model-tools")
     install_package("onnx-graphsurgeon==0.3.26", "--extra-index-url", "https://pypi.ngc.nvidia.com")
 
 
