@@ -2,6 +2,8 @@
 
 Bring Your Edge AI Models For Compilation and Inference (BYOM)
 
+## Introduction
+
 This package provides a wrapper over the core [TIDL model compilation and runtimes](https://github.com/TexasInstruments/edgeai-tidl-tools) to make  model compilation and inference interface easy to use. 
 
 This will be installed as **edgeai_tidlrunner** Python package.
@@ -12,27 +14,21 @@ edgeai_tidlrunner package has two parts:
 
 * **edgeai_tidlrunner.rtwrapper** (advanced interface) - rtwrapper is a thin wrapper over the core OSRT and TIDL-RT runtimes - the wrapper is provided for ease of use and also to make the usage of various runtimes consistent. This is an advanced wrapper does not impose much restrictions on the usage and the full flexibility and functionality of the underlying runtimes are available to the user. 
 
-<hr>
+
 <hr>
 
 ## Setup
 
 [Setup instructions](docs/setup.md)
 
-<hr>
-<hr>
+## Getting Started
 
-[Getting started](docs/getting_started.md)
+[Getting started instructions and examples](docs/getting_started.md)
 
-<hr>
-<hr>
+### Detailed Documentation
 
-[Usage](docs/usage.md)
+[Usage Documentation](docs/usage.md)
 
-<hr>
-<hr>
+[Advanced Usage Documentation](docs/advanced_usage.md)
 
-[Advanced Usage](docs/advanced_usage.md)
-
-<hr>
 <hr>

@@ -9,9 +9,20 @@ tidlrunnercli <command> --config_path <configfile> [overrideoptions...]
 The configfile can be an aggregate config file listing multiple config files as in [this example](../data/models/configs.yaml) or it can be individual config files provided [under this directory here](../data/models/vision/)
 
 
-#### Example - running using config file
-* Config files can be provided either as a single config file or as an aggregate config file to operate on multiple models in parallel. 
-* If aggregate configfile is provided, the models will run in parallel and the log will go into a log file specific to each model (will not be displayed on screen)
+#### Example - running using a single config file
+* Config file can be provided with the required arguments, instead of providing them on the commandline. The fields that can be used in the config file is described [in the Config Field here](./command_line_arguments.md)
+```
+tidlrunnercli compile --config_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml
+```
+
+To run inference:
+```
+tidlrunnercli infer --config_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml
+```
+
+#### Example - running using an aggregate config file
+* Using an aggregate config file that lists other config files under the configs field. 
+* When aggregate configfile is provided, multiple models will run in parallel and the log will go into a log file specific to each model (will not be displayed on screen)
 ```
 tidlrunnercli compile --config_path ./data/models/configs.yaml
 ```

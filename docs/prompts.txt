@@ -1,8 +1,10 @@
 
 
-## docs/command_line_arguments.md
-
-Create a markdown file docs/command_line_arguments.md that explains the command line argumetns for these commands under the docs folder in this repository. The sections in the markdown file should be the differnt commands - compile, infer, accuracy, analyze, optimize, extract, report. Don't add any other section in the markdown file - the only sections should be these. Make single table under each section. Not additional descriptions or examples or explanations are needed - only the commandline options need to be placed in compact tables. Do not capitalize the section names - keep the command names as it is.
+# docs/command_line_arguments.md: Create a markdown file docs/command_line_arguments.md that explains the command line argumetns for these commands under the docs folder in this repository. 
+The information required for this can be taken from the SETTINGS_DEFAULT dict in the file: edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py. The sections in the markdown file should be the differnt commands - for example, compile, infer, accuracy, analyze, optimize, extract, report etc. Don't add any other section in the markdown file - the only sections should be these kind of commands. Make single table under each section. No additional descriptions or examples or explanations are needed - only the commandline options need to be placed in compact tables. 
+Also add a last column called "Config Field" explaining to which fiield in the config file does the option correspond to - this information can be obtained from the dest field in SETTINGS_DEFAULT in the file edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py. Explain in text that the dest field in Config Field is expressed as a flat name, separated by '.' but there is an equivalence for this to the dict style used in the config file. 
+For example, 'session.model_path' corresponds to session['model_path'] in the configuration dictionary, and 'session.runtime_options.tensor_bits' corresponds to session['runtime_options']['tensor_bits'. Another example is: session.runtime_options.advanced_options:calibration_frames corresponds to session['runtime_options']['advanced_options:calibration_frames']
+Do not capitalize the section names - keep the command names as it is.
 For example, it is not
 ## Compile
 that I want, but
@@ -11,7 +13,5 @@ If the file already exists, replace it with new file.
 
 
 
-## docs/getting_started.md
-
-Create a .md markdown file docs/getting_started.md that helps new users to get started using this repository. Keep the information high level. Give links on how to install and use the repository. For usage, talk about (1) basic command line usage (giving only the model_path as input - that will use random inputs for calibration) (2) config file based usage in which the uer can specify any arguments.
+# docs/getting_started.md: Create a .md markdown file docs/getting_started.md that helps new users to get started using this repository. Keep the information high level. No need to  include setup instructions. Give links on how to use the repository. For usage, talk about (1) basic command line usage giving only the model_path as input (that will use random inputs for calibration) For this option, the following model can be used in the example: data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx Explain that the file command_line_arguments.md (give link to that file) shows the arguments that can be used. (2) Config file based usage using config_path based usage in which the uer can specify any argument in the config file. Use the following config file in the example: data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml Explain that the file command_line_arguments.md (give link to that file) shows the fields that can be populated in the config file. 
 
