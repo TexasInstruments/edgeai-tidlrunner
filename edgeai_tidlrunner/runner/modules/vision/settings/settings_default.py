@@ -85,7 +85,6 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | {
     ## model
     'model_id':                 {'dest': 'session.model_id', 'default': None, 'type': str, 'metavar': 'value', 'help': 'unique id of a model - optional'},
     'artifacts_folder':         {'dest': 'session.artifacts_folder', 'default': None, 'type': str, 'metavar': 'value', 'help': 'folder to store compilation artifacts'},
-    'packaged_path':            {'dest': 'session.packaged_path', 'default':'./work_dirs/{pipeline_type}_package/{target_device}/{tensor_bits}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'packaged model path'},
     ## runtime
     'runtime_name':             {'dest': 'session.name', 'default': None, 'type': str, 'metavar': 'value', 'help': 'name of the runtime session'},
     'input_mean':               {'dest': 'session.input_mean', 'default': (123.675, 116.28, 103.53), 'type': float, 'nargs': '*', 'metavar': 'value', 'help': 'mean values for input normalization (RGB channels)'},
@@ -223,3 +222,18 @@ SETTINGS_DEFAULT['report'] = SETTINGS_DEFAULT['basic'] | {
 
 COPY_SETTINGS_DEFAULT['report'] = COPY_SETTINGS_DEFAULT['basic'] | {
 }
+
+
+##########################################################################
+SETTINGS_DEFAULT['package'] = SETTINGS_DEFAULT['basic'] | {
+    'pipeline_type':        {'dest': 'common.pipeline_type', 'default': 'compile', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'}, 
+    'target_device':        {'dest': 'session.target_device', 'default': presets.TargetDeviceType.TARGET_DEVICE_AM68A, 'type': str, 'metavar': 'value', 'help': 'target device for inference (AM68A, AM69A, etc.)'},
+    'tensor_bits':          {'dest': 'session.runtime_options.tensor_bits', 'default': 8, 'type': int, 'metavar': 'value', 'help': 'quantization bit-width for tensors (8 or 16)'},
+    'work_path':            {'dest': 'common.package.work_path', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}', 'type':str, 'metavar':'value', 'help':'work path'},
+    'package_path':         {'dest': 'common.package.package_path', 'default':'./work_dirs/{pipeline_type}_package/{target_device}/{tensor_bits}', 'type':str, 'metavar':'value', 'help':'packaged path'},
+    'param_template':       {'dest': 'common.package.param_template', 'default':'data/templates/configs/param_template_package.yaml', 'type':str, 'metavar':'value', 'help':'param template path'},
+}
+
+COPY_SETTINGS_DEFAULT['package'] = COPY_SETTINGS_DEFAULT['basic'] | {
+}
+

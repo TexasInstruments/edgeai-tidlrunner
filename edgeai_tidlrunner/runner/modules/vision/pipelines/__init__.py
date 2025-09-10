@@ -32,6 +32,7 @@ from .compile_.compile import CompileModel
 from .compile_.accuracy import InferAccuracy
 from .compile_.analyze import CompileAnalyzeNoTIDL, InferAnalyzeNoTIDL, CompileAnalyzeTIDL, InferAnalyzeTIDL, InferAnalyzeFinal
 from .compile_.report import GenReport 
+from .compile_.package import PackageArtifacts
 
 from .optimize_.optimize import OptimizeModel
 # from .optimize_.optimize_gui import OptimizeModelGUI
@@ -39,22 +40,21 @@ from .optimize_.optimize import OptimizeModel
 from .utils_.extract import ExtractNodes
 
 
-command_module_name_dict_base = {
+command_module_name_dict = {
+    # compile related
     'compile':'CompileModel',
     'infer':'InferModel',
     'accuracy': ['InferAccuracy'],
     'compile+infer': ['CompileModel', 'InferModel'],
     'compile+accuracy': ['CompileModel', 'InferAccuracy'],
     'analyze': ['CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL', 'InferAnalyzeTIDL', 'InferAnalyzeFinal'],    
-    'report': ['GenReport'],    
-}
-
-command_module_name_dict_ext = {
+    'report': ['GenReport'],   
+    'package': ['PackageArtifacts'], 
+    # other
     'optimize':'OptimizeModel',
     'extract':'ExtractNodes',
 }
 
-command_module_name_dict = command_module_name_dict_base | command_module_name_dict_ext
 command_choices = list(command_module_name_dict.keys())
 command_choices = list(set(command_choices))
 

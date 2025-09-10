@@ -95,7 +95,7 @@ class CommonPipelineBase(bases.PipelineBase):
         pipeline_type = self.kwargs.get('common.pipeline_type', 'compile')
         task_type = self.kwargs.get('common.task_type', None) or None
     
-        model_basename = os.path.basename(self.model_source)
+        model_basename = os.path.basename(self.model_source) if self.model_source else ''
         model_id = self.settings[self.session_prefix].get('model_id', '')
         if not model_id:
             unique_id = utils.generate_unique_id(model_basename, num_characters=8)            
@@ -132,7 +132,9 @@ class CommonPipelineBase(bases.PipelineBase):
         run_dir = run_dir.replace('{target_device}/', target_device_slash)
         run_dir = run_dir.replace('{target_device}', target_device_str)
         run_dir = run_dir.replace('{model_name}', model_basename_wo_ext)
-        run_dir = self._replace_model_path(run_dir, '{model_path}', run_dir_tree_depth=3)
+        if self.model_source:
+            run_dir = self._replace_model_path(run_dir, '{model_path}', run_dir_tree_depth=3)
+        #
         return run_dir
 
     def _replace_model_path(self, run_dir, model_path_str, run_dir_tree_depth):
