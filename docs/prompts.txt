@@ -9,3 +9,9 @@ that I want, but
 ## compile
 If the file already exists, replace it with new file.
 
+
+
+## docs/getting_started.md
+
+Create a .md markdown file docs/getting_started.md that helps new users to get started using this repository. Keep the information high level. Give links on how to install and use the repository. For usage, talk about (1) basic command line usage (giving only the model_path as input - that will use random inputs for calibration) (2) config file based usage in which the uer can specify any arguments.
+
