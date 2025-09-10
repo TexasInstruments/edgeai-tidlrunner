@@ -27,6 +27,10 @@
 | --tidl_offload | True | bool | enable TIDL acceleration for inference |
 | --graph_optimization_level | ORT_DISABLE_ALL | int | ONNX Runtime graph optimization level |
 | --tensor_bits | 8 | int | quantization bit-width for tensors (8 or 16) |
+| --accuracy_level | 1 | int | accuracy level for TIDL offload (0, 1, 2) |
+| --debug_level | 0 | int | debug level for compile and infer |
+| --deny_list_layer_type | - | str | comma separated layer types to exclude from TIDL offload |
+| --deny_list_layer_name | - | str | comma separated layer names to exclude from TIDL offload |
 | --quantization_scale_type | None | int | type of quantization scale to use |
 | --calibration_frames | 12 | int | number of frames for quantization calibration |
 | --calibration_iterations | 12 | int | number of calibration iterations |
@@ -75,6 +79,10 @@
 | --tidl_offload | True | bool | enable TIDL acceleration for inference |
 | --graph_optimization_level | ORT_DISABLE_ALL | int | ONNX Runtime graph optimization level |
 | --tensor_bits | 8 | int | quantization bit-width for tensors (8 or 16) |
+| --accuracy_level | 1 | int | accuracy level for TIDL offload (0, 1, 2) |
+| --debug_level | 0 | int | debug level for compile and infer |
+| --deny_list_layer_type | - | str | comma separated layer types to exclude from TIDL offload |
+| --deny_list_layer_name | - | str | comma separated layer names to exclude from TIDL offload |
 | --quantization_scale_type | None | int | type of quantization scale to use |
 | --calibration_frames | 12 | int | number of frames for quantization calibration |
 | --calibration_iterations | 12 | int | number of calibration iterations |
@@ -123,6 +131,10 @@
 | --tidl_offload | True | bool | enable TIDL acceleration for inference |
 | --graph_optimization_level | ORT_DISABLE_ALL | int | ONNX Runtime graph optimization level |
 | --tensor_bits | 8 | int | quantization bit-width for tensors (8 or 16) |
+| --accuracy_level | 1 | int | accuracy level for TIDL offload (0, 1, 2) |
+| --debug_level | 0 | int | debug level for compile and infer |
+| --deny_list_layer_type | - | str | comma separated layer types to exclude from TIDL offload |
+| --deny_list_layer_name | - | str | comma separated layer names to exclude from TIDL offload |
 | --quantization_scale_type | None | int | type of quantization scale to use |
 | --calibration_frames | 12 | int | number of frames for quantization calibration |
 | --calibration_iterations | 12 | int | number of calibration iterations |
@@ -183,6 +195,10 @@
 | --tidl_offload | True | bool | enable TIDL acceleration for inference |
 | --graph_optimization_level | ORT_DISABLE_ALL | int | ONNX Runtime graph optimization level |
 | --tensor_bits | 8 | int | quantization bit-width for tensors (8 or 16) |
+| --accuracy_level | 1 | int | accuracy level for TIDL offload (0, 1, 2) |
+| --debug_level | 0 | int | debug level for compile and infer |
+| --deny_list_layer_type | - | str | comma separated layer types to exclude from TIDL offload |
+| --deny_list_layer_name | - | str | comma separated layer names to exclude from TIDL offload |
 | --quantization_scale_type | None | int | type of quantization scale to use |
 | --calibration_frames | 12 | int | number of frames for quantization calibration |
 | --calibration_iterations | 12 | int | number of calibration iterations |
