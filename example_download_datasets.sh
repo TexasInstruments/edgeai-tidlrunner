@@ -30,4 +30,10 @@
 
 
 ##################################################################
-python3 ./examples/vision/scripts/download_datasets.py
+python3 ./examples/vision/scripts/download_datasets.py --dataset_name imagenetv2c
+
+python3 ./examples/vision/scripts/download_datasets.py --dataset_name coco
+
+
+
+

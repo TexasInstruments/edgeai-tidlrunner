@@ -29,6 +29,7 @@
 
 import os
 import shutil
+import argparse
 
 import edgeai_tidlrunner
 from edgeai_tidlrunner.runner import utils
@@ -41,6 +42,11 @@ def _get_root(path):
 
 
 def download_imagenetv2(path, split='val', force_download=False):
+    print(f'INFO: downloading and preparing dataset: {path} This may take some time.')
+    if os.path.exists(path) and (not force_download):
+        print(f'INFO: dataset exists - will reuse: {path}')
+        return path, os.path.join(path, f'{split}.txt')
+    
     notice = f'\nThe ImageNetV2 dataset is small and convenient version of ImageNet.' \
                 f'\nNote: The categories in this dataset are same as the original ImageNet Dataset.' \
                 f'\n' \
@@ -54,8 +60,7 @@ def download_imagenetv2(path, split='val', force_download=False):
                 f'\n'
     
     url = 'https://huggingface.co/datasets/vaishaal/ImageNetV2/resolve/main/imagenetv2-top-images.tar.gz'
-
-    print(f'INFO: downloading and preparing dataset: {url} This may take some time.')
+    
     print(notice)
 
     root = path
@@ -90,6 +95,13 @@ def download_imagenetv2(path, split='val', force_download=False):
 
 
 def download_coco(path, split='val', force_download=False):
+    print('INFO: downloading and preparing dataset: {path} This may take some time.')
+
+    if os.path.exists(path) and (not force_download):
+        print(f'INFO: dataset exists - will reuse: {path}')
+        return path, os.path.join(path, f'{split}.txt')
+    
+
     root = path
     images_folder = os.path.join(path, split)
     annotations_folder = os.path.join(path, 'annotations')
@@ -98,7 +110,7 @@ def download_coco(path, split='val', force_download=False):
         print(f'INFO: dataset exists - will reuse: {path}')
         return path
     #
-    print('INFO: downloading and preparing dataset: {path} This may take some time.')
+
     print(f'\nCOCO Dataset:'
             f'\n    Microsoft COCO: Common Objects in Context, '
             f'\n        Tsung-Yi Lin, et.al. https://arxiv.org/abs/1405.0312\n'
@@ -116,8 +128,43 @@ def download_coco(path, split='val', force_download=False):
 
 
 def main():
-    download_imagenetv2('./data/datasets/vision/imagenetv2c')
-    download_coco('./data/datasets/vision/coco')
+    parser = argparse.ArgumentParser(description='Download datasets for EdgeAI TIDL Runner')
+    parser.add_argument('--dataset_name', 
+                       choices=['imagenetv2c', 'coco', 'all'], 
+                       default='all',
+                       help='Dataset to download: imagenetv2c, coco, or all (default: all)')
+    parser.add_argument('--dataset_path', 
+                       default='./data/datasets/vision/{dataset_name}',
+                       help='Base path where datasets will be downloaded (default: ./data/datasets/vision)')
+    parser.add_argument('--force_download', 
+                       action='store_true',
+                       help='Force re-download even if dataset already exists')
+    
+    args = parser.parse_args()
+
+
+    # Create base data path if it doesn't exist
+    os.makedirs(args.dataset_path, exist_ok=True)
+
+    if args.dataset_name == 'imagenetv2c' or args.dataset_name == 'all':
+        if '{dataset_name}' in args.dataset_path:
+            dataset_path = args.dataset_path.replace('{dataset_name}', 'imagenetv2c')
+        else :
+            dataset_path = os.path.join(args.dataset_path, 'imagenetv2c')
+        #
+        print(f"Downloading ImageNetV2c to: {dataset_path}")
+        download_imagenetv2(dataset_path, force_download=args.force_download)
+        
+    if args.dataset_name == 'coco' or args.dataset_name == 'all':
+        if '{dataset_name}' in args.dataset_path:
+            dataset_path = args.dataset_path.replace('{dataset_name}', 'coco')
+        else:
+            dataset_path = os.path.join(args.dataset_path, 'coco')
+        #
+        print(f"Downloading COCO to: {dataset_path}")
+        download_coco(dataset_path, force_download=args.force_download)
+        
+    print("Dataset download completed!")
 
 
 if __name__ == '__main__':
