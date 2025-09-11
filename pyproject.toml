@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
+requires = ["setuptools>=42", "pyyaml", "tqdm", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -9,8 +9,8 @@ description = "Edge AI TIDL Runner"
 authors = [
     { name = "Edge AI Development Team", email = "edgeai-dev@list.ti.com" }
 ]
-license = { text = "BSD-3-Clause" }
 readme = "README.md"
+license = {file = "LICENSE.md"}
 requires-python = ">=3.10"
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -20,16 +20,17 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence"
 ]
 dependencies = [
-    "numpy>=1.20.0",
     "cython",
+    "pillow",
     "requests",
     "tqdm",
-    "pillow",
     "pyyaml",
+    "pycocotools",
     "colorama",
     "munkres",
     "wurlitzer",
     "xlsxwriter"
+
 ]
 
 [project.urls]
@@ -39,9 +40,10 @@ dependencies = [
 
 [project.optional-dependencies]
 pc = [
-    "pycocotools",
-    "opencv-python",
-    "onnxsim==0.4.35"
+    "opencv-python-headless",
+    "onnxsim==0.4.35",
+    "numpy==1.23.0",
+    "osrt_model_tools@git+https://github.com/TexasInstruments/edgeai-tidl-tools.git@11_00_08_00#subdirectory=osrt-model-tools",
 ]
 evm = [
     "pycocotools"

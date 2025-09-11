@@ -310,7 +310,7 @@ def download_tidl_tools(download_url, download_path, **tidl_version_dict):
         download_tidl_tools_path_until_dev, rel_name = os.path.split(download_tidl_tools_path_until_rel)
         download_tidl_tools_path_symlink_src = os.path.join(rel_name, tidl_tools_name)
         os.chdir(download_tidl_tools_path_until_dev)
-        os.remove(tidl_tools_name)
+        remove_link_stauts = os.remove(tidl_tools_name) if os.path.exists(tidl_tools_name) else None
         os.symlink(download_tidl_tools_path_symlink_src, tidl_tools_name)
     except:
         print(f"ERROR: symlink failed: {download_tidl_tools_path} to {download_tidl_tools_path_symlink_src}")
@@ -325,7 +325,7 @@ def download_tidl_tools_package_11_01(install_path, tools_version, tools_type):
     assert tools_version in expected_tools_version, f"ERROR: incorrect tools_version passed:{tools_version} - expected:{expected_tools_version}"
     tidl_tools_version_name=tools_version
     tidl_tools_release_label="r11.1"
-    tidl_tools_release_id="11_01_02_00"
+    tidl_tools_release_id="11_01_nightly45"
     c7x_firmware_version="11_01_00_00" #TODO - udpate this for 11.1
     c7x_firmware_version_possible_update=None #TODO - udpate this for 11.1
     print(f"INFO: you have chosen to install tidl_tools version:{tidl_tools_release_id} with default SDK firmware version set to:{c7x_firmware_version}")
@@ -339,11 +339,11 @@ def download_tidl_tools_package_11_01(install_path, tools_version, tools_type):
 
     tidl_tools_type_suffix=("_gpu" if isinstance(tools_type,str) and "gpu" in tools_type else "")
     target_soc_download_urls = {
-        "TDA4VM": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/TDA4VM",
-        "AM68A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM68A",
-        "AM69A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
-        "AM67A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM67A",
-        "AM62A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM62A",
+        "TDA4VM": f"http://tidl-ta-01.dhcp.ti.com/tidl_tools/45/NIGHTLY/j721e",
+        "AM68A": f"http://tidl-ta-01.dhcp.ti.com/tidl_tools/45/NIGHTLY/j721s2",
+        "AM69A": f"http://tidl-ta-01.dhcp.ti.com/tidl_tools/45/NIGHTLY/j784s4",
+        "AM67A": f"http://tidl-ta-01.dhcp.ti.com/tidl_tools/45/NIGHTLY/j722s",
+        "AM62A": f"http://tidl-ta-01.dhcp.ti.com/tidl_tools/45/NIGHTLY/am62a",
     }
     tidl_version_dict = dict(version=tidl_tools_version_name, release_label=tidl_tools_release_label,
                              release_id=tidl_tools_release_id, tools_type=tidl_tools_type_suffix,
@@ -491,8 +491,48 @@ def setup_tidl_tools(install_path, tools_version, tools_type):
 
 
 ###############################################################################
+# this function is the entrypoint for download_tidlrunner_tools as specified in pyproject.toml
+def install_package(*install_args, install_cmd="install"):
+    """Install osrt_model_tools package."""
+    
+    package_name = install_args[0].split('@')[0].split('==')[0]
+    # Check if package is already installed
+    if importlib.util.find_spec(package_name) is not None:
+        print(f"INFO: {package_name} is already installed")
+        return True
+    try:
+        print(f"INFO: Installing {package_name}")
+        install_options = [str(arg) for arg in install_args]
+        install_cmd_list = ["python3", "-m", "pip", install_cmd, "--no-input"] + install_options
+        print("INFO: installing {package_name} using:", " ".join(install_cmd_list))
+        result = subprocess.run(install_cmd_list, check=True, capture_output=True, text=True)
+        
+        print(f"SUCCESS: {package_name} installed successfully")
+        if result.stdout:
+            print("STDOUT:", result.stdout)
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"ERROR: Failed to install {package_name}")
+        print(f"Return code: {e.returncode}")
+        if e.stdout:
+            print("STDOUT:", e.stdout)
+        if e.stderr:
+            print("STDERR:", e.stderr)
+        return False
+    except Exception as e:
+        print(f"ERROR: Unexpected error during installation: {e}")
+        return False
+
+
+def uninstall_package(*install_args, install_cmd="uninstall"):
+    install_cmd(*install_args, install_cmd=install_cmd)
+	
+	
+###############################################################################
 # this function is the entrypoint for download_tidl_tools as specified in pyproject.toml
 def download():
+    uninstall_package("onnxruntime")
+	
     install_path = os.path.dirname(os.path.realpath(__file__))
     tools_version = os.environ.get("TIDL_TOOLS_VERSION", TIDL_TOOLS_VERSION_DEFAULT)
     tools_type = os.environ.get("TIDL_TOOLS_TYPE", TIDL_TOOLS_TYPE_DEFAULT)

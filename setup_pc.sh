@@ -42,6 +42,7 @@ download-tidlrunner-tools
 #######################################################################
 pip3 install -e ./tools --verbose
 
+
 # download-tidl-tools is a script that defined in and installed via tools/pyproject.toml
 # download and install tidl-tools - this invokes: python3 tools/tidl_tools_package/download.py
 echo "Running: download-tidl-tools..."

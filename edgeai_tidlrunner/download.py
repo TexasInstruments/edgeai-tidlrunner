@@ -68,7 +68,7 @@ def install_package(*install_args):
 
 
 def main():
-    install_package("osrt_model_tools@git+https://github.com/TexasInstruments/edgeai-tidl-tools.git@11_00_08_00#subdirectory=osrt-model-tools")
+    #install_package("osrt_model_tools@git+https://github.com/TexasInstruments/edgeai-tidl-tools.git@11_00_08_00#subdirectory=osrt-model-tools")
     install_package("onnx-graphsurgeon==0.3.26", "--extra-index-url", "https://pypi.ngc.nvidia.com")
 
 

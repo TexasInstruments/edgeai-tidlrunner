@@ -94,6 +94,18 @@ def download_imagenetv2(path, split='val', force_download=False):
     return extract_path, split_file
 
 
+def download_imagenet(path, split='val', force_download=False):
+    notice = '''
+        It is required to download ImageNet 2012 dataset from
+        https://huggingface.co/datasets/ILSVRC/imagenet-1k/tree/main/data
+        OR
+        https://image-net.org/challenges/LSVRC/2012/2012-downloads.php
+        Download ILSVRC2012_img_val.tar.gz from one of the above links. Then untar and arrange in folders - each categorey in a different folder - based on the ground truth labels.
+        The following script can also be used to untar and arrange the data in folders: https://github.com/pytorch/examples/blob/main/imagenet/extract_ILSVRC.sh
+        '''
+    print(notice)
+
+ 
 def download_coco(path, split='val', force_download=False):
     print('INFO: downloading and preparing dataset: {path} This may take some time.')
 
