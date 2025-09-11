@@ -9,8 +9,7 @@ There is also a Pythonic interface for the runner module, for more flexibility.
 
 ## Extensions - Using custom datasets & models
 You have tried the off-the-shelf examples provided in this repository and is ready to compile own models and datasets - then look as this section on custom datasets & models: 
-* [Custom models](./custom_models.md)
-* [Custom datasets](./custom_datasets.md)
+* [Custom models and datasets](./custom_models_and_datasets.md)
 
 <hr>
 <hr>
