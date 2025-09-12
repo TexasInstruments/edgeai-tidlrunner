@@ -32,12 +32,9 @@ from .compile_.compile import CompileModel
 from .compile_.accuracy import InferAccuracy
 from .compile_.analyze import CompileAnalyzeNoTIDL, InferAnalyzeNoTIDL, CompileAnalyzeTIDL, InferAnalyzeTIDL, InferAnalyzeFinal
 from .compile_.report import GenReport 
-from .compile_.package import PackageArtifacts
-
 from .optimize_.optimize import OptimizeModel
-# from .optimize_.optimize_gui import OptimizeModelGUI
-
 from .utils_.extract import ExtractNodes
+from .utils_.package import PackageArtifacts
 
 
 command_module_name_dict = {

@@ -272,7 +272,7 @@ class PackageArtifacts(CommonPipelineBase):
                     model_path = pipeline_param['session']['model_path']
                     model_path = model_path[0] if isinstance(model_path, (list,tuple)) else model_path
 
-                    run_dir = pipeline_param['session']['run_dir']
+                    # run_dir = pipeline_param['session']['run_dir']
                     run_dir_basename = os.path.basename(run_dir)
                     run_dir_splits = run_dir_basename.split('_')
                     artifact_id = '_'.join(run_dir_splits[:2]) if not custom_model else None
@@ -293,12 +293,12 @@ class PackageArtifacts(CommonPipelineBase):
                                     'shortlisted': is_shortlisted,
                                     'recommended': is_recommended}
                     packaged_artifacts_dict.update({artifact_id:artifacts_dict})
-                    print(utils.log_color('SUCCESS', 'finished packaging', run_dir))
+                    print(utils.log_color('SUCCESS', 'finished packaging', f'{run_dir} to {out_dir}'))
                 else:
-                    print(utils.log_color('WARNING', 'could not package', run_dir))
+                    print(utils.log_color('WARNING', 'could not package', f'{run_dir}'))
                 #
             except:
-                print(utils.log_color('WARNING', 'could not package', run_dir))
+                print(utils.log_color('WARNING', 'could not package', f'{run_dir}'))
             #
             sys.stdout.flush()
         #
