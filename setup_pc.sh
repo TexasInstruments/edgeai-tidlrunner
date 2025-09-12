@@ -58,7 +58,8 @@ install_if_missing() {
 }
 
 # Dependencies for cmake, onnx, pillow-simd, tidl-graph-visualization
-packages=("cmake" "libffi-dev" "libjpeg-dev" "zlib1g-dev" "protobuf-compiler" "graphviz" "graphviz-dev")
+# TBD: "graphviz-dev"
+packages=("cmake" "libffi-dev" "libjpeg-dev" "zlib1g-dev" "protobuf-compiler" "graphviz")
 
 for package in "${packages[@]}"; do
     install_if_missing "$package"

@@ -28,9 +28,9 @@ dependencies = [
     "pycocotools",
     "colorama",
     "munkres",
+    "json_tricks",
     "wurlitzer",
     "xlsxwriter"
-
 ]
 
 [project.urls]
@@ -41,9 +41,9 @@ dependencies = [
 [project.optional-dependencies]
 pc = [
     "opencv-python-headless",
-    "onnxsim==0.4.35",
     "numpy==1.23.0",
-    "osrt_model_tools@git+https://github.com/TexasInstruments/edgeai-tidl-tools.git@11_00_08_00#subdirectory=osrt-model-tools",
+    "onnxsim==0.4.35",
+    "osrt_model_tools@git+ssh://git@bitbucket.itg.ti.com/processor-sdk-vision/edgeai-tidl-tools.git@2025/kunal_opt_merge#subdirectory=osrt-model-tools", ## "osrt_model_tools@git+https://github.com/TexasInstruments/edgeai-tidl-tools.git@11_00_08_00#subdirectory=osrt-model-tools",
 ]
 evm = [
     "pycocotools"
@@ -68,60 +68,3 @@ include-package-data = true
 where = ["."]
 include = ["edgeai_tidlrunner*"]
 
-[tool.black]
-line-length = 88
-target-version = ['py310']
-include = '\.pyi?$'
-extend-exclude = '''
-/(
-  # directories
-  \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | build
-  | dist
-)/
-'''
-
-[tool.isort]
-profile = "black"
-line_length = 88
-
-[tool.flake8]
-max-line-length = 88
-extend-ignore = ["E203", "W503"]
-exclude = [
-    ".git",
-    "__pycache__",
-    "build",
-    "dist",
-    ".eggs",
-    "*.egg-info",
-    ".venv",
-    ".tox"
-]
-
-[tool.mypy]
-python_version = "3.10"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_no_return = true
-warn_unreachable = true
-strict_equality = true
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py", "*_test.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
-addopts = "-v --tb=short"

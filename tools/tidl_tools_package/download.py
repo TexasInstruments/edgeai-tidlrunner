@@ -525,7 +525,7 @@ def install_package(*install_args, install_cmd="install"):
 
 
 def uninstall_package(*install_args, install_cmd="uninstall"):
-    install_cmd(*install_args, install_cmd=install_cmd)
+    install_package(*install_args, install_cmd=install_cmd)
 	
 	
 ###############################################################################
