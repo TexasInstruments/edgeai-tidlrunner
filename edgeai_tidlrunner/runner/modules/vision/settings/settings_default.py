@@ -74,7 +74,7 @@ SETTINGS_DEFAULT['optimize'] = SETTINGS_DEFAULT['basic'] | {
     'optimize_model':                   {'dest': 'common.optimize.optimize_model', 'default': True, 'type': utils.str_to_bool_or_none_or_dict, 'metavar': 'value', 'help': 'enable model optimization'},
     'simplify_model':                   {'dest': 'common.optimize.simplify_mode', 'default': 'pre', 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable model simplification optimizations'},
     'shape_inference':                  {'dest': 'common.optimize.shape_inference_mode', 'default': 'all', 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable shape inference during optimization'},
-    'input_optimization':               {'dest': 'session.input_optimization', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32'},
+    'input_optimization':               {'dest': 'session.input_optimization', 'default': False, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32'},
     'input_mean':                       {'dest': 'session.input_mean', 'default': (123.675, 116.28, 103.53), 'type': float, 'nargs': '*', 'metavar': 'value', 'help': 'mean values for input normalization (RGB channels)'},
     'input_scale':                      {'dest': 'session.input_scale', 'default': (0.017125, 0.017507, 0.017429), 'type': float, 'nargs': '*', 'metavar': 'value', 'help': 'scale values for input normalization (RGB channels)'},
 }
@@ -121,7 +121,8 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | SETTINGS_DEFAULT['opti
     'calibration_iterations':   {'dest': 'session.runtime_options.advanced_options:calibration_iterations', 'default': 12, 'type': int, 'metavar': 'value', 'help': 'number of calibration iterations'},
     'quant_params_file_path':   {'dest': 'session.runtime_options.advanced_options:quant_params_proto_path', 'default': argparse.SUPPRESS, 'type': utils.str_or_none_or_bool, 'metavar': 'value', 'help': 'path to quantization parameters file'},
     'max_num_subgraph_nodes':   {'dest': 'session.runtime_options.advanced_options:max_num_subgraph_nodes', 'default': 1536, 'type': int, 'metavar': 'value', 'help': 'maximum number of nodes in a subgraph'},    
-    'output_feature_16bit_names_list':   {'dest': 'session.runtime_options.advanced_options:output_feature_16bit_names_list', 'default': argparse.SUPPRESS, 'type': str, 'metavar': 'value', 'help': 'list of output layers to keep in 16-bit precision'},        
+    'output_feature_16bit_names_list':   {'dest': 'session.runtime_options.advanced_options:output_feature_16bit_names_list', 'default': argparse.SUPPRESS, 'type': str, 'metavar': 'value', 'help': 'list of output layers to keep in 16-bit precision'},
+    'add_data_convert_ops':    {'dest': 'session.runtime_options.advanced_options:add_data_convert_ops', 'default': presets.DataConvertOps.DATA_CONVERT_OPS_DISABLE, 'type': int, 'metavar': 'value', 'help': 'data convert in DSP (0: disable, 1: input, 2: output, 3: input and output) - otherwise it will happen in ARM'},        
     # runtime_settings.runtime_options.object_detection
     'meta_arch_type':           {'dest': 'session.runtime_options.object_detection:meta_arch_type', 'default': argparse.SUPPRESS, 'type': int, 'metavar': 'value', 'help': 'meta architecture type for object detection'},
     'meta_arch_file_path':      {'dest': 'session.runtime_options.object_detection:meta_layers_names_list', 'default': argparse.SUPPRESS, 'type': str, 'metavar': 'value', 'help': 'path to meta architecture file'},
