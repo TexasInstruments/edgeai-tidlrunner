@@ -43,8 +43,13 @@ def _get_target_module(target_module_name):
     return target_module
 
 
-def _run_command(command_key, pipeline_name, command_kwargs, capture_log):
+def _run_command(task_index, command_key, pipeline_name, command_kwargs, capture_log):
     command_kwargs = copy.deepcopy(command_kwargs)
+    parallel_devices = command_kwargs['common.parallel_devices']
+    if parallel_devices is not None and parallel_devices > 0:
+        device_index = task_index % parallel_devices
+        os.environ['CUDA_VISIBLE_DEVICES'] = str(device_index)
+    #
     command_kwargs['common.capture_log'] = capture_log
     target_module_name = command_kwargs['common.target_module']
     target_module = getattr(modules, target_module_name)
@@ -149,6 +154,7 @@ def _run(model_command_dict):
     multiple_models = len(model_command_dict) > 1
     multiple_commands = len(list(model_command_dict.values())[0]) > 1
 
+    task_index = 0
     task_entries = {}
     for model_key, model_command_list in model_command_dict.items():
         task_list = []
@@ -157,11 +163,12 @@ def _run(model_command_dict):
             # while running multiple configs, it is better to use parallel processing
             parallel_processes = command_kwargs['common.parallel_processes']
             capture_log = bases.settings_base.CaptureLogModes.CAPTURE_LOG_MODE_ON if parallel_processes and multiple_models else command_kwargs['common.capture_log']
-            task_func = functools.partial(_run_command, command_key, pipeline_name, command_kwargs, capture_log)
+            task_func = functools.partial(_run_command, task_index, command_key, pipeline_name, command_kwargs, capture_log)
             model_key = model_key or 'model'
             proc_name = f'{model_key}:{command_key}:{pipeline_name}'
             task_entry = {'proc_name':proc_name, 'proc_func':task_func}
             task_list.append(task_entry)
+            task_index = task_index + 1
         #
         task_entries.update({model_key:task_list})
     #

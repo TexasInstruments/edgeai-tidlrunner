@@ -70,6 +70,7 @@ def main():
     print(f"INFO: machine architecture found: {arch}")   
     target_machine = 'pc' if 'x86' in arch or 'amd64' in arch else 'evm'
     print(f"INFO: setting target_machine to: {target_machine}")
+    
     main_with_proper_environment(target_machine=target_machine)
 
 

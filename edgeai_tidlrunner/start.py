@@ -45,6 +45,26 @@ class MainRunner(runner.bases.PipelineBase):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self._set_parallel_devices()
+
+    def _set_parallel_devices(self):
+        try:
+            if self.kwargs['session.target_machine'] == 'pc' and self.kwargs['common.parallel_devices'] is None:
+                print(f"INFO: model compilation in PC can use CUDA gpus (if it is available) - setup using setup_pc_gpu.sh")
+                num_cuda_gpus = self._get_num_cuda_gpus()
+                print(f'INFO: setting parallel_devices to the number of CUDA gpus found: {num_cuda_gpus}')
+                sys.argv += [ f'--parallel_devices={num_cuda_gpus}' ]
+            #
+        except:
+            print("\nINFO: could not find CUDA gpus - parallel_devices will not be used.")
+        #
+
+    def _get_num_cuda_gpus(self):
+        nvidia_smi_command = 'nvidia-smi --list-gpus | wc -l'
+        proc = subprocess.Popen([nvidia_smi_command], stdout=subprocess.PIPE, shell=True)
+        out_ret, err_ret = proc.communicate()
+        num_cuda_gpus = int(out_ret)
+        return num_cuda_gpus
 
     @classmethod
     def _get_target_module(cls, target_module_name):
