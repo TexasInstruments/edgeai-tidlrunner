@@ -24,16 +24,6 @@ This package provides all the resources to enables all these steps. This will be
 [Setup instructions](docs/setup.md)
 
 
-## Download datasets to run examples in this repository (optional)
-
-Model compilation can be run using random data - if the intention is just to measure latency / FPS. However, to actually check the correctness of output / accuracy, actual data is required.
-
-To run example models in this repository with actual data, download example datasets:
-```
-./example_download_datasets.sh
-```
-
-
 ## Getting Started
 
 [Getting started instructions and examples](docs/getting_started.md)

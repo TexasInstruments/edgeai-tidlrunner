@@ -23,7 +23,7 @@ Example:
 
 This script installs the CUDA based tidl-tools and nvidia-hpc-sdk. The user has to make sure the system has CUDA gpus appropriate nvidia graphics drivers. 
 
-### Chaning the tidl-tools version
+### Changing the tidl-tools version
 Version of tidl-tools can be specified during the setup process.
 
 ```
@@ -41,12 +41,19 @@ TIDL_TOOLS_VERSION="11.0" ./setup_pc_gpu.sh
 * This is automatically taken care [restart_with_proper_environment in rtwrapper here](edgeai_tidlrunner/rtwrapper/set_env.py). See how it is used in [main.py](edgeai_tidlrunner/main.py)
 
 
-<hr>
-
-
-### To setup on EVM, run:
+### To setup on EVM
+Run this on the EVM to setup on the EVM
 
 ```
 ./setup_evm.sh
 ```
 
+
+### Download datasets to run examples in this repository (optional)
+
+Model compilation can be run using random data - if the intention is just to measure latency / FPS. However, to actually check the correctness of output / accuracy, actual data is required.
+
+To run example models in this repository with actual data, download example datasets:
+```
+./example_download_datasets.sh
+```
