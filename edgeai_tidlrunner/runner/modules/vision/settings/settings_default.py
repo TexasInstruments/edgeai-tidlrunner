@@ -65,18 +65,35 @@ SETTINGS_DEFAULT['basic'] = settings_base.SETTING_PIPELINE_RUNNER_ARGS_DICT | {
 COPY_SETTINGS_DEFAULT['basic'] = {}
 
 ##########################################################################
+SETTINGS_DEFAULT['optimize'] = SETTINGS_DEFAULT['basic'] | {
+    'model_path':                       {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
+    'config_path':                      {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'},    
+    'output_path':                      {'dest': 'session.run_path', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'output model path'},
+    'pipeline_type':                    {'dest': 'common.pipeline_type', 'default': 'optimize', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},    
+    'optimize_model':                   {'dest': 'common.optimize.optimize_model', 'default': True, 'type': utils.str_to_bool_or_none_or_dict, 'metavar': 'value', 'help': 'enable model optimization'},
+    'simplify_model':                   {'dest': 'common.optimize.simplify_mode', 'default': 'pre', 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable model simplification optimizations'},
+    'shape_inference':                  {'dest': 'common.optimize.shape_inference_mode', 'default': 'all', 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable shape inference during optimization'},
+    'input_optimization':                  {'dest': 'common.optimize.add_input_normalization', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32'},
+}
+
+COPY_SETTINGS_DEFAULT['optimize'] = COPY_SETTINGS_DEFAULT['basic'] | {
+}
+
+##########################################################################
 # compile can be followed by infer, analyze or accuracy
 # compile is used to indicate a more sophisticated import - populate real data_path for that.
 ##########################################################################
-SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | {
+SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | SETTINGS_DEFAULT['optimize'] | {
     'model_path':               {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
-    'config_path':              {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'},    
-    'output_path':              {'dest': 'session.run_dir', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'output model path'},
+    'config_path':              {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'}, 
+    'work_path':                {'dest': 'session.work_path', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}', 'type':str, 'metavar':'value', 'help':'work path'},   
+    'output_path':              {'dest': 'session.run_path', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'output model path'},
     'pipeline_type':            {'dest': 'common.pipeline_type', 'default': 'compile', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},
     # optimizations
     'simplify_model':           {'dest': 'common.optimize.simplify_model', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable model simplification optimizations'},
     'optimize_model':           {'dest': 'common.optimize.optimize_model', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable model optimization'},
     'shape_inference':          {'dest': 'common.optimize.shape_inference', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable shape inference during optimization'},
+    'input_optimization':       {'dest': 'common.optimize.add_input_normalization', 'default': False, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32'},
     # common options
     'task_type':                {'dest': 'common.task_type', 'default': None, 'type': str, 'metavar': 'value', 'help': 'type of AI task (classification, detection, segmentation etc.)'},
     'num_frames':               {'dest': 'common.num_frames', 'default': 10, 'type': int, 'metavar': 'value', 'help': 'number of frames to process'},
@@ -128,7 +145,7 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | {
     'postprocess_name':         {'dest': 'postprocess.name', 'default': None, 'type': str, 'metavar': 'value', 'help': 'name of the postprocessing pipeline'},
 }
 
-COPY_SETTINGS_DEFAULT['compile'] = COPY_SETTINGS_DEFAULT['basic'] | {
+COPY_SETTINGS_DEFAULT['compile'] = COPY_SETTINGS_DEFAULT['basic'] | COPY_SETTINGS_DEFAULT['optimize'] | {
     'session.data_layout': 'preprocess.data_layout', 
     'postprocess.data_layout': 'preprocess.data_layout'     
 }
@@ -181,26 +198,13 @@ SETTINGS_DEFAULT['analyze'] = SETTINGS_DEFAULT['infer'] | {
 COPY_SETTINGS_DEFAULT['analyze'] = COPY_SETTINGS_DEFAULT['infer'] | {
 }
 
-##########################################################################
-SETTINGS_DEFAULT['optimize'] = SETTINGS_DEFAULT['basic'] | {
-    'model_path':                       {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
-    'config_path':                      {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'},    
-    'output_path':                      {'dest': 'session.run_dir', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'output model path'},
-    'pipeline_type':                    {'dest': 'common.pipeline_type', 'default': 'optimize', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},    
-    'simplify_model':                   {'dest': 'common.optimize.simplify_model', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable model simplification optimizations'},
-    'optimize_model':                   {'dest': 'common.optimize.optimize_model', 'default': True, 'type': utils.str_to_bool_or_none_or_dict, 'metavar': 'value', 'help': 'enable model optimization'},
-    'shape_inference':                  {'dest': 'common.optimize.shape_inference', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable shape inference during optimization'},
-}
-
-COPY_SETTINGS_DEFAULT['optimize'] = COPY_SETTINGS_DEFAULT['basic'] | {
-}
-
 
 ##########################################################################
 SETTINGS_DEFAULT['extract'] = SETTINGS_DEFAULT['basic'] | {
     'model_path':             {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
     'config_path':            {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'},
-    'output_path':            {'dest': 'session.run_dir', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'output model path'},
+    'work_path':              {'dest': 'session.work_path', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}', 'type':str, 'metavar':'value', 'help':'work path'},
+    'output_path':            {'dest': 'session.run_path', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'output model path'},
     'pipeline_type':          {'dest': 'common.pipeline_type', 'default': 'extract', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'}, 
     'extract_mode':           {'dest': 'common.extract.mode', 'default': 'operators', 'type': str, 'metavar': 'value', 'choices': ['submodules', 'submodule', 'start2end', 'operators'], 'help': 'extraction mode (submodules, submodule, start2end, operators)'},
     'submodule_name':         {'dest': 'common.extract.submodule_name', 'default': None, 'type': str, 'metavar': 'value', 'help': 'name of specific submodule to extract'},

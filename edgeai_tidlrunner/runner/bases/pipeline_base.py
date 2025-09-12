@@ -258,9 +258,9 @@ class PipelineBase():
     def prepare(self):
         capture_log = self.settings['common']['capture_log']
         log_file = self.settings['common']['log_file']
-        if capture_log and log_file and hasattr(self, 'run_dir') and self.run_dir:
+        if capture_log and log_file and hasattr(self, 'run_path') and self.run_path:
             if not log_file.startswith('/') and not log_file.startswith('.'):
-                log_file =  os.path.join(self.run_dir, log_file)
+                log_file =  os.path.join(self.run_path, log_file)
             #
             os.makedirs(os.path.dirname(log_file), exist_ok=True)       
             with open(log_file, 'a') as log_fp:
@@ -268,7 +268,7 @@ class PipelineBase():
                     return self._prepare()
                 #
             #
-        # elif log_file and hasattr(self, 'run_dir') and self.run_dir:
+        # elif log_file and hasattr(self, 'run_path') and self.run_path:
         #     with open(log_file, 'a') as log_fp:
         #         tee_stdout = utils.TeeLogWriter([sys.stdout, log_fp])
         #         tee_stderr = utils.TeeLogWriter([sys.stderr, log_fp])                
@@ -282,9 +282,9 @@ class PipelineBase():
     def run(self):
         capture_log = self.settings['common']['capture_log']
         log_file = self.settings['common']['log_file']
-        if capture_log and log_file and hasattr(self, 'run_dir') and self.run_dir:
+        if capture_log and log_file and hasattr(self, 'run_path') and self.run_path:
             if not log_file.startswith('/') and not log_file.startswith('.'):
-                log_file =  os.path.join(self.run_dir, log_file)
+                log_file =  os.path.join(self.run_path, log_file)
             #        
             os.makedirs(os.path.dirname(log_file), exist_ok=True)
             with open(log_file, 'a') as log_fp:
@@ -292,7 +292,7 @@ class PipelineBase():
                     return self._run()
                 #
             #
-        # elif log_file and hasattr(self, 'run_dir') and self.run_dir:
+        # elif log_file and hasattr(self, 'run_path') and self.run_path:
         #     with open(log_file, 'a') as log_fp:
         #         tee_stdout = utils.TeeLogWriter([sys.stdout, log_fp])
         #         tee_stderr = utils.TeeLogWriter([sys.stderr, log_fp])                

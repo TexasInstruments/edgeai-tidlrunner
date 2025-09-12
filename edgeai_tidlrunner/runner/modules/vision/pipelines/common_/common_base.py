@@ -46,24 +46,30 @@ class CommonPipelineBase(bases.PipelineBase):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        if 'session' in self.settings and self.settings[self.session_prefix].get('model_path', None):
-            common_kwargs = self.settings['common']                 
-            config_path = os.path.dirname(common_kwargs['config_path']) if common_kwargs['config_path'] else None            
-            model_source = self.settings[self.session_prefix]['model_path']       
-            self.model_source = self._get_file_path(model_source, source_dir=config_path)
+        self.work_path = None
+        self.model_source = None
+        self.model_folder = None
+        self.model_path = None
+        self.run_path = None
+        if 'session' in self.settings:
+            if 'work_path' in self.settings[self.session_prefix]:
+                work_path = self.settings[self.session_prefix]['work_path']
+                self.work_path = self._build_run_path(work_path)
+            #
+            if self.settings[self.session_prefix].get('model_path', None):
+                common_kwargs = self.settings['common']                 
+                config_path = os.path.dirname(common_kwargs['config_path']) if common_kwargs['config_path'] else None            
+                model_source = self.settings[self.session_prefix]['model_path']       
+                self.model_source = self._get_file_path(model_source, source_dir=config_path)
 
-            run_dir = self.settings[self.session_prefix]['run_dir']
-            self.run_dir = self._build_run_dir(run_dir)
+                run_path = self.settings[self.session_prefix]['run_path']
+                self.run_path = self._build_run_path(run_path)
 
-            model_basename = os.path.basename(self.model_source)
-            self.model_folder = os.path.join(self.run_dir, 'model')
-            self.model_path = os.path.join(self.model_folder, model_basename)
-            self.settings[self.session_prefix]['model_path'] = self.model_path
-        else:
-            self.model_source = None
-            self.model_folder = None
-            self.model_path = None
-            self.run_dir = None
+                model_basename = os.path.basename(self.model_source)
+                self.model_folder = os.path.join(self.run_path, 'model')
+                self.model_path = os.path.join(self.model_folder, model_basename)
+                self.settings[self.session_prefix]['model_path'] = self.model_path
+            #
 
     def _prepare(self):
         pass
@@ -91,7 +97,7 @@ class CommonPipelineBase(bases.PipelineBase):
             shutil.copy2(model_source, model_folder)
         #
 
-    def _build_run_dir(self, run_dir):
+    def _build_run_path(self, run_path):
         pipeline_type = self.kwargs.get('common.pipeline_type', 'compile')
         task_type = self.kwargs.get('common.task_type', None) or None
     
@@ -122,29 +128,30 @@ class CommonPipelineBase(bases.PipelineBase):
 
         runtime_name = self.kwargs.get('session.name', '') or ''
 
-        run_dir = run_dir.replace('{pipeline_type}', pipeline_type)
-        run_dir = run_dir.replace('{model_id}_', model_id_underscore)
-        run_dir = run_dir.replace('{model_id}', model_id)
-        run_dir = run_dir.replace('{runtime_name}', runtime_name)        
-        run_dir = run_dir.replace('{model_ext}', model_ext)        
-        run_dir = run_dir.replace('{tensor_bits}/', tensor_bits_slash)
-        run_dir = run_dir.replace('{tensor_bits}', tensor_bits_str)
-        run_dir = run_dir.replace('{target_device}/', target_device_slash)
-        run_dir = run_dir.replace('{target_device}', target_device_str)
-        run_dir = run_dir.replace('{model_name}', model_basename_wo_ext)
+        run_path = run_path.replace('{work_path}', self.work_path) if self.work_path else run_path
+        run_path = run_path.replace('{pipeline_type}', pipeline_type)
+        run_path = run_path.replace('{model_id}_', model_id_underscore)
+        run_path = run_path.replace('{model_id}', model_id)
+        run_path = run_path.replace('{runtime_name}', runtime_name)        
+        run_path = run_path.replace('{model_ext}', model_ext)        
+        run_path = run_path.replace('{tensor_bits}/', tensor_bits_slash)
+        run_path = run_path.replace('{tensor_bits}', tensor_bits_str)
+        run_path = run_path.replace('{target_device}/', target_device_slash)
+        run_path = run_path.replace('{target_device}', target_device_str)
+        run_path = run_path.replace('{model_name}', model_basename_wo_ext)
         if self.model_source:
-            run_dir = self._replace_model_path(run_dir, '{model_path}', run_dir_tree_depth=3)
+            run_path = self._replace_model_path(run_path, '{model_path}', run_path_tree_depth=3)
         #
-        return run_dir
+        return run_path
 
-    def _replace_model_path(self, run_dir, model_path_str, run_dir_tree_depth):
-        run_dir_tree_depth = 3
+    def _replace_model_path(self, run_path, model_path_str, run_path_tree_depth):
+        run_path_tree_depth = 3
         model_path_tree = os.path.abspath(os.path.splitext(self.model_source)[0]).split(os.sep)
-        if len(model_path_tree) > run_dir_tree_depth:
-            model_path_tree = model_path_tree[-run_dir_tree_depth:]
+        if len(model_path_tree) > run_path_tree_depth:
+            model_path_tree = model_path_tree[-run_path_tree_depth:]
         #
-        run_dir = run_dir.replace(model_path_str, '_'.join(model_path_tree))    
-        return run_dir    
+        run_path = run_path.replace(model_path_str, '_'.join(model_path_tree))    
+        return run_path    
     
     def info(self):
         print(f'INFO: Common pipeline base - {__file__}')
@@ -154,7 +161,7 @@ class CommonPipelineBase(bases.PipelineBase):
 
     def _write_params(self, filename):
         params = utils.pretty_object(self.settings)
-        param_file = os.path.join(self.run_dir, filename)
+        param_file = os.path.join(self.run_path, filename)
         with open(param_file, 'w') as fp:
             yaml.dump(params, fp)
         #

@@ -53,17 +53,17 @@ class GenReport(bases.PipelineBase):
         print(f'INFO: starting gen report')
         self.run_report(self.kwargs)
 
-    def get_run_dirs(self, work_dir):
-        run_dirs = glob.glob(f'{work_dir}/*')
-        run_dirs = [f for f in run_dirs if os.path.isdir(f)]
-        return run_dirs
+    def get_run_paths(self, work_dir):
+        run_paths = glob.glob(f'{work_dir}/*')
+        run_paths = [f for f in run_paths if os.path.isdir(f)]
+        return run_paths
 
     def run_rewrite_results(self, work_dir, results_yaml):
-        run_dirs = self.get_run_dirs(work_dir)
+        run_paths = self.get_run_paths(work_dir)
         results = {}
-        for run_dir in run_dirs:
-            result_yaml = os.path.join(run_dir, 'result.yaml')
-            config_yaml = os.path.join(run_dir, 'config.yaml')
+        for run_path in run_paths:
+            result_yaml = os.path.join(run_path, 'result.yaml')
+            config_yaml = os.path.join(run_path, 'config.yaml')
             result_or_config_yaml = None
             if os.path.exists(result_yaml):
                 result_or_config_yaml = result_yaml
@@ -125,14 +125,14 @@ class GenReport(bases.PipelineBase):
                 self.run_rewrite_results(work_dir, results_yaml)
             #
             work_dir_splits = os.path.normpath(work_dir).split(os.sep)
-            run_dirs = self.get_run_dirs(work_dir)
+            run_paths = self.get_run_paths(work_dir)
             work_dir_key = '_'.join(work_dir_splits[-2:])
             if skip_pattern is None or skip_pattern not in work_dir_key:
                 with open(results_yaml) as rfp:
                     results = yaml.safe_load(rfp)
                     results_collection[work_dir_key] = results
-                    if len(run_dirs) > work_dir_results_max_len:
-                        work_dir_results_max_len = len(run_dirs)
+                    if len(run_paths) > work_dir_results_max_len:
+                        work_dir_results_max_len = len(run_paths)
                         work_dir_results_max_id = work_id
                         work_dir_results_max_name = work_dir_key
                         work_dir_results_max_path = work_dir
@@ -164,20 +164,20 @@ class GenReport(bases.PipelineBase):
         results_table = dict()
         metric_title = [m+'_metric' for m in results_collection.keys()]
         performance_title = [m+'_'+p for m in results_collection.keys() for p in performance_keys]
-        title_line = ['serial_num', 'model_id', 'runtime_name', 'task_type', 'dataset_name', 'run_dir', 'input_resolution', 'metric_name'] + \
+        title_line = ['serial_num', 'model_id', 'runtime_name', 'task_type', 'dataset_name', 'run_path', 'input_resolution', 'metric_name'] + \
             metric_title + performance_title + ['metric_reference'] + ['model_shortlist', 'model_path', 'artifact_name']
 
-        run_dirs = self.get_run_dirs(work_dir_results_max_path)
-        for serial_num, run_dir in enumerate(run_dirs):
+        run_paths = self.get_run_paths(work_dir_results_max_path)
+        for serial_num, run_path in enumerate(run_paths):
             results_line_dict = {title_key:None for title_key in title_line}
 
-            param_yaml = os.path.join(run_dir, 'param.yaml')
+            param_yaml = os.path.join(run_path, 'param.yaml')
             compilation_done = os.path.exists(param_yaml)
 
-            run_dir_basename = os.path.basename(run_dir)
-            run_dir_splits = run_dir_basename.split('_')
-            artifact_id = '_'.join(run_dir_splits[:2]) if len(run_dir_splits) > 1 else run_dir_splits[0]
-            model_id = run_dir_splits[0]
+            run_path_basename = os.path.basename(run_path)
+            run_path_splits = run_path_basename.split('_')
+            artifact_id = '_'.join(run_path_splits[:2]) if len(run_path_splits) > 1 else run_path_splits[0]
+            model_id = run_path_splits[0]
 
             results_line_dict['model_id'] = model_id
             results_line_dict['serial_num'] = serial_num+1
@@ -218,11 +218,11 @@ class GenReport(bases.PipelineBase):
                 #        
             #
 
-            results_line_dict['run_dir'] = run_dir_basename
+            results_line_dict['run_path'] = run_path_basename
 
-            artifact_id = '_'.join(run_dir_basename.split('_')[:2])
-            artifact_name = utils.get_artifact_name(artifact_id, run_dir)
-            artifact_name = '_'.join(run_dir_basename.split('_')[1:]) if artifact_name is None else artifact_name
+            artifact_id = '_'.join(run_path_basename.split('_')[:2])
+            artifact_name = utils.get_artifact_name(artifact_id, run_path)
+            artifact_name = '_'.join(run_path_basename.split('_')[1:]) if artifact_name is None else artifact_name
             results_line_dict['artifact_name'] = artifact_name
 
             results_table[artifact_id] = results_line_dict

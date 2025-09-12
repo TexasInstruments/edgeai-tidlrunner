@@ -54,7 +54,7 @@ class CompileModelBase(CommonPipelineBase):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if 'session' in self.settings and self.settings[self.session_prefix].get('model_path', None):
-            self.artifacts_folder = self.settings[self.session_prefix].get('artifactrs_folder', os.path.join(self.run_dir, 'artifacts'))
+            self.artifacts_folder = self.settings[self.session_prefix].get('artifactrs_folder', os.path.join(self.run_path, 'artifacts'))
             self.settings[self.session_prefix]['artifacts_folder'] = self.artifacts_folder
         else:
             self.artifacts_folder = None
@@ -108,9 +108,6 @@ class CompileModelBase(CommonPipelineBase):
                 #
                 session_kwargs['runtime_options']['object_detection:meta_layers_names_list'] = object_detection_meta_layers_names_path
             #
-
-            packaged_path = self.settings[self.session_prefix]['packaged_path']
-            self.packaged_path = self._build_run_dir(packaged_path)
         #
 
     @classmethod

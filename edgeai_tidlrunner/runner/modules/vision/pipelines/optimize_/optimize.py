@@ -46,7 +46,7 @@ class OptimizeModel(common_base.CommonPipelineBase):
 
     def _prepare(self):
         super()._prepare()
-        os.makedirs(self.run_dir, exist_ok=True)
+        os.makedirs(self.run_path, exist_ok=True)
 
     def info():
         print(f'INFO: Model optimize - {__file__}')
@@ -57,14 +57,14 @@ class OptimizeModel(common_base.CommonPipelineBase):
         common_kwargs = self.settings[self.common_prefix]
         optimize_kwargs = common_kwargs.get('optimize', {})
 
-        if os.path.exists(self.run_dir):
-            print(f'INFO: clearing run_dir folder before compile: {self.run_dir}')
-            shutil.rmtree(self.run_dir, ignore_errors=True)
+        if os.path.exists(self.run_path):
+            print(f'INFO: clearing run_path folder before compile: {self.run_path}')
+            shutil.rmtree(self.run_path, ignore_errors=True)
         #
 
         output_path = self.model_folder
 
-        os.makedirs(self.run_dir, exist_ok=True)
+        os.makedirs(self.run_path, exist_ok=True)
         # os.makedirs(self.artifacts_folder, exist_ok=True)
         os.makedirs(self.model_folder, exist_ok=True)
         os.makedirs(output_path, exist_ok=True)
@@ -76,24 +76,13 @@ class OptimizeModel(common_base.CommonPipelineBase):
         self._run_func(self.model_path, output_model, **optimize_kwargs)
 
     @classmethod
-    def _run_func(cls, model_source, model_path, simplify_model=True, shape_inference=True, optimize_model=True, **kwargs):
+    def _run_func(cls, model_source, model_path, optimize_model=True, **kwargs):
         try:
             shutil.copy2(model_source, model_path)
         except shutil.SameFileError:
             pass
         #
-        if simplify_model:
-            import onnxsim
-            onnxsim.simplify(model_path)
-        #
         if optimize_model:
-            print('INFO: optimize_model can be set to True for defaults OR a dictionary of options')
-            print('INFO:   as specified in osrt_model_tools.onnx_tools.tidl_onnx_model_optimizer.ops.get_optimizers()')
-        #
-        if optimize_model is True:
-            from osrt_model_tools.onnx_tools import tidl_onnx_model_optimizer
-            tidl_onnx_model_optimizer.optimize(model_path, model_path)
-        elif isinstance(optimize_model, dict):
             from osrt_model_tools.onnx_tools import tidl_onnx_model_optimizer
             # from osrt_model_tools.onnx_tools.tidl_onnx_model_optimizer.ops import get_optimizers
             # with_default = optimize_model.pop('with_default', True)
@@ -109,9 +98,5 @@ class OptimizeModel(common_base.CommonPipelineBase):
             #     #
             # #
             # tidl_onnx_model_optimizer.optimize(model_path, model_path, custom_optimizers=optimizers)
-            tidl_onnx_model_optimizer.optimize(model_path, model_path, **optimize_model)
-        #
-        if shape_inference:
-            import onnx
-            onnx.shape_inference.infer_shapes_path(model_path, model_path)
+            tidl_onnx_model_optimizer.optimize(model_path, model_path, **kwargs)
         #

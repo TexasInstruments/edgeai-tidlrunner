@@ -58,12 +58,12 @@ class CompileModel(CompileModelBase):
         postprocess_kwargs = self.settings[self.postprocess_prefix]
         runtime_options = session_kwargs['runtime_options']
 
-        if os.path.exists(self.run_dir):
-            print(f'INFO: clearing run_dir folder before compile: {self.run_dir}')
-            shutil.rmtree(self.run_dir, ignore_errors=True)
+        if os.path.exists(self.run_path):
+            print(f'INFO: clearing run_path folder before compile: {self.run_path}')
+            shutil.rmtree(self.run_path, ignore_errors=True)
         #
 
-        os.makedirs(self.run_dir, exist_ok=True)
+        os.makedirs(self.run_path, exist_ok=True)
         os.makedirs(self.artifacts_folder, exist_ok=True)
         os.makedirs(self.model_folder, exist_ok=True)
 
@@ -165,7 +165,7 @@ class CompileModel(CompileModelBase):
             run_dict = self._run_frame(input_index)
             run_data.append(run_dict)
         #
-        print(f'INFO: model import done. output is in: {self.run_dir}')
+        print(f'INFO: model import done. output is in: {self.run_path}')
         self.run_data = run_data
 
         # TODO - cleanup the parameters and write param.yaml

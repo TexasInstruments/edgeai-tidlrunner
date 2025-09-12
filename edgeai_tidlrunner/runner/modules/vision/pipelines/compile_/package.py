@@ -48,9 +48,9 @@ class PackageArtifacts(CommonPipelineBase):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         work_path = self.settings['common']['package']['work_path']
-        self.work_path = self._build_run_dir(work_path)
+        self.work_path = self._build_run_path(work_path)
         package_path = self.settings['common']['package']['package_path']
-        self.package_path = self._build_run_dir(package_path)
+        self.package_path = self._build_run_path(package_path)
         pass
 
     def _prepare(self):
@@ -79,7 +79,7 @@ class PackageArtifacts(CommonPipelineBase):
         return got_match
 
 
-    def package_artifact(self, pipeline_param, work_dir, out_dir, run_dir=None, make_package_tar=True, make_package_dir=False,
+    def package_artifact(self, pipeline_param, work_dir, out_dir, run_path=None, make_package_tar=True, make_package_dir=False,
                         include_results=False, param_template=None):
         
         assert isinstance(param_template, (str,dict)), 'ERROR: param_template must be a dict or a valid yaml file path'
@@ -95,18 +95,18 @@ class PackageArtifacts(CommonPipelineBase):
         input_files = []
         packaged_files = []
 
-        run_dir = run_dir or pipeline_param['session']['run_dir']
-        if os.sep not in run_dir:
-            run_dir = os.path.join(work_dir, run_dir)
+        run_path = run_path or pipeline_param['session']['run_path']
+        if os.sep not in run_path:
+            run_path = os.path.join(work_dir, run_path)
         #
-        if not os.path.exists(run_dir):
-            print(f'could not find: {run_dir}')
+        if not os.path.exists(run_path):
+            print(f'could not find: {run_path}')
             return None
         #
 
         artifacts_folder = pipeline_param['session']['artifacts_folder']
         if os.sep not in artifacts_folder:
-            artifacts_folder = os.path.join(run_dir, artifacts_folder)
+            artifacts_folder = os.path.join(run_path, artifacts_folder)
         #
         if not os.path.exists(artifacts_folder):
             print(f'could not find: {artifacts_folder}')
@@ -117,12 +117,12 @@ class PackageArtifacts(CommonPipelineBase):
         os.makedirs(out_dir, exist_ok=True)
 
         # the output run folder
-        package_run_dir = os.path.join(out_dir, os.path.basename(run_dir))
+        package_run_path = os.path.join(out_dir, os.path.basename(run_path))
 
         # local model folder
-        model_folder = pipeline_param['session'].get('model_folder', os.path.join(run_dir, 'model'))
+        model_folder = pipeline_param['session'].get('model_folder', os.path.join(run_path, 'model'))
         if os.sep not in model_folder:
-            model_folder = os.path.join(run_dir, model_folder)
+            model_folder = os.path.join(run_path, model_folder)
         #
         model_path = pipeline_param['session']['model_path']
         relative_model_dir = os.path.basename(model_folder)
@@ -133,16 +133,16 @@ class PackageArtifacts(CommonPipelineBase):
         #
 
         # local artifacts folder
-        relative_artifacts_dir = artifacts_folder.replace(run_dir, '')
+        relative_artifacts_dir = artifacts_folder.replace(run_path, '')
         relative_artifacts_dir = relative_artifacts_dir.lstrip(os.sep)
 
         # create the param file in source folder with relative paths
-        param_file = os.path.join(run_dir, 'param.yaml')
+        param_file = os.path.join(run_path, 'param.yaml')
         pipeline_param = copy.deepcopy(pipeline_param)
         pipeline_param = utils.cleanup_dict(pipeline_param, param_template)
 
         pipeline_param = utils.pretty_object(pipeline_param)
-        pipeline_param['session']['run_dir'] = os.path.basename(run_dir)
+        pipeline_param['session']['run_path'] = os.path.basename(run_path)
         pipeline_param['session']['model_folder'] = relative_model_dir
         pipeline_param['session']['model_path'] = relative_model_path
         pipeline_param['session']['artifacts_folder'] = relative_artifacts_dir
@@ -155,7 +155,7 @@ class PackageArtifacts(CommonPipelineBase):
         #
 
         # copy model files
-        package_model_folder = os.path.join(package_run_dir, relative_model_dir)
+        package_model_folder = os.path.join(package_run_path, relative_model_dir)
         model_files = utils.list_files(model_folder, basename=False)
         package_model_files = [os.path.join(package_model_folder,os.path.basename(f)) for f in model_files]
         for f, pf in zip(model_files, package_model_files):
@@ -164,7 +164,7 @@ class PackageArtifacts(CommonPipelineBase):
         #
 
         # copy artifacts
-        package_artifacts_folder = os.path.join(package_run_dir, relative_artifacts_dir)
+        package_artifacts_folder = os.path.join(package_run_path, relative_artifacts_dir)
         artifacts_files = utils.list_files(artifacts_folder, basename=False)
         package_artifacts_files = [os.path.join(package_artifacts_folder,os.path.basename(f)) for f in artifacts_files]
         artifacts_patterns = [
@@ -209,9 +209,9 @@ class PackageArtifacts(CommonPipelineBase):
             #
         #
 
-        # copy files in run_dir - example result.yaml
-        run_files = utils.list_files(run_dir, basename=False)
-        package_run_files = [os.path.join(package_run_dir,os.path.basename(f)) for f in run_files]
+        # copy files in run_path - example result.yaml
+        run_files = utils.list_files(run_path, basename=False)
+        package_run_files = [os.path.join(package_run_path,os.path.basename(f)) for f in run_files]
         for f, pf in zip(run_files, package_run_files):
             if (not include_results) and 'result' in f:
                 continue
@@ -229,53 +229,53 @@ class PackageArtifacts(CommonPipelineBase):
 
         tarfile_size = 0
         if make_package_tar:
-            tarfile_name = package_run_dir + '.tar.gz'
+            tarfile_name = package_run_path + '.tar.gz'
             tfp = tarfile.open(tarfile_name, 'w:gz')
             for inpf, pf in zip(input_files, packaged_files):
-                outpf = pf.replace(package_run_dir, '')
+                outpf = pf.replace(package_run_path, '')
                 tfp.add(inpf, arcname=outpf)
             #
             tfp.close()
             tarfile_size = os.path.getsize(tarfile_name)
         else:
-            package_run_dir = None
+            package_run_path = None
         #
-        return package_run_dir, tarfile_size
+        return package_run_path, tarfile_size
 
 
     def package_artifacts(self, settings, work_dir, out_dir, include_results=False, custom_model=False, param_template=None):
         print(f'INFO: packaging artifacts to {out_dir} please wait...')
-        run_dirs = glob.glob(f'{work_dir}/*')
-        run_dirs = [d for d in run_dirs if os.path.isdir(d)]
-        run_dirs = sorted(run_dirs)
+        run_paths = glob.glob(f'{work_dir}/*')
+        run_paths = [d for d in run_paths if os.path.isdir(d)]
+        run_paths = sorted(run_paths)
 
         packaged_artifacts_dict = {}
-        for run_dir in run_dirs:
-            if not os.path.isdir(run_dir):
+        for run_path in run_paths:
+            if not os.path.isdir(run_path):
                 continue
             #
             try:
-                param_yaml = os.path.join(run_dir, 'param.yaml')
-                result_yaml = os.path.join(run_dir, 'result.yaml')
+                param_yaml = os.path.join(run_path, 'param.yaml')
+                result_yaml = os.path.join(run_path, 'result.yaml')
                 read_yaml = result_yaml if os.path.exists(result_yaml) else param_yaml
                 with open(read_yaml) as fp:
                     pipeline_param = yaml.safe_load(fp)
                 #
-                package_run_dir, tarfile_size = self.package_artifact(pipeline_param, work_dir, out_dir,
-                                    run_dir=run_dir, include_results=include_results, param_template=param_template)
-                if package_run_dir is not None:
+                package_run_path, tarfile_size = self.package_artifact(pipeline_param, work_dir, out_dir,
+                                    run_path=run_path, include_results=include_results, param_template=param_template)
+                if package_run_path is not None:
                     task_type = pipeline_param['task_type']
-                    package_run_dir = os.path.basename(package_run_dir)
+                    package_run_path = os.path.basename(package_run_path)
                     model_path = pipeline_param['session']['model_path']
                     model_path = model_path[0] if isinstance(model_path, (list,tuple)) else model_path
 
-                    run_dir = pipeline_param['session']['run_dir']
-                    run_dir_basename = os.path.basename(run_dir)
-                    run_dir_splits = run_dir_basename.split('_')
-                    artifact_id = '_'.join(run_dir_splits[:2]) if not custom_model else None
+                    run_path = pipeline_param['session']['run_path']
+                    run_path_basename = os.path.basename(run_path)
+                    run_path_splits = run_path_basename.split('_')
+                    artifact_id = '_'.join(run_path_splits[:2]) if not custom_model else None
                     runtime_name = pipeline_param['session']['session_name']
                     model_name = utils.get_artifact_name(artifact_id) if not custom_model else None
-                    model_name = model_name or run_dir_basename
+                    model_name = model_name or run_path_basename
 
                     # artifacts generated using scripts/benchmark_resolution.py will not produce good accuracy
                     # that is only for performance test
@@ -285,17 +285,17 @@ class PackageArtifacts(CommonPipelineBase):
                     is_recommended = utils.is_recommended_model(artifact_id) if not custom_model else True
 
                     artifacts_dict = {'task_type': task_type, 'session_name': runtime_name,
-                                    'run_dir': package_run_dir, 'model_name': model_name,
+                                    'run_path': package_run_path, 'model_name': model_name,
                                     'size': tarfile_size,
                                     'shortlisted': is_shortlisted,
                                     'recommended': is_recommended}
                     packaged_artifacts_dict.update({artifact_id:artifacts_dict})
-                    print(utils.log_color('SUCCESS', 'finished packaging', run_dir))
+                    print(utils.log_color('SUCCESS', 'finished packaging', run_path))
                 else:
-                    print(utils.log_color('WARNING', 'could not package', run_dir))
+                    print(utils.log_color('WARNING', 'could not package', run_path))
                 #
             except:
-                print(utils.log_color('WARNING', 'could not package', run_dir))
+                print(utils.log_color('WARNING', 'could not package', run_path))
             #
             sys.stdout.flush()
         #
