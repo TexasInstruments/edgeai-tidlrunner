@@ -58,9 +58,9 @@ class InferModel(CompileModelBase):
         postprocess_kwargs = self.settings[self.postprocess_prefix]
         runtime_options = session_kwargs['runtime_options']
 
-        if not os.path.exists(self.run_path) and not os.path.exists(self.model_folder) and not os.path.exists(
+        if not os.path.exists(self.run_dir) and not os.path.exists(self.model_folder) and not os.path.exists(
                 self.artifacts_folder):
-            raise RuntimeWarning(f'self.run_path does not exist {self.run_path} - compile the model before inference')
+            raise RuntimeWarning(f'self.run_dir does not exist {self.run_dir} - compile the model before inference')
 
         # shutil.copy2(self.model_source, self.model_path)
 
@@ -152,7 +152,7 @@ class InferModel(CompileModelBase):
         #
         tqdm_obj.update(input_index + 1 - tqdm_obj.n)
 
-        print(f'INFO: model infer done. output is in: {self.run_path}')
+        print(f'INFO: model infer done. output is in: {self.run_dir}')
         self.run_data = run_data
         # TODO: populate the result entry
         result = self.session.get_stats()   

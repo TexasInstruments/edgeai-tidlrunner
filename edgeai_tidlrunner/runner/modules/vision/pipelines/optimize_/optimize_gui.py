@@ -51,14 +51,14 @@ class OptimizeModelGUI(common_base.CommonPipelineBase):
         try:
             import streamlit as st
             import pandas as pd
-            os.system(f"streamlit run {__file__} -- --model_path={self.kwargs['model_path']} --run_path={self.kwargs['run_path']}")
+            os.system(f"streamlit run {__file__} -- --model_path={self.kwargs['model_path']} --run_dir={self.kwargs['run_dir']}")
         except:
             raise RuntimeError("install requirements via: pip3 install streamlit pandas")
 
 
     def on_click_run_optimize(self, model_path, output_path, **kwargs):
         if os.path.exists(output_path):
-            print(f'INFO: clearing run_path folder before compile: {output_path}')
+            print(f'INFO: clearing run_dir folder before compile: {output_path}')
             shutil.rmtree(output_path, ignore_errors=True)
         #
         from osrt_model_tools.onnx_tools.tidl_onnx_model_optimizer.optimize import get_optimizers, optimize
@@ -66,16 +66,16 @@ class OptimizeModelGUI(common_base.CommonPipelineBase):
 
 
     def main(self, **kwargs):
-        run_path = kwargs.pop('run_path')
-        run_path = run_path.replace('{model_name}', os.path.splitext(os.path.basename(kwargs['model_path']))[0])
-        model_folder = os.path.join(run_path, 'model')
+        run_dir = kwargs.pop('run_dir')
+        run_dir = run_dir.replace('{model_name}', os.path.splitext(os.path.basename(kwargs['model_path']))[0])
+        model_folder = os.path.join(run_dir, 'model')
 
-        # if os.path.exists(run_path):
-        #     print(f'INFO: clearing run_path folder before compile: {run_path}')
-        #     shutil.rmtree(run_path, ignore_errors=True)
+        # if os.path.exists(run_dir):
+        #     print(f'INFO: clearing run_dir folder before compile: {run_dir}')
+        #     shutil.rmtree(run_dir, ignore_errors=True)
         # #
 
-        os.makedirs(run_path, exist_ok=True)
+        os.makedirs(run_dir, exist_ok=True)
         os.makedirs(model_folder, exist_ok=True)
 
         model_path = os.path.join(model_folder, os.path.basename(kwargs['model_path']))

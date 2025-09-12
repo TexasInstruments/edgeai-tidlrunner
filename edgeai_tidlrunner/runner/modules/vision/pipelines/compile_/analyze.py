@@ -51,7 +51,7 @@ class CompileAnalyzeNoTIDL(compile.CompileModel):
     def __init__(self, **kwargs):
         kargs_copy = copy.deepcopy(kwargs)
         kargs_copy['tidl_offload'] = False
-        kargs_copy['session.run_path'] = os.path.join(kargs_copy['session.run_path'], 'notidl')
+        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'notidl')
         kargs_copy['common.postprocess_enable'] = False        
         super().__init__(**kargs_copy)
 
@@ -71,9 +71,9 @@ class CompileAnalyzeNoTIDL(compile.CompileModel):
         onnx.save(onnx_model, model_path)
 
     def _prepare(self):     
-        if os.path.exists(self.run_path):
-            base_dir = os.path.dirname(self.run_path)
-            print(f'INFO: clearing run_path folder before analyze: {base_dir}')
+        if os.path.exists(self.run_dir):
+            base_dir = os.path.dirname(self.run_dir)
+            print(f'INFO: clearing run_dir folder before analyze: {base_dir}')
             shutil.rmtree(base_dir, ignore_errors=True)
         #    
         super()._prepare()   
@@ -89,13 +89,13 @@ class InferAnalyzeNoTIDL(infer.InferModel):
     def __init__(self, **kwargs):
         kargs_copy = copy.deepcopy(kwargs)
         kargs_copy['tidl_offload'] = False
-        kargs_copy['session.run_path'] = os.path.join(kargs_copy['session.run_path'], 'notidl')
+        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'notidl')
         kargs_copy['common.postprocess_enable'] = False            
         super().__init__(**kargs_copy)
 
     def _run(self):
         super()._run()
-        traces_root = os.path.join(self.run_path, 'traces')
+        traces_root = os.path.join(self.run_dir, 'traces')
         os.makedirs(traces_root, exist_ok=True)
         for frame_idx in range(len(self.run_data)):
             frame_name = str(frame_idx)
@@ -116,7 +116,7 @@ class CompileAnalyzeTIDL(compile.CompileModel):
 
     def __init__(self, **kwargs):
         kargs_copy = copy.deepcopy(kwargs)
-        kargs_copy['session.run_path'] = os.path.join(kargs_copy['session.run_path'], 'tidl')
+        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'tidl')
         kargs_copy['common.postprocess_enable'] = False            
         super().__init__(**kargs_copy)
 
@@ -130,7 +130,7 @@ class InferAnalyzeTIDL(infer.InferModel):
 
     def __init__(self, **kwargs):
         kargs_copy = copy.deepcopy(kwargs)
-        kargs_copy['session.run_path'] = os.path.join(kargs_copy['session.run_path'], 'tidl')
+        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'tidl')
         kargs_copy['session.runtime_options.debug_level'] = 4
         kargs_copy['common.postprocess_enable'] = False            
         super().__init__(**kargs_copy)
@@ -142,7 +142,7 @@ class InferAnalyzeTIDL(infer.InferModel):
     def _run_frame(self, input_index, *args, **kwargs):
         os.system('rm -f /tmp/tidl_*.bin')
         run_dict = super()._run_frame(input_index, *args, **kwargs)
-        traces_root = os.path.join(self.run_path, 'traces', str(input_index))
+        traces_root = os.path.join(self.run_dir, 'traces', str(input_index))
         os.makedirs(traces_root, exist_ok=True)
         os.system(f'mv /tmp/tidl_*.bin {traces_root}')
         return run_dict
@@ -156,15 +156,15 @@ class InferAnalyzeFinal(compile_base.CompileModelBase):
         super().__init__(**kwargs)
 
     def _run(self):
-        notidl_run_path = os.path.join(self.run_path, 'notidl')
-        tidl_run_path = os.path.join(self.run_path, 'tidl')
-        notidl_traces = os.path.join(notidl_run_path, 'traces')
-        tidl_traces = os.path.join(tidl_run_path, 'traces')
-        layer_info_dir = os.path.join(tidl_run_path, 'artifacts', 'tempDir')
+        notidl_run_dir = os.path.join(self.run_dir, 'notidl')
+        tidl_run_dir = os.path.join(self.run_dir, 'tidl')
+        notidl_traces = os.path.join(notidl_run_dir, 'traces')
+        tidl_traces = os.path.join(tidl_run_dir, 'traces')
+        layer_info_dir = os.path.join(tidl_run_dir, 'artifacts', 'tempDir')
         layer_info_files = [f for f in os.listdir(layer_info_dir) if f.endswith('layer_info.txt')]
         layer_info_path = os.path.join(layer_info_dir, layer_info_files[0])
 
-        analyze_xlsx_path = os.path.join(self.run_path, "analyze.xlsx")
+        analyze_xlsx_path = os.path.join(self.run_dir, "analyze.xlsx")
         analyze_xlsx =  xlsxwriter.Workbook(analyze_xlsx_path, options=dict(nan_inf_to_errors=True))
         num_traces = len(os.listdir(notidl_traces))
         for frame_idx in range(num_traces):

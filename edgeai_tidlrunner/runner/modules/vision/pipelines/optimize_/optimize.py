@@ -46,7 +46,7 @@ class OptimizeModel(common_base.CommonPipelineBase):
 
     def _prepare(self):
         super()._prepare()
-        os.makedirs(self.run_path, exist_ok=True)
+        os.makedirs(self.run_dir, exist_ok=True)
 
     def info():
         print(f'INFO: Model optimize - {__file__}')
@@ -57,14 +57,14 @@ class OptimizeModel(common_base.CommonPipelineBase):
         common_kwargs = self.settings[self.common_prefix]
         optimize_kwargs = common_kwargs.get('optimize', {})
 
-        if os.path.exists(self.run_path):
-            print(f'INFO: clearing run_path folder before compile: {self.run_path}')
-            shutil.rmtree(self.run_path, ignore_errors=True)
+        if os.path.exists(self.run_dir):
+            print(f'INFO: clearing run_dir folder before compile: {self.run_dir}')
+            shutil.rmtree(self.run_dir, ignore_errors=True)
         #
 
         output_path = self.model_folder
 
-        os.makedirs(self.run_path, exist_ok=True)
+        os.makedirs(self.run_dir, exist_ok=True)
         # os.makedirs(self.artifacts_folder, exist_ok=True)
         os.makedirs(self.model_folder, exist_ok=True)
         os.makedirs(output_path, exist_ok=True)
@@ -73,16 +73,31 @@ class OptimizeModel(common_base.CommonPipelineBase):
         self.download_file(self.model_source, model_folder=self.model_folder, source_dir=config_path)
 
         output_model = os.path.join(output_path, os.path.basename(self.model_path))
-        self._run_func(self.model_path, output_model, **optimize_kwargs)
+        self._run_func(self.settings, self.model_path, output_model, **optimize_kwargs)
 
     @classmethod
-    def _run_func(cls, model_source, model_path, optimize_model=True, **kwargs):
+    def _run_func(cls, settings, model_source, model_path, optimize_model=True, **kwargs):
         try:
             shutil.copy2(model_source, model_path)
         except shutil.SameFileError:
             pass
         #
+        
         if optimize_model:
+            # input_optimization is set, the input_mean and input_scale are added inside the model
+            input_optimization = settings['session'].get('input_optimization', False)
+            if input_optimization:
+                if not isinstance(kwargs.get('add_input_normalization', None), dict):
+                    input_mean = settings['session'].get('input_mean', None)
+                    input_scale = settings['session'].get('input_scale', None)
+                    if input_mean and input_scale:
+                        kwargs['add_input_normalization'] = dict()
+                        kwargs['add_input_normalization']['input_mean'] = input_mean
+                        kwargs['add_input_normalization']['input_scale'] = input_scale
+                    #
+                #
+            #
+
             from osrt_model_tools.onnx_tools import tidl_onnx_model_optimizer
             # from osrt_model_tools.onnx_tools.tidl_onnx_model_optimizer.ops import get_optimizers
             # with_default = optimize_model.pop('with_default', True)

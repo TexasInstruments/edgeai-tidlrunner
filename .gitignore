@@ -24,7 +24,7 @@ dist/
 
 /work_dirs/modelartifacts
 /work_dirs/compile
-/work_dirs/compile_package
+/work_dirs/package
 /work_dirs/extract
 /work_dirs/optimize
 /work_dirs/analyze

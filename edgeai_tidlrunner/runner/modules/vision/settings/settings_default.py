@@ -68,12 +68,15 @@ COPY_SETTINGS_DEFAULT['basic'] = {}
 SETTINGS_DEFAULT['optimize'] = SETTINGS_DEFAULT['basic'] | {
     'model_path':                       {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
     'config_path':                      {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'},    
-    'output_path':                      {'dest': 'session.run_path', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'output model path'},
+    'work_path':                        {'dest': 'session.work_path', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}', 'type':str, 'metavar':'value', 'help':'work path'},   
+    'output_path':                      {'dest': 'session.run_dir', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'output model path'},
     'pipeline_type':                    {'dest': 'common.pipeline_type', 'default': 'optimize', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},    
     'optimize_model':                   {'dest': 'common.optimize.optimize_model', 'default': True, 'type': utils.str_to_bool_or_none_or_dict, 'metavar': 'value', 'help': 'enable model optimization'},
     'simplify_model':                   {'dest': 'common.optimize.simplify_mode', 'default': 'pre', 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable model simplification optimizations'},
     'shape_inference':                  {'dest': 'common.optimize.shape_inference_mode', 'default': 'all', 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable shape inference during optimization'},
-    'input_optimization':                  {'dest': 'common.optimize.add_input_normalization', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32'},
+    'input_optimization':               {'dest': 'session.input_optimization', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32'},
+    'input_mean':                       {'dest': 'session.input_mean', 'default': (123.675, 116.28, 103.53), 'type': float, 'nargs': '*', 'metavar': 'value', 'help': 'mean values for input normalization (RGB channels)'},
+    'input_scale':                      {'dest': 'session.input_scale', 'default': (0.017125, 0.017507, 0.017429), 'type': float, 'nargs': '*', 'metavar': 'value', 'help': 'scale values for input normalization (RGB channels)'},
 }
 
 COPY_SETTINGS_DEFAULT['optimize'] = COPY_SETTINGS_DEFAULT['basic'] | {
@@ -86,14 +89,9 @@ COPY_SETTINGS_DEFAULT['optimize'] = COPY_SETTINGS_DEFAULT['basic'] | {
 SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | SETTINGS_DEFAULT['optimize'] | {
     'model_path':               {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
     'config_path':              {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'}, 
-    'work_path':                {'dest': 'session.work_path', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}', 'type':str, 'metavar':'value', 'help':'work path'},   
-    'output_path':              {'dest': 'session.run_path', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'output model path'},
+    'work_path':                {'dest': 'session.work_path', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}', 'type':str, 'metavar':'value', 'help':'work path'},
+    'output_path':              {'dest': 'session.run_dir', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'output model path'},
     'pipeline_type':            {'dest': 'common.pipeline_type', 'default': 'compile', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},
-    # optimizations
-    'simplify_model':           {'dest': 'common.optimize.simplify_model', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable model simplification optimizations'},
-    'optimize_model':           {'dest': 'common.optimize.optimize_model', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable model optimization'},
-    'shape_inference':          {'dest': 'common.optimize.shape_inference', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable shape inference during optimization'},
-    'input_optimization':       {'dest': 'common.optimize.add_input_normalization', 'default': False, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32'},
     # common options
     'task_type':                {'dest': 'common.task_type', 'default': None, 'type': str, 'metavar': 'value', 'help': 'type of AI task (classification, detection, segmentation etc.)'},
     'num_frames':               {'dest': 'common.num_frames', 'default': 10, 'type': int, 'metavar': 'value', 'help': 'number of frames to process'},
@@ -104,8 +102,6 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | SETTINGS_DEFAULT['opti
     'artifacts_folder':         {'dest': 'session.artifacts_folder', 'default': None, 'type': str, 'metavar': 'value', 'help': 'folder to store compilation artifacts'},
     ## runtime
     'runtime_name':             {'dest': 'session.name', 'default': None, 'type': str, 'metavar': 'value', 'help': 'name of the runtime session'},
-    'input_mean':               {'dest': 'session.input_mean', 'default': (123.675, 116.28, 103.53), 'type': float, 'nargs': '*', 'metavar': 'value', 'help': 'mean values for input normalization (RGB channels)'},
-    'input_scale':              {'dest': 'session.input_scale', 'default': (0.017125, 0.017507, 0.017429), 'type': float, 'nargs': '*', 'metavar': 'value', 'help': 'scale values for input normalization (RGB channels)'},
     # input_data
     'data_name':                {'dest': 'dataloader.name', 'default': None, 'type': str, 'metavar': 'value', 'help': 'name of the input dataset'},
     'data_path':                {'dest': 'dataloader.path', 'default': None, 'type': str, 'metavar': 'path', 'help': 'path to the input data directory'},
@@ -204,7 +200,7 @@ SETTINGS_DEFAULT['extract'] = SETTINGS_DEFAULT['basic'] | {
     'model_path':             {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
     'config_path':            {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'},
     'work_path':              {'dest': 'session.work_path', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}', 'type':str, 'metavar':'value', 'help':'work path'},
-    'output_path':            {'dest': 'session.run_path', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'output model path'},
+    'output_path':            {'dest': 'session.run_dir', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'output model path'},
     'pipeline_type':          {'dest': 'common.pipeline_type', 'default': 'extract', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'}, 
     'extract_mode':           {'dest': 'common.extract.mode', 'default': 'operators', 'type': str, 'metavar': 'value', 'choices': ['submodules', 'submodule', 'start2end', 'operators'], 'help': 'extraction mode (submodules, submodule, start2end, operators)'},
     'submodule_name':         {'dest': 'common.extract.submodule_name', 'default': None, 'type': str, 'metavar': 'value', 'help': 'name of specific submodule to extract'},
@@ -230,11 +226,11 @@ COPY_SETTINGS_DEFAULT['report'] = COPY_SETTINGS_DEFAULT['basic'] | {
 
 ##########################################################################
 SETTINGS_DEFAULT['package'] = SETTINGS_DEFAULT['basic'] | {
-    'pipeline_type':        {'dest': 'common.pipeline_type', 'default': 'compile', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'}, 
+    'pipeline_type':        {'dest': 'common.pipeline_type', 'default': 'package', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'}, 
     'target_device':        {'dest': 'session.target_device', 'default': presets.TargetDeviceType.TARGET_DEVICE_AM68A, 'type': str, 'metavar': 'value', 'help': 'target device for inference (AM68A, AM69A, etc.)'},
     'tensor_bits':          {'dest': 'session.runtime_options.tensor_bits', 'default': 8, 'type': int, 'metavar': 'value', 'help': 'quantization bit-width for tensors (8 or 16)'},
-    'work_path':            {'dest': 'common.package.work_path', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}', 'type':str, 'metavar':'value', 'help':'work path'},
-    'package_path':         {'dest': 'common.package.package_path', 'default':'./work_dirs/{pipeline_type}_package/{target_device}/{tensor_bits}', 'type':str, 'metavar':'value', 'help':'packaged path'},
+    'work_path':            {'dest': 'common.package.work_path', 'default':'./work_dirs/compile/{target_device}/{tensor_bits}', 'type':str, 'metavar':'value', 'help':'work path'},
+    'package_path':         {'dest': 'common.package.package_path', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}', 'type':str, 'metavar':'value', 'help':'packaged path'},
     'param_template':       {'dest': 'common.package.param_template', 'default':'data/templates/configs/param_template_package.yaml', 'type':str, 'metavar':'value', 'help':'param template path'},
 }
 

@@ -74,12 +74,12 @@ class ExtractNodes(CommonPipelineBase):
         super()._prepare()
         common_kwargs = self.settings['common']
 
-        if os.path.exists(self.run_path):
-            print(f'INFO: clearing run_path folder before compile: {self.run_path}')
-            shutil.rmtree(self.run_path, ignore_errors=True)
+        if os.path.exists(self.run_dir):
+            print(f'INFO: clearing run_dir folder before compile: {self.run_dir}')
+            shutil.rmtree(self.run_dir, ignore_errors=True)
         #
 
-        os.makedirs(self.run_path, exist_ok=True)
+        os.makedirs(self.run_dir, exist_ok=True)
         os.makedirs(self.model_folder, exist_ok=True)
 
         config_path = os.path.dirname(common_kwargs['config_path']) if common_kwargs['config_path'] else None
@@ -91,7 +91,7 @@ class ExtractNodes(CommonPipelineBase):
     def _run(self):
         print(f'INFO: starting extract model')
         onnx.shape_inference.infer_shapes_path(self.model_path)
-        output_path = os.path.join(self.run_path, 'extract')
+        output_path = os.path.join(self.run_dir, 'extract')
         os.makedirs(output_path, exist_ok=True)
         if self.kwargs['common.extract.mode']=='submodules':
             self._export_unique_submodules(self.model_path, output_path, max_depth=3)

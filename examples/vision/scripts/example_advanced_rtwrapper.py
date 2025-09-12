@@ -151,21 +151,21 @@ def main(args):
     #########################################################################
     # prepare the model and artifacts folders
     model_name = os.path.basename(args.model_path)
-    run_path = os.path.join(modelartifacts_path, os.path.splitext(model_name)[0])
+    run_dir = os.path.join(modelartifacts_path, os.path.splitext(model_name)[0])
 
-    if args.command=='compile_model' and os.path.exists(run_path):
-        print(f'INFO: clearing run_path folder before compile: {run_path}')
-        shutil.rmtree(run_path, ignore_errors=True)
+    if args.command=='compile_model' and os.path.exists(run_dir):
+        print(f'INFO: clearing run_dir folder before compile: {run_dir}')
+        shutil.rmtree(run_dir, ignore_errors=True)
     #
 
-    model_folder = os.path.join(run_path, 'model')
+    model_folder = os.path.join(run_dir, 'model')
     model_path = os.path.join(model_folder, os.path.basename(args.model_path))
     os.makedirs(model_folder, exist_ok=True)
     shutil.copy2(args.model_path, model_path)
     onnx.shape_inference.infer_shapes_path(model_path, model_path)
     print(f'INFO: model_path - {model_path}')
 
-    artifacts_folder = os.path.join(run_path, 'artifacts')
+    artifacts_folder = os.path.join(run_dir, 'artifacts')
     os.makedirs(artifacts_folder, exist_ok=True)
     print(f'INFO: artifacts_folder - {artifacts_folder}')
 

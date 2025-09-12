@@ -122,7 +122,7 @@ class ObjectDetectionDataLoader(dataset_base.DatasetBaseWithUtils):
         imgs_list = list(self.coco_dataset.imgs.items())
         self.coco_dataset.imgs = {k:v for k,v in imgs_list[:num_frames]}
 
-        #os.makedirs(run_path, exist_ok=True)
+        #os.makedirs(run_dir, exist_ok=True)
         detections_formatted_list = []
         for frame_idx, det_frame in enumerate(predictions):
             for det_id, det in enumerate(det_frame):

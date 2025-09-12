@@ -41,10 +41,13 @@ DataLayoutType = rtwrapper.options.presets.DataLayoutType
 
 
 def create_input_normalizer(self):
+    input_optimization = self.kwargs.get('input_optimization', False)
     input_mean = self.kwargs.get('input_mean', None)
     input_scale = self.kwargs.get('input_scale', None)
     data_layout = self.kwargs.get('data_layout', None)
-    if input_mean and input_scale:
+    # input_optimization is set, the input_mean and input_scale are added inside the model
+    # in that case, there is not need to normalize here
+    if (not input_optimization) and input_mean and input_scale:
         # mean scale could not be absorbed inside the model - do it explicitly
         input_normalizer = preprocess.ImageNormMeanScale(input_mean, input_scale, data_layout)
     else:

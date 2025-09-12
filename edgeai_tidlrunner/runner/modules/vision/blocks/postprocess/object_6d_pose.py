@@ -301,8 +301,8 @@ class Object6dPoseImageSave:
         data_path = info_dict['data_path']
         img_data = info_dict['data']
         image_name = os.path.split(data_path)[-1]
-        run_path = info_dict['run_path']
-        save_dir = os.path.join(run_path, 'outputs')
+        run_dir = info_dict['run_dir']
+        save_dir = os.path.join(run_dir, 'outputs')
         os.makedirs(save_dir, exist_ok=True)
         save_path = os.path.join(save_dir, image_name)
 

@@ -2054,8 +2054,8 @@ class BEVImageSave():
             cv2.line(lidar_img, tuple(corners[4]), tuple(corners[7]), self.bbox_color[labels_3d[idx]], self.thickness)
             cv2.line(lidar_img, tuple(corners[3]), tuple(corners[7]), self.bbox_color[labels_3d[idx]], self.thickness)
 
-        run_path = info_dict['run_path']
-        save_dir = os.path.join(run_path, 'outputs/LiDAR')
+        run_dir = info_dict['run_dir']
+        save_dir = os.path.join(run_dir, 'outputs/LiDAR')
         os.makedirs(save_dir, exist_ok=True)
         save_path = os.path.join(save_dir, 'output_lidar-{:04d}.png'.format(self.output_frame_idx))
         cv2.imwrite(save_path, lidar_img)
@@ -2079,8 +2079,8 @@ class BEVImageSave():
             img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
             img_size = info_dict['data_shape'][0:2]
 
-            run_path = info_dict['run_path']
-            save_dir = os.path.join(run_path, 'outputs')
+            run_dir = info_dict['run_dir']
+            save_dir = os.path.join(run_dir, 'outputs')
             os.makedirs(save_dir, exist_ok=True)
 
             # Convert bboxes to corners
@@ -2130,8 +2130,8 @@ class BEVImageSave():
 
             img_size = info_dict['data_shape'][0:2]
 
-            run_path = info_dict['run_path']
-            save_dir = os.path.join(run_path, 'outputs')
+            run_dir = info_dict['run_dir']
+            save_dir = os.path.join(run_dir, 'outputs')
             os.makedirs(save_dir, exist_ok=True)
 
             corners_3d = get_lidar_box_corners_3d(bboxes_3d)
