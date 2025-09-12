@@ -30,6 +30,56 @@
 
 
 ######################################################################
+CURRENT_WORK_DIR=$(pwd)
+
+
+#######################################################################
+echo 'Installing system dependencies...'
+
+# Function to check if a package is installed using dpkg
+is_package_installed() {
+    local package_name="$1"
+    if dpkg-query -W -f='${Status}' "$package_name" 2>/dev/null | grep -q "install ok installed"; then
+        return 0  # Package is installed
+    else
+        return 1  # Package is not installed
+    fi
+}
+
+# Function to install package only if not already installed
+install_if_missing() {
+    local package_name="$1"
+    if is_package_installed "$package_name"; then
+        echo "✓ Package $package_name is already installed"
+    else
+        echo "Installing $package_name..."
+        sudo apt-get install -y "$package_name"
+    fi
+}
+
+# Dependencies for cmake, onnx, pillow-simd, tidl-graph-visualization
+packages=("cmake" "libffi-dev" "libjpeg-dev" "zlib1g-dev" "protobuf-compiler" "graphviz" "graphviz-dev")
+
+for package in "${packages[@]}"; do
+    install_if_missing "$package"
+done
+
+
+#######################################################################
+pip3 install -e ./tools --verbose
+
+
+# unsintall onnxruntime and install onnxruntime-tild along with tidl-tools
+# pip3 uninstall -y onnxruntime
+
+
+# download-tidl-tools is a script that defined in and installed via tools/pyproject.toml
+# download and install tidl-tools - this invokes: python3 tools/tidl_tools_package/download.py
+echo "Running: download-tidl-tools..."
+download-tidl-tools
+
+
+######################################################################
 pip3 install -e ./[pc] --verbose
 
 # download-tidlrunner-tools is a script that defined in and installed via ./pyproject.toml
@@ -39,11 +89,10 @@ pip3 install -e ./[pc] --verbose
 echo "Running: download-tidlrunner-tools..."
 download-tidlrunner-tools
 
+
 #######################################################################
-pip3 install -e ./tools --verbose
+# pillow-simd for faster resize
+# there as issue with installing pillow-simd through requirements - force it here
+# pip3 uninstall --yes pillow
+# pip3 install --no-input -U --force-reinstall pillow-simd
 
-
-# download-tidl-tools is a script that defined in and installed via tools/pyproject.toml
-# download and install tidl-tools - this invokes: python3 tools/tidl_tools_package/download.py
-echo "Running: download-tidl-tools..."
-download-tidl-tools
