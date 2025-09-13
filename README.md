@@ -2,6 +2,18 @@
 
 Bring Your Edge AI Models For Compilation and Inference (BYOM) using TI Deep Learning (TIDL) - for TI MPU Processors for Edge AI. More details are in the [Edge AI developer landing page](https://github.com/TexasInstruments/edgeai).
 
+
+### Notice
+#### Purpose
+Much of the functionality in this repository is similar to that of [edgeai-benchmark](https://github.com/TexasInstruments/edgeai-tensorlab/tree/main/edgeai-benchmark). edgeai-benchmark is primarily focused on compiling and benchmarking models in [edgeai-modelzoo](https://github.com/TexasInstruments/edgeai-tensorlab/blob/main/edgeai-modelzoo), but the focus here in this repository is a simpler user interface and support for compiling user's models and datasets. 
+
+#### Limitations
+This is a work in progress with the following limitations 
+* onnxruntime with TIDL is supported, other runtimes are not yet supported. Hence, currently only onnx models are supported;  tflite models are not yet supported. 
+* Eventually the plan is to support most of the [models in edgeai-modelzoo/models/configs.yaml](https://github.com/TexasInstruments/edgeai-tensorlab/blob/main/edgeai-modelzoo/models/configs.yaml) - this work is in progress.
+* The main purpose of this tool is to enable compilation and benchmarking of user's models - this requires support for generic user defined datasets - this is also a work in progress.
+
+
 ## Introduction
 
 This package provides a wrapper over the core [tidl-tools model compilation and runtimes](https://github.com/TexasInstruments/edgeai-tidl-tools) to make  model compilation and inference interface easy to use.
