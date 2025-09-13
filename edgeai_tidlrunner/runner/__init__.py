@@ -47,8 +47,8 @@ def _run_command(task_index, command_key, pipeline_name, command_kwargs, capture
     command_kwargs = copy.deepcopy(command_kwargs)
     parallel_devices = command_kwargs['common.parallel_devices']
     if parallel_devices is not None and parallel_devices > 0:
-        device_index = task_index % parallel_devices
-        os.environ['CUDA_VISIBLE_DEVICES'] = str(device_index)
+        parallel_devices_index = task_index % parallel_devices
+        os.environ['CUDA_VISIBLE_DEVICES'] = str(parallel_devices_index)
     #
     command_kwargs['common.capture_log'] = capture_log
     target_module_name = command_kwargs['common.target_module']

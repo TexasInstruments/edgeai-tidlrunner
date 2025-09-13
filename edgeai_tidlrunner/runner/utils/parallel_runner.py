@@ -157,6 +157,7 @@ class ParallelRunner:
         else:
             # proc = None indicates a completed task
             # especially happens if a ParallelProcess is not lanched, but is a simple task that returns None as proc.
+            # print(log_color("\nERROR", f"Process is None for: {running_proc_name}", f"Check process initialization at {__file__}"))
             completed = True
         #
         return completed, out_ret
