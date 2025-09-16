@@ -30,6 +30,7 @@
 import os
 import sys
 import shutil
+import copy
 
 from ...settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
 from ..... import utils
@@ -82,13 +83,12 @@ class OptimizeModel(common_base.CommonPipelineBase):
         except shutil.SameFileError:
             pass
         #
-        
-        if not optimize_model:
-            return
-        
-        input_optimization = settings['session'].get('input_optimization', False)
 
+        kwargs = copy.deepcopy(kwargs)
+
+        input_optimization = settings['session'].get('input_optimization', False)
         model_ext = os.path.splitext(model_path)[1].lower()
+
         if model_ext == '.onnx':
             # input_optimization is set, the input_mean and input_scale are added inside the model
             if input_optimization:
@@ -102,23 +102,22 @@ class OptimizeModel(common_base.CommonPipelineBase):
                     #
                 #
             #
-
-            from osrt_model_tools.onnx_tools import tidl_onnx_model_optimizer
-            # from osrt_model_tools.onnx_tools.tidl_onnx_model_optimizer.ops import get_optimizers
-            # with_default = optimize_model.pop('with_default', True)
-            # optimizers = get_optimizers()
-            # for key, value in optimizers.items():
-            #     optimizers[key] = (with_default and value)
-            # #
-            # for key, value in optimize_model.items():
-            #     if key in optimizers:
-            #         optimizers[key] = value       
-            #     else:
-            #         print(f"INFO: The given transformation {key} has not been implemented yet.")
-            #     #
-            # #
-            # tidl_onnx_model_optimizer.optimize(model_path, model_path, custom_optimizers=optimizers)
-            tidl_onnx_model_optimizer.optimize(model_path, model_path, **kwargs)
+            if not optimize_model:
+                # optimize_model is false, but shape_inference and input_optimization may still be required
+                from osrt_model_tools.onnx_tools import tidl_onnx_model_optimizer
+                custom_optimizers = {
+                    'shape_inference_mode': kwargs.get('shape_inference_mode', 'pre'), 
+                    'simplify_mode': kwargs.get('simplify_mode', None),
+                    'add_input_normalization': kwargs.get('add_input_normalization', False)
+                }
+                tidl_onnx_model_optimizer.optimize(model_path, model_path, custom_optimizers=custom_optimizers)
+            else:
+                if isinstance(optimize_model, dict):
+                    kwargs.update(optimize_model)
+                #
+                from osrt_model_tools.onnx_tools import tidl_onnx_model_optimizer
+                tidl_onnx_model_optimizer.optimize(model_path, model_path, **kwargs)
+            #
         elif model_ext == '.tflite':
             if input_optimization:
                 input_mean = settings['session'].get('input_mean', None)

@@ -40,7 +40,6 @@ from . import options_default
 class RuntimeOptions(attr_dict.AttrDict):
     def __init__(self, **kwargs):
         super().__init__()
-        self.runtime_options = {}
         self.update(self._get_runtime_options(**kwargs))
 
     def get_runtime_options(self):
@@ -149,9 +148,8 @@ class RuntimeOptions(attr_dict.AttrDict):
         runtime_options = copy.deepcopy(runtime_options_default)
 
         for k, v in kwargs.items():
-            if k in runtime_options:
-                runtime_options[k] = v
-            elif (verbose is True or (isinstance(verbose, int) and verbose>=2)):
+            runtime_options[k] = v
+            if k not in runtime_options and (verbose is True or (isinstance(verbose, int) and verbose>=2)):
                 warnings.warn(f'\nWARNING: unknown runtime option passed - please check if it is correct: {k}')
             #
         #
