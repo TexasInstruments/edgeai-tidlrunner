@@ -128,7 +128,7 @@ class CompileModelBase(CommonPipelineBase):
                     kwargs_out[k] = v
                 #                
             elif k == 'session.session_name':
-                kwargs_out['session.name'] = v           
+                kwargs_out['session.name'] = v
             elif k == 'dataloader.name':
                 if kwargs_in[k] is not None:
                     kwargs_out[k] = kwargs_in[k]
@@ -217,3 +217,12 @@ class CompileModelBase(CommonPipelineBase):
             #
         #
         return kwargs_out
+
+    def _write_params(self, settings, filename):
+        # adjustments for backward compatibility with 
+        # params.yaml and result.yaml written by edgeai-benchmark
+        settings = copy.deepcopy(settings)
+        if 'session' in settings:
+            settings['session']['session_name'] = settings['session']['name']
+        #
+        super()._write_params(settings, filename)

@@ -83,9 +83,14 @@ class OptimizeModel(common_base.CommonPipelineBase):
             pass
         #
         
-        if optimize_model:
+        if not optimize_model:
+            return
+        
+        input_optimization = settings['session'].get('input_optimization', False)
+
+        model_ext = os.path.splitext(model_path)[1].lower()
+        if model_ext == '.onnx':
             # input_optimization is set, the input_mean and input_scale are added inside the model
-            input_optimization = settings['session'].get('input_optimization', False)
             if input_optimization:
                 if not isinstance(kwargs.get('add_input_normalization', None), dict):
                     input_mean = settings['session'].get('input_mean', None)
@@ -114,4 +119,16 @@ class OptimizeModel(common_base.CommonPipelineBase):
             # #
             # tidl_onnx_model_optimizer.optimize(model_path, model_path, custom_optimizers=optimizers)
             tidl_onnx_model_optimizer.optimize(model_path, model_path, **kwargs)
+        elif model_ext == '.tflite':
+            if input_optimization:
+                input_mean = settings['session'].get('input_mean', None)
+                input_scale = settings['session'].get('input_scale', None)
+                if input_mean and input_scale:
+                    from osrt_model_tools.tflite_tools import tflite_model_opt
+                    tflite_model_opt.tidlTfliteModelOptimize(model_path, model_path, scaleList=input_scale, meanList=input_mean)
+                #
+            #
+        else:
+            raise RuntimeError(f'ERROR: optimization for supported for model format: {model_ext}')
         #
+        return

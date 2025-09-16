@@ -60,7 +60,7 @@ class InferAccuracy(infer.InferModel):
             accuracy = self.dataloader.evaluate(run_data, **metric_kwargs)
             print(f'INFO: Accuracy - {accuracy}')
             self.settings['result'].update(accuracy)
-            self._write_params('result.yaml')
+            self._write_params(self.settings, os.path.join(self.run_dir,'result.yaml'))
         else:
             print(f'WARNING: dataloader {self.dataloader.__class__.__name__} does not have evaluate method, skipping accuracy calculation')
         #

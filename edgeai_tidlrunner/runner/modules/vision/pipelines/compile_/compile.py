@@ -68,7 +68,7 @@ class CompileModel(CompileModelBase):
         os.makedirs(self.model_folder, exist_ok=True)
 
         # write config to a file
-        self._write_params('config.yaml')
+        self._write_params(self.settings, os.path.join(self.run_dir,'config.yaml'))
 
         config_path = os.path.dirname(common_kwargs['config_path']) if common_kwargs['config_path'] else None
         self.download_file(self.model_source, model_folder=self.model_folder, source_dir=config_path)
@@ -169,7 +169,7 @@ class CompileModel(CompileModelBase):
         self.run_data = run_data
 
         # TODO - cleanup the parameters and write param.yaml
-        self._write_params('param.yaml')
+        self._write_params(self.settings, os.path.join(self.run_dir,'param.yaml'))
         return run_data
     
     def _run_frame(self, input_index):

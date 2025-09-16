@@ -159,9 +159,8 @@ class CommonPipelineBase(bases.PipelineBase):
     def _run(self):
         return None
 
-    def _write_params(self, filename):
-        params = utils.pretty_object(self.settings)
-        param_file = os.path.join(self.run_dir, filename)
-        with open(param_file, 'w') as fp:
+    def _write_params(self, settings, filename):
+        params = utils.pretty_object(settings)
+        with open(filename, 'w') as fp:
             yaml.dump(params, fp)
         #

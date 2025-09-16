@@ -157,7 +157,7 @@ class InferModel(CompileModelBase):
         # TODO: populate the result entry
         result = self.session.get_stats()   
         self.settings['result'] = result     
-        self._write_params('result.yaml')
+        self._write_params(self.settings, os.path.join(self.run_dir,'result.yaml'))
         return run_data
 
     def _run_frame(self, input_index):
