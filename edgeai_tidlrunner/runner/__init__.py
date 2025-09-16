@@ -61,6 +61,18 @@ def _run_command(task_index, command_key, pipeline_name, command_kwargs, capture
     runner_obj.run()
 
 
+def _model_selection(config_entry_file, model_path, model_selection):
+    is_selected = True
+    if model_path is not None and model_selection is not None:
+        import re
+        is_selected = re.search(model_selection, model_path) is not None
+        if config_entry_file is not None:
+            is_selected = is_selected or re.search(model_selection, config_entry_file) is not None
+        #
+    #
+    return is_selected
+
+
 def _create_run_dict(command, argparse=False, **kwargs):
     # which target module to use
     target_module = _get_target_module(kwargs['common.target_module'])
@@ -126,10 +138,16 @@ def _create_run_dict(command, argparse=False, **kwargs):
             # correct config_path is required to form the full model_path
             kwargs_model.update({'common.config_path': config_entry_file})
 
-            # append to command_list for the model
-            model_command_list = run_dict.get(model_key, [])
-            model_command_list.append((command,pipeline_name,kwargs_model))
-            run_dict[model_key] = model_command_list
+            model_selection = kwargs_model.get('common.model_selection', None)
+            model_path = kwargs_model.get('session.model_path', None)
+            if _model_selection(config_entry_file, model_path, model_selection):
+                # append to command_list for the model
+                model_command_list = run_dict.get(model_key, [])
+                model_command_list.append((command,pipeline_name,kwargs_model))
+                run_dict[model_key] = model_command_list
+            else:
+                print(f'INFO: skipping entry: {model_path} or config {config_entry_file} does not match model_selection: {model_selection}')
+            #
         #
     #
 
