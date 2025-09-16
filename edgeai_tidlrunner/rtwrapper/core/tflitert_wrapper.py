@@ -98,7 +98,11 @@ class TFLiteRuntimeWrapper(BaseRuntimeWrapper):
         for (input_detail, c_data_entry) in zip(input_details, input_data):
             self._set_tensor(input_detail, c_data_entry)
         #
+        # output_details is not mandatory, output_keys can be None
+        output_keys = output_keys or [d_info['name'] for d_info in self.kwargs['output_details']]
+
         self.interpreter.invoke()
+        
         outputs = [self._get_tensor(output_detail) for output_detail in output_details]
         output_dict = {output_key:output for output_key, output in zip(output_keys, outputs)}
         return output_dict
