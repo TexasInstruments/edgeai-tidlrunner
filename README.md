@@ -7,10 +7,11 @@ Bring Your Edge AI Models For Compilation and Inference (BYOM) using TI Deep Lea
 #### Purpose
 Much of the functionality in this repository is similar to that of [edgeai-benchmark](https://github.com/TexasInstruments/edgeai-tensorlab/tree/main/edgeai-benchmark). edgeai-benchmark is primarily focused on compiling and benchmarking models in [edgeai-modelzoo](https://github.com/TexasInstruments/edgeai-tensorlab/blob/main/edgeai-modelzoo), but the focus here in this repository is a simpler user interface and support for compiling user's models and datasets. 
 
-#### Limitations
+#### Limitations and work in progress
 This is a work in progress with the following limitations 
-* onnxruntime with TIDL is supported, other runtimes are not yet supported. Hence, currently only onnx models are supported;  tflite models are not yet supported. 
-* Eventually the plan is to support most of the [models in edgeai-modelzoo/models/configs.yaml](https://github.com/TexasInstruments/edgeai-tensorlab/blob/main/edgeai-modelzoo/models/configs.yaml) - this work is in progress.
+* onnx models and tflite models are supported. onnx models will use onnxruntime with TIDL by default and tflite models will use tidlruntime with TIDL by default. Other model types are not supported. 
+* Other runtimes are not yet supported, but there is a work in progress to support tvm runtime for better offloading capability to DSP(C7x/MMA)
+* Work in progress to support most of the [models in edgeai-modelzoo/models/configs.yaml](https://github.com/TexasInstruments/edgeai-tensorlab/blob/main/edgeai-modelzoo/models/configs.yaml).
 * The main purpose of this tool is to enable compilation and benchmarking of user's models - this requires support for generic user defined datasets - this is also a work in progress.
 
 
