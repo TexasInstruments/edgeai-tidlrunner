@@ -34,13 +34,16 @@ session:
   - 1.0
   - 1.0
   runtime_options:
-    object_detection:meta_arch_type: 6
-    object_detection:meta_layers_names_list: yolox_nano_lite_416x416_20220214_model.prototxt
-    advanced_options:output_feature_16bit_names_list: 1033, 711, 712, 713, 727, 728, 729, 743, 744, 745
-    advanced_options:params_16bit_names_list: ''
-    # these commented options may needed to be used at TIDL compilation time, and the user can use appropriate values by consulting the documentation in https://github.com/TexasInstruments/edgeai-tidl-tools
     platform: J7
     version: 11.1.0
+    object_detection:meta_arch_type: 6
+    object_detection:meta_layers_names_list: yolox_nano_lite_416x416_20220214_model.prototxt
+    advanced_options:output_feature_16bit_names_list: ''
+    advanced_options:params_16bit_names_list: ''
+    advanced_options:prequantized_model: 0
+    deny_list_layer_type: ''
+    deny_list:layer_name: ''
+    # for these commented fields, use recommended values from: https://github.com/TexasInstruments/edgeai-tidl-tools
     #tensor_bits: 8
     #accuracy_level: 1
     #advanced_options:high_resolution_optimization: 0
@@ -52,7 +55,6 @@ session:
     #advanced_options:weight_clipping: 1
     #advanced_options:bias_calibration: 1
     #advanced_options:add_data_convert_ops: 3    # optimize data conversion options by moving them from arm to c7x
-    advanced_options:prequantized_model: 0
     #onnxruntime:graph_optimization_level: null
     #info: null # Optional
   model_path: yolox_nano_lite_416x416_20220214_model.onnx
