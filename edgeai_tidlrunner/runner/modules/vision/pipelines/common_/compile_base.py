@@ -149,18 +149,41 @@ class CompileModelBase(CommonPipelineBase):
                 pass
             elif k == 'calibration_dataset':
                 pass
-            elif k == 'task_type':
+            elif k == 'task_type' or k == 'common.task_type':
                 kwargs_out['common.task_type'] = v
-            elif k == 'input_dataset':
+                if v == constants.TaskType.TASK_TYPE_CLASSIFICATION:
+                    if kwargs_in.get('preprocess.name',None) is None:
+                        kwargs_out['preprocess.name'] = 'image_preprocess'
+                    #
+                elif v == constants.TaskType.TASK_TYPE_DETECTION:
+                    if kwargs_in.get('preprocess.name',None) is None:
+                        kwargs_out['preprocess.name'] = 'image_preprocess'
+                    #
+                    if kwargs_in.get('postprocess.name',None) is None:
+                        kwargs_out['postprocess.name'] = 'object_detection_postprocess'
+                    #
+                elif v == constants.TaskType.TASK_TYPE_SEGMENTATION:
+                    if kwargs_in.get('preprocess.name',None) is None:
+                        kwargs_out['preprocess.name'] = 'image_preprocess'
+                    #
+                    if kwargs_in.get('postprocess.name',None) is None:
+                        kwargs_out['postprocess.name'] = 'segmentation_postprocess'
+                    #   
+                elif v == constants.TaskType.TASK_TYPE_KEYPOINT_DETECTION:
+                    if kwargs_in.get('preprocess.name',None) is None:
+                        kwargs_out['preprocess.name'] = 'image_preprocess'
+                    #
+                    if kwargs_in.get('postprocess.name',None) is None:
+                        kwargs_out['postprocess.name'] = 'keypoint_detection_postprocess'
+                    #  
+                #
+            elif k == 'input_dataset' or k == 'dataloader.input_dataset':
                 if v == 'imagenet':
                     if kwargs_in.get('dataloader.name', None) is None:
                         kwargs_out['dataloader.name'] = 'image_classification_dataloader'
                     #
                     if kwargs_in.get('dataloader.path', None) is None:
                         kwargs_out['dataloader.path'] = './data/datasets/vision/imagenetv2c/val'
-                    #
-                    if kwargs_in.get('preprocess.name',None) is None:
-                        kwargs_out['preprocess.name'] = 'image_preprocess'
                     #
                 elif v == 'coco':
                     if kwargs_in.get('dataloader.name', None) is None:
@@ -169,26 +192,21 @@ class CompileModelBase(CommonPipelineBase):
                     if kwargs_in.get('dataloader.path', None) is None:
                         kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
                     #
-                    if kwargs_in.get('preprocess.name',None) is None:
-                        kwargs_out['preprocess.name'] = 'image_preprocess'
-                    #
-                    if kwargs_in.get('postprocess.name',None) is None:
-                        kwargs_out['postprocess.name'] = 'object_detection_postprocess'
-                    #
                 elif v == 'cocoseg21':
                     if kwargs_in.get('dataloader.name', None) is None:
                         kwargs_out['dataloader.name'] = 'coco_segmentation_dataloader'
                     #
                     if kwargs_in.get('dataloader.path', None) is None:
                         kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
+                    #                 
+                elif v == 'cocokpts':
+                    if kwargs_in.get('dataloader.name', None) is None:
+                        kwargs_out['dataloader.name'] = 'coco_keypoint_detection_dataloader'
                     #
-                    if kwargs_in.get('preprocess.name',None) is None:
-                        kwargs_out['preprocess.name'] = 'image_preprocess'
-                    #
-                    if kwargs_in.get('postprocess.name',None) is None:
-                        kwargs_out['postprocess.name'] = 'segmentation_postprocess'
-                    #                    
-                #             
+                    if kwargs_in.get('dataloader.path', None) is None:
+                        kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
+                    #                  
+                #          
             else:
                 kwargs_out[k] = v
             #
@@ -220,10 +238,10 @@ class CompileModelBase(CommonPipelineBase):
         ###################################################################################
         preset_selection = kwargs_out.get('common.preset_selection', None)
         if preset_selection is not None:
-            if preset_selection == constants.ModelCompilationPreset.PRESET_ACCURACY:
+            if preset_selection.lower() == constants.ModelCompilationPreset.PRESET_ACCURACY.lower():
                 kwargs_out['session.runtime_options.object_detection:confidence_threshold'] = 0.05
                 kwargs_out['session.runtime_options.object_detection:top_k'] = 500
-            elif preset_selection == constants.ModelCompilationPreset.PRESET_SPEED:
+            elif preset_selection.lower() == constants.ModelCompilationPreset.PRESET_SPEED.lower():
                 kwargs_out['session.runtime_options.object_detection:confidence_threshold'] = 0.3
                 kwargs_out['session.runtime_options.object_detection:top_k'] = 200
                 kwargs_out['session.runtime_options.advanced_options:calibration_frames'] = 5
@@ -234,11 +252,11 @@ class CompileModelBase(CommonPipelineBase):
 
         return kwargs_out
 
-    def _write_params(self, settings, filename):
+    def _write_params(self, settings, filename, param_template=None):
         # adjustments for backward compatibility with 
         # params.yaml and result.yaml written by edgeai-benchmark
         settings = copy.deepcopy(settings)
         if 'session' in settings:
             settings['session']['session_name'] = settings['session']['name']
         #
-        super()._write_params(settings, filename)
+        super()._write_params(settings, filename, param_template=param_template)

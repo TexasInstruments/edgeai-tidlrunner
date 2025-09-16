@@ -812,7 +812,7 @@ class HumanPoseHeatmapParser:
         return aggregated_heatmaps, tags
 
     def __call__(self, outputs, info_dict):
-        outputs_flip = info_dict['outputs_flip']
+        outputs_flip = info_dict.get('outputs_flip', None)
         base_size = (info_dict['resize_shape'][0],info_dict['resize_shape'][1])
 
         heatmaps, tags = self.PoseMultiStage(outputs,outputs_flip,base_size)

@@ -83,10 +83,10 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     # post process transforms for classification
     ###############################################################
     @classmethod
-    def create_transforms_classification(cls, settings, **kwargs):
+    def create_transforms_classification(cls, settings, save_output=False, save_output_frames=50, **kwargs):
         transforms_list = [SqueezeAxis(), ArgMax(axis=-1)]
-        if settings.save_output:
-            transforms_list += [ClassificationImageSave(settings.num_output_frames)]
+        if save_output:
+            transforms_list += [ClassificationImageSave(save_output_frames)]
         #
         return transforms_list, dict()
 
@@ -96,7 +96,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     @classmethod
     def create_transforms_detection_base(cls, settings, formatter=None, resize_with_pad=False, keypoint=False, object6dpose=False, normalized_detections=True,
                                      shuffle_indices=None, squeeze_axis=0, reshape_list=None, ignore_index=None, logits_bbox_to_bbox_ls=False,
-                                     detection_threshold=None, detection_top_k=None, detection_keep_top_k=None, save_output=False, save_output_frames=1, **kwargs):
+                                     detection_threshold=None, detection_top_k=None, detection_keep_top_k=None, save_output=False, save_output_frames=50, **kwargs):
 
         # detection_threshold = detection_threshold or settings.detection_threshold
 
@@ -193,7 +193,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     # post process transforms for segmentation
     ###############################################################
     @classmethod
-    def create_transforms_segmentation_base(cls, settings, data_layout=None, with_argmax=True, save_output=False, num_output_frames=50, **kwargs):
+    def create_transforms_segmentation_base(cls, settings, data_layout=None, with_argmax=True, save_output=False, save_output_frames=50, **kwargs):
         transforms_list = [SqueezeAxis()]
         if with_argmax:
             transforms_list += [ArgMax(axis=None, data_layout=data_layout)]
@@ -202,7 +202,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
                                      SegmentationImageResize(),
                                      SegmentationImagetoBytes()]
         if save_output:
-            transforms_list += [SegmentationImageSave(num_output_frames)]
+            transforms_list += [SegmentationImageSave(save_output_frames)]
         #
         return transforms_list, dict(data_layout=data_layout, with_argmax=with_argmax)
 
@@ -218,14 +218,14 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     # post process transforms for human pose estimation
     ###############################################################
     @classmethod
-    def create_transforms_human_pose_estimation_base(cls, settings, data_layout=None, with_udp=True, **kwargs):
+    def create_transforms_human_pose_estimation_base(cls, settings, data_layout=None, with_udp=True, save_output=False, save_output_frames=50, **kwargs):
         # channel_axis = -1 if data_layout == constants.presets.NHWC else 1
         # postprocess_human_pose_estimation = [SqueezeAxis()] #just removes the first axis from output list, final size (c,w,h)
         transforms_list = [HumanPoseHeatmapParser(use_udp=with_udp),
                            KeypointsProject2Image(use_udp=with_udp)]
 
-        if settings.save_output:
-            transforms_list += [HumanPoseImageSave(settings.num_output_frames)]
+        if save_output:
+            transforms_list += [HumanPoseImageSave(save_output_frames)]
         #
         return transforms_list, dict(data_layout=data_layout, with_udp=with_udp)
 
@@ -237,12 +237,12 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     # post process transforms for depth estimation
     ###############################################################
     @classmethod
-    def create_transforms_depth_estimation_base(cls, settings, data_layout=None, **kwargs):
+    def create_transforms_depth_estimation_base(cls, settings, data_layout=None, save_output=False, save_output_frames=50, **kwargs):
         transforms_list = [SqueezeAxis(),
                            NPTensorToImage(data_layout=data_layout),
                            DepthImageResize()]
-        if settings.save_output:
-            transforms_list += [DepthImageSave(settings.num_output_frames)]
+        if save_output:
+            transforms_list += [DepthImageSave(save_output_frames)]
         #
         return transforms_list, dict(data_layout=data_layout)
 
@@ -261,13 +261,13 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     # post process transforms for disparity estimation
     ###############################################################
     @classmethod
-    def create_transforms_disparity_estimation_base(cls, settings, data_layout, **kwargs):
+    def create_transforms_disparity_estimation_base(cls, settings, data_layout, save_output=False, save_output_frames=50, **kwargs):
         transforms_list = [SqueezeAxis(), 
                            NPTensorToImage(data_layout=data_layout)]
         
         # To REVISIT!
-        #if self.settings.save_output:
-        #    transforms_list += [DepthImageSave(self.settings.num_output_frames)]
+        #if save_output:
+        #    transforms_list += [DepthImageSave(save_output_frames)]
         return transforms_list, dict(data_layout=data_layout)
 
     @classmethod
@@ -289,4 +289,10 @@ def object_detection_postprocess(settings, name='object_detection_postprocess', 
 def segmentation_postprocess(settings, name='segmentation_postprocess', **kwargs):
     assert settings.common.task_type == constants.TaskType.TASK_TYPE_SEGMENTATION, \
         'segmentation_postprocess can only be used for segmentation task type'
+    return PostProcessTransforms.from_kwargs(settings, **kwargs)
+
+
+def keypoint_detection_postprocess(settings, name='keypoint_detection_postprocess', **kwargs):
+    assert settings.common.task_type == constants.TaskType.TASK_TYPE_KEYPOINT_DETECTION, \
+        'keypoint_detection_postprocess can only be used for keypoint detection task type'
     return PostProcessTransforms.from_kwargs(settings, **kwargs)

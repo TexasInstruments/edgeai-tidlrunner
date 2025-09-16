@@ -32,5 +32,6 @@ from .image_list import image_list_dataloader, image_files_dataloader
 from .image_classification import image_classification_dataloader
 from .object_detection import coco_detection_dataloader
 from .semantic_segmentation import coco_segmentation_dataloader
+from .keypoint_detection import coco_keypoint_detection_dataloader
 from .modelmaker_dataloaders import modelmaker_classification_dataloader, \
     modelmaker_detection_dataloader, modelmaker_segmentation_dataloader
