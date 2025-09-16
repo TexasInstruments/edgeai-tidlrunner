@@ -216,6 +216,22 @@ class CompileModelBase(CommonPipelineBase):
                 kwargs_out['session.name'] = session_name
             #
         #
+
+        ###################################################################################
+        preset_selection = kwargs_out.get('common.preset_selection', None)
+        if preset_selection is not None:
+            if preset_selection == constants.ModelCompilationPreset.PRESET_ACCURACY:
+                kwargs_out['session.runtime_options.object_detection:confidence_threshold'] = 0.05
+                kwargs_out['session.runtime_options.object_detection:top_k'] = 500
+            elif preset_selection == constants.ModelCompilationPreset.PRESET_SPEED:
+                kwargs_out['session.runtime_options.object_detection:confidence_threshold'] = 0.3
+                kwargs_out['session.runtime_options.object_detection:top_k'] = 200
+                kwargs_out['session.runtime_options.advanced_options:calibration_frames'] = 5
+                kwargs_out['session.runtime_options.advanced_options:calibration_iterations'] = 5
+                kwargs_out['session.runtime_options.advanced_options:num_frames'] = 10
+            #
+        #
+
         return kwargs_out
 
     def _write_params(self, settings, filename):

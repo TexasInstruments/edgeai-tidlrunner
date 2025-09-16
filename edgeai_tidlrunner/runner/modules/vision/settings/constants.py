@@ -55,3 +55,9 @@ TaskTypeShortNames = {
     TaskType.TASK_TYPE_VISUAL_LOCALIZATION: 'visloc',
     TaskType.TASK_TYPE_DISPARITY_ESTIMATION: 'sd',
 }
+
+
+class ModelCompilationPreset:
+    PRESET_DEFAULT = None       # None is for Default preset (BALANCED)
+    PRESET_SPEED = 'SPEED'
+    PRESET_ACCURACY = 'ACCURACY'
