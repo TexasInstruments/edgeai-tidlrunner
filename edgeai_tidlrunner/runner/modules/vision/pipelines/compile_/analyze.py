@@ -240,23 +240,25 @@ class InferAnalyzeFinal(compile_base.CompileModelBase):
         num_traces = len(tidl_traces_dirs)
 
         layer_info_dir = os.path.join(tidl_run_dir, 'artifacts', 'tempDir')
-        layer_info_files = [f for f in os.listdir(layer_info_dir) if f.endswith('layer_info.txt')]
-        layer_info_path = os.path.join(layer_info_dir, layer_info_files[0])
+        layer_info_files = [os.path.join(layer_info_dir,f) for f in os.listdir(layer_info_dir) if f.endswith('layer_info.txt')]
         for frame_idx in range(num_traces):
             frame_worksheet = analyze_xlsx.add_worksheet('diff_frame_' + str(frame_idx))
-            tidl_onnx_trace_mapping = self._get_traces(notidl_traces_dirs[frame_idx], tidl_traces_dirs[frame_idx], layer_info_path)
-            layers_diff = self._get_layers_diff(notidl_traces_dirs[frame_idx], tidl_traces_dirs[frame_idx], layer_info_path, tidl_onnx_trace_mapping)
-
-            frame_worksheet.write_row(0, 1, ['ONNXLayer', 'TIDLDataID'])
-            frame_worksheet.write_row(0, 3, layers_diff[0].keys())
-            tidl_onnx_trace_mapping_keys = list(tidl_onnx_trace_mapping.keys())
-            for layer_idx in range(len(layers_diff)):
-                tidl_data_id = tidl_onnx_trace_mapping_keys[layer_idx]
-                tidl_onnx_trace_mapping_entry = tidl_onnx_trace_mapping[tidl_data_id]
-                frame_worksheet.write(layer_idx + 1, 0, str(layer_idx))
-                frame_worksheet.write(layer_idx + 1, 1, tidl_onnx_trace_mapping_entry[2])
-                frame_worksheet.write(layer_idx + 1, 2, tidl_onnx_trace_mapping_entry[3])
-                frame_worksheet.write_row(layer_idx + 1, 3, layers_diff[layer_idx].values())
+            row_idx = 1
+            for subgraph_idx, layer_info_path in enumerate(layer_info_files):
+                tidl_onnx_trace_mapping = self._get_traces(notidl_traces_dirs[frame_idx], tidl_traces_dirs[frame_idx], layer_info_path)
+                layers_diff = self._get_layers_diff(notidl_traces_dirs[frame_idx], tidl_traces_dirs[frame_idx], layer_info_path, tidl_onnx_trace_mapping)
+                frame_worksheet.write_row(0, 1, ['ONNXLayer', 'TIDLDataID'])
+                frame_worksheet.write_row(0, 3, layers_diff[0].keys())
+                tidl_onnx_trace_mapping_keys = list(tidl_onnx_trace_mapping.keys())
+                for layer_idx in range(len(layers_diff)):
+                    tidl_data_id = tidl_onnx_trace_mapping_keys[layer_idx]
+                    tidl_onnx_trace_mapping_entry = tidl_onnx_trace_mapping[tidl_data_id]
+                    frame_worksheet.write(row_idx+layer_idx, 0, str(subgraph_idx) + '_' + str(layer_idx))
+                    frame_worksheet.write(row_idx+layer_idx, 1, tidl_onnx_trace_mapping_entry[2])
+                    frame_worksheet.write(row_idx+layer_idx, 2, tidl_onnx_trace_mapping_entry[3])
+                    frame_worksheet.write_row(row_idx+layer_idx, 3, layers_diff[layer_idx].values())
+                #
+                row_idx += len(layers_diff)
             #
         #
 
