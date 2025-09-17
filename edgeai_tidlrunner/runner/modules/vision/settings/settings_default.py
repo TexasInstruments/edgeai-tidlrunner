@@ -71,7 +71,7 @@ SETTINGS_DEFAULT['optimize'] = SETTINGS_DEFAULT['basic'] | {
     'work_path':                        {'dest': 'session.work_path', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}', 'type':str, 'metavar':'value', 'help':'work path'},   
     'output_path':                      {'dest': 'session.run_dir', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'output model path'},
     'pipeline_type':                    {'dest': 'common.pipeline_type', 'default': 'optimize', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},    
-    'optimize_model':                   {'dest': 'common.optimize.optimize_model', 'default': False, 'type': utils.str_to_bool_or_none_or_dict, 'metavar': 'value', 'help': 'enable model optimization'},
+    'optimize_model':                   {'dest': 'common.optimize.optimize_model', 'default': True, 'type': utils.str_to_bool_or_none_or_dict, 'metavar': 'value', 'help': 'enable model optimization'},
     'simplify_model':                   {'dest': 'common.optimize.simplify_mode', 'default': 'pre', 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable model simplification optimizations'},
     'shape_inference':                  {'dest': 'common.optimize.shape_inference_mode', 'default': 'all', 'type': utils.str_or_none_or_bool, 'metavar': 'value', 'help': 'enable shape inference during optimization'},
     'input_optimization':               {'dest': 'session.input_optimization', 'default': False, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32'},
@@ -161,10 +161,8 @@ COPY_SETTINGS_DEFAULT['infer'] = COPY_SETTINGS_DEFAULT['compile'] | {
 # accuracy requires label_path as well
 SETTINGS_DEFAULT['accuracy'] = SETTINGS_DEFAULT['compile'] | {
     'label_path':                         {'dest': 'dataloader.label_path', 'default':None, 'type':str, 'metavar':'path', 'help': 'path to ground truth labels for accuracy evaluation'},
-
     # increase number of frames for infer_accuracy
     'num_frames': {'dest': 'common.num_frames', 'default': 1000, 'type': int, 'metavar': 'value', 'help': 'number of frames to process for accuracy evaluation'},
-
     # postprocess
     'postprocess_enable':                 {'dest':'common.postprocess_enable', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable postprocessing after inference'},    
     'postprocess_resize_with_pad':        {'dest':'postprocess.resize_with_pad', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', 'help': 'resize output with padding to maintain aspect ratio'},
@@ -191,7 +189,8 @@ COPY_SETTINGS_DEFAULT['accuracy'] = COPY_SETTINGS_DEFAULT['compile'] | {
 
 ##########################################################################
 SETTINGS_DEFAULT['analyze'] = SETTINGS_DEFAULT['infer'] | {
-    'pipeline_type':                    {'dest': 'common.pipeline_type', 'default': 'analyze', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},        
+    'pipeline_type':                      {'dest': 'common.pipeline_type', 'default': 'analyze', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},        
+    'analyze_level':                      {'dest': 'common.analyze_level', 'default': 0, 'type': int, 'metavar': 'value', 'help': 'analyze_level - 0: whole model summary, 1: per layer with stats', 'choices': [0, 1]},        
 }
 
 COPY_SETTINGS_DEFAULT['analyze'] = COPY_SETTINGS_DEFAULT['infer'] | {

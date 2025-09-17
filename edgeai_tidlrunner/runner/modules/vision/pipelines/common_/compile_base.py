@@ -151,66 +151,82 @@ class CompileModelBase(CommonPipelineBase):
                 pass
             elif k == 'task_type' or k == 'common.task_type':
                 kwargs_out['common.task_type'] = v
-                if v == constants.TaskType.TASK_TYPE_CLASSIFICATION:
-                    if kwargs_in.get('preprocess.name',None) is None:
-                        kwargs_out['preprocess.name'] = 'image_preprocess'
-                    #
-                elif v == constants.TaskType.TASK_TYPE_DETECTION:
-                    if kwargs_in.get('preprocess.name',None) is None:
-                        kwargs_out['preprocess.name'] = 'image_preprocess'
-                    #
-                    if kwargs_in.get('postprocess.name',None) is None:
-                        kwargs_out['postprocess.name'] = 'object_detection_postprocess'
-                    #
-                elif v == constants.TaskType.TASK_TYPE_SEGMENTATION:
-                    if kwargs_in.get('preprocess.name',None) is None:
-                        kwargs_out['preprocess.name'] = 'image_preprocess'
-                    #
-                    if kwargs_in.get('postprocess.name',None) is None:
-                        kwargs_out['postprocess.name'] = 'segmentation_postprocess'
-                    #   
-                elif v == constants.TaskType.TASK_TYPE_KEYPOINT_DETECTION:
-                    if kwargs_in.get('preprocess.name',None) is None:
-                        kwargs_out['preprocess.name'] = 'image_preprocess'
-                    #
-                    if kwargs_in.get('postprocess.name',None) is None:
-                        kwargs_out['postprocess.name'] = 'keypoint_detection_postprocess'
-                    #  
-                #
             elif k == 'input_dataset' or k == 'dataloader.input_dataset':
-                if v == 'imagenet':
-                    if kwargs_in.get('dataloader.name', None) is None:
-                        kwargs_out['dataloader.name'] = 'image_classification_dataloader'
-                    #
-                    if kwargs_in.get('dataloader.path', None) is None:
-                        kwargs_out['dataloader.path'] = './data/datasets/vision/imagenetv2c/val'
-                    #
-                elif v == 'coco':
-                    if kwargs_in.get('dataloader.name', None) is None:
-                        kwargs_out['dataloader.name'] = 'coco_detection_dataloader'
-                    #
-                    if kwargs_in.get('dataloader.path', None) is None:
-                        kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
-                    #
-                elif v == 'cocoseg21':
-                    if kwargs_in.get('dataloader.name', None) is None:
-                        kwargs_out['dataloader.name'] = 'coco_segmentation_dataloader'
-                    #
-                    if kwargs_in.get('dataloader.path', None) is None:
-                        kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
-                    #                 
-                elif v == 'cocokpts':
-                    if kwargs_in.get('dataloader.name', None) is None:
-                        kwargs_out['dataloader.name'] = 'coco_keypoint_detection_dataloader'
-                    #
-                    if kwargs_in.get('dataloader.path', None) is None:
-                        kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
-                    #                  
-                #          
+                kwargs_out['common.input_dataset'] = v
             else:
                 kwargs_out[k] = v
             #
         #
+
+        ###################################################################################
+        if not (kwargs_out.get('dataloader.name',None) and kwargs_out.get('dataloader.path',None)):
+            input_dataset = kwargs_out.get('common.input_dataset', None)
+            if input_dataset == 'imagenet':
+                if kwargs_out.get('dataloader.name', None) is None:
+                    kwargs_out['dataloader.name'] = 'image_classification_dataloader'
+                #
+                if kwargs_out.get('dataloader.path', None) is None:
+                    kwargs_out['dataloader.path'] = './data/datasets/vision/imagenetv2c/val'
+                #
+            elif input_dataset == 'coco':
+                if kwargs_out.get('dataloader.name', None) is None:
+                    kwargs_out['dataloader.name'] = 'coco_detection_dataloader'
+                #
+                if kwargs_out.get('dataloader.path', None) is None:
+                    kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
+                #
+            elif input_dataset == 'cocoseg21':
+                if kwargs_out.get('dataloader.name', None) is None:
+                    kwargs_out['dataloader.name'] = 'coco_segmentation_dataloader'
+                #
+                if kwargs_out.get('dataloader.path', None) is None:
+                    kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
+                #               
+            elif input_dataset == 'cocokpts':
+                if kwargs_out.get('dataloader.name', None) is None:
+                    kwargs_out['dataloader.name'] = 'coco_keypoint_detection_dataloader'
+                #
+                if kwargs_out.get('dataloader.path', None) is None:
+                    kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
+                #                  
+            else:
+                print(f'WARNING: {input_dataset} dataset is not supported - please use a supported dataset OR specify both dataloader.name and dataloader.path')  
+            #  
+        #
+ 
+        ###################################################################################
+        if kwargs_out.get('dataloader.name',None) and kwargs_out.get('dataloader.path',None):
+            task_type = kwargs_out.get('common.task_type', None)
+            if kwargs_out.get('preprocess.name',None) and kwargs_out.get('postprocess.name',None):
+                pass
+            elif task_type == constants.TaskType.TASK_TYPE_CLASSIFICATION:
+                if kwargs_out.get('preprocess.name',None) is None:
+                    kwargs_out['preprocess.name'] = 'image_preprocess'
+                #
+            elif task_type == constants.TaskType.TASK_TYPE_DETECTION:
+                if kwargs_out.get('preprocess.name',None) is None:
+                    kwargs_out['preprocess.name'] = 'image_preprocess'
+                #
+                if kwargs_out.get('postprocess.name',None) is None:
+                    kwargs_out['postprocess.name'] = 'object_detection_postprocess'
+                #
+            elif task_type == constants.TaskType.TASK_TYPE_SEGMENTATION:
+                if kwargs_out.get('preprocess.name',None) is None:
+                    kwargs_out['preprocess.name'] = 'image_preprocess'
+                #
+                if kwargs_out.get('postprocess.name',None) is None:
+                    kwargs_out['postprocess.name'] = 'segmentation_postprocess'
+                #   
+            elif task_type == constants.TaskType.TASK_TYPE_KEYPOINT_DETECTION:
+                if kwargs_out.get('preprocess.name',None) is None:
+                    kwargs_out['preprocess.name'] = 'image_preprocess'
+                #
+                if kwargs_out.get('postprocess.name',None) is None:
+                    kwargs_out['postprocess.name'] = 'keypoint_detection_postprocess'
+                #  
+            else:
+                print(f'WARNING: task_type {task_type} is not supported - please use a supported task_type OR specify both preprocess.name and postprocess.name')  
+            #
 
         ###################################################################################
         model_path = kwargs_out.get('session.model_path', None)
@@ -242,11 +258,11 @@ class CompileModelBase(CommonPipelineBase):
                 kwargs_out['session.runtime_options.object_detection:confidence_threshold'] = 0.05
                 kwargs_out['session.runtime_options.object_detection:top_k'] = 500
             elif preset_selection.lower() == constants.ModelCompilationPreset.PRESET_SPEED.lower():
+                kwargs_out['common.num_frames'] = 10
                 kwargs_out['session.runtime_options.object_detection:confidence_threshold'] = 0.3
                 kwargs_out['session.runtime_options.object_detection:top_k'] = 200
                 kwargs_out['session.runtime_options.advanced_options:calibration_frames'] = 5
                 kwargs_out['session.runtime_options.advanced_options:calibration_iterations'] = 5
-                kwargs_out['session.runtime_options.advanced_options:num_frames'] = 10
             #
         #
 
