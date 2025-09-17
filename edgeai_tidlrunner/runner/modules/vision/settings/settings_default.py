@@ -190,7 +190,7 @@ COPY_SETTINGS_DEFAULT['accuracy'] = COPY_SETTINGS_DEFAULT['compile'] | {
 ##########################################################################
 SETTINGS_DEFAULT['analyze'] = SETTINGS_DEFAULT['infer'] | {
     'pipeline_type':                      {'dest': 'common.pipeline_type', 'default': 'analyze', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},        
-    'analyze_level':                      {'dest': 'common.analyze_level', 'default': 0, 'type': int, 'metavar': 'value', 'help': 'analyze_level - 0: whole model summary, 1: per layer with stats', 'choices': [0, 1]},        
+    'analyze_level':                      {'dest': 'common.analyze_level', 'default': 1, 'type': int, 'metavar': 'value', 'help': 'analyze_level - 0: whole model summary, 1: per layer with stats', 'choices': [0, 1]},        
 }
 
 COPY_SETTINGS_DEFAULT['analyze'] = COPY_SETTINGS_DEFAULT['infer'] | {
