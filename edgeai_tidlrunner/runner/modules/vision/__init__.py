@@ -31,5 +31,5 @@ from . import blocks
 from . import pipelines
 
 
-def get_command_choices():
-    return pipelines.get_command_choices()
+def get_command_pipelines(**kwargs):
+    return pipelines.get_command_pipelines(**kwargs)

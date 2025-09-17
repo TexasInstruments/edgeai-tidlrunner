@@ -38,10 +38,19 @@ from . import bases
 from . import modules
 
 
-def _get_target_module(target_module_name):
+def get_target_module(target_module_name):
     target_module = getattr(modules, target_module_name)
     return target_module
 
+
+def get_command_pipelines(**kwargs):
+    if 'common.target_module' not in kwargs:
+        raise RuntimeError('ERROR: common.target_module is not specified')
+    #
+    target_module = get_target_module(kwargs['common.target_module'])
+    command_choices = target_module.get_command_pipelines(**kwargs)
+    return command_choices
+    
 
 def _run_command(task_index, command_key, pipeline_name, command_kwargs, capture_log):
     command_kwargs = copy.deepcopy(command_kwargs)
@@ -53,7 +62,7 @@ def _run_command(task_index, command_key, pipeline_name, command_kwargs, capture
     command_kwargs['common.capture_log'] = capture_log
     target_module_name = command_kwargs['common.target_module']
     target_module = getattr(modules, target_module_name)
-    command_module_name_dict = target_module.pipelines.command_module_name_dict
+    command_module_name_dict = target_module.pipelines.get_command_pipelines(**command_kwargs)
     assert command_key in command_module_name_dict, f'ERROR: unknown command: {command_key}'
     command_module = getattr(target_module.pipelines, pipeline_name)
     runner_obj = command_module(**command_kwargs)
@@ -75,8 +84,8 @@ def _model_selection(config_entry_file, model_path, model_selection):
 
 def _create_run_dict(command, argparse=False, **kwargs):
     # which target module to use
-    target_module = _get_target_module(kwargs['common.target_module'])
-    pipeline_names = target_module.pipelines.command_module_name_dict[command]
+    target_module = get_target_module(kwargs['common.target_module'])
+    pipeline_names = target_module.pipelines.get_command_pipelines(**kwargs)[command]
     pipeline_names = pipeline_names if isinstance(pipeline_names, list) else [pipeline_names]
 
     rest_args_list = []

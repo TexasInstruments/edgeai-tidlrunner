@@ -66,11 +66,6 @@ class MainRunner(runner.bases.PipelineBase):
         num_cuda_gpus = int(out_ret)
         return num_cuda_gpus
 
-    @classmethod
-    def _get_target_module(cls, target_module_name):
-        target_module = getattr(runner.modules, target_module_name)
-        return target_module
-
     def run(self, command):
         run_dict = runner._create_run_dict(command, argparse=True, **self.kwargs)
         return runner._run(run_dict)
@@ -85,8 +80,7 @@ class MainRunner(runner.bases.PipelineBase):
             parser = cls.get_arg_parser()
             command_args, rest_args = parser.parse_known_args()
             kwargs = vars(command_args)
-            target_module = cls._get_target_module(kwargs['common.target_module'])
-            command_choices = target_module.get_command_choices()
+            command_choices = runner.get_command_pipelines(**kwargs)
             parser.print_help()
             print('============================================================')
             print('for detailed help, use the following options:')
@@ -104,8 +98,7 @@ class MainRunner(runner.bases.PipelineBase):
             parser = cls.get_arg_parser()
             command_args, rest_args = parser.parse_known_args()
             kwargs = vars(command_args)
-            target_module = cls._get_target_module(kwargs['common.target_module'])
-            command_choices = target_module.get_command_choices()
+            command_choices = runner.get_command_pipelines(**kwargs)
             command = sys.argv[1]
             assert command in command_choices, RuntimeError(
                 f'ERROR: invalid command: {command} - must be one of {command_choices}')
@@ -116,8 +109,7 @@ class MainRunner(runner.bases.PipelineBase):
             parser = cls.get_arg_parser()
             command_args, rest_args = parser.parse_known_args()
             kwargs = vars(command_args)
-            target_module = cls._get_target_module(kwargs['common.target_module'])
-            command_choices = target_module.get_command_choices()
+            command_choices = runner.get_command_pipelines(**kwargs)
             command = sys.argv[1].lower().replace(' ', '')
             assert command in command_choices, RuntimeError(
                 f'ERROR: invalid command: {command} - must be one of {command_choices}')

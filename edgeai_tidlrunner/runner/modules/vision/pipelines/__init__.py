@@ -37,24 +37,19 @@ from .utils_.extract import ExtractNodes
 from .utils_.package import PackageArtifacts
 
 
-command_module_name_dict = {
-    # compile related
-    'compile':'CompileModel',
-    'infer':'InferModel',
-    'accuracy': ['InferAccuracy'],
-    'compile+infer': ['CompileModel', 'InferModel'],
-    'compile+accuracy': ['CompileModel', 'InferAccuracy'],
-    'analyze': ['CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL', 'InferAnalyzeTIDL', 'InferAnalyzeFinal'],    
-    'report': ['GenReport'],   
-    'package': ['PackageArtifacts'], 
-    # other
-    'optimize':'OptimizeModel',
-    'extract':'ExtractNodes',
-}
-
-command_choices = list(command_module_name_dict.keys())
-command_choices = list(set(command_choices))
-
-
-def get_command_choices():
-    return command_choices
+def get_command_pipelines(**kwargs):
+    command_module_name_dict = {
+        # compile related
+        'compile':'CompileModel',
+        'infer':'InferModel',
+        'accuracy': ['InferAccuracy'],
+        'compile+infer': ['CompileModel', 'InferModel'],
+        'compile+accuracy': ['CompileModel', 'InferAccuracy'],
+        'analyze': ['CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL', 'InferAnalyzeTIDL', 'InferAnalyzeFinal'],    
+        'report': ['GenReport'],   
+        'package': ['PackageArtifacts'], 
+        # other
+        'optimize':'OptimizeModel',
+        'extract':'ExtractNodes',
+    }
+    return command_module_name_dict

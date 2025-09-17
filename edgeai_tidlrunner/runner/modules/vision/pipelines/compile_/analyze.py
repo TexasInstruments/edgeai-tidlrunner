@@ -64,7 +64,7 @@ class CompileAnalyzeNoTIDL(compile.CompileModel):
 
     def modify_model(self):
         super().modify_model()
-        if self.kwargs['common.analyze_level'] > 0:
+        if self.kwargs['common.analyze_level'] >= 2:
             model_path = self.model_path
             # Load the original ONNX model and add intermediate outputs
             onnx_model = onnx.load(model_path)
@@ -149,11 +149,11 @@ class InferAnalyzeTIDL(infer.InferModel):
         print('INFO: TIDL traces generated')
 
     def _run_frame(self, input_index, *args, **kwargs):
-        if self.kwargs['common.analyze_level'] == 0:
-            run_dict = super()._run_frame(input_index, *args, **kwargs)
-        else:
+        if self.kwargs['common.analyze_level'] >= 2:
             os.system('rm -f /tmp/tidl_*.bin')
-            run_dict = super()._run_frame(input_index, *args, **kwargs)
+        #
+        run_dict = super()._run_frame(input_index, *args, **kwargs)
+        if self.kwargs['common.analyze_level'] >= 2:
             traces_root = os.path.join(self.run_dir, 'traces_', str(input_index))
             os.makedirs(traces_root, exist_ok=True)
             os.system(f'mv /tmp/tidl_*.bin {traces_root}')
@@ -191,7 +191,7 @@ class InferAnalyzeFinal(compile_base.CompileModelBase):
         analyze_xlsx_path = os.path.join(self.run_dir, "analyze.xlsx")
         analyze_xlsx =  xlsxwriter.Workbook(analyze_xlsx_path, options=dict(nan_inf_to_errors=True))
         self._analyze_model_outputs(notidl_outputs_dirs, tidl_outputs_dirs, analyze_xlsx)
-        if self.kwargs['common.analyze_level'] > 0:
+        if self.kwargs['common.analyze_level'] >= 2:
             self._analyze_model_layers(notidl_outputs_dirs, tidl_traces_dirs, analyze_xlsx)
         #
         analyze_xlsx.close()
@@ -243,7 +243,7 @@ class InferAnalyzeFinal(compile_base.CompileModelBase):
         layer_info_files = [f for f in os.listdir(layer_info_dir) if f.endswith('layer_info.txt')]
         layer_info_path = os.path.join(layer_info_dir, layer_info_files[0])
         for frame_idx in range(num_traces):
-            frame_worksheet = analyze_xlsx.add_worksheet('diff_' + str(frame_idx))
+            frame_worksheet = analyze_xlsx.add_worksheet('diff_frame_' + str(frame_idx))
             tidl_onnx_trace_mapping = self._get_traces(notidl_traces_dirs[frame_idx], tidl_traces_dirs[frame_idx], layer_info_path)
             layers_diff = self._get_layers_diff(notidl_traces_dirs[frame_idx], tidl_traces_dirs[frame_idx], layer_info_path, tidl_onnx_trace_mapping)
 
