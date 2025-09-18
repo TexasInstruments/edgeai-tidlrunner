@@ -34,6 +34,7 @@ import copy
 import numpy as np
 import onnx
 import glob
+import math
 import xlsxwriter
 
 from ..... import utils
@@ -220,18 +221,20 @@ class InferAnalyzeFinal(compile_base.CompileModelBase):
                 tidlBuffer = np.fromfile(tidl_output_file, dtype=np.float32).flatten()
                 diff_dict = self._get_tensor_diff(goldenBuffer, tidlBuffer)
 
-                frame_worksheet.write_row(0, column_start_idx+1, ['ONNXLayer', 'TIDLONNXLayer'])
+                frame_worksheet.write_row(0, column_start_idx+0, ['FrameNum', 'ONNXLayer', 'TIDLONNXLayer'])
                 frame_worksheet.write_row(0, column_start_idx+3, diff_dict.keys())
 
                 frame_worksheet.write(frame_idx + 1, column_start_idx+0, str(frame_idx))
-                frame_worksheet.write(frame_idx + 1, column_start_idx+1, os.path.basename(golden_output_file))
-                frame_worksheet.write(frame_idx + 1, column_start_idx+2, os.path.basename(tidl_output_file))
+                frame_worksheet.write(frame_idx + 1, column_start_idx+1, os.path.splitext(os.path.basename(golden_output_file))[0])
+                frame_worksheet.write(frame_idx + 1, column_start_idx+2, os.path.splitext(os.path.basename(tidl_output_file))[0])
                 frame_worksheet.write_row(frame_idx + 1, column_start_idx+3, diff_dict.values())
                 column_start_idx += (3 + len(diff_dict))
             #
         #
 
     def _analyze_model_layers(self, notidl_traces_dirs, tidl_traces_dirs, analyze_xlsx):
+        zero_if_nan = lambda v: 0.0 if (math.isnan(v) or v is None) else v
+
         if len(notidl_traces_dirs) != len(tidl_traces_dirs):
             print(f"ERROR: Number of traces in notidl and tidl folders do not match")
             raise ValueError(f"ERROR: Number of traces in notidl and tidl folders do not match")
@@ -241,22 +244,62 @@ class InferAnalyzeFinal(compile_base.CompileModelBase):
 
         layer_info_dir = os.path.join(tidl_run_dir, 'artifacts', 'tempDir')
         layer_info_files = [os.path.join(layer_info_dir,f) for f in os.listdir(layer_info_dir) if f.endswith('layer_info.txt')]
+        tidl_onnx_trace_mapping_dict = dict()
+        layers_diff_dict = dict()
+        layers_diff_sum = dict()
+        for frame_idx in range(num_traces):
+            for subgraph_idx, layer_info_path in enumerate(layer_info_files):
+                tidl_onnx_trace_mapping_dict[frame_idx] = tidl_onnx_trace_mapping_dict.get(frame_idx, dict())
+                tidl_onnx_trace_mapping = self._get_traces(notidl_traces_dirs[frame_idx], tidl_traces_dirs[frame_idx], layer_info_path)
+                tidl_onnx_trace_mapping_dict[frame_idx][subgraph_idx] = tidl_onnx_trace_mapping
+
+                layers_diff_dict[frame_idx] = layers_diff_dict.get(frame_idx, dict())
+                layers_diff = self._get_layers_diff(notidl_traces_dirs[frame_idx], tidl_traces_dirs[frame_idx], layer_info_path, tidl_onnx_trace_mapping)
+                layers_diff_dict[frame_idx][subgraph_idx] = layers_diff
+
+                # find median
+                layers_diff_keys = layers_diff[0].keys()
+                layers_diff_transposed = {key: [] for key in layers_diff_keys}
+                for layer_idx in range(len(layers_diff)):
+                    for key, v in layers_diff[layer_idx].items():
+                        v = zero_if_nan(v)
+                        layers_diff[layer_idx][key] = v
+                        layers_diff_transposed[key].append(v)
+                    #
+                #
+                layers_diff_median = {key: np.median(np.array(vs)) for key, vs in layers_diff_transposed.items()}
+            #
+        #
+
+        # add percentage values as well
+        for frame_idx in range(num_traces):
+            for subgraph_idx, layer_info_path in enumerate(layer_info_files):
+                layers_diff = layers_diff_dict[frame_idx][subgraph_idx]
+                for layer_idx, layer_diff in enumerate(layers_diff):
+                    for key in layers_diff_median.keys():
+                        median_val = layers_diff_median[key]
+                        eps = 1e-6 if median_val == 0 else 0
+                        layer_diff[key + '_Median%'] = abs((layer_diff[key] + eps) * 100 / (median_val + eps))
+                    #
+                # 
+            #
+        #
+
         for frame_idx in range(num_traces):
             frame_worksheet = analyze_xlsx.add_worksheet('diff_frame_' + str(frame_idx))
             row_idx = 1
             for subgraph_idx, layer_info_path in enumerate(layer_info_files):
-                tidl_onnx_trace_mapping = self._get_traces(notidl_traces_dirs[frame_idx], tidl_traces_dirs[frame_idx], layer_info_path)
-                layers_diff = self._get_layers_diff(notidl_traces_dirs[frame_idx], tidl_traces_dirs[frame_idx], layer_info_path, tidl_onnx_trace_mapping)
-                frame_worksheet.write_row(0, 1, ['ONNXLayer', 'TIDLDataID'])
-                frame_worksheet.write_row(0, 3, layers_diff[0].keys())
+                tidl_onnx_trace_mapping = tidl_onnx_trace_mapping_dict[frame_idx][subgraph_idx]
+                layers_diff = layers_diff_dict[frame_idx][subgraph_idx]
+                frame_worksheet.write_row(0, 0, ['Subgraph', 'SerialNum', 'ONNXLayer', 'TIDLDataID'])
+                frame_worksheet.write_row(0, 4, layers_diff[0].keys())
                 tidl_onnx_trace_mapping_keys = list(tidl_onnx_trace_mapping.keys())
                 for layer_idx in range(len(layers_diff)):
                     tidl_data_id = tidl_onnx_trace_mapping_keys[layer_idx]
                     tidl_onnx_trace_mapping_entry = tidl_onnx_trace_mapping[tidl_data_id]
-                    frame_worksheet.write(row_idx+layer_idx, 0, str(subgraph_idx) + '_' + str(layer_idx))
-                    frame_worksheet.write(row_idx+layer_idx, 1, tidl_onnx_trace_mapping_entry[2])
-                    frame_worksheet.write(row_idx+layer_idx, 2, tidl_onnx_trace_mapping_entry[3])
-                    frame_worksheet.write_row(row_idx+layer_idx, 3, layers_diff[layer_idx].values())
+                    layer_id_mapping_list = [str(subgraph_idx), str(layer_idx), tidl_onnx_trace_mapping_entry[2], tidl_onnx_trace_mapping_entry[3]]
+                    frame_worksheet.write_row(row_idx+layer_idx, 0, layer_id_mapping_list)
+                    frame_worksheet.write_row(row_idx+layer_idx, 4, layers_diff[layer_idx].values())
                 #
                 row_idx += len(layers_diff)
             #
@@ -275,25 +318,17 @@ class InferAnalyzeFinal(compile_base.CompileModelBase):
             tidl_data_id = entry[0]
             onnx_layer_name = entry[-1]
             onnx_layer_id = onnx_layer_name.replace("/", "_")
+            onnx_trace_path = list(filter(lambda path: onnx_layer_id in path, onnx_entries))
 
             _tidl_data_id = tidl_data_id
             while len(_tidl_data_id) < 4:
                 _tidl_data_id = "0" + _tidl_data_id
 
-            _tidl_trace_path = os.path.join(
-                tidl_trace_folder,
-                f"tidl_trace_subgraph_0_{_tidl_data_id}*_float.bin",
-            )
-
-            onnx_trace_path = list(
-                filter(lambda path: onnx_layer_id in path, onnx_entries)
-            )
+            _tidl_trace_path = os.path.join(tidl_trace_folder, f"tidl_trace_subgraph_0_{_tidl_data_id}*_float.bin")
             tidl_trace_path = glob.glob(_tidl_trace_path)
 
             if len(onnx_trace_path) > 0 and len(tidl_trace_path) > 0:
-                onnx_trace_path = os.path.join(
-                    onnx_trace_folder, onnx_trace_path[0]
-                )
+                onnx_trace_path = os.path.join(onnx_trace_folder, onnx_trace_path[0])
                 tidl_trace_path = tidl_trace_path[0]
                 tidl_onnx_trace_mapping[tidl_data_id] = [
                     os.path.basename(onnx_trace_path),
@@ -314,14 +349,13 @@ class InferAnalyzeFinal(compile_base.CompileModelBase):
             delta = np.zeros_like(tidlBuffer)
         #
         eps = 1e-6
-        scale = np.mean(np.absolute(goldenBuffer))
-        scale = np.abs(scale)
-        abs_delta = np.absolute(delta)
-        max = np.max(abs_delta)
-        mean = np.mean(abs_delta)
-        mae = mean / scale if scale > eps else (mean+eps) / (scale+eps)
-        max_abs = np.mean(np.absolute(delta))
-        diff_dict = {'MeanAbsRelE': float(mae), 'MaxAbsE': float(max), 'MeanMaxAbsE': float(max_abs)}
+        abs_delta = np.abs(delta)
+        max_delta = np.max(abs_delta)
+        mean_delta = np.mean(abs_delta)
+        median_delta = np.median(abs_delta)
+        mean_scale = np.mean(np.abs(goldenBuffer))
+        mean_abs_rel_diff = mean_delta / mean_scale if mean_scale > eps else (mean_delta+eps) / (mean_scale+eps)
+        diff_dict = {'MeanAbsRelDiff': float(mean_abs_rel_diff), 'MeanAbsDiff': float(mean_delta), 'MedianAbsDiff': float(median_delta), 'MaxAbsDiff': float(max_delta)}
         return diff_dict
 
     def _get_layers_diff(self, onnx_trace_folder, tidl_trace_folder, layer_info_path, tidl_onnx_trace_mapping):
@@ -333,20 +367,12 @@ class InferAnalyzeFinal(compile_base.CompileModelBase):
         combined_diff = []
         for idx in range(num_traces_files):
             layer_idx = traces_files[idx]
-            tidl = os.path.join(
-                tidl_trace_folder,
-                tidl_onnx_trace_mapping[layer_idx][1],
-            )
-            golden = os.path.join(
-                onnx_trace_folder,
-                tidl_onnx_trace_mapping[layer_idx][0],
-            )
+            tidl = os.path.join(tidl_trace_folder, tidl_onnx_trace_mapping[layer_idx][1])
+            golden = os.path.join(onnx_trace_folder, tidl_onnx_trace_mapping[layer_idx][0])
             goldenBuffer = np.fromfile(golden, dtype=np.float32).flatten()
             tidlBuffer = np.fromfile(tidl, dtype=np.float32).flatten()
-
             tidl_onnx_trace_mapping[layer_idx].extend([goldenBuffer, tidlBuffer])
             diff_dict = self._get_tensor_diff(goldenBuffer, tidlBuffer)
             combined_diff.append(diff_dict)
         #
         return combined_diff
-
