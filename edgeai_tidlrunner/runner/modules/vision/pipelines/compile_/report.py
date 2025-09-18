@@ -51,7 +51,7 @@ class GenReport(bases.PipelineBase):
 
     def _run(self):
         print(f'INFO: starting gen report')
-        self.run_report(self.kwargs)
+        self.run_report(self.settings)
 
     def get_run_dirs(self, work_dir):
         run_dirs = glob.glob(f'{work_dir}/*')
@@ -74,7 +74,7 @@ class GenReport(bases.PipelineBase):
                 with open(result_or_config_yaml) as fp:
                     result = yaml.safe_load(fp)
                     model_id = result['session']['model_id']
-                    session_name = result['session'].get('session_name', result['session']['name'])
+                    session_name = result['session'].get('session_name', result['session'].get('name','NONE'))
                     artifact_id = f'{model_id}_{session_name}'
                     results[artifact_id] = result
                 #
@@ -88,9 +88,9 @@ class GenReport(bases.PipelineBase):
 
 
     def run_report(self, kwargs, rewrite_results=True, skip_pattern=None):
-        report_perfsim = kwargs['common.report.mode']
-        report_path = kwargs['common.report.path']
-        target_device = kwargs.get('session.target_device', 'NONE')
+        report_perfsim = kwargs['common']['report']['mode']
+        report_path = kwargs['common']['report']['path']
+        target_device = kwargs['session'].get('target_device', 'NONE')
 
         if target_device in (None, 'None', 'NONE'):
             benchmark_dir = report_path
@@ -187,7 +187,7 @@ class GenReport(bases.PipelineBase):
             if pipeline_params_anchor is not None:
                 model_id_from_result = pipeline_params_anchor['session']['model_id']
                 assert model_id == model_id_from_result, f"model_id={model_id} doesnt match model_id_from_result={model_id_from_result}"
-                results_line_dict['runtime_name'] = pipeline_params_anchor['session'].get('session_name', pipeline_params_anchor['session']['name'])
+                results_line_dict['runtime_name'] = pipeline_params_anchor['session'].get('session_name', pipeline_params_anchor['session'].get('name','NONE'))
                 preprocess_crop = pipeline_params_anchor['preprocess'].get('crop',None)
                 results_line_dict['input_resolution'] = 'x'.join(map(str, preprocess_crop)) \
                     if isinstance(preprocess_crop, (list,tuple)) else str(preprocess_crop)
