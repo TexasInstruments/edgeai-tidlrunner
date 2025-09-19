@@ -34,9 +34,9 @@ dependencies = [
 ]
 
 [project.urls]
-"Homepage" = "https://bitbucket.itg.ti.com/projects/EDGEAI-ALGO/repos/edgeai-tidlrunner/browse"
-"Bug Reports" = "https://bitbucket.itg.ti.com/projects/EDGEAI-ALGO/repos/edgeai-tidlrunner/issues"
-"Source" = "https://bitbucket.itg.ti.com/projects/EDGEAI-ALGO/repos/edgeai-tidlrunner/browse"
+"Homepage" = "https://github.com/TexasInstruments/edgeai-tidlrunner"
+"Bug Reports" = "https://github.com/TexasInstruments/edgeai-tidlrunner/issues"
+"Source" = "https://github.com/TexasInstruments/edgeai-tidlrunner"
 
 [project.optional-dependencies]
 pc = [

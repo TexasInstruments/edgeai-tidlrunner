@@ -26,9 +26,9 @@ dependencies = [
 ]
 
 [project.urls]
-"Homepage" = "https://bitbucket.itg.ti.com/projects/EDGEAI-ALGO/repos/edgeai-tidlrunner/browse"
+"Homepage" = "https://github.com/TexasInstruments/edgeai-tidlrunner"
 "Bug Reports" = "https://e2e.ti.com/support/processors-group/processors/tags/TIDL"
-"Source" = "https://bitbucket.itg.ti.com/projects/EDGEAI-ALGO/repos/edgeai-tidlrunner/browse"
+"Source" = "https://github.com/TexasInstruments/edgeai-tidlrunner"
 
 [tool.setuptools.packages.find]
 where = ["."]
