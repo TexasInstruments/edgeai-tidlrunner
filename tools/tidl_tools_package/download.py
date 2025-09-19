@@ -302,18 +302,19 @@ def download_tidl_tools(download_url, download_path, **tidl_version_dict):
         with open(os.path.join(download_tidl_tools_path, 'version.yaml'), "w") as fp:
             yaml.safe_dump(tidl_version_dict, fp)
         #
-    except:
-        print(f"ERROR: download_and_extract_archive: {download_url} - failed")
+    except Exception as e:
+        print(f"ERROR: download_and_extract_archive: {download_url} - failed - {e}")
     #
     try:
         download_tidl_tools_path_until_rel, tidl_tools_name = os.path.split(download_tidl_tools_path)
         download_tidl_tools_path_until_dev, rel_name = os.path.split(download_tidl_tools_path_until_rel)
         download_tidl_tools_path_symlink_src = os.path.join(rel_name, tidl_tools_name)
         os.chdir(download_tidl_tools_path_until_dev)
-        remove_link_stauts = os.remove(tidl_tools_name) if os.path.exists(tidl_tools_name) else None
+        remove_link_stauts = os.unlink(tidl_tools_name) if os.path.islink(tidl_tools_name) else None
+        remove_link_stauts = shutil.rmtree(tidl_tools_name) if os.path.exists(tidl_tools_name) else None
         os.symlink(download_tidl_tools_path_symlink_src, tidl_tools_name)
-    except:
-        print(f"ERROR: symlink failed: {download_tidl_tools_path} to {download_tidl_tools_path_symlink_src}")
+    except Exception as e:
+        print(f"ERROR: symlink failed: {download_tidl_tools_path} to {download_tidl_tools_path_symlink_src} - {e}")
     #
     os.chdir(cwd)
     return None

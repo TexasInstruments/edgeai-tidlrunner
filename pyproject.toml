@@ -43,7 +43,7 @@ pc = [
     "opencv-python-headless",
     "numpy==1.23.0",
     "onnxsim==0.4.35",
-    "osrt_model_tools@git+ssh://git@bitbucket.itg.ti.com/processor-sdk-vision/edgeai-tidl-tools.git@2025/kunal_opt_merge#subdirectory=osrt-model-tools", ## "osrt_model_tools@git+https://github.com/TexasInstruments/edgeai-tidl-tools.git@11_00_08_00#subdirectory=osrt-model-tools",
+    "osrt_model_tools@git+https://github.com/TexasInstruments/edgeai-tidl-tools.git@11_01_06_00#subdirectory=osrt-model-tools", ##"osrt_model_tools@git+ssh://git@bitbucket.itg.ti.com/processor-sdk-vision/edgeai-tidl-tools.git@main#subdirectory=osrt-model-tools",
 ]
 evm = [
     "pycocotools"
