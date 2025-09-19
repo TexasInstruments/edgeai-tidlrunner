@@ -55,5 +55,5 @@ Model compilation can be run using random data - if the intention is just to mea
 
 To run example models in this repository with actual data, download example datasets:
 ```
-./example_download_datasets.sh
+./examples/example_download_datasets.sh
 ```

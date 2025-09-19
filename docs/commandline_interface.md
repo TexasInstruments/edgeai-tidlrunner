@@ -36,4 +36,4 @@ tidlrunnercli compile --model_path=./data/models/vision/segmentation/cocoseg21/e
 ```
 
 #### Example - a commandline example
-See the commandline examples in [example_runner_cli_pc.sh](../example_runner_cli_pc.sh) and [example_runner_cli_evm.sh](../example_runner_cli_evm.sh)
+See the commandline examples in [examples/example_runner_cli_pc.sh](../examples/example_runner_cli_pc.sh) and [examples/example_runner_cli_evm.sh](../examples/example_runner_cli_evm.sh)
