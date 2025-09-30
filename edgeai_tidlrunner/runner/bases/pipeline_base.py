@@ -204,11 +204,13 @@ class PipelineBase():
 
     @classmethod
     def _add_argument(cls, parser, name, **kwargs):
+        positional = kwargs.pop('positional', False)
+        prefix_dash = '' if positional else '--'
         if 'dest' in kwargs:
             alternate_arg_name = kwargs['dest']
-            parser.add_argument(f'--{name}', f'--{alternate_arg_name}', action=_TrackProvidedAction, **kwargs)
+            parser.add_argument(f'{prefix_dash}{name}', f'{prefix_dash}{alternate_arg_name}', action=_TrackProvidedAction, **kwargs)
         else:
-            parser.add_argument(f'--{name}', action=_TrackProvidedAction, **kwargs)
+            parser.add_argument(f'{prefix_dash}{name}', action=_TrackProvidedAction, **kwargs)
         #
 
     @classmethod

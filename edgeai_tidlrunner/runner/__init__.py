@@ -31,6 +31,7 @@ import os
 import copy
 import functools
 import yaml
+import warnings
 
 from .. import rtwrapper
 from . import utils
@@ -82,7 +83,7 @@ def _model_selection(config_entry_file, model_path, model_selection):
     return is_selected
 
 
-def _create_run_dict(command, argparse=False, **kwargs):
+def _create_run_dict(command, argparse=False, ignore_unknown_args=False, **kwargs):
     # which target module to use
     target_module = get_target_module(kwargs['common.target_module'])
     pipeline_names = target_module.pipelines.get_command_pipelines(**kwargs)[command]
@@ -91,7 +92,6 @@ def _create_run_dict(command, argparse=False, **kwargs):
     rest_args_list = []
     run_dict = {}
     for pipeline_name in pipeline_names:
-        # remove spaces from command
         if argparse:
             command_module = getattr(target_module.pipelines, pipeline_name)
             command_args, rest_args = command_module.get_arg_parser().parse_known_args()    
@@ -110,8 +110,9 @@ def _create_run_dict(command, argparse=False, **kwargs):
                 kwargs_config = dict()
             #
             kwargs_config.pop('command', None)
+            model_id = kwargs_config.get('session',{}).get('model_id', None) or kwargs.get('session',{}).get('model_id', None)
             if 'configs' not in kwargs_config:
-                configs = {'config':config_path}
+                configs = {model_id:config_path}
             else:
                 configs = kwargs_config.get('configs')
             #
@@ -119,7 +120,7 @@ def _create_run_dict(command, argparse=False, **kwargs):
             configs = {'config': None}
         #
 
-        for model_key, config_entry_file in configs.items():
+        for model_id, config_entry_file in configs.items():
             if config_entry_file:
                 if not (config_entry_file.startswith('/') or config_entry_file.startswith('.')):
                     config_base_path = os.path.dirname(config_path)
@@ -151,9 +152,9 @@ def _create_run_dict(command, argparse=False, **kwargs):
             model_path = kwargs_model.get('session.model_path', None)
             if _model_selection(config_entry_file, model_path, model_selection):
                 # append to command_list for the model
-                model_command_list = run_dict.get(model_key, [])
+                model_command_list = run_dict.get(model_id, [])
                 model_command_list.append((command,pipeline_name,kwargs_model))
-                run_dict[model_key] = model_command_list
+                run_dict[model_id] = model_command_list
             else:
                 print(f'INFO: skipping entry: {model_path} or config {config_entry_file} does not match model_selection: {model_selection}')
             #
@@ -167,7 +168,11 @@ def _create_run_dict(command, argparse=False, **kwargs):
     # ignore the option --target_machine since it could have been added in main.py
     rest_args = [arg for arg in rest_args if '--target_machine' not in arg]
     if rest_args:
-        raise RuntimeError(f'WARNING: unknown args found for command: {command} - {rest_args}')
+        if ignore_unknown_args:
+            warnings.warn(f'WARNING: unknown args found for command: {command} - {rest_args}')
+        else:
+            raise RuntimeError(f'WARNING: unknown args found for command: {command} - {rest_args}')
+        #
     #
     return run_dict
 

@@ -27,14 +27,18 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from .config_utils import *
-from .download_utils import *
-from .parse_utils import *
-from .file_utils import *
-from .metric_utils import *
-from .string_utils import *
-from .process_with_queue import *
-from .parallel_runner import *
-from .sequential_runner import *
-from .artifacts_id import *
-from .import_utils import *
+import os
+import sys
+import importlib
+
+
+def import_file_folder(file_or_folder_name):
+    if file_or_folder_name.endswith(os.sep):
+        file_or_folder_name = file_or_folder_name[:-1]
+    #
+    parent_folder = os.path.dirname(file_or_folder_name)
+    basename = os.path.splitext(os.path.basename(file_or_folder_name))[0]
+    sys.path.insert(0, parent_folder)
+    imported_module = importlib.import_module(basename, __name__)
+    sys.path.pop(0)
+    return imported_module
