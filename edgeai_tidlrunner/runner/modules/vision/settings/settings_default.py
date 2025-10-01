@@ -60,6 +60,7 @@ COPY_SETTINGS_DEFAULT = {}
 
 SETTINGS_DEFAULT['basic'] = settings_base.SETTING_PIPELINE_RUNNER_ARGS_DICT | {
     'pipeline_type': {'dest': 'common.pipeline_type', 'default': None, 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},
+    'verbose':       {'dest': 'common.verbose', 'default': 0, 'type': int, 'metavar': 'value', 'help': 'verbosity level'},
 }
 
 COPY_SETTINGS_DEFAULT['basic'] = {}
@@ -96,7 +97,10 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | SETTINGS_DEFAULT['opti
     'task_type':                {'dest': 'common.task_type', 'default': None, 'type': str, 'metavar': 'value', 'help': 'type of AI task (classification, detection, segmentation etc.)'},
     'num_frames':               {'dest': 'common.num_frames', 'default': 10, 'type': int, 'metavar': 'value', 'help': 'number of frames to process'},
     'display_step':             {'dest': 'common.display_step', 'default': 100, 'type': str, 'metavar': 'value', 'help': 'interval for displaying progress information'},
+    'upgrade_config':           {'dest': 'common.upgrade_config', 'default': True, 'type': str, 'metavar': 'value', 'help': 'upgrade edgeai-benchmark config to work with tidlrunner'},
+    'session_type_dict':        {'dest': 'common.session_type_dict', 'default': None, 'type': str, 'metavar': 'value', 'help': 'mapping of model extensions to session names'},
     'model_selection':          {'dest': 'common.model_selection', 'default': None, 'type': str, 'metavar': 'value', 'help': 'select a subset of models to run - path of the model is compared using this model_selection regex to select a particular model or not'},
+    'model_shortlist':          {'dest': 'common.model_shortlist', 'default': None, 'type': str, 'metavar': 'value', 'help': 'select a subset of models to run - models configs with model_shortlist value <= this specified value will be used'},
     'preset_selection':          {'dest': 'common.preset_selection', 'default': None, 'type': utils.str_or_none, 'metavar': 'value', 'help': 'select a preset for speed accuracy trade-off: None, SPEED, ACCURACY, BALANCED'},
     'config_template':           {'dest': 'common.config_template', 'default':'data/templates/configs/param_template_config.yaml', 'type':str, 'metavar':'value', 'help':'param template path'},
     # compile/infer session

@@ -87,7 +87,9 @@ class CompileModel(CompileModelBase):
         self.session.start_import()
 
         # input_data
-        if callable(dataloader_kwargs['name']):
+        if self.pipeline_config and 'dataloader' in self.pipeline_config:
+            self.dataloader = self.pipeline_config['dataloader']
+        elif callable(dataloader_kwargs['name']):
             dataloader_method = dataloader_kwargs['name']
             self.dataloader = dataloader_method()
         elif hasattr(blocks.dataloaders, dataloader_kwargs['name']):

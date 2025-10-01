@@ -39,7 +39,7 @@ import subprocess
 from edgeai_tidlrunner import rtwrapper, runner
 
 
-class MainRunner(runner.bases.PipelineBase):
+class StartRunner(runner.bases.PipelineBase):
     ARGS_DICT = runner.bases.SETTING_PIPELINE_RUNNER_ARGS_DICT
     COPY_ARGS = {}
 
@@ -120,7 +120,7 @@ class MainRunner(runner.bases.PipelineBase):
 
 def start():
     print(f'INFO: running - {sys.argv}')
-    MainRunner.main()
+    StartRunner.main()
 
 
 if __name__ == "__main__":

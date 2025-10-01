@@ -61,3 +61,10 @@ class ModelCompilationPreset:
     PRESET_DEFAULT = None       # None is for Default preset (BALANCED)
     PRESET_SPEED = 'SPEED'
     PRESET_ACCURACY = 'ACCURACY'
+
+
+SESSION_TYPE_DICT_DEFAULT = {
+    presets.ModelType.MODEL_TYPE_ONNX: presets.RuntimeType.RUNTIME_TYPE_ONNXRT,
+    presets.ModelType.MODEL_TYPE_TFLITE: presets.RuntimeType.RUNTIME_TYPE_TFLITERT
+}
+

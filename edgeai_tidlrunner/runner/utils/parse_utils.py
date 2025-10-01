@@ -169,6 +169,8 @@ def str_to_list_of_tuples(v):
 
 
 def str_to_literal(v):
-    lst = ast.literal_eval(v)
-    return lst
+    if isinstance(v, str):
+        v = ast.literal_eval(v)
+    #
+    return v
 

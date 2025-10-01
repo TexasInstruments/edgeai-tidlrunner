@@ -100,7 +100,8 @@ class ObjectDetectionDataLoader(dataset_base.DatasetBaseWithUtils):
         img_id = self.img_ids[index]
         img = self.coco_dataset.loadImgs([img_id])[0]
         image_path = os.path.join(self.image_dir, img['file_name'])
-        return self.image_reader(image_path, info_dict)
+        img, info_dict = self.image_reader(image_path, info_dict)
+        return img, info_dict
     
     def __len__(self):
         return self.kwargs['num_frames']

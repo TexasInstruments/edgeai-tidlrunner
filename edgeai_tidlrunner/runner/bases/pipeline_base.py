@@ -55,6 +55,9 @@ class PipelineBase():
 
     def __init__(self, **kwargs):
         super().__init__()
+
+        self.pipeline_config = kwargs.pop('common.pipeline_config', None)
+
         kwargs_in = self._flatten_dict(**kwargs)
         kwargs_in = self._expand_short_args(**kwargs_in)
         kwargs_in = self._upgrade_kwargs(**kwargs_in)

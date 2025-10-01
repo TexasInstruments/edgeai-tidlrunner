@@ -53,6 +53,14 @@ class CompileModelBase(CommonPipelineBase):
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+        # upgrade pipeline_config from edgeai-benchmark
+        if self.pipeline_config:
+            if 'dataloader' not in self.pipeline_config and 'input_dataset' in self.pipeline_config:
+                self.pipeline_config['dataloader'] = self.pipeline_config.pop('input_dataset')
+            #
+        #
+
         if 'session' in self.settings and self.settings[self.session_prefix].get('model_path', None):
             self.artifacts_folder = self.settings[self.session_prefix].get('artifactrs_folder', os.path.join(self.run_dir, 'artifacts'))
             self.settings[self.session_prefix]['artifacts_folder'] = self.artifacts_folder
@@ -112,146 +120,162 @@ class CompileModelBase(CommonPipelineBase):
 
     @classmethod
     def _upgrade_kwargs(cls, **kwargs):
-        kwargs_in = copy.deepcopy(kwargs)
-        kwargs_out = dict()
+        kwargs_in = kwargs
 
-        ###################################################################################
-        for k, v in kwargs_in.items():
-            if k in ('session.target_device',):
-                # options that are not allowed to be None
-                if v is not None:
+        upgrade_config = kwargs_in['common.upgrade_config']
+        model_path = kwargs_in.get('session.model_path', None)
+        model_ext = os.path.splitext(model_path)[1][1:]
+        
+        if not upgrade_config:
+            kwargs_out = copy.deepcopy(kwargs_in)
+        else:
+            kwargs_in = copy.deepcopy(kwargs)
+            kwargs_out = dict()
+
+            for k, v in kwargs_in.items():
+                if k in ('session.target_device',):
+                    # options that are not allowed to be None
+                    if v is not None:
+                        kwargs_out[k] = v
+                    #
+                elif k.startswith('session.runtime_options.'):
+                    # options that are not allowed to be None
+                    if v is not None:
+                        kwargs_out[k] = v
+                    #                
+                elif k == 'session.session_name':
+                    kwargs_out['session.name'] = v
+                elif k == 'dataloader.name':
+                    if kwargs_in[k] is not None:
+                        kwargs_out[k] = kwargs_in[k]
+                    #
+                elif k == 'dataloader.path':
+                    if kwargs_in[k] is not None:
+                        kwargs_out[k] = kwargs_in[k]
+                    #
+                elif k == 'preprocess.name':
+                    if kwargs_in[k] is not None:
+                        kwargs_out[k] = kwargs_in[k]
+                    #
+                elif k == 'postprocess.name':
+                    if kwargs_in[k] is not None:
+                        kwargs_out[k] = kwargs_in[k]
+                    #
+                elif k == 'dataset_category':
+                    pass
+                elif k == 'calibration_dataset':
+                    pass
+                elif k == 'task_type' or k == 'common.task_type':
+                    kwargs_out['common.task_type'] = v
+                elif k == 'input_dataset' or k == 'dataloader.input_dataset':
+                    kwargs_out['common.input_dataset'] = v
+                else:
                     kwargs_out[k] = v
                 #
-            elif k.startswith('session.runtime_options.'):
-                # options that are not allowed to be None
-                if v is not None:
-                    kwargs_out[k] = v
-                #                
-            elif k == 'session.session_name':
-                kwargs_out['session.name'] = v
-            elif k == 'dataloader.name':
-                if kwargs_in[k] is not None:
-                    kwargs_out[k] = kwargs_in[k]
-                #
-            elif k == 'dataloader.path':
-                if kwargs_in[k] is not None:
-                    kwargs_out[k] = kwargs_in[k]
-                #
-            elif k == 'preprocess.name':
-                if kwargs_in[k] is not None:
-                    kwargs_out[k] = kwargs_in[k]
-                #
-            elif k == 'postprocess.name':
-                if kwargs_in[k] is not None:
-                    kwargs_out[k] = kwargs_in[k]
-                #
-            elif k == 'dataset_category':
-                pass
-            elif k == 'calibration_dataset':
-                pass
-            elif k == 'task_type' or k == 'common.task_type':
-                kwargs_out['common.task_type'] = v
-            elif k == 'input_dataset' or k == 'dataloader.input_dataset':
-                kwargs_out['common.input_dataset'] = v
-            else:
-                kwargs_out[k] = v
             #
-        #
 
-        ###################################################################################
-        if not (kwargs_out.get('dataloader.name',None) and kwargs_out.get('dataloader.path',None)):
-            input_dataset = kwargs_out.get('common.input_dataset', None)
-            if input_dataset == 'imagenet':
-                if kwargs_out.get('dataloader.name', None) is None:
-                    kwargs_out['dataloader.name'] = 'image_classification_dataloader'
-                #
-                if kwargs_out.get('dataloader.path', None) is None:
-                    kwargs_out['dataloader.path'] = './data/datasets/vision/imagenetv2c/val'
-                #
-            elif input_dataset == 'coco':
-                if kwargs_out.get('dataloader.name', None) is None:
-                    kwargs_out['dataloader.name'] = 'coco_detection_dataloader'
-                #
-                if kwargs_out.get('dataloader.path', None) is None:
-                    kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
-                #
-            elif input_dataset == 'cocoseg21':
-                if kwargs_out.get('dataloader.name', None) is None:
-                    kwargs_out['dataloader.name'] = 'coco_segmentation_dataloader'
-                #
-                if kwargs_out.get('dataloader.path', None) is None:
-                    kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
-                #               
-            elif input_dataset == 'cocokpts':
-                if kwargs_out.get('dataloader.name', None) is None:
-                    kwargs_out['dataloader.name'] = 'coco_keypoint_detection_dataloader'
-                #
-                if kwargs_out.get('dataloader.path', None) is None:
-                    kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
-                #                  
-            else:
-                print(f'WARNING: {input_dataset} dataset is not supported - please use a supported dataset OR specify both dataloader.name and dataloader.path')  
-            #  
-        #
- 
-        ###################################################################################
-        if kwargs_out.get('dataloader.name',None) and kwargs_out.get('dataloader.path',None):
-            task_type = kwargs_out.get('common.task_type', None)
-            if kwargs_out.get('preprocess.name',None) and kwargs_out.get('postprocess.name',None):
-                pass
-            elif task_type == constants.TaskType.TASK_TYPE_CLASSIFICATION:
-                if kwargs_out.get('preprocess.name',None) is None:
-                    kwargs_out['preprocess.name'] = 'image_preprocess'
-                #
-            elif task_type == constants.TaskType.TASK_TYPE_DETECTION:
-                if kwargs_out.get('preprocess.name',None) is None:
-                    kwargs_out['preprocess.name'] = 'image_preprocess'
-                #
-                if kwargs_out.get('postprocess.name',None) is None:
-                    kwargs_out['postprocess.name'] = 'object_detection_postprocess'
-                #
-            elif task_type == constants.TaskType.TASK_TYPE_SEGMENTATION:
-                if kwargs_out.get('preprocess.name',None) is None:
-                    kwargs_out['preprocess.name'] = 'image_preprocess'
-                #
-                if kwargs_out.get('postprocess.name',None) is None:
-                    kwargs_out['postprocess.name'] = 'segmentation_postprocess'
-                #   
-            elif task_type == constants.TaskType.TASK_TYPE_KEYPOINT_DETECTION:
-                if kwargs_out.get('preprocess.name',None) is None:
-                    kwargs_out['preprocess.name'] = 'image_preprocess'
-                #
-                if kwargs_out.get('postprocess.name',None) is None:
-                    kwargs_out['postprocess.name'] = 'keypoint_detection_postprocess'
+            ###################################################################################
+            if not (kwargs_out.get('dataloader.name',None) and kwargs_out.get('dataloader.path',None)):
+                input_dataset = kwargs_out.get('common.input_dataset', None)
+                if input_dataset == 'imagenet':
+                    if kwargs_out.get('dataloader.name', None) is None:
+                        kwargs_out['dataloader.name'] = 'image_classification_dataloader'
+                    #
+                    if kwargs_out.get('dataloader.path', None) is None:
+                        kwargs_out['dataloader.path'] = './data/datasets/vision/imagenetv2c/val'
+                    #
+                elif input_dataset == 'coco':
+                    if kwargs_out.get('dataloader.name', None) is None:
+                        kwargs_out['dataloader.name'] = 'coco_detection_dataloader'
+                    #
+                    if kwargs_out.get('dataloader.path', None) is None:
+                        kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
+                    #
+                elif input_dataset == 'cocoseg21':
+                    if kwargs_out.get('dataloader.name', None) is None:
+                        kwargs_out['dataloader.name'] = 'coco_segmentation_dataloader'
+                    #
+                    if kwargs_out.get('dataloader.path', None) is None:
+                        kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
+                    #               
+                elif input_dataset == 'cocokpts':
+                    if kwargs_out.get('dataloader.name', None) is None:
+                        kwargs_out['dataloader.name'] = 'coco_keypoint_detection_dataloader'
+                    #
+                    if kwargs_out.get('dataloader.path', None) is None:
+                        kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
+                    #                  
+                else:
+                    print(f'WARNING: {input_dataset} dataset is not supported - please use a supported dataset OR specify both dataloader.name and dataloader.path')  
                 #  
-            else:
-                print(f'WARNING: task_type {task_type} is not supported - please use a supported task_type OR specify both preprocess.name and postprocess.name')  
+            #
+    
+            ###################################################################################
+            if kwargs_out.get('dataloader.name',None) and kwargs_out.get('dataloader.path',None):
+                task_type = kwargs_out.get('common.task_type', None)
+                if kwargs_out.get('preprocess.name',None) and kwargs_out.get('postprocess.name',None):
+                    pass
+                elif task_type == constants.TaskType.TASK_TYPE_CLASSIFICATION:
+                    if kwargs_out.get('preprocess.name',None) is None:
+                        kwargs_out['preprocess.name'] = 'image_preprocess'
+                    #
+                elif task_type == constants.TaskType.TASK_TYPE_DETECTION:
+                    if kwargs_out.get('preprocess.name',None) is None:
+                        kwargs_out['preprocess.name'] = 'image_preprocess'
+                    #
+                    if kwargs_out.get('postprocess.name',None) is None:
+                        kwargs_out['postprocess.name'] = 'object_detection_postprocess'
+                    #
+                elif task_type == constants.TaskType.TASK_TYPE_SEGMENTATION:
+                    if kwargs_out.get('preprocess.name',None) is None:
+                        kwargs_out['preprocess.name'] = 'image_preprocess'
+                    #
+                    if kwargs_out.get('postprocess.name',None) is None:
+                        kwargs_out['postprocess.name'] = 'segmentation_postprocess'
+                    #   
+                elif task_type == constants.TaskType.TASK_TYPE_KEYPOINT_DETECTION:
+                    if kwargs_out.get('preprocess.name',None) is None:
+                        kwargs_out['preprocess.name'] = 'image_preprocess'
+                    #
+                    if kwargs_out.get('postprocess.name',None) is None:
+                        kwargs_out['postprocess.name'] = 'keypoint_detection_postprocess'
+                    #  
+                else:
+                    print(f'WARNING: task_type {task_type} is not supported - please use a supported task_type OR specify both preprocess.name and postprocess.name')  
+                #
             #
 
-        ###################################################################################
-        model_path = kwargs_out.get('session.model_path', None)
-        if model_path:
-            model_ext = os.path.splitext(model_path)[1]
-            if kwargs_out.get('preprocess.data_layout', None) is None:
-                data_layout_mapping = {
-                    '.onnx': presets.DataLayoutType.NCHW,
-                    '.tflite': presets.DataLayoutType.NHWC,
-                }
-                data_layout = data_layout_mapping.get(model_ext, None)
-                kwargs_out['preprocess.data_layout'] = data_layout
-                kwargs_out['session.data_layout'] = data_layout
-            #
-            if kwargs_out.get('session.name', None) is None:
-                session_name_mapping = {
-                    '.onnx': presets.RuntimeType.RUNTIME_TYPE_ONNXRT,
-                    '.tflite': presets.RuntimeType.RUNTIME_TYPE_TFLITERT,
-                }
-                session_name = session_name_mapping.get(model_ext, None)
-                kwargs_out['session.name'] = session_name
+            if model_path:
+                if kwargs_out.get('preprocess.data_layout', None) is None:
+                    data_layout_mapping = {
+                        'onnx': presets.DataLayoutType.NCHW,
+                        'tflite': presets.DataLayoutType.NHWC,
+                    }
+                    data_layout = data_layout_mapping.get(model_ext, None)
+                    kwargs_out['preprocess.data_layout'] = data_layout
+                    kwargs_out['session.data_layout'] = data_layout
+                #
             #
         #
 
-        ###################################################################################
+        if kwargs_out.get('session.session_name', None) is not None:
+            if kwargs_out.get('session.name', None) is None:
+                kwargs_out['session.name'] = kwargs_out['session.session_name']
+            #
+        #
+        kwargs_out.pop('session.session_name', None)
+
+        # override session.name based on model_ext and session_type_dict
+        session_type_dict = kwargs_out.get('common.session_type_dict', None)
+        session_type_dict = utils.str_to_literal(session_type_dict)
+        session_type_dict = session_type_dict or constants.SESSION_TYPE_DICT_DEFAULT
+        if model_ext in session_type_dict:
+            kwargs_out['session.name'] = session_type_dict[model_ext]
+        else:
+            raise RuntimeError(f'ERROR: model extension {model_ext} is not supported - must be one of {list(session_type_dict.keys())}')
+        #
+       
+        # override calibration parameters with preset_selection
         preset_selection = kwargs_out.get('common.preset_selection', None)
         if preset_selection is not None:
             if preset_selection.lower() == constants.ModelCompilationPreset.PRESET_ACCURACY.lower():

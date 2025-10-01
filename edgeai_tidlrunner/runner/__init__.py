@@ -83,12 +83,13 @@ def _model_selection(config_entry_file, model_path, model_selection):
     return is_selected
 
 
-def _create_run_dict(command, argparse=False, ignore_unknown_args=False, **kwargs):
+def _create_run_dict(command, argparse=False, ignore_unknown_args=False, model_id=None, **kwargs):
     # which target module to use
     target_module = get_target_module(kwargs['common.target_module'])
     pipeline_names = target_module.pipelines.get_command_pipelines(**kwargs)[command]
     pipeline_names = pipeline_names if isinstance(pipeline_names, list) else [pipeline_names]
 
+    selected_models = []
     rest_args_list = []
     run_dict = {}
     for pipeline_name in pipeline_names:
@@ -106,22 +107,25 @@ def _create_run_dict(command, argparse=False, ignore_unknown_args=False, **kwarg
                     kwargs_config = yaml.safe_load(fp)
                 #
                 kwargs_config.pop('command', None)
+                if 'configs' not in kwargs_config:
+                    model_id = kwargs_config.get('session',{}).get('model_id', None) or kwargs.get('session',{}).get('model_id', None)
+                    configs = {model_id:config_path}
+                else:
+                    configs = kwargs_config.get('configs')
+                #
             else:
-                kwargs_config = dict()
-            #
-            kwargs_config.pop('command', None)
-            model_id = kwargs_config.get('session',{}).get('model_id', None) or kwargs.get('session',{}).get('model_id', None)
-            if 'configs' not in kwargs_config:
-                configs = {model_id:config_path}
-            else:
-                configs = kwargs_config.get('configs')
+                assert model_id is not None, 'ERROR: model_id is required when config_path is not given'
+                kwargs_config = copy.deepcopy(kwargs)
+                kwargs_config.pop('command', None)
+                configs = {model_id:kwargs_config}
             #
         else:
             configs = {'config': None}
         #
 
+        selected_models = []
         for model_id, config_entry_file in configs.items():
-            if config_entry_file:
+            if isinstance(config_entry_file, str):
                 if not (config_entry_file.startswith('/') or config_entry_file.startswith('.')):
                     config_base_path = os.path.dirname(config_path)
                     config_entry_file = os.path.join(config_base_path, config_entry_file)
@@ -146,17 +150,35 @@ def _create_run_dict(command, argparse=False, ignore_unknown_args=False, **kwarg
             kwargs_provided = {k:v for k,v in kwargs_cmd.items() if k in provided_args}
             kwargs_model.update(kwargs_provided)
             # correct config_path is required to form the full model_path
-            kwargs_model.update({'common.config_path': config_entry_file})
+            if isinstance(config_entry_file, str):
+                config_entry_path = config_entry_file
+                kwargs_model.update({'common.config_path': config_entry_file})
+            else:
+                config_entry_path = None
+            #
 
+            verbose = kwargs_model.get('common.verbose', 0)
+            model_shortlist = kwargs_model.get('common.model_shortlist', None)
             model_selection = kwargs_model.get('common.model_selection', None)
             model_path = kwargs_model.get('session.model_path', None)
-            if _model_selection(config_entry_file, model_path, model_selection):
+            model_shortlist_for_model = kwargs_model.get('model_info.model_shortlist', None)
+            if model_shortlist and model_shortlist_for_model:
+                shortlisted_model = int(model_shortlist_for_model) <= int(model_shortlist)
+            else:
+                shortlisted_model = False
+            #
+            if shortlisted_model and _model_selection(config_entry_file, model_path, model_selection):
                 # append to command_list for the model
                 model_command_list = run_dict.get(model_id, [])
                 model_command_list.append((command,pipeline_name,kwargs_model))
                 run_dict[model_id] = model_command_list
-            else:
-                print(f'INFO: skipping entry: {model_path} or config {config_entry_file} does not match model_selection: {model_selection}')
+                selected_models.append(model_id)
+            elif verbose > 0:
+                if config_entry_path:
+                    print(f'INFO: skipping entry: {config_entry_path} - does not match model_shortlist: {model_shortlist}, model_selection: {model_selection}')
+                else:
+                    print(f'INFO: skipping entry: {model_path} - does not match model_shortlist: {model_shortlist}, model_selection: {model_selection}')
+                #
             #
         #
     #

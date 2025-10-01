@@ -90,7 +90,14 @@ class TFLITERuntimeSession(rtwrapper.core.TFLiteRuntimeWrapper):
         return super().run_inference(input_data, output_keys)
 
 
+class TVMDLRRuntimeSession(rtwrapper.core.TVMDLRRuntimeWrapper):
+    def __init__(self, settings, **kwargs):
+        raise NotImplementedError('TVM DLR Runtime session is not implemented yet')
+
+
+
 SESSION_TYPES_MAPPING = {
     presets.RuntimeType.RUNTIME_TYPE_ONNXRT: ONNXRuntimeSession,
-    presets.RuntimeType.RUNTIME_TYPE_TFLITERT: TFLITERuntimeSession
+    presets.RuntimeType.RUNTIME_TYPE_TFLITERT: TFLITERuntimeSession,
+    presets.RuntimeType.RUNTIME_TYPE_TVMDLR: TVMDLRRuntimeSession
 }
