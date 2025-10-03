@@ -47,9 +47,9 @@ class PackageArtifacts(CommonPipelineBase):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        work_path = self.settings['common']['package']['work_path']
+        work_path = self.settings['common']['work_path']
         self.work_path = self._build_run_dir(work_path)
-        package_path = self.settings['common']['package']['package_path']
+        package_path = self.settings['common']['package_path']
         self.package_path = self._build_run_dir(package_path)
         pass
 
@@ -64,7 +64,7 @@ class PackageArtifacts(CommonPipelineBase):
 
     def _run(self):
         print(f'INFO: starting package artifacts')
-        param_template = self.settings['common']['package']['param_template']
+        param_template = self.settings['common']['param_template']
         self.run_package(self.kwargs, 
                          work_dir=self.work_path,
                          out_dir=self.package_path,

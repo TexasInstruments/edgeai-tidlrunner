@@ -46,13 +46,13 @@ class PreProcessTransforms(transforms_base.TransformsCompose):
                          add_flip_image=False, pad_color=0):
         if resize is None:
             transforms_list = [
-                # ImageRead(backend=backend),
+                ImageRead(backend=backend),
                 ImageCenterCrop(crop),
                 ImageToNPTensor4D(data_layout=data_layout)
             ]
         else:
             transforms_list = [
-                # ImageRead(backend=backend),
+                ImageRead(backend=backend),
                 ImageResize(resize, interpolation=interpolation, resize_with_pad=resize_with_pad, pad_color=pad_color),
                 ImageCenterCrop(crop),
                 ImageToNPTensor4D(data_layout=data_layout)

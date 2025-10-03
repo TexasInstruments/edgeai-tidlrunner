@@ -51,25 +51,25 @@ class CommonPipelineBase(bases.PipelineBase):
         self.model_folder = None
         self.model_path = None
         self.run_dir = None
-        if 'session' in self.settings:
-            if 'work_path' in self.settings[self.session_prefix]:
-                work_path = self.settings[self.session_prefix]['work_path']
-                self.work_path = self._build_run_dir(work_path)
-            #
-            if self.settings[self.session_prefix].get('model_path', None):
-                common_kwargs = self.settings['common']                 
-                config_path = os.path.dirname(common_kwargs['config_path']) if common_kwargs['config_path'] else None            
-                model_source = self.settings[self.session_prefix]['model_path']       
-                self.model_source = self._get_file_path(model_source, source_dir=config_path)
 
-                run_dir = self.settings[self.session_prefix]['run_dir']
-                self.run_dir = self._build_run_dir(run_dir)
+        if 'work_path' in self.settings[self.common_prefix]:
+            work_path = self.settings[self.common_prefix]['work_path']
+            self.work_path = self._build_run_dir(work_path)
+        #
+        if self.session_prefix in self.settings and self.settings[self.session_prefix].get('model_path', None):
+            common_kwargs = self.settings[self.common_prefix]                 
+            config_path = os.path.dirname(common_kwargs['config_path']) if common_kwargs['config_path'] else None            
+            model_source = self.settings[self.session_prefix]['model_path']       
+            self.model_source = self._get_file_path(model_source, source_dir=config_path)
 
-                model_basename = os.path.basename(self.model_source)
-                self.model_folder = os.path.join(self.run_dir, 'model')
-                self.model_path = os.path.join(self.model_folder, model_basename)
-                self.settings[self.session_prefix]['model_path'] = self.model_path
-            #
+            run_dir = self.settings[self.session_prefix]['run_dir']
+            self.run_dir = self._build_run_dir(run_dir)
+
+            model_basename = os.path.basename(self.model_source)
+            self.model_folder = os.path.join(self.run_dir, 'model')
+            self.model_path = os.path.join(self.model_folder, model_basename)
+            self.settings[self.session_prefix]['model_path'] = self.model_path
+        #
 
     def _prepare(self):
         pass
@@ -116,8 +116,8 @@ class CommonPipelineBase(bases.PipelineBase):
         model_id_underscore = model_id + '_'
 
         tensor_bits = self.kwargs.get('session.runtime_options.tensor_bits', '') or ''
-        tensor_bits_str = f'{str(tensor_bits)}bits' if tensor_bits else ''
-        tensor_bits_slash = f'{str(tensor_bits)}bits' + os.sep if tensor_bits else ''
+        tensor_bits_str = f'{str(tensor_bits)}' if tensor_bits else ''
+        tensor_bits_slash = f'{str(tensor_bits)}' + os.sep if tensor_bits else ''
 
         target_device = self.kwargs.get('session.target_device', 'NONE') or 'NONE'
         target_device_str = target_device if target_device else ''

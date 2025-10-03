@@ -161,7 +161,7 @@ class TVMDLRRuntimeWrapper(BaseRuntimeWrapper):
             if target_machine == presets.TARGET_MACHINE_EVM:
                 build_target = 'llvm -device=arm_cpu -mtriple=aarch64-linux-gnu'
                 cross_cc_args = {'cc' : os.path.join(os.environ['ARM64_GCC_PATH'], 'bin', 'aarch64-none-linux-gnu-gcc')}
-            elif target_machine == presets.TARGET_MACHINE_PC_EMULATION:
+            elif target_machine == presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION:
                 build_target = 'llvm'
                 cross_cc_args = {}
             else:

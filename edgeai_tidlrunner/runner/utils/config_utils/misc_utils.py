@@ -136,7 +136,7 @@ def pretty_object(d, depth=10, precision=6):
         d_out = [pretty_object(di, depth) for di in d]
     elif isinstance(d, np.ndarray):
         d_out = pretty_object(d.tolist(), depth)
-    elif isinstance(d, ParamsBase):
+    elif isinstance(d, ParamsBase) or hasattr(d, 'peek_params'):
         # this is a special case
         p = d.peek_params()
         d_out = pretty_object(p, depth)

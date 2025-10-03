@@ -71,19 +71,70 @@ def _run_command(task_index, command_key, pipeline_name, command_kwargs, capture
     runner_obj.run()
 
 
-def _model_selection(config_entry_file, model_path, model_selection):
+def _model_selection(model_selection, *args):
     is_selected = True
-    if model_path is not None and model_selection is not None:
-        import re
-        is_selected = re.search(model_selection, model_path) is not None
-        if config_entry_file is not None:
-            is_selected = is_selected or re.search(model_selection, config_entry_file) is not None
+    if model_selection is not None:
+        for arg in args:
+            if arg is not None:
+                import re
+                is_selected = is_selected or (re.search(model_selection, arg) is not None)
+            #
         #
     #
     return is_selected
 
 
-def _create_run_dict(command, argparse=False, ignore_unknown_args=False, model_id=None, **kwargs):
+def _model_shortlist(model_shortlist, model_shortlist_for_model):
+    if model_shortlist:
+        shortlisted_model = model_shortlist_for_model and int(model_shortlist_for_model) <= int(model_shortlist)
+    else:
+        shortlisted_model = True
+    #
+    return shortlisted_model
+
+
+def _get_configs(config_path, **kwargs):
+    if isinstance(config_path, str):
+        if config_path.endswith('.yaml'):
+            with open(config_path) as fp:
+                kwargs_config = yaml.safe_load(fp)
+            #
+            kwargs_config.pop('command', None)
+            if 'configs' in kwargs_config:
+                configs = kwargs_config.get('configs')
+            else:
+                model_id = kwargs_config.get('session',{}).get('model_id', None) or kwargs.get('session.model_id', None)
+                configs = {model_id:config_path}
+            #
+        elif os.path.exists(config_path) and os.path.isdir(config_path):
+            import edgeai_benchmark
+            settings_file = edgeai_benchmark.get_settings_file()
+            model_shortlist = kwargs.get('common.model_shortlist', None)
+            model_shortlist = int(model_shortlist) if model_shortlist is not None else None
+            model_selection=kwargs.get('common.model_selection', None)
+            settings = edgeai_benchmark.config_settings.ConfigSettings(settings_file, model_shortlist=model_shortlist, model_selection=model_selection)
+            settings.configs_path = os.path.abspath(config_path)
+            print(f'settings: {settings}')
+            if settings.model_shortlist is not None:
+                print('INFO', 'model_shortlist has been set', 'it will cause only a subset of models to run:')
+                print('INFO', 'model_shortlist', f'{settings.model_shortlist}')
+            #
+            work_path = kwargs['common.work_path']
+            print(f'\nINFO: work_path: {work_path}')
+            pipeline_configs = edgeai_benchmark.interfaces.get_configs(settings, work_path)
+            configs = edgeai_benchmark.pipelines.PipelineRunner(settings, pipeline_configs).get_pipeline_configs()
+        else:
+            raise RuntimeError(f'ERROR: invalid config_path: {config_path}')
+        #
+    elif isinstance(config_path, dict):
+        configs = config_path
+    else:
+        raise RuntimeError(f'ERROR: invalid config_path: {config_path}')
+    #
+    return configs
+
+
+def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs):
     # which target module to use
     target_module = get_target_module(kwargs['common.target_module'])
     pipeline_names = target_module.pipelines.get_command_pipelines(**kwargs)[command]
@@ -93,50 +144,44 @@ def _create_run_dict(command, argparse=False, ignore_unknown_args=False, model_i
     rest_args_list = []
     run_dict = {}
     for pipeline_name in pipeline_names:
-        if argparse:
-            command_module = getattr(target_module.pipelines, pipeline_name)
-            command_args, rest_args = command_module.get_arg_parser().parse_known_args()    
-            rest_args_list.append(rest_args)
+        command_module = getattr(target_module.pipelines, pipeline_name)
+        command_args, rest_args = command_module.get_arg_parser().parse_known_args()    
+        rest_args_list.append(rest_args)
 
-            kwargs_cmd = vars(command_args)
-            provided_args = kwargs_cmd.pop('_provided_args', set())
-                        
-            config_path = kwargs_cmd.get('common.config_path', None)
-            if config_path:
-                with open(config_path) as fp:
-                    kwargs_config = yaml.safe_load(fp)
-                #
-                kwargs_config.pop('command', None)
-                if 'configs' not in kwargs_config:
-                    model_id = kwargs_config.get('session',{}).get('model_id', None) or kwargs.get('session',{}).get('model_id', None)
-                    configs = {model_id:config_path}
-                else:
-                    configs = kwargs_config.get('configs')
-                #
-            else:
-                assert model_id is not None, 'ERROR: model_id is required when config_path is not given'
-                kwargs_config = copy.deepcopy(kwargs)
-                kwargs_config.pop('command', None)
-                configs = {model_id:kwargs_config}
-            #
+        kwargs_cmd = vars(command_args)
+        provided_args = kwargs_cmd.pop('_provided_args', set())
+                    
+        config_path = kwargs_cmd.get('common.config_path', None)
+        if config_path:
+            configs = _get_configs(config_path, **(kwargs_cmd | kwargs))
         else:
-            configs = {'config': None}
+            assert model_id is not None, 'ERROR: model_id is required when config_path is not given'
+            configs = {model_id:dict()}
         #
 
         selected_models = []
-        for model_id, config_entry_file in configs.items():
-            if isinstance(config_entry_file, str):
-                if not (config_entry_file.startswith('/') or config_entry_file.startswith('.')):
+        for model_id, config_entry in configs.items():
+            if isinstance(config_entry, str):
+                if not (config_entry.startswith('/') or config_entry.startswith('.')):
                     config_base_path = os.path.dirname(config_path)
-                    config_entry_file = os.path.join(config_base_path, config_entry_file)
+                    config_entry = os.path.join(config_base_path, config_entry)
                 #
-                with open(config_entry_file) as fp:
+                with open(config_entry) as fp:
                     kwargs_cfg = yaml.safe_load(fp)
-                #                    
+                #         
+            elif isinstance(config_entry, dict):
+                kwargs_cfg = utils.pretty_object(config_entry)
             else:
-                kwargs_cfg = kwargs #dict()
+                kwargs_cfg = dict()
             #
+            kwargs_cfg.get('session', {}).pop('run_dir', None)
 
+            # add given args
+            kwargs_copy = copy.deepcopy(kwargs)
+            kwargs_copy.pop('command', None)
+            kwargs_cfg.update(kwargs_copy)
+
+            # process args
             kwargs_cfg = command_module._flatten_dict(**kwargs_cfg)
             kwargs_cfg = command_module._expand_short_args(**kwargs_cfg)                
             kwargs_cfg = command_module._upgrade_kwargs(**kwargs_cfg)
@@ -150,24 +195,23 @@ def _create_run_dict(command, argparse=False, ignore_unknown_args=False, model_i
             kwargs_provided = {k:v for k,v in kwargs_cmd.items() if k in provided_args}
             kwargs_model.update(kwargs_provided)
             # correct config_path is required to form the full model_path
-            if isinstance(config_entry_file, str):
-                config_entry_path = config_entry_file
-                kwargs_model.update({'common.config_path': config_entry_file})
+            if isinstance(config_entry, str):
+                config_entry_path = config_entry
+                kwargs_model.update({'common.config_path': config_entry})
             else:
                 config_entry_path = None
             #
+            kwargs_model['common.pipeline_config'] = config_entry
 
             verbose = kwargs_model.get('common.verbose', 0)
             model_shortlist = kwargs_model.get('common.model_shortlist', None)
             model_selection = kwargs_model.get('common.model_selection', None)
             model_path = kwargs_model.get('session.model_path', None)
+
             model_shortlist_for_model = kwargs_model.get('model_info.model_shortlist', None)
-            if model_shortlist and model_shortlist_for_model:
-                shortlisted_model = int(model_shortlist_for_model) <= int(model_shortlist)
-            else:
-                shortlisted_model = False
-            #
-            if shortlisted_model and _model_selection(config_entry_file, model_path, model_selection):
+            shortlisted_model = _model_shortlist(model_shortlist, model_shortlist_for_model)
+            selected_model = _model_selection(model_selection, config_entry, model_path)
+            if shortlisted_model and selected_model:
                 # append to command_list for the model
                 model_command_list = run_dict.get(model_id, [])
                 model_command_list.append((command,pipeline_name,kwargs_model))
@@ -260,7 +304,7 @@ def run(command, **kwargs):
     :return: The result of the command execution.
     """
     if isinstance(command, str):
-        run_dict = _create_run_dict(command, argparse=False, **kwargs)
+        run_dict = _create_run_dict(command, **kwargs)
         return _run(run_dict)
     else:
         raise RuntimeError(f"ERROR: run() got unexpected command {command} with type {type(command)}. Expected str or dict.")

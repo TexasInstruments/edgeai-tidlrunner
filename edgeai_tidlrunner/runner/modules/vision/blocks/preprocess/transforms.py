@@ -140,7 +140,16 @@ class ImageRead(object):
             else:
                 info_dict['data_shape'] = img_data[0].shape
         else:
-            assert False, 'invalid input'
+            img_data = path
+            if 'data_shape' not in info_dict:
+                info_dict['data_shape'] = img_data.shape
+            #
+            if 'data' not in info_dict:
+                info_dict['data'] = img_data
+            #
+            if 'data_path' not in info_dict:
+                info_dict['data_path'] = './'
+            #
         #
         return img_data, info_dict
 

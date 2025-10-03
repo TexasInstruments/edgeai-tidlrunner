@@ -104,7 +104,9 @@ class CompileModel(CompileModelBase):
         #
 
         # preprocess
-        if callable(preprocess_kwargs['name']):
+        if self.pipeline_config and 'preprocess' in self.pipeline_config:
+            self.preprocess = self.pipeline_config['preprocess']
+        elif callable(preprocess_kwargs['name']):
             preprocess_method = preprocess_kwargs['name']
             self.preprocess = preprocess_method()
         elif hasattr(blocks.preprocess, preprocess_kwargs['name']):
@@ -126,7 +128,9 @@ class CompileModel(CompileModelBase):
         #
 
         # postprocess
-        if self.kwargs['common.postprocess_enable']:
+        if self.pipeline_config and 'postprocess' in self.pipeline_config:
+            self.postprocess = self.pipeline_config['postprocess']
+        elif self.kwargs['common.postprocess_enable']:
             if callable(postprocess_kwargs['name']):
                 postprocess_method = postprocess_kwargs['name']
                 self.postprocess = postprocess_method()

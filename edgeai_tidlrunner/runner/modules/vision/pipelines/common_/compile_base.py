@@ -70,7 +70,7 @@ class CompileModelBase(CommonPipelineBase):
 
     def _prepare(self):
         super()._prepare()
-        
+
         self.dataloader = None
         self.preprocess = None
         self.session = None
@@ -122,10 +122,9 @@ class CompileModelBase(CommonPipelineBase):
     def _upgrade_kwargs(cls, **kwargs):
         kwargs_in = kwargs
 
-        upgrade_config = kwargs_in['common.upgrade_config']
+        upgrade_config = kwargs_in.get('common.upgrade_config', False)
         model_path = kwargs_in.get('session.model_path', None)
-        model_ext = os.path.splitext(model_path)[1][1:]
-        
+
         if not upgrade_config:
             kwargs_out = copy.deepcopy(kwargs_in)
         else:
@@ -266,13 +265,16 @@ class CompileModelBase(CommonPipelineBase):
         kwargs_out.pop('session.session_name', None)
 
         # override session.name based on model_ext and session_type_dict
-        session_type_dict = kwargs_out.get('common.session_type_dict', None)
-        session_type_dict = utils.str_to_literal(session_type_dict)
-        session_type_dict = session_type_dict or constants.SESSION_TYPE_DICT_DEFAULT
-        if model_ext in session_type_dict:
-            kwargs_out['session.name'] = session_type_dict[model_ext]
-        else:
-            raise RuntimeError(f'ERROR: model extension {model_ext} is not supported - must be one of {list(session_type_dict.keys())}')
+        if model_path and 'common.session_type_dict' in kwargs_out:
+            model_ext = os.path.splitext(model_path)[1][1:] if model_path else None
+            session_type_dict = kwargs_out.get('common.session_type_dict', None)
+            session_type_dict = utils.str_to_literal(session_type_dict)
+            session_type_dict = session_type_dict or constants.SESSION_TYPE_DICT_DEFAULT
+            if model_ext in session_type_dict:
+                kwargs_out['session.name'] = session_type_dict[model_ext]
+            else:
+                raise RuntimeError(f'ERROR: model extension {model_ext} is not supported - must be one of {list(session_type_dict.keys())}')
+            #
         #
        
         # override calibration parameters with preset_selection
