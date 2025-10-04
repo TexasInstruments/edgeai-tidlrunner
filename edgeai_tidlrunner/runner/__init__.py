@@ -107,6 +107,7 @@ def _get_configs(config_path, **kwargs):
                 configs = {model_id:config_path}
             #
         elif os.path.exists(config_path) and os.path.isdir(config_path):
+            print(f"INFO: config_path is a configs module from edgeai-benchmark: {config_path}")
             import edgeai_benchmark
             settings_file = edgeai_benchmark.get_settings_file()
             model_shortlist = kwargs.get('common.model_shortlist', None)
@@ -114,6 +115,20 @@ def _get_configs(config_path, **kwargs):
             model_selection=kwargs.get('common.model_selection', None)
             settings = edgeai_benchmark.config_settings.ConfigSettings(settings_file, model_shortlist=model_shortlist, model_selection=model_selection)
             settings.configs_path = os.path.abspath(config_path)
+            if not os.path.exists(settings.datasets_path):
+                benchmark_dependencies_path = '../edgeai-benchmark/dependencies'
+                local_dependencies_path = './dependencies'
+                if os.path.exists(benchmark_dependencies_path) and not os.path.exists(local_dependencies_path):
+                    try:
+                        print(f"INFO: creating symlink to: {benchmark_dependencies_path}")
+                        print(f"INFO: make sure that datasets required for edgeai-benchmark configs are available in that folder")
+                        print(f"INFO: consult the documentation of edgeai-benchmark for more information")
+                        os.symlink(benchmark_dependencies_path, local_dependencies_path)
+                    except:
+                        print(f"INFO: could not create symlink to: {benchmark_dependencies_path}")
+                    #
+                #
+            #
             print(f'settings: {settings}')
             if settings.model_shortlist is not None:
                 print('INFO', 'model_shortlist has been set', 'it will cause only a subset of models to run:')

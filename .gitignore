@@ -28,3 +28,5 @@ dist/
 /work_dirs/extract
 /work_dirs/optimize
 /work_dirs/analyze
+
+/dependencies
