@@ -182,7 +182,11 @@ class CompileModel(CompileModelBase):
         input_data, info_dict = self.dataloader(input_index)
         input_data, info_dict = self.preprocess(input_data, info_dict=info_dict) if self.preprocess else (input_data, info_dict)
         output_dict = self.session.run_import(input_data)
-        outputs = list(output_dict.values())
-        outputs, info_dict = self.postprocess(outputs, info_dict=info_dict) if self.postprocess else (outputs, info_dict)
-        output_dict = {output_key:output for output, output_key in zip(outputs, output_dict.keys())}
-        return {'input':input_data, 'output':output_dict, 'info_dict':info_dict}
+        if self.postprocess:
+            outputs = list(output_dict.values())
+            outputs, info_dict = self.postprocess(outputs, info_dict=info_dict) 
+            run_data = {'input':input_data, 'output':outputs, 'info_dict':info_dict}
+        else:
+            run_data = {'input':input_data, 'output':output_dict, 'info_dict':info_dict}
+        #
+        return run_data

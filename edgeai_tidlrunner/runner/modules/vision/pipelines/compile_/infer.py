@@ -71,7 +71,9 @@ class InferModel(CompileModelBase):
         self.session.start_inference()
 
         # input_data
-        if callable(dataloader_kwargs['name']):
+        if self.pipeline_config and 'dataloader' in self.pipeline_config:
+            self.dataloader = self.pipeline_config['dataloader']
+        elif callable(dataloader_kwargs['name']):
             dataloader_method = dataloader_kwargs['name']
             self.dataloader = dataloader_method()
         elif hasattr(blocks.dataloaders, dataloader_kwargs['name']):
@@ -86,7 +88,9 @@ class InferModel(CompileModelBase):
         #
 
         # preprocess
-        if callable(preprocess_kwargs['name']):
+        if self.pipeline_config and 'preprocess' in self.pipeline_config:
+            self.preprocess = self.pipeline_config['preprocess']
+        elif callable(preprocess_kwargs['name']):
             preprocess_method = preprocess_kwargs['name']
             self.preprocess = preprocess_method()
         elif hasattr(blocks.preprocess, preprocess_kwargs['name']):
@@ -108,7 +112,9 @@ class InferModel(CompileModelBase):
         #
 
         # postprocess
-        if self.kwargs['common.postprocess_enable']:
+        if self.pipeline_config and 'postprocess' in self.pipeline_config:
+            self.postprocess = self.pipeline_config['postprocess']
+        elif self.kwargs['common.postprocess_enable']:
             if callable(postprocess_kwargs['name']):
                 postprocess_method = postprocess_kwargs['name']
                 self.postprocess = postprocess_method()
@@ -164,10 +170,12 @@ class InferModel(CompileModelBase):
         input_data, info_dict = self.dataloader(input_index)
         input_data, info_dict = self.preprocess(input_data, info_dict=info_dict) if self.preprocess else (input_data, info_dict)
         output_dict = self.session.run_inference(input_data)
-        outputs = list(output_dict.values())
         if self.postprocess:
-            outputs, info_dict = self.postprocess(outputs, info_dict=info_dict)
+            outputs = list(output_dict.values())
+            outputs, info_dict = self.postprocess(outputs, info_dict=info_dict) 
+            run_data = {'input':input_data, 'output':outputs, 'info_dict':info_dict}
         else:
-            outputs = output_dict
+            run_data = {'input':input_data, 'output':output_dict, 'info_dict':info_dict}
         #
-        return {'input':input_data, 'output':outputs, 'info_dict':info_dict}
+        return run_data
+

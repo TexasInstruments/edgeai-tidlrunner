@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2025, Texas Instruments
+# Copyright (c) 2018-2021, Texas Instruments
 # All Rights Reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,17 +25,12 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#################################################################################
 
 
-from .config_utils import *
-from .download_utils import *
-from .parse_utils import *
-from .file_utils import *
-from .metric_utils import *
-from .string_utils import *
-from .process_with_queue import *
-from .parallel_runner import *
-from .sequential_runner import *
-from .artifacts_id import *
-from .import_utils import *
-from .collections_utils import *
+def is_iterable(obj):
+    try:
+        iter(obj)
+        return True
+    except:
+        return False
