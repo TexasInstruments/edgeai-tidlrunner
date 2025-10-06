@@ -51,6 +51,15 @@ class InferAccuracy(infer.InferModel):
 
     def _run(self):
         print(f'INFO: starting model accuracy evaluation')
+        common_kwargs = self.settings[self.common_prefix]
+        if common_kwargs['incremental']:
+            if os.path.exists(self.result_yaml):
+                print(f'INFO: incremental {common_kwargs["incremental"]} param.yaml exists: {self.result_yaml}')
+                print(f'INFO: skipping infer/accuracy')
+                return
+            #
+        #
+
         outputs = super()._run()
         run_data = self.get_run_data()
 

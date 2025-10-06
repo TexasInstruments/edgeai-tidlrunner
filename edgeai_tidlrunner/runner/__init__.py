@@ -28,6 +28,7 @@
 
 
 import os
+import sys
 import copy
 import functools
 import yaml
@@ -75,7 +76,7 @@ def _model_selection(model_selection, *args):
     is_selected = True
     if model_selection is not None:
         for arg in args:
-            if arg is not None:
+            if isinstance(arg, str):
                 import re
                 is_selected = is_selected or (re.search(model_selection, arg) is not None)
             #
@@ -225,7 +226,7 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
 
             model_shortlist_for_model = kwargs_model.get('model_info.model_shortlist', None)
             shortlisted_model = _model_shortlist(model_shortlist, model_shortlist_for_model)
-            selected_model = _model_selection(model_selection, config_entry, model_path)
+            selected_model = _model_selection(model_selection, config_entry, model_path, model_id)
             if shortlisted_model and selected_model:
                 # append to command_list for the model
                 model_command_list = run_dict.get(model_id, [])

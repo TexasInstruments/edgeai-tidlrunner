@@ -51,12 +51,20 @@ class InferModel(CompileModelBase):
 
     def _prepare(self):
         super()._prepare()
+        self.result_yaml = os.path.join(self.run_dir,'result.yaml')
+
         common_kwargs = self.settings[self.common_prefix]
         dataloader_kwargs = self.settings[self.dataloader_prefix]
         session_kwargs = self.settings[self.session_prefix]
         preprocess_kwargs = self.settings[self.preprocess_prefix]
         postprocess_kwargs = self.settings[self.postprocess_prefix]
         runtime_options = session_kwargs['runtime_options']
+
+        if common_kwargs['incremental']:
+            if os.path.exists(self.result_yaml):
+                return
+            #
+        #
 
         if not os.path.exists(self.run_dir) and not os.path.exists(self.model_folder) and not os.path.exists(
                 self.artifacts_folder):
@@ -131,6 +139,15 @@ class InferModel(CompileModelBase):
 
     def _run(self):
         print(f'INFO: starting model infer')
+        common_kwargs = self.settings[self.common_prefix]
+        if common_kwargs['incremental']:
+            if os.path.exists(self.result_yaml):
+                print(f'INFO: incremental {common_kwargs["incremental"]} param.yaml exists: {self.result_yaml}')
+                print(f'INFO: skipping infer')
+                return
+            #
+        #
+
         super()._run()
                 
         self.settings['result'] = dict()
@@ -163,7 +180,7 @@ class InferModel(CompileModelBase):
         # TODO: populate the result entry
         result = self.session.get_stats()   
         self.settings['result'] = result     
-        self._write_params(self.settings, os.path.join(self.run_dir,'result.yaml'))
+        self._write_params(self.settings, self.result_yaml)
         return run_data
 
     def _run_frame(self, input_index):

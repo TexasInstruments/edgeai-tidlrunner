@@ -51,12 +51,20 @@ class CompileModel(CompileModelBase):
 
     def _prepare(self):
         super()._prepare()
+        self.param_yaml = os.path.join(self.run_dir,'param.yaml')
+        
         common_kwargs = self.settings[self.common_prefix]
         dataloader_kwargs = self.settings[self.dataloader_prefix]
         session_kwargs = self.settings[self.session_prefix]
         preprocess_kwargs = self.settings[self.preprocess_prefix]
         postprocess_kwargs = self.settings[self.postprocess_prefix]
         runtime_options = session_kwargs['runtime_options']
+
+        if common_kwargs['incremental']:
+            if os.path.exists(self.param_yaml):
+                return
+            #
+        #
 
         if os.path.exists(self.run_dir):
             print(f'INFO: clearing run_dir folder before compile: {self.run_dir}')
@@ -160,6 +168,14 @@ class CompileModel(CompileModelBase):
         postprocess_kwargs = self.settings[self.postprocess_prefix]
         runtime_options = session_kwargs['runtime_options']
 
+        if common_kwargs['incremental']:
+            if os.path.exists(self.param_yaml):
+                print(f'INFO: incremental {common_kwargs["incremental"]} param.yaml exists: {self.param_yaml}')
+                print(f'INFO: skipping compile')
+                return
+            #
+        #
+
         super()._run()
 
         # infer model
@@ -175,7 +191,7 @@ class CompileModel(CompileModelBase):
         self.run_data = run_data
 
         # TODO - cleanup the parameters and write param.yaml
-        self._write_params(self.settings, os.path.join(self.run_dir,'param.yaml'))
+        self._write_params(self.settings, self.param_yaml)
         return run_data
     
     def _run_frame(self, input_index):

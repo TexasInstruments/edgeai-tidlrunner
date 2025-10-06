@@ -101,8 +101,9 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | SETTINGS_DEFAULT['opti
     'session_type_dict':        {'dest': 'common.session_type_dict', 'default': None, 'type': str, 'metavar': 'value', 'help': 'mapping of model extensions to session names'},
     'model_selection':          {'dest': 'common.model_selection', 'default': None, 'type': str, 'metavar': 'value', 'help': 'select a subset of models to run - path of the model is compared using this model_selection regex to select a particular model or not'},
     'model_shortlist':          {'dest': 'common.model_shortlist', 'default': None, 'type': str, 'metavar': 'value', 'help': 'select a subset of models to run - models configs with model_shortlist value <= this specified value will be used'},
-    'preset_selection':          {'dest': 'common.preset_selection', 'default': None, 'type': utils.str_or_none, 'metavar': 'value', 'help': 'select a preset for speed accuracy trade-off: None, SPEED, ACCURACY, BALANCED'},
-    'config_template':           {'dest': 'common.config_template', 'default':'data/templates/configs/param_template_config.yaml', 'type':str, 'metavar':'value', 'help':'param template path'},
+    'preset_selection':         {'dest': 'common.preset_selection', 'default': None, 'type': utils.str_or_none, 'metavar': 'value', 'help': 'select a preset for speed accuracy trade-off: None, SPEED, ACCURACY, BALANCED'},
+    'config_template':          {'dest': 'common.config_template', 'default':'data/templates/configs/param_template_config.yaml', 'type':str, 'metavar':'value', 'help':'param template path'},
+    'incremental':              {'dest': 'common.incremental', 'default':True, 'type':utils.str_to_bool, 'metavar':'value', 'help':'param template path'},
     # compile/infer session
     ## model
     'model_id':                 {'dest': 'session.model_id', 'default': None, 'type': str, 'metavar': 'value', 'help': 'unique id of a model - optional'},

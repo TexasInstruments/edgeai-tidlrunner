@@ -39,6 +39,9 @@ import subprocess
 from edgeai_tidlrunner import rtwrapper, runner
 
 
+SPECIAL_PIPELINE_NAMES = ('report',)
+
+
 class StartRunner(runner.bases.PipelineBase):
     ARGS_DICT = runner.bases.SETTING_PIPELINE_RUNNER_ARGS_DICT
     COPY_ARGS = {}
@@ -67,7 +70,11 @@ class StartRunner(runner.bases.PipelineBase):
         return num_cuda_gpus
 
     def run(self, command):
-        run_dict = runner._create_run_dict(command, argparse=True, **self.kwargs)
+        if command not in SPECIAL_PIPELINE_NAMES:
+            run_dict = runner._create_run_dict(command, argparse=True, **self.kwargs)
+        else:
+            run_dict =runner._create_run_dict(command, argparse=True, model_id=command+'_model', **self.kwargs)
+        #
         return runner._run(run_dict)
 
     @classmethod
@@ -87,7 +94,7 @@ class StartRunner(runner.bases.PipelineBase):
             for command_choice in command_choices:
                 print(f'{sys.argv[0]} {command_choice} --help')
             #
-        elif (len(sys.argv) == 2 and sys.argv[1] != 'report') or \
+        elif (len(sys.argv) == 2 and sys.argv[1] not in SPECIAL_PIPELINE_NAMES) or \
             (len(sys.argv) > 2 and sys.argv[2] in ('help', 'h', '--help', '-h')):
             if len(sys.argv) == 2:
                 if sys.argv[1].startswith('-'):
