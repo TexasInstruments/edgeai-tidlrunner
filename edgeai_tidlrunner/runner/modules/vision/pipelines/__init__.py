@@ -35,6 +35,7 @@ from .compile_.report import GenReport
 from .optimize_.optimize import OptimizeModel
 from .utils_.extract import ExtractNodes
 from .utils_.package import PackageArtifacts
+from .distill_.distill import DistillModel
 
 
 def get_command_pipelines(**kwargs):
@@ -51,5 +52,6 @@ def get_command_pipelines(**kwargs):
         # other
         'optimize':'OptimizeModel',
         'extract':'ExtractNodes',
+        'distill':'DistillModel',
     }
     return command_module_name_dict

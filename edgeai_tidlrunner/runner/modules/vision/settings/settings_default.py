@@ -245,3 +245,32 @@ SETTINGS_DEFAULT['package'] = SETTINGS_DEFAULT['basic'] | {
 COPY_SETTINGS_DEFAULT['package'] = COPY_SETTINGS_DEFAULT['basic'] | {
 }
 
+
+##########################################################################
+SETTINGS_DEFAULT['convert'] = SETTINGS_DEFAULT['basic'] | {
+    'model_path':             {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
+    'config_path':            {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'},    
+    'work_path':              {'dest': 'common.work_path', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'work path'},   
+    'output_path':            {'dest': 'session.run_dir', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'output model path'},
+    'pipeline_type':          {'dest': 'common.pipeline_type', 'default': 'convert', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},    
+}
+
+COPY_SETTINGS_DEFAULT['convert'] = COPY_SETTINGS_DEFAULT['basic'] | {
+}
+
+
+##########################################################################
+SETTINGS_DEFAULT['distill'] = SETTINGS_DEFAULT['basic'] | {
+    'model_path':             {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
+    'config_path':            {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'},    
+    'work_path':              {'dest': 'common.work_path', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'work path'},   
+    'output_path':            {'dest': 'session.run_dir', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'output model path'},
+    'pipeline_type':          {'dest': 'common.pipeline_type', 'default': 'distill', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},    
+    'model_selection':          {'dest': 'common.model_selection', 'default': None, 'type': str, 'metavar': 'value', 'help': 'select a subset of models to run - path of the model is compared using this model_selection regex to select a particular model or not'},
+    'model_shortlist':          {'dest': 'common.model_shortlist', 'default': None, 'type': str, 'metavar': 'value', 'help': 'select a subset of models to run - models configs with model_shortlist value <= this specified value will be used'},
+}
+
+COPY_SETTINGS_DEFAULT['distill'] = COPY_SETTINGS_DEFAULT['basic'] | {
+}
+
+
