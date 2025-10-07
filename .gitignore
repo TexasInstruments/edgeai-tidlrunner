@@ -20,14 +20,6 @@ dist/
 *.onnx
 *.prototxt
 
-/work_dirs/rtwrapper
-
-/work_dirs/modelartifacts
-/work_dirs/compile
-/work_dirs/package
-/work_dirs/extract
-/work_dirs/optimize
-/work_dirs/analyze
-/work_dirs/analyze
+/work_dirs/*
 
 /dependencies
