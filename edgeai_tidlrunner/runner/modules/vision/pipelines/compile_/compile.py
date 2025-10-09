@@ -86,14 +86,6 @@ class CompileModel(CompileModelBase):
                                source_dir=config_path)
         #
 
-        self.modify_model()
-
-        # session
-        session_name = session_kwargs['name']
-        session_type = blocks.sessions.SESSION_TYPES_MAPPING[session_name]
-        self.session = session_type(self.settings, **session_kwargs)
-        self.session.start_import()
-
         # input_data
         if self.pipeline_config and 'dataloader' in self.pipeline_config:
             self.dataloader = self.pipeline_config['dataloader']
@@ -153,7 +145,7 @@ class CompileModel(CompileModelBase):
     def info(self):
         print(f'INFO: Model import - {__file__}')
 
-    def modify_model(self):
+    def _optimize_model(self):
         print(f'INFO: running model optimize {self.model_path}')
         common_kwargs = self.settings[self.common_prefix]
         optimize_kwargs = common_kwargs['optimize']
@@ -167,6 +159,14 @@ class CompileModel(CompileModelBase):
         preprocess_kwargs = self.settings[self.preprocess_prefix]
         postprocess_kwargs = self.settings[self.postprocess_prefix]
         runtime_options = session_kwargs['runtime_options']
+
+        self._optimize_model()
+
+        # session
+        session_name = session_kwargs['name']
+        session_type = blocks.sessions.SESSION_TYPES_MAPPING[session_name]
+        self.session = session_type(self.settings, **session_kwargs)
+        self.session.start_import()
 
         if common_kwargs['incremental']:
             if os.path.exists(self.param_yaml):

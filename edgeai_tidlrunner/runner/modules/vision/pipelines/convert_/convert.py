@@ -31,6 +31,7 @@ import os
 import sys
 import shutil
 import copy
+import numpy as np
 
 from ...settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
 from ..... import utils
@@ -58,50 +59,123 @@ class ConvertModel(common_base.CommonPipelineBase):
         common_kwargs = self.settings[self.common_prefix]
         convert_kwargs = common_kwargs.get('convert', {})
 
-        if os.path.exists(self.run_dir):
-            print(f'INFO: clearing run_dir folder before compile: {self.run_dir}')
-            shutil.rmtree(self.run_dir, ignore_errors=True)
-        #
+        input_model_path = self.model_path
+        output_model_path = common_kwargs.get('output_model_path', None)
+        output_model_folder = os.path.dirname(output_model_path)
 
-        output_path = self.model_folder
-
-        os.makedirs(self.run_dir, exist_ok=True)
-        # os.makedirs(self.artifacts_folder, exist_ok=True)
         os.makedirs(self.model_folder, exist_ok=True)
-        os.makedirs(output_path, exist_ok=True)
+        os.makedirs(output_model_folder, exist_ok=True)
 
         config_path = os.path.dirname(common_kwargs['config_path']) if common_kwargs['config_path'] else None
         self.download_file(self.model_source, model_folder=self.model_folder, source_dir=config_path)
 
-        output_name = os.path.splitext(os.path.basename(self.model_path))[0] + '.pt'
-        output_model = os.path.join(output_path, output_name)
-        self._run_func(self.settings, self.model_path, output_model, **convert_kwargs)
+        output_model = self._run_func(input_model_path, output_model_path, **convert_kwargs)
+        return output_model
 
     @classmethod
-    def _run_func(cls, settings, model_source, model_path, **kwargs):
-        try:
-            shutil.copy2(model_source, model_path)
-        except shutil.SameFileError:
-            pass
+    def _run_func(cls, input_model_path, output_model_path=None, example_torch_inputs=None, **convert_kwargs):
+        import torch
+        if isinstance(input_model_path, str) and input_model_path.endswith('.onnx'):
+            output_model = cls._onnx2torchfile(input_model_path, output_model_path, example_torch_inputs, **convert_kwargs)
+        elif isinstance(input_model_path, str) and input_model_path.endswith('.pt'):
+            output_model = cls._torch2onnxfile(input_model_path, output_model_path, example_torch_inputs, **convert_kwargs)
+        elif isinstance(input_model_path, str) and input_model_path.endswith('.pt2'):
+            output_model = cls._torch2onnxfile(input_model_path, output_model_path, example_torch_inputs, **convert_kwargs)
+        elif isinstance(input_model_path, torch.nn.Module):
+            output_model = cls._torch2onnxfile(input_model_path, output_model_path, example_torch_inputs, **convert_kwargs)
+        else:
+            raise ValueError(f'ERROR: unsupported model format: {input_model_path}')
         #
-        kwargs = copy.deepcopy(kwargs)
+        return output_model
 
-        try:
-            import torch
-        except Exception as e:
-            print(f"ERROR: torch could not be imported: {e}")
-            raise
+    @classmethod
+    def _get_onnx_input_info(cls, model_path):
+        import onnx
+        import onnx_graphsurgeon as gs
+        model = onnx.load(model_path)
+        graph = gs.import_onnx(model)
+        input_info = {}
+        for input_tensor in graph.inputs:
+            # Handle dynamic dimensions (represented as strings)
+            shape = []
+            for dim in input_tensor.shape:
+                if isinstance(dim, str):
+                    shape.append(-1)  # Dynamic dimension
+                else:
+                    shape.append(int(dim))
+            
+            input_info[input_tensor.name] = {
+                'shape': shape,
+                'dtype': input_tensor.dtype,
+            }
+        return input_info
+
+    @classmethod
+    def _get_onnx_example_inputs(cls, model_path, to_torch=True):
+        import torch
+        input_info = cls._get_onnx_input_info(model_path)
+        input_shapes = [input_info[name]['shape'] for name in input_info]
+        input_dtypes = [input_info[name]['dtype'] for name in input_info]
+        input_tensors = [np.random.rand(*shape).astype(dtype) for shape, dtype in zip(input_shapes, input_dtypes)]
+        if to_torch:
+            input_tensors = [torch.from_numpy(input_tensor) for input_tensor in input_tensors]
         #
+        return tuple(input_tensors)
 
-        try:
-            import edgeai_onnx2torchmodel
-        except Exception as e:
-            print(f"WARNING: failed to install edgeai_onnx2torchmodel package, error: {e}")
-            install_url = "edgeai_onnx2torchmodel@git+ssh://git@bitbucket.itg.ti.com/edgeai-algo/edgeai-modeloptimization.git@2025_kunal_onnx2torch#subdirectory=onnx2torchmodel", ##"edgeai_onnx2torchmodel@git+https://github.com/TexasInstruments/edgeai-modeloptimization.git@main#subdirectory=onnx2torchmodel"
-            print(f"ERROR: trying to install package from url: {install_url}")
-            raise
+    @classmethod
+    def _get_example_inputs(cls, model_path, to_torch=True):
+        if isinstance(model_path, str) and model_path.endswith('.onnx'):
+            return cls._get_onnx_example_inputs(model_path, to_torch=to_torch)
+        else:
+            return None
+
+    @classmethod
+    def _onnx2torchfile(cls, model_path, output_model_path=None, example_torch_inputs=None, **kwargs):
+        if isinstance(model_path, str) and model_path.endswith('.onnx'):
+            try:
+                import edgeai_onnx2torchmodel
+            except Exception as e:
+                print(f"WARNING: failed to install edgeai_onnx2torchmodel package, error: {e}")
+                install_url = "edgeai_onnx2torchmodel@git+ssh://git@bitbucket.itg.ti.com/edgeai-algo/edgeai-modeloptimization.git@2025_kunal_onnx2torch#subdirectory=onnx2torchmodel", ##"edgeai_onnx2torchmodel@git+https://github.com/TexasInstruments/edgeai-modeloptimization.git@main#subdirectory=onnx2torchmodel"
+                print(f"ERROR: trying to install package from url: {install_url}")
+                raise
+            #
+            torch_model = edgeai_onnx2torchmodel.convert(model_path, **kwargs)
+        else:
+            torch_model = model_path
         #
-
-        torch_model = edgeai_onnx2torchmodel.convert(model_source, **kwargs)
-        torch.save(torch_model, model_path)
+        if output_model_path:
+            if not example_torch_inputs:
+                example_torch_inputs = cls._get_onnx_example_inputs(model_path, to_torch=True)
+            #
+            cls._torch2torchfile(torch_model, output_model_path, example_torch_inputs)
+        #
         return torch_model
+
+    @classmethod
+    def _torch2torchfile(cls, torch_model, output_model_path=None, example_torch_inputs=None):
+        import torch
+        if output_model_path.endswith('.pt2'):
+            torch.export.export(torch_model, example_torch_inputs, output_model_path)
+        elif output_model_path.endswith('.pt'):
+            torch.jit.export(torch_model, example_torch_inputs, output_model_path)
+        else:
+            raise ValueError(f'ERROR: unsupported student model format: {output_model_path}')
+        #
+
+    @classmethod
+    def _torch2onnxfile(cls, torch_model, onnx_model_path, example_torch_inputs, dynamo=False):
+        import torch
+        if isinstance(torch_model, str) and torch_model.endswith('.pt2'):
+            torch_model = torch.export.load(torch_model)
+        elif isinstance(torch_model, str) and torch_model.endswith('.pt'):
+            torch_model = torch.jit.load(torch_model)
+        #
+        if dynamo:
+            print('INFO: dynamo based onnx export ...')
+            onnx_program = torch.onnx.export(torch_model, example_torch_inputs, dynamo=True)
+            onnx_program.save(onnx_model_path)
+        else:
+            # traditional torchscript based onnx export
+            print('INFO: torchscript based onnx export ...')
+            torch.onnx.export(torch_model, example_torch_inputs, onnx_model_path, export_params=True, opset_version=17, do_constant_folding=True, dynamo=False)

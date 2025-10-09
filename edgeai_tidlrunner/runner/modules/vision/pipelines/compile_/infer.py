@@ -72,12 +72,6 @@ class InferModel(CompileModelBase):
 
         # shutil.copy2(self.model_source, self.model_path)
 
-        # session
-        session_name = session_kwargs['name']
-        session_type = blocks.sessions.SESSION_TYPES_MAPPING[session_name]
-        self.session = session_type(self.settings, **session_kwargs)
-        self.session.start_inference()
-
         # input_data
         if self.pipeline_config and 'dataloader' in self.pipeline_config:
             self.dataloader = self.pipeline_config['dataloader']
@@ -140,6 +134,14 @@ class InferModel(CompileModelBase):
     def _run(self):
         print(f'INFO: starting model infer')
         common_kwargs = self.settings[self.common_prefix]
+        session_kwargs = self.settings[self.session_prefix]
+        
+        # session
+        session_name = session_kwargs['name']
+        session_type = blocks.sessions.SESSION_TYPES_MAPPING[session_name]
+        self.session = session_type(self.settings, **session_kwargs)
+        self.session.start_inference()
+
         if common_kwargs['incremental']:
             if os.path.exists(self.result_yaml):
                 print(f'INFO: incremental {common_kwargs["incremental"]} param.yaml exists: {self.result_yaml}')

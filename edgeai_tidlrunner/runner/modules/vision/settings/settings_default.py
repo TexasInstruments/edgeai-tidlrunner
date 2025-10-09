@@ -70,7 +70,7 @@ SETTINGS_DEFAULT['optimize'] = SETTINGS_DEFAULT['basic'] | {
     'model_path':                       {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
     'config_path':                      {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'},    
     'work_path':                        {'dest': 'common.work_path', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'work path'},   
-    'output_path':                      {'dest': 'session.run_dir', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'output model path'},
+    'run_dir':                      {'dest': 'session.run_dir', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'run_dir'},
     'pipeline_type':                    {'dest': 'common.pipeline_type', 'default': 'optimize', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},    
     'optimize_model':                   {'dest': 'common.optimize.optimize_model', 'default': True, 'type': utils.str_to_bool_or_none_or_dict, 'metavar': 'value', 'help': 'enable model optimization'},
     'simplify_model':                   {'dest': 'common.optimize.simplify_mode', 'default': 'pre', 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable model simplification optimizations'},
@@ -91,7 +91,7 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | SETTINGS_DEFAULT['opti
     'model_path':               {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
     'config_path':              {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'}, 
     'work_path':                {'dest': 'common.work_path', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'work path'},
-    'output_path':              {'dest': 'session.run_dir', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'output model path'},
+    'run_dir':              {'dest': 'session.run_dir', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'run_dir'},
     'pipeline_type':            {'dest': 'common.pipeline_type', 'default': 'compile', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},
     # common options
     'task_type':                {'dest': 'common.task_type', 'default': None, 'type': str, 'metavar': 'value', 'help': 'type of AI task (classification, detection, segmentation etc.)'},
@@ -208,7 +208,7 @@ SETTINGS_DEFAULT['extract'] = SETTINGS_DEFAULT['basic'] | {
     'model_path':             {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
     'config_path':            {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'},
     'work_path':              {'dest': 'common.work_path', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'work path'},
-    'output_path':            {'dest': 'session.run_dir', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'output model path'},
+    'run_dir':            {'dest': 'session.run_dir', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'run_dir'},
     'pipeline_type':          {'dest': 'common.pipeline_type', 'default': 'extract', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'}, 
     'extract_mode':           {'dest': 'common.extract.mode', 'default': 'operators', 'type': str, 'metavar': 'value', 'choices': ['submodules', 'submodule', 'start2end', 'operators'], 'help': 'extraction mode (submodules, submodule, start2end, operators)'},
     'submodule_name':         {'dest': 'common.extract.submodule_name', 'default': None, 'type': str, 'metavar': 'value', 'help': 'name of specific submodule to extract'},
@@ -251,8 +251,9 @@ SETTINGS_DEFAULT['convert'] = SETTINGS_DEFAULT['basic'] | {
     'model_path':             {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
     'config_path':            {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'},    
     'work_path':              {'dest': 'common.work_path', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'work path'},   
-    'output_path':            {'dest': 'session.run_dir', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'output model path'},
+    'run_dir':            {'dest': 'session.run_dir', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'run_dir'},
     'pipeline_type':          {'dest': 'common.pipeline_type', 'default': 'convert', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},    
+    'output_model_path':      {'dest': 'common.output_model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'output model'},
 }
 
 COPY_SETTINGS_DEFAULT['convert'] = COPY_SETTINGS_DEFAULT['basic'] | {
@@ -260,17 +261,21 @@ COPY_SETTINGS_DEFAULT['convert'] = COPY_SETTINGS_DEFAULT['basic'] | {
 
 
 ##########################################################################
-SETTINGS_DEFAULT['distill'] = SETTINGS_DEFAULT['basic'] | {
-    'model_path':             {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
-    'config_path':            {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'},    
-    'work_path':              {'dest': 'common.work_path', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'work path'},   
-    'output_path':            {'dest': 'session.run_dir', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'output model path'},
+SETTINGS_DEFAULT['distill'] = SETTINGS_DEFAULT['compile'] | {
     'pipeline_type':          {'dest': 'common.pipeline_type', 'default': 'distill', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},    
-    'model_selection':          {'dest': 'common.model_selection', 'default': None, 'type': str, 'metavar': 'value', 'help': 'select a subset of models to run - path of the model is compared using this model_selection regex to select a particular model or not'},
-    'model_shortlist':          {'dest': 'common.model_shortlist', 'default': None, 'type': str, 'metavar': 'value', 'help': 'select a subset of models to run - models configs with model_shortlist value <= this specified value will be used'},
+    'teacher_model_path':      {'dest': 'common.teacher_model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'teacher model'},
+    'output_model_path':      {'dest': 'common.output_model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'output model'},
 }
 
-COPY_SETTINGS_DEFAULT['distill'] = COPY_SETTINGS_DEFAULT['basic'] | {
+COPY_SETTINGS_DEFAULT['distill'] = COPY_SETTINGS_DEFAULT['compile'] | {
 }
 
+
+##########################################################################
+SETTINGS_DEFAULT['quantize'] = SETTINGS_DEFAULT['distill'] | {
+    'pipeline_type':          {'dest': 'common.pipeline_type', 'default': 'quantize', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'}, 
+}
+
+COPY_SETTINGS_DEFAULT['quantize'] = COPY_SETTINGS_DEFAULT['distill'] | {
+}
 

@@ -35,11 +35,11 @@ import copy
 from ...settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
 from ..... import utils
 from ..... import bases
-from ..common_ import common_base
+from ..compile_ import compile
 from ..convert_ import convert
 
 
-class DistillModel(common_base.CommonPipelineBase):
+class DistillModel(compile.CompileModel):
     ARGS_DICT=SETTINGS_DEFAULT['distill']
     COPY_ARGS=COPY_SETTINGS_DEFAULT['distill']
 
@@ -52,42 +52,55 @@ class DistillModel(common_base.CommonPipelineBase):
     def info():
         print(f'INFO: Model distill - {__file__}')
 
-    def _run(self):
-        print(f'INFO: starting model distill with parameters: {self.kwargs}')
+    def _prepare(self):
+        print(f'INFO: preparing model distill with parameters: {self.kwargs}')
+        super()._prepare()
 
+    def _run(self):
+        import torch
+        print(f'INFO: starting model quantize with parameters: {self.kwargs}')
+        print(f'INFO: running model quantize {self.model_path}')
         common_kwargs = self.settings[self.common_prefix]
+        session_kwargs = self.settings[self.session_prefix]
+        runtime_options = session_kwargs['runtime_options']
         distill_kwargs = common_kwargs.get('distill', {})
 
-        if os.path.exists(self.run_dir):
-            print(f'INFO: clearing run_dir folder before compile: {self.run_dir}')
-            shutil.rmtree(self.run_dir, ignore_errors=True)
+        teacher_model_path = common_kwargs.get('teacher_model_path', None) or self.model_path
+        student_model_path = common_kwargs.get('output_model_path', None)
+        example_inputs = common_kwargs.get('example_inputs', None)
+
+        teacher_model = teacher_model_path
+        if isinstance(teacher_model_path, str):
+            teacher_model = convert.ConvertModel._run_func(teacher_model_path)
+            if not example_inputs:
+                example_inputs = convert.ConvertModel._get_example_inputs(teacher_model_path, to_torch=True)
+            #
         #
 
-        torch_model_name = os.path.splitext(os.path.basename(self.model_path))[0] + '.pt'
-        teacher_folder = os.path.join(self.run_dir, 'distill', 'teacher')
-        student_folder = os.path.join(self.run_dir, 'distill', 'student')
-
-        os.makedirs(self.run_dir, exist_ok=True)
-        # os.makedirs(self.artifacts_folder, exist_ok=True)
-        os.makedirs(self.model_folder, exist_ok=True)
-        os.makedirs(teacher_folder, exist_ok=True)
-        os.makedirs(student_folder, exist_ok=True)
-
-        teacher_path = os.path.join(teacher_folder, torch_model_name)
-        student_path = os.path.join(student_folder, torch_model_name)
-
-        config_path = os.path.dirname(common_kwargs['config_path']) if common_kwargs['config_path'] else None
-        self.download_file(self.model_source, model_folder=self.model_folder, source_dir=config_path)
-
-        convert_kwargs = common_kwargs.get('convert', {})
-        convert.ConvertModel._run_func(self.settings, self.model_path, teacher_path, **convert_kwargs)
-
-        self._run_func(self.settings, teacher_path, student_path, **distill_kwargs)
-
-    @classmethod
-    def _run_func(self, settings, teacher_path, student_path, **kwargs):
-        try:
-            shutil.copy2(teacher_path, student_path)
-        except shutil.SameFileError:
-            pass
+        student_model = student_model_path
+        if isinstance(student_model_path, str):
+            student_model = convert.ConvertModel._run_func(student_model_path)
+            if not example_inputs:
+                example_inputs = convert.ConvertModel._get_example_inputs(student_model_path, to_torch=True)
+            #
         #
+
+        # distill loop here
+        calibration_iterations = runtime_options['advanced_options:calibration_iterations']
+        calibration_frames = runtime_options['advanced_options:calibration_frames']
+        for calib_index in range(calibration_iterations):
+            print(f'INFO: running model quantize iteration: {calib_index}')
+            for input_index in range(min(len(self.dataloader), calibration_frames)):
+                print(f'INFO: input frame for quantize: {input_index}')
+            #
+        #
+
+        if isinstance(student_model_path, str):
+            if not example_inputs:
+                input_data, info_dict = self.dataloader(0)
+                input_data, info_dict = self.preprocess(input_data, info_dict=info_dict) if self.preprocess else (input_data, info_dict)
+                example_inputs = tuple([torch.from_numpy(input_tensor) for input_tensor in input_data]) if isinstance(input_data, (list, tuple)) else (torch.from_numpy(input_data),)
+            #
+            convert.ConvertModel._run_func(student_model, student_model_path, example_inputs)
+        #
+        return student_model

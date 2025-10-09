@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # Copyright (c) 2018-2025, Texas Instruments
 # All Rights Reserved.
 #
@@ -27,33 +29,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from .compile_.infer import InferModel
-from .compile_.compile import CompileModel
-from .compile_.accuracy import InferAccuracy
-from .compile_.analyze import CompileAnalyzeNoTIDL, InferAnalyzeNoTIDL, CompileAnalyzeTIDL, InferAnalyzeTIDL, InferAnalyzeFinal
-from .compile_.report import GenReport 
-from .optimize_.optimize import OptimizeModel
-from .utils_.extract import ExtractNodes
-from .utils_.package import PackageArtifacts
-from .distill_.distill import DistillModel
-from .distill_.quantize import QuantizeModel
+#######################################################################
+# torch
+pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+# pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu128
 
+pip3 install onnxscript onnx-ir
+# pip3 uninstall -y onnx protobuf onnx-ir
 
-def get_command_pipelines(**kwargs):
-    command_module_name_dict = {
-        # compile related
-        'compile':'CompileModel',
-        'infer':'InferModel',
-        'accuracy': ['InferAccuracy'],
-        'compile+infer': ['CompileModel', 'InferModel'],
-        'compile+accuracy': ['CompileModel', 'InferAccuracy'],
-        'analyze': ['CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL', 'InferAnalyzeTIDL', 'InferAnalyzeFinal'],    
-        'report': ['GenReport'],   
-        'package': ['PackageArtifacts'], 
-        # other
-        'optimize':'OptimizeModel',
-        'extract':'ExtractNodes',
-        'distill':'DistillModel',
-        'quantize':'QuantizeModel',
-    }
-    return command_module_name_dict
