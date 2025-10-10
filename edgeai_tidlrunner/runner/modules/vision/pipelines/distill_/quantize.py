@@ -50,35 +50,70 @@ class QuantizeModel(distill.DistillModel):
         print(f'INFO: Model quantize - {__file__}')
 
     def _prepare(self):
+        import torch
+        import torchao
+
+        # from edgeai_torchmodelopt.xmodelopt import quantization
         print(f'INFO: preparing model quantize with parameters: {self.kwargs}')
         super()._prepare()
 
         common_kwargs = self.settings[self.common_prefix]
-
+        session_kwargs = self.settings[self.session_prefix]
+        runtime_options = session_kwargs['runtime_options']
+        calibration_iterations = runtime_options['advanced_options:calibration_iterations']
+        
         self.teacher_folder = os.path.join(self.run_dir, 'teacher')
         self.student_folder = os.path.join(self.run_dir, 'student')
         os.makedirs(self.teacher_folder, exist_ok=True)
-        os.makedirs(self.student_folder, exist_ok=True)
 
         self.teacher_model_path = os.path.join(self.teacher_folder, os.path.basename(self.model_path))
         shutil.move(self.model_path, self.teacher_model_path)
 
-        teacher_model = convert.ConvertModel._run_func(self.teacher_model_path)
+        teacher_model = convert.ConvertModel._run_func(self.teacher_model_path).eval()
         example_inputs = convert.ConvertModel._get_example_inputs(self.teacher_model_path, to_torch=True)
         common_kwargs['teacher_model_path'] = teacher_model
         common_kwargs['example_inputs'] = example_inputs
-
-        self.student_model_path = os.path.join(self.student_folder, os.path.basename(self.model_path))
-        
-        #####################################################
-        # TODO: replace this with QDQ model
-        student_model = copy.deepcopy(teacher_model)
+        student_model = self._prepare_quantize(teacher_model, example_inputs)
         common_kwargs['output_model_path'] = student_model
-        #####################################################
 
     def _run(self):
         print(f'INFO: starting model quantize with parameters: {self.kwargs}')
         common_kwargs = self.settings[self.common_prefix]
         super()._run()
-        convert.ConvertModel._run_func(common_kwargs['output_model_path'], self.student_model_path, common_kwargs['example_inputs'])
+
+        from torchao.quantization.pt2e.quantize_pt2e import (prepare_qat_pt2e, convert_pt2e,)
+        student_model = common_kwargs['output_model_path']
+        student_model = convert_pt2e(student_model)
+
+        os.makedirs(self.student_folder, exist_ok=True)
+        self.student_model_path = os.path.join(self.student_folder, os.path.basename(self.model_path))
+        convert.ConvertModel._run_func(student_model, self.student_model_path, common_kwargs['example_inputs'])
+
         shutil.copyfile(self.student_model_path, self.model_path)
+
+    def _prepare_quantize(self, teacher_model, example_inputs):
+        import torch
+        import torchao
+
+        # create student model
+        # student_model = quantization.v3.QATPT2EModule(teacher_model, example_inputs, total_epochs=calibration_iterations)
+        # from edgeai_torchmodelopt.xmodelopt.quantization.v3.quant_utils import register_onnx_symbolics
+        # register_onnx_symbolics()
+
+        teacher_model_pte = torch.export.export(teacher_model, example_inputs).module()
+        # we get a model with aten ops
+        # from torchao.quantization.pt2e import allow_exported_model_train_eval
+        # allow_exported_model_train_eval(teacher_model_pte)
+
+        # Step 2. quantization
+        from torchao.quantization.pt2e.quantize_pt2e import (prepare_qat_pt2e, convert_pt2e,)
+
+        # install executorch: `pip install executorch`
+        from executorch.backends.xnnpack.quantizer.xnnpack_quantizer import (get_symmetric_quantization_config, XNNPACKQuantizer,)
+
+        # backend developer will write their own Quantizer and expose methods to allow
+        # users to express how they
+        # want the model to be quantized
+        quantizer = XNNPACKQuantizer().set_global(get_symmetric_quantization_config(is_per_channel=True, is_qat=True))
+        student_model = prepare_qat_pt2e(teacher_model_pte, quantizer)
+        return student_model

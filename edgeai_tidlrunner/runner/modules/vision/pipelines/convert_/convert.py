@@ -73,16 +73,16 @@ class ConvertModel(common_base.CommonPipelineBase):
         return output_model
 
     @classmethod
-    def _run_func(cls, input_model_path, output_model_path=None, example_torch_inputs=None, **convert_kwargs):
+    def _run_func(cls, input_model_path, output_model_path=None, example_torch_inputs=None, dynamo=True, **convert_kwargs):
         import torch
         if isinstance(input_model_path, str) and input_model_path.endswith('.onnx'):
             output_model = cls._onnx2torchfile(input_model_path, output_model_path, example_torch_inputs, **convert_kwargs)
         elif isinstance(input_model_path, str) and input_model_path.endswith('.pt'):
-            output_model = cls._torch2onnxfile(input_model_path, output_model_path, example_torch_inputs, **convert_kwargs)
+            output_model = cls._torch2onnxfile(input_model_path, output_model_path, example_torch_inputs, dynamo=dynamo, **convert_kwargs)
         elif isinstance(input_model_path, str) and input_model_path.endswith('.pt2'):
-            output_model = cls._torch2onnxfile(input_model_path, output_model_path, example_torch_inputs, **convert_kwargs)
+            output_model = cls._torch2onnxfile(input_model_path, output_model_path, example_torch_inputs, dynamo=dynamo, **convert_kwargs)
         elif isinstance(input_model_path, torch.nn.Module):
-            output_model = cls._torch2onnxfile(input_model_path, output_model_path, example_torch_inputs, **convert_kwargs)
+            output_model = cls._torch2onnxfile(input_model_path, output_model_path, example_torch_inputs, dynamo=dynamo, **convert_kwargs)
         else:
             raise ValueError(f'ERROR: unsupported model format: {input_model_path}')
         #
@@ -164,7 +164,7 @@ class ConvertModel(common_base.CommonPipelineBase):
         #
 
     @classmethod
-    def _torch2onnxfile(cls, torch_model, onnx_model_path, example_torch_inputs, dynamo=False):
+    def _torch2onnxfile(cls, torch_model, onnx_model_path, example_torch_inputs, dynamo=True):
         import torch
         if isinstance(torch_model, str) and torch_model.endswith('.pt2'):
             torch_model = torch.export.load(torch_model)
@@ -173,9 +173,10 @@ class ConvertModel(common_base.CommonPipelineBase):
         #
         if dynamo:
             print('INFO: dynamo based onnx export ...')
-            onnx_program = torch.onnx.export(torch_model, example_torch_inputs, dynamo=True)
+            artifacts_dir = os.path.dirname(onnx_model_path)
+            onnx_program = torch.onnx.export(torch_model, example_torch_inputs, dynamo=True, report=True, artifacts_dir=artifacts_dir)
             onnx_program.save(onnx_model_path)
         else:
             # traditional torchscript based onnx export
             print('INFO: torchscript based onnx export ...')
-            torch.onnx.export(torch_model, example_torch_inputs, onnx_model_path, export_params=True, opset_version=17, do_constant_folding=True, dynamo=False)
+            torch.onnx.export(torch_model, example_torch_inputs, onnx_model_path, export_params=True, opset_version=17, do_constant_folding=True, training=torch.onnx.TrainingMode.PRESERVE, dynamo=False)
