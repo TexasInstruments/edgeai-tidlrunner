@@ -27,8 +27,5 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from .version import __version__
-
-from . import rtwrapper
-from . import runner
-
+from ....rtwrapper import options as runtime_options
+from .runtime_settings import *
