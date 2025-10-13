@@ -66,10 +66,11 @@ class QuantizeModel(distill.DistillModel):
         self.teacher_model_path = os.path.join(self.teacher_folder, os.path.basename(self.model_path))
         shutil.move(self.model_path, self.teacher_model_path)
 
-        teacher_model = convert.ConvertModel._run_func(self.teacher_model_path).eval()
+        teacher_model = convert.ConvertModel._get_torch_model(self.teacher_model_path)
         example_inputs = convert.ConvertModel._get_example_inputs(self.teacher_model_path, to_torch=True)
         common_kwargs['teacher_model_path'] = teacher_model
         common_kwargs['example_inputs'] = example_inputs
+        
         student_model = self._prepare_quantize(teacher_model, example_inputs)
         common_kwargs['output_model_path'] = student_model
 

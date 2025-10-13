@@ -92,6 +92,22 @@ class ConvertModel(common_base.CommonPipelineBase):
         return output_model
 
     @classmethod
+    def _get_torch_model(cls, input_model_path, output_model_path=None, example_torch_inputs=None, opset_version=constants.ONNX_OPSET_VERSION_DEFAULT, dynamo=True, **convert_kwargs):
+        import torch
+        if isinstance(input_model_path, str) and input_model_path.endswith('.onnx'):
+            output_model = cls._onnx2torchfile(input_model_path, output_model_path, example_torch_inputs, **convert_kwargs)
+        elif isinstance(input_model_path, str) and input_model_path.endswith('.pt'):
+            output_model = torch.jit.load(input_model_path)
+        elif isinstance(input_model_path, str) and input_model_path.endswith('.pt2'):
+            output_model = torch.export.load(input_model_path)
+        elif isinstance(input_model_path, torch.nn.Module):
+            output_model = input_model_path
+        else:
+            raise ValueError(f'ERROR: unsupported model format: {input_model_path}')
+        #
+        return output_model
+    
+    @classmethod
     def _get_onnx_input_info(cls, model_path):
         import onnx
         import onnx_graphsurgeon as gs

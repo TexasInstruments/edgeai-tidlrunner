@@ -31,9 +31,9 @@
 
 #######################################################################
 # torch
-pip install torch==2.8 torchvision==0.23 torchaudio==2.8 --index-url https://download.pytorch.org/whl/cu128
-# pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 # pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+# pip install torch==2.8 torchvision==0.23 torchaudio==2.8 --index-url https://download.pytorch.org/whl/cu128
 
 pip3 install torchao onnxscript
 

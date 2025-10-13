@@ -40,11 +40,11 @@ __all = ['ONNXRuntimeSession', 'SESSION_TYPES_MAPPING']
 DataLayoutType = rtwrapper.options.presets.DataLayoutType
 
 
-def create_input_normalizer(self):
-    input_optimization = self.kwargs.get('input_optimization', False)
-    input_mean = self.kwargs.get('input_mean', None)
-    input_scale = self.kwargs.get('input_scale', None)
-    data_layout = self.kwargs.get('data_layout', None)
+def create_input_normalizer(**kwargs):
+    input_optimization = kwargs.get('input_optimization', False)
+    input_mean = kwargs.get('input_mean', None)
+    input_scale = kwargs.get('input_scale', None)
+    data_layout = kwargs.get('data_layout', None)
     # input_optimization is set, the input_mean and input_scale are added inside the model
     # in that case, there is not need to normalize here
     if (not input_optimization) and input_mean and input_scale:
@@ -62,7 +62,7 @@ class ONNXRuntimeSession(rtwrapper.core.ONNXRuntimeWrapper):
             kwargs = RuntimeSettings(**kwargs)
         #
         super().__init__(**kwargs)
-        self.input_normalizer = create_input_normalizer(self)
+        self.input_normalizer = create_input_normalizer(**self.kwargs)
 
     def run_import(self, input_data, output_keys=None):
         input_data, info_dict = self.input_normalizer(input_data, info_dict={}) if self.input_normalizer else input_data, {}
@@ -79,7 +79,7 @@ class TFLITERuntimeSession(rtwrapper.core.TFLiteRuntimeWrapper):
             kwargs = RuntimeSettings(**kwargs)
         #
         super().__init__(**kwargs)
-        self.input_normalizer = create_input_normalizer(self)
+        self.input_normalizer = create_input_normalizer(**self.kwargs)
 
     def run_import(self, input_data, output_keys=None):
         input_data, info_dict = self.input_normalizer(input_data, info_dict={}) if self.input_normalizer else input_data, {}
