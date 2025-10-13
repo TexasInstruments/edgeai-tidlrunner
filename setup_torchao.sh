@@ -31,9 +31,10 @@
 
 #######################################################################
 # torch
-pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+pip install torch==2.8 torchvision==0.23 torchaudio==2.8 --index-url https://download.pytorch.org/whl/cu128
+# pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 # pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu128
 
-pip3 install onnxscript onnx-ir
-# pip3 uninstall -y onnx protobuf onnx-ir
+pip3 install torchao onnxscript
 
+pip3 install onnx-graphsurgeon==0.5.8 --extra-index-url https://pypi.ngc.nvidia.com

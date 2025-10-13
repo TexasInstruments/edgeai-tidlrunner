@@ -54,13 +54,6 @@ class CompileModelBase(CommonPipelineBase):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        # upgrade pipeline_config from edgeai-benchmark
-        if self.pipeline_config:
-            if 'dataloader' not in self.pipeline_config and 'input_dataset' in self.pipeline_config:
-                self.pipeline_config['dataloader'] = self.pipeline_config.pop('input_dataset')
-            #
-        #
-
         if 'session' in self.settings and self.settings[self.session_prefix].get('model_path', None):
             self.artifacts_folder = self.settings[self.session_prefix].get('artifactrs_folder', os.path.join(self.run_dir, 'artifacts'))
             self.settings[self.session_prefix]['artifacts_folder'] = self.artifacts_folder

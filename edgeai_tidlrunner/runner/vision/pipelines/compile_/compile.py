@@ -89,6 +89,10 @@ class CompileModel(CompileModelBase):
         # input_data
         if self.pipeline_config and 'dataloader' in self.pipeline_config:
             self.dataloader = self.pipeline_config['dataloader']
+        elif self.pipeline_config and 'calibration_dataset' in self.pipeline_config:
+            self.dataloader = self.pipeline_config['calibration_dataset']
+        elif self.pipeline_config and 'input_dataset' in self.pipeline_config:
+            self.dataloader = self.pipeline_config['input_dataset']
         elif callable(dataloader_kwargs['name']):
             dataloader_method = dataloader_kwargs['name']
             self.dataloader = dataloader_method()

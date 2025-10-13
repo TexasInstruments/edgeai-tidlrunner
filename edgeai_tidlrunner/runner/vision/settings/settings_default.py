@@ -262,9 +262,12 @@ COPY_SETTINGS_DEFAULT['convert'] = COPY_SETTINGS_DEFAULT['basic'] | {
 
 ##########################################################################
 SETTINGS_DEFAULT['distill'] = SETTINGS_DEFAULT['compile'] | {
-    'pipeline_type':          {'dest': 'common.pipeline_type', 'default': 'distill', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},    
-    'teacher_model_path':      {'dest': 'common.teacher_model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'teacher model'},
-    'output_model_path':      {'dest': 'common.output_model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'output model'},
+    'pipeline_type':            {'dest': 'common.pipeline_type', 'default': 'distill', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},    
+    'teacher_model_path':       {'dest': 'common.teacher_model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'teacher model'},
+    'output_model_path':        {'dest': 'common.output_model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'output model'},
+    'calibration_frames':       {'dest': 'session.runtime_options.advanced_options:calibration_frames', 'default': 1000, 'type': int, 'metavar': 'value', 'help': 'number of frames for quantization calibration'},
+    'calibration_iterations':   {'dest': 'session.runtime_options.advanced_options:calibration_iterations', 'default': 10, 'type': int, 'metavar': 'value', 'help': 'number of calibration iterations'},
+    'num_frames':               {'dest': 'common.num_frames', 'default': 1000, 'type': int, 'metavar': 'value', 'help': 'number of frames to process'},
 }
 
 COPY_SETTINGS_DEFAULT['distill'] = COPY_SETTINGS_DEFAULT['compile'] | {

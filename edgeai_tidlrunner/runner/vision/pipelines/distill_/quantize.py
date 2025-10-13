@@ -58,9 +58,6 @@ class QuantizeModel(distill.DistillModel):
         super()._prepare()
 
         common_kwargs = self.settings[self.common_prefix]
-        session_kwargs = self.settings[self.session_prefix]
-        runtime_options = session_kwargs['runtime_options']
-        calibration_iterations = runtime_options['advanced_options:calibration_iterations']
         
         self.teacher_folder = os.path.join(self.run_dir, 'teacher')
         self.student_folder = os.path.join(self.run_dir, 'student')
@@ -80,10 +77,12 @@ class QuantizeModel(distill.DistillModel):
         import torch
         import torchao
 
-        self._register_quantized_symbolics()
+        common_kwargs = self.settings[self.common_prefix]
+        session_kwargs = self.settings[self.session_prefix]
+        runtime_options = session_kwargs['runtime_options']
+        calibration_iterations = runtime_options['advanced_options:calibration_iterations']
 
         print(f'INFO: starting model quantize with parameters: {self.kwargs}')
-        common_kwargs = self.settings[self.common_prefix]
         super()._run()
 
         from torchao.quantization.pt2e.quantize_pt2e import (prepare_qat_pt2e, convert_pt2e,)
@@ -96,11 +95,12 @@ class QuantizeModel(distill.DistillModel):
 
         shutil.copyfile(self.student_model_path, self.model_path)
 
-    def _prepare_quantize(self, teacher_model, example_inputs):
+    def _prepare_quantize(self, teacher_model, example_inputs, device=None):
         import torch
         import torchao
 
         # create student model
+        # from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule 
         # student_model = quantization.v3.QATPT2EModule(teacher_model, example_inputs, total_epochs=calibration_iterations)
 
         teacher_model_pte = torch.export.export(teacher_model, example_inputs).module()
@@ -109,20 +109,28 @@ class QuantizeModel(distill.DistillModel):
         # allow_exported_model_train_eval(teacher_model_pte)
 
         # Step 2. quantization
-        from torchao.quantization.pt2e.quantize_pt2e import (prepare_qat_pt2e, convert_pt2e,)
-
-        # install executorch: `pip install executorch`
-        from executorch.backends.xnnpack.quantizer.xnnpack_quantizer import (get_symmetric_quantization_config, XNNPACKQuantizer,)
+        from torchao.quantization.pt2e.quantize_pt2e import (prepare_qat_pt2e, convert_pt2e)
+        from torchao.quantization.pt2e import allow_exported_model_train_eval
 
         # backend developer will write their own Quantizer and expose methods to allow
-        # users to express how they
-        # want the model to be quantized
-        quantizer = XNNPACKQuantizer().set_global(get_symmetric_quantization_config(is_per_channel=True, is_qat=True))
+        from torchao.quantization.pt2e.quantizer.arm_inductor_quantizer import (ArmInductorQuantizer, get_default_arm_inductor_quantization_config)
+        quantizer = ArmInductorQuantizer().set_global(get_default_arm_inductor_quantization_config(is_qat=True))
+
+        # from torchao.quantization.pt2e.quantizer.x86_inductor_quantizer import (X86InductorQuantizer, get_default_x86_inductor_quantization_config)
+        # quantizer = X86InductorQuantizer().set_global(get_default_x86_inductor_quantization_config(is_qat=True))
+
+        # from torchao.quantization.pt2e.quantizer.xpu_inductor_quantizer import (XPUInductorQuantizer, get_default_xpu_inductor_quantization_config)
+        # quantizer = XPUInductorQuantizer().set_global(get_default_xpu_inductor_quantization_config(is_qat=True))
+
+        # install executorch: `pip install executorch`
+        # from executorch.backends.xnnpack.quantizer.xnnpack_quantizer import (get_symmetric_quantization_config, XNNPACKQuantizer)
+        # # quantizer = XNNPACKQuantizer().set_global(get_symmetric_quantization_config(is_qat=True, per_channel=True))
+        # quantizer = XNNPACKQuantizer().set_global(get_symmetric_quantization_config(is_qat=True))
+
         student_model = prepare_qat_pt2e(teacher_model_pte, quantizer)
+        allow_exported_model_train_eval(student_model)
+
+        if device:
+            student_model.to(device)
+        #
         return student_model
-    
-    @classmethod
-    def _register_quantized_symbolics(cls, opset_version=None):
-        from edgeai_torchmodelopt.xmodelopt.quantization.v3.quant_utils import register_onnx_symbolics
-        register_onnx_symbolics()
-        

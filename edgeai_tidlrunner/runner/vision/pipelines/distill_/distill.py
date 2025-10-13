@@ -88,9 +88,11 @@ class DistillModel(compile.CompileModel):
         # distill loop here
         calibration_iterations = runtime_options['advanced_options:calibration_iterations']
         calibration_frames = runtime_options['advanced_options:calibration_frames']
+        calibration_iterations = min(calibration_iterations, len(self.dataloader)) if calibration_iterations else len(self.dataloader)
+        calibration_frames = min(calibration_frames, len(self.dataloader)) if calibration_frames else len(self.dataloader)
         for calib_index in range(calibration_iterations):
             print(f'INFO: running model quantize iteration: {calib_index}')
-            for input_index in range(min(len(self.dataloader), calibration_frames)):
+            for input_index in range(calibration_frames):
                 print(f'INFO: input frame for quantize: {input_index}')
             #
         #

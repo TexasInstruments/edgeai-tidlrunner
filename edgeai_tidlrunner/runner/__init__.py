@@ -139,6 +139,8 @@ def _get_configs(config_path, **kwargs):
             print(f'\nINFO: work_path: {work_path}')
             pipeline_configs = edgeai_benchmark.interfaces.get_configs(settings, work_path)
             configs = edgeai_benchmark.pipelines.PipelineRunner(settings, pipeline_configs).get_pipeline_configs()
+            upgrade_config = {'common.upgrade_config':False}
+            configs = {model_id: (upgrade_config | pipeline_config) for model_id, pipeline_config in configs.items()}
         else:
             raise RuntimeError(f'ERROR: invalid config_path: {config_path}')
         #
