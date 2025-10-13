@@ -77,6 +77,11 @@ class QuantizeModel(distill.DistillModel):
         common_kwargs['output_model_path'] = student_model
 
     def _run(self):
+        import torch
+        import torchao
+
+        self._register_quantized_symbolics()
+
         print(f'INFO: starting model quantize with parameters: {self.kwargs}')
         common_kwargs = self.settings[self.common_prefix]
         super()._run()
@@ -97,8 +102,6 @@ class QuantizeModel(distill.DistillModel):
 
         # create student model
         # student_model = quantization.v3.QATPT2EModule(teacher_model, example_inputs, total_epochs=calibration_iterations)
-        # from edgeai_torchmodelopt.xmodelopt.quantization.v3.quant_utils import register_onnx_symbolics
-        # register_onnx_symbolics()
 
         teacher_model_pte = torch.export.export(teacher_model, example_inputs).module()
         # we get a model with aten ops
@@ -117,3 +120,9 @@ class QuantizeModel(distill.DistillModel):
         quantizer = XNNPACKQuantizer().set_global(get_symmetric_quantization_config(is_per_channel=True, is_qat=True))
         student_model = prepare_qat_pt2e(teacher_model_pte, quantizer)
         return student_model
+    
+    @classmethod
+    def _register_quantized_symbolics(cls, opset_version=None):
+        from edgeai_torchmodelopt.xmodelopt.quantization.v3.quant_utils import register_onnx_symbolics
+        register_onnx_symbolics()
+        
