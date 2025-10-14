@@ -43,6 +43,64 @@ from runner.common.pipelines import compile
 from . import convert
 
 
+def get_distill_wrapper_module():
+    # define inside a function, to avoid torch and torchao depdency at start
+    import torch
+    import torchao
+    class _DistillWrapperModule(torch.nn.Module):
+        def __init__(self, student_model, teacher_model, **kwargs):
+            super().__init__()
+            self.student_model = student_model
+            self.teacher_model = teacher_model
+            
+            self.criterion = torch.nn.MSELoss() #torch.nn.KLDivLoss()
+            self.epochs = kwargs.get('epochs', 10)
+            self.lr = kwargs.get('lr', 0.0001)
+            self.lr_min = kwargs.get('lr_min', self.lr/100)
+            self.momentum = kwargs.get('momentum', 0.9)
+            self.temperature = kwargs.get('temperature', 1)
+
+            self.optimizer = torch.optim.SGD(student_model.parameters(), lr=self.lr, momentum=self.momentum)
+            self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max=self.epochs, eta_min=self.lr_min)
+        
+        def forward(self, *inputs):
+            with torch.no_grad():
+                teacher_outputs = self.teacher_model(*inputs)
+            #
+            student_outputs = self.student_model(*inputs)
+            return student_outputs, teacher_outputs
+        
+        def eval(self):
+            # super().eval()
+            self.teacher_model.eval()
+            torchao.quantization.pt2e.move_exported_model_to_eval(self.teacher_model)
+            self.student_model.eval()
+            torchao.quantization.pt2e.move_exported_model_to_eval(self.student_model)
+            return self
+        
+        def train(self):
+            # super().train()
+            self.teacher_model.eval()
+            torchao.quantization.pt2e.move_exported_model_to_eval(self.teacher_model)
+            self.student_model.train()
+            torchao.quantization.pt2e.move_exported_model_to_train(self.student_model)
+            return self
+        
+        def step_iter(self, outputs, targets):
+            loss = self.criterion(outputs, targets)
+            lr = round(self.scheduler.get_last_lr()[0], 6)
+            loss_value = round(loss.item(), 6)
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+            return {'lr':lr, 'loss':loss_value}
+        
+        def step_epoch(self):
+            self.scheduler.step()
+
+    return _DistillWrapperModule
+
+
 class DistillModel(compile.CompileModel):
     ARGS_DICT=SETTINGS_DEFAULT['distill']
     COPY_ARGS=COPY_SETTINGS_DEFAULT['distill']
@@ -104,11 +162,9 @@ class DistillModel(compile.CompileModel):
         calibration_iterations = min(calibration_iterations, len(self.dataloader)) if calibration_iterations else len(self.dataloader)
         calibration_frames = min(calibration_frames, len(self.dataloader)) if calibration_frames else len(self.dataloader)
 
-        self._setup_distill_loss(student_model, teacher_model, epochs=calibration_iterations, **distill_kwargs)
-
-        teacher_model.eval()
-        student_model.train()
-        torchao.quantization.pt2e.move_exported_model_to_train(student_model)
+        DistillWrapperModule = get_distill_wrapper_module()
+        self.distill_model = DistillWrapperModule(student_model, teacher_model, epochs=calibration_iterations, **distill_kwargs)
+        self.distill_model.train()
 
         # distill loop here
         for calib_index in range(calibration_iterations):
@@ -117,24 +173,17 @@ class DistillModel(compile.CompileModel):
                 print(f'INFO: input batch for quantize: {input_index}')
                 input_data, info_dict = self._get_input_from_dataloader(
                     input_index, calibration_frames, calibration_batch_size, random_shuffle=True, use_cache=True)
-                
-                outputs = student_model(*input_data)
-                targets = teacher_model(*input_data)
-
-                loss = self._compute_loss(outputs, targets)
-                self.optimizer.zero_grad()
-                loss.backward()
-                print(f'INFO: input batch for quantize: {input_index}, loss: {loss.item()}')
+                distill_outputs = self.distill_model(*input_data)
+                distil_metrics = self.distill_model.step_iter(*distill_outputs)
+                print(f'INFO: input batch for quantize: {input_index}, {distil_metrics}')
             #
-            self.scheduler.step()
+            self.distill_model.step_epoch()
         #
         if isinstance(student_model_path, str):
             convert.ConvertModel._run_func(student_model, student_model_path, example_inputs)
         #
 
-        student_model.eval()
-        torchao.quantization.pt2e.move_exported_model_to_eval(student_model)
-
+        self.distill_model.eval()
         return student_model
     
     def _get_input_from_dataloader(self, index, calibration_frames, batch_size=1, random_shuffle=False, use_cache=False):
@@ -162,19 +211,3 @@ class DistillModel(compile.CompileModel):
         #
         input_batch = tuple([torch.cat([t[idx] for t in input_list], dim=0) for idx in range(len(input_list[0]))]) if batch_size > 1 else input_list[0]
         return input_batch, info_dict
-
-    def _setup_distill_loss(self, student_model, teacher_model, **distill_kwargs):
-        import torch
-        import torchao
-        self.criterion = torch.nn.KLDivLoss()
-        self.epochs = distill_kwargs.get('epochs', 10)
-        self.lr = distill_kwargs.get('lr', 0.001)
-        self.lr_min = distill_kwargs.get('lr_min', 0.00001)
-        self.momentum = distill_kwargs.get('momentum', 0.9)
-        self.temperature = distill_kwargs.get('temperature', 1)
-        self.optimizer = torch.optim.SGD(student_model.parameters(), lr=self.lr, momentum=self.momentum)
-        self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max=self.epochs, eta_min=self.lr_min)
-
-    def _compute_loss(self, outputs, teacher_outputs):
-        loss = self.criterion(outputs, teacher_outputs)
-        return loss

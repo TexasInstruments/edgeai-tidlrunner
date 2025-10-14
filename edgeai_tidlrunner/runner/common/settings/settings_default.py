@@ -267,7 +267,7 @@ SETTINGS_DEFAULT['distill'] = SETTINGS_DEFAULT['compile'] | {
     'output_model_path':        {'dest': 'common.output_model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'output model'},
     'calibration_frames':       {'dest': 'session.runtime_options.advanced_options:calibration_frames', 'default': 100, 'type': int, 'metavar': 'value', 'help': 'number of frames for quantization calibration'},
     'calibration_iterations':   {'dest': 'session.runtime_options.advanced_options:calibration_iterations', 'default': 10, 'type': int, 'metavar': 'value', 'help': 'number of calibration iterations'},
-    'calibration_batch_size':   {'dest': 'session.runtime_options.advanced_options:calibration_batch_size', 'default': 8, 'type': int, 'metavar': 'value', 'help': 'number of calibration batch size'},
+    'calibration_batch_size':   {'dest': 'session.runtime_options.advanced_options:calibration_batch_size', 'default': 16, 'type': int, 'metavar': 'value', 'help': 'number of calibration batch size'},
     'num_frames':               {'dest': 'common.num_frames', 'default': 1000, 'type': int, 'metavar': 'value', 'help': 'number of frames to process'},
 }
 
