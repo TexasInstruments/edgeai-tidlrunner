@@ -34,11 +34,11 @@ import copy
 import random
 from edgeai_tidlrunner import runner
 
-from runner.common import utils
-from runner.common import bases
-from runner.common.settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
-from runner.common.blocks import sessions
-from runner.common.pipelines import compile
+from edgeai_tidlrunner.runner.common import utils
+from edgeai_tidlrunner.runner.common import bases
+from edgeai_tidlrunner.runner.common.settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
+from edgeai_tidlrunner.runner.common.blocks import sessions
+from edgeai_tidlrunner.runner.common.pipelines import compile
 
 from . import convert
 

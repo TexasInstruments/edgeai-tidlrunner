@@ -153,6 +153,7 @@ def _get_configs(config_path, **kwargs):
             model_shortlist = kwargs.get('common.model_shortlist', None)
             model_shortlist = int(model_shortlist) if model_shortlist is not None else None
             model_selection=kwargs.get('common.model_selection', None)
+            model_selection = utils.formatted_nargs(model_selection)
             settings = edgeai_benchmark.config_settings.ConfigSettings(settings_file, model_shortlist=model_shortlist, model_selection=model_selection)
             settings.configs_path = os.path.abspath(config_path)
             if not os.path.exists(settings.datasets_path):
