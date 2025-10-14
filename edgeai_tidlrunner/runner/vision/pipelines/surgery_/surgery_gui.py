@@ -36,7 +36,7 @@ from ..... import bases
 from ..common_ import common_base
 
 
-class OptimizeModelGUI(common_base.CommonPipelineBase):
+class ModelSurgeryGUI(common_base.CommonPipelineBase):
     ARGS_DICT=SETTINGS_DEFAULT['optimize']
     COPY_ARGS=COPY_SETTINGS_DEFAULT['optimize']
     

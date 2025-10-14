@@ -38,7 +38,7 @@ from ....common import bases
 from ..common_ import common_base
 
 
-class OptimizeModel(common_base.CommonPipelineBase):
+class ModelSurgery(common_base.CommonPipelineBase):
     ARGS_DICT=SETTINGS_DEFAULT['optimize']
     COPY_ARGS=COPY_SETTINGS_DEFAULT['optimize']
 
