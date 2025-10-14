@@ -34,6 +34,7 @@ import yaml
 import difflib
 import warnings
 import functools
+import re
 
 import edgeai_tidlrunner
 from edgeai_tidlrunner import runner, optimizer
@@ -107,12 +108,16 @@ def _run_command(task_index, command_name, pipeline_name, command_kwargs, captur
 
 
 def _model_selection(model_selection, *args):
-    is_selected = True
-    if model_selection is not None:
-        for arg in args:
-            if isinstance(arg, str):
-                import re
-                is_selected = is_selected or (re.search(model_selection, arg) is not None)
+    if model_selection is None:
+        is_selected = True
+    else:
+        model_selection = utils.formatted_nargs(model_selection)
+        is_selected = False
+        for m in model_selection:
+            for arg in args:
+                if isinstance(arg, str):
+                    is_selected = is_selected or (re.search(m, arg) is not None)
+                #
             #
         #
     #
