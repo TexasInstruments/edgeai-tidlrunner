@@ -115,8 +115,8 @@ class QuantizeModel(distill.DistillModel):
         from torchao.quantization.pt2e import allow_exported_model_train_eval
 
         # backend developer will write their own Quantizer and expose methods to allow
-        from torchao.quantization.pt2e.quantizer.arm_inductor_quantizer import (ArmInductorQuantizer, get_default_arm_inductor_quantization_config)
-        quantizer = ArmInductorQuantizer().set_global(get_default_arm_inductor_quantization_config(is_qat=True))
+        # from torchao.quantization.pt2e.quantizer.arm_inductor_quantizer import (ArmInductorQuantizer, get_default_arm_inductor_quantization_config)
+        # quantizer = ArmInductorQuantizer().set_global(get_default_arm_inductor_quantization_config(is_qat=True))
 
         # from torchao.quantization.pt2e.quantizer.x86_inductor_quantizer import (X86InductorQuantizer, get_default_x86_inductor_quantization_config)
         # quantizer = X86InductorQuantizer().set_global(get_default_x86_inductor_quantization_config(is_qat=True))
@@ -125,9 +125,9 @@ class QuantizeModel(distill.DistillModel):
         # quantizer = XPUInductorQuantizer().set_global(get_default_xpu_inductor_quantization_config(is_qat=True))
 
         # install executorch: `pip install executorch`
-        # from executorch.backends.xnnpack.quantizer.xnnpack_quantizer import (get_symmetric_quantization_config, XNNPACKQuantizer)
+        from executorch.backends.xnnpack.quantizer.xnnpack_quantizer import (get_symmetric_quantization_config, XNNPACKQuantizer)
         # # quantizer = XNNPACKQuantizer().set_global(get_symmetric_quantization_config(is_qat=True, per_channel=True))
-        # quantizer = XNNPACKQuantizer().set_global(get_symmetric_quantization_config(is_qat=True))
+        quantizer = XNNPACKQuantizer().set_global(get_symmetric_quantization_config(is_qat=True))
 
         student_model = prepare_qat_pt2e(teacher_model_pte, quantizer)
         allow_exported_model_train_eval(student_model)

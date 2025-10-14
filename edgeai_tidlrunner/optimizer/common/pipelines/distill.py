@@ -53,14 +53,15 @@ def get_distill_wrapper_module():
             self.student_model = student_model
             self.teacher_model = teacher_model
             
-            self.criterion = torch.nn.MSELoss() #torch.nn.KLDivLoss()
+            self.criterion = torch.nn.SmoothL1Loss() #torch.nn.MSELoss() #torch.nn.KLDivLoss()
             self.epochs = kwargs.get('epochs', 10)
             self.lr = kwargs.get('lr', 0.0001)
             self.lr_min = kwargs.get('lr_min', self.lr/100)
             self.momentum = kwargs.get('momentum', 0.9)
+            self.weight_decay = kwargs.get('weight_decay', 1e-4)
             self.temperature = kwargs.get('temperature', 1)
 
-            self.optimizer = torch.optim.SGD(student_model.parameters(), lr=self.lr, momentum=self.momentum)
+            self.optimizer = torch.optim.SGD(student_model.parameters(), lr=self.lr, momentum=self.momentum, weight_decay=self.weight_decay)
             self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max=self.epochs, eta_min=self.lr_min)
         
         def forward(self, *inputs):
@@ -186,9 +187,9 @@ class DistillModel(compile.CompileModel):
         self.distill_model.eval()
         return student_model
     
-    def _get_input_from_dataloader(self, index, calibration_frames, batch_size=1, random_shuffle=False, use_cache=False):
+    def _get_input_from_dataloader(self, index, calibration_frames=None, batch_size=1, random_shuffle=False, use_cache=False):
         import torch
-        dataset_size = calibration_frames #len(self.dataloader)
+        dataset_size = min(calibration_frames, len(self.dataloader)) if calibration_frames else len(self.dataloader)
         input_list = []
         for batch_index in range(batch_size):
             if random_shuffle:
