@@ -35,8 +35,9 @@ import argparse
 import json
 import wurlitzer
 
-from ....rtwrapper.options import presets
-from ....rtwrapper.options import attr_dict
+from edgeai_tidlrunner.rtwrapper.options import presets
+from edgeai_tidlrunner.rtwrapper.options import attr_dict
+
 from .. import utils
 from . import settings_base
 
@@ -50,7 +51,7 @@ class _TrackProvidedAction(argparse._StoreAction):
 
 
 class PipelineBase():
-    ARGS_DICT = settings_base.SETTINGS_TARGET_MODULE_ARGS_DICT
+    ARGS_DICT = {}
     COPY_ARGS = {}
 
     def __init__(self, **kwargs):

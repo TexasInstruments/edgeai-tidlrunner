@@ -28,25 +28,49 @@
 
 
 
-class CaptureLogModes:
-    CAPTURE_LOG_MODE_OFF = False  # only to screen
-    CAPTURE_LOG_MODE_ON = True    # only to file
-    CAPTURE_LOG_MODE_TEE = 'tee'  # to screen and to file
+from edgeai_tidlrunner.rtwrapper.options import presets
 
 
-class SettingsBaseDefaults:
-    NUM_PARALLEL_PROCESSES = 8
-    CAPTURE_LOG_MODE = CaptureLogModes.CAPTURE_LOG_MODE_OFF
-    CAPTURE_LOG_FILE = 'run.log'
+class TargetModuleType:
+    TARGET_MODULE_COMMON = 'common'
+
+    
+# task_type
+class TaskType:
+    TASK_TYPE_CLASSIFICATION = 'classification'
+    TASK_TYPE_DETECTION = 'detection'
+    TASK_TYPE_SEGMENTATION = 'segmentation'
+    TASK_TYPE_KEYPOINT_DETECTION = 'keypoint_detection'
+    TASK_TYPE_DEPTH_ESTIMATION = 'depth_estimation'
+    TASK_TYPE_DETECTION_3DOD = 'detection_3d'
+    TASK_TYPE_OBJECT_6D_POSE_ESTIMATION = 'object_6d_pose_estimation'
+    TASK_TYPE_VISUAL_LOCALIZATION = 'visual_localization'
+    TASK_TYPE_DISPARITY_ESTIMATION = 'disparity_estimation'
 
 
-
-SETTING_PIPELINE_RUNNER_ARGS_DICT = {
-    # model
-    'log_file':                 {'dest': 'common.log_file', 'default': SettingsBaseDefaults.CAPTURE_LOG_FILE, 'type': str, 'metavar': 'value'},
-    'capture_log':              {'dest': 'common.capture_log', 'default': SettingsBaseDefaults.CAPTURE_LOG_MODE, 'type': str, 'metavar': 'value'},
-    'parallel_processes':       {'dest': 'common.parallel_processes', 'default': SettingsBaseDefaults.NUM_PARALLEL_PROCESSES, 'type': int, 'metavar': 'value'},
-    'parallel_devices':         {'dest': 'common.parallel_devices', 'default': None, 'type': int, 'metavar': 'value', 'help': 'number of parallel gpu devices to use for compilation (used only if gpu based tidl-tools is installed)'},
-    'target_machine':           {'dest': 'session.target_machine', 'default': 'pc', 'type': str, 'metavar': 'value', 'help': 'target machine for running the inference (pc, evm)'},
+TaskTypeShortNames = {
+    TaskType.TASK_TYPE_CLASSIFICATION: 'cl',
+    TaskType.TASK_TYPE_DETECTION: 'od',
+    TaskType.TASK_TYPE_SEGMENTATION: 'ss',
+    TaskType.TASK_TYPE_KEYPOINT_DETECTION: 'kd',
+    TaskType.TASK_TYPE_DEPTH_ESTIMATION: 'de',
+    TaskType.TASK_TYPE_DETECTION_3DOD: '3dod',
+    TaskType.TASK_TYPE_OBJECT_6D_POSE_ESTIMATION: '6dpose',
+    TaskType.TASK_TYPE_VISUAL_LOCALIZATION: 'visloc',
+    TaskType.TASK_TYPE_DISPARITY_ESTIMATION: 'sd',
 }
 
+
+class ModelCompilationPreset:
+    PRESET_DEFAULT = None       # None is for Default preset (BALANCED)
+    PRESET_SPEED = 'SPEED'
+    PRESET_ACCURACY = 'ACCURACY'
+
+
+SESSION_TYPE_DICT_DEFAULT = {
+    presets.ModelType.MODEL_TYPE_ONNX: presets.RuntimeType.RUNTIME_TYPE_ONNXRT,
+    presets.ModelType.MODEL_TYPE_TFLITE: presets.RuntimeType.RUNTIME_TYPE_TFLITERT
+}
+
+
+ONNX_OPSET_VERSION_DEFAULT = 18 #17

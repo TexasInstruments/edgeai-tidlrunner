@@ -27,26 +27,29 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-
-class CaptureLogModes:
-    CAPTURE_LOG_MODE_OFF = False  # only to screen
-    CAPTURE_LOG_MODE_ON = True    # only to file
-    CAPTURE_LOG_MODE_TEE = 'tee'  # to screen and to file
-
-
-class SettingsBaseDefaults:
-    NUM_PARALLEL_PROCESSES = 8
-    CAPTURE_LOG_MODE = CaptureLogModes.CAPTURE_LOG_MODE_OFF
-    CAPTURE_LOG_FILE = 'run.log'
+from .infer import InferModel
+from .compile import CompileModel
+from .accuracy import InferAccuracy
+from .analyze import CompileAnalyzeNoTIDL, InferAnalyzeNoTIDL, CompileAnalyzeTIDL, InferAnalyzeTIDL, InferAnalyzeFinal
+from .report import GenReport 
+from .surgery import ModelSurgery
+from .extract import ExtractNodes
+from .package import PackageArtifacts
 
 
-
-SETTING_PIPELINE_RUNNER_ARGS_DICT = {
-    # model
-    'log_file':                 {'dest': 'common.log_file', 'default': SettingsBaseDefaults.CAPTURE_LOG_FILE, 'type': str, 'metavar': 'value'},
-    'capture_log':              {'dest': 'common.capture_log', 'default': SettingsBaseDefaults.CAPTURE_LOG_MODE, 'type': str, 'metavar': 'value'},
-    'parallel_processes':       {'dest': 'common.parallel_processes', 'default': SettingsBaseDefaults.NUM_PARALLEL_PROCESSES, 'type': int, 'metavar': 'value'},
-    'parallel_devices':         {'dest': 'common.parallel_devices', 'default': None, 'type': int, 'metavar': 'value', 'help': 'number of parallel gpu devices to use for compilation (used only if gpu based tidl-tools is installed)'},
-    'target_machine':           {'dest': 'session.target_machine', 'default': 'pc', 'type': str, 'metavar': 'value', 'help': 'target machine for running the inference (pc, evm)'},
-}
-
+def get_command_pipelines(**kwargs):
+    command_module_name_dict = {
+        # compile related
+        'compile':'CompileModel',
+        'infer':'InferModel',
+        'accuracy': ['InferAccuracy'],
+        'compile+infer': ['CompileModel', 'InferModel'],
+        'compile+accuracy': ['CompileModel', 'InferAccuracy'],
+        'analyze': ['CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL', 'InferAnalyzeTIDL', 'InferAnalyzeFinal'],    
+        'report': ['GenReport'],   
+        'package': ['PackageArtifacts'], 
+        # other
+        'surgery':'ModelSurgery',
+        'extract':'ExtractNodes',
+    }
+    return command_module_name_dict

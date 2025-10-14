@@ -36,14 +36,16 @@ import yaml
 import functools
 import subprocess
 
-from edgeai_tidlrunner import rtwrapper, runner
+import edgeai_tidlrunner
+from edgeai_tidlrunner import rtwrapper, runner, optimizer, interfaces
 
 
+COMMAND_PIPELINES = edgeai_tidlrunner.get_command_pipelines()
 SPECIAL_PIPELINE_NAMES = ('report',)
 
 
-class StartRunner(runner.bases.PipelineBase):
-    ARGS_DICT = runner.bases.SETTING_PIPELINE_RUNNER_ARGS_DICT
+class StartRunner(runner.common.bases.PipelineBase):
+    ARGS_DICT = runner.common.bases.SETTING_PIPELINE_RUNNER_ARGS_DICT
     COPY_ARGS = {}
 
     def __init__(self, **kwargs):
@@ -71,11 +73,11 @@ class StartRunner(runner.bases.PipelineBase):
 
     def run(self, command):
         if command not in SPECIAL_PIPELINE_NAMES:
-            run_dict = runner._create_run_dict(command, argparse=True, **self.kwargs)
+            run_dict = interfaces._create_run_dict(command, argparse=True, **self.kwargs)
         else:
-            run_dict =runner._create_run_dict(command, argparse=True, model_id=command+'_model', **self.kwargs)
+            run_dict = interfaces._create_run_dict(command, argparse=True, model_id=command+'_model', **self.kwargs)
         #
-        return runner._run(run_dict)
+        return interfaces._run(run_dict)
 
     @classmethod
     def main(cls):
@@ -107,8 +109,8 @@ class StartRunner(runner.bases.PipelineBase):
             kwargs = vars(command_args)
             command_choices = runner.get_command_pipelines(**kwargs)
             command = sys.argv[1]
-            assert command in command_choices, RuntimeError(
-                f'ERROR: invalid command: {command} - must be one of {command_choices}')
+            # assert command in command_choices, RuntimeError(
+            #     f'ERROR: invalid command: {command} - must be one of {command_choices}')
             sys.argv = [sys.argv[0]] + ['--help']
             main_runner = cls()
             main_runner.run(command)
@@ -118,8 +120,8 @@ class StartRunner(runner.bases.PipelineBase):
             kwargs = vars(command_args)
             command_choices = runner.get_command_pipelines(**kwargs)
             command = sys.argv[1].lower().replace(' ', '')
-            assert command in command_choices, RuntimeError(
-                f'ERROR: invalid command: {command} - must be one of {command_choices}')
+            # assert command in command_choices, RuntimeError(
+            #     f'ERROR: invalid command: {command} - must be one of {command_choices}')
             sys.argv = [sys.argv[0]] + sys.argv[2:]
             main_runner = cls(**kwargs)
             main_runner.run(command)
