@@ -66,6 +66,7 @@ class DistillModel(compile.CompileModel):
 
     def _run(self):
         import torch
+        import torchao
         print(f'INFO: starting model quantize with parameters: {self.kwargs}')
         print(f'INFO: running model quantize {self.model_path}')
         common_kwargs = self.settings[self.common_prefix]
@@ -97,25 +98,42 @@ class DistillModel(compile.CompileModel):
             input_data, info_dict = self._get_input_from_dataloader(0)
         #
 
-        # distill loop here
         calibration_iterations = runtime_options['advanced_options:calibration_iterations']
         calibration_frames = runtime_options['advanced_options:calibration_frames']
         calibration_batch_size = runtime_options['advanced_options:calibration_batch_size']
         calibration_iterations = min(calibration_iterations, len(self.dataloader)) if calibration_iterations else len(self.dataloader)
         calibration_frames = min(calibration_frames, len(self.dataloader)) if calibration_frames else len(self.dataloader)
+
+        self._setup_distill_loss(student_model, teacher_model, epochs=calibration_iterations, **distill_kwargs)
+
+        teacher_model.eval()
+        student_model.train()
+        torchao.quantization.pt2e.move_exported_model_to_train(student_model)
+
+        # distill loop here
         for calib_index in range(calibration_iterations):
             print(f'INFO: running model quantize iteration: {calib_index}')
             for input_index in range(calibration_frames):
                 print(f'INFO: input batch for quantize: {input_index}')
                 input_data, info_dict = self._get_input_from_dataloader(
                     input_index, calibration_frames, calibration_batch_size, random_shuffle=True, use_cache=True)
-                teacher_model(*input_data)
-                student_model(*input_data)
+                
+                outputs = student_model(*input_data)
+                targets = teacher_model(*input_data)
+
+                loss = self._compute_loss(outputs, targets)
+                self.optimizer.zero_grad()
+                loss.backward()
+                self.scheduler.step()
+                print(f'INFO: input batch for quantize: {input_index}, loss: {loss.item()}')
             #
         #
         if isinstance(student_model_path, str):
             convert.ConvertModel._run_func(student_model, student_model_path, example_inputs)
         #
+
+        torchao.quantization.pt2e.move_exported_model_to_eval(student_model)
+
         return student_model
     
     def _get_input_from_dataloader(self, index, calibration_frames, batch_size=1, random_shuffle=False, use_cache=False):
@@ -143,3 +161,19 @@ class DistillModel(compile.CompileModel):
         #
         input_batch = tuple([torch.cat([t[idx] for t in input_list], dim=0) for idx in range(len(input_list[0]))]) if batch_size > 1 else input_list[0]
         return input_batch, info_dict
+
+    def _setup_distill_loss(self, student_model, teacher_model, **distill_kwargs):
+        import torch
+        import torchao
+        self.criterion = torch.nn.KLDivLoss()
+        self.epochs = distill_kwargs.get('epochs', 10)
+        self.lr = distill_kwargs.get('lr', 0.001)
+        self.lr_min = distill_kwargs.get('lr_min', 0.00001)
+        self.momentum = distill_kwargs.get('momentum', 0.9)
+        self.temperature = distill_kwargs.get('temperature', 1)
+        self.optimizer = torch.optim.SGD(student_model.parameters(), lr=self.lr, momentum=self.momentum)
+        self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max=self.epochs, eta_min=self.lr_min)
+
+    def _compute_loss(self, outputs, teacher_outputs):
+        loss = self.criterion(outputs, teacher_outputs)
+        return loss
