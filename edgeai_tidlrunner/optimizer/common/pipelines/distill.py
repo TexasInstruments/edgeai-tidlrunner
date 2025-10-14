@@ -124,14 +124,15 @@ class DistillModel(compile.CompileModel):
                 loss = self._compute_loss(outputs, targets)
                 self.optimizer.zero_grad()
                 loss.backward()
-                self.scheduler.step()
                 print(f'INFO: input batch for quantize: {input_index}, loss: {loss.item()}')
             #
+            self.scheduler.step()
         #
         if isinstance(student_model_path, str):
             convert.ConvertModel._run_func(student_model, student_model_path, example_inputs)
         #
 
+        student_model.eval()
         torchao.quantization.pt2e.move_exported_model_to_eval(student_model)
 
         return student_model
