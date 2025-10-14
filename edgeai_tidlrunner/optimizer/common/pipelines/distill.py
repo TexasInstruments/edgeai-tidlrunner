@@ -49,6 +49,7 @@ class DistillModel(compile.CompileModel):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.calibration_data_cache = {}
 
     def _prepare(self):
         super()._prepare()
@@ -106,20 +107,20 @@ class DistillModel(compile.CompileModel):
             print(f'INFO: running model quantize iteration: {calib_index}')
             for input_index in range(calibration_frames):
                 print(f'INFO: input batch for quantize: {input_index}')
-                input_data, info_dict = self._get_input_from_dataloader(input_index, batch_size=calibration_batch_size, random_shuffle=True)
+                input_data, info_dict = self._get_input_from_dataloader(
+                    input_index, calibration_frames, calibration_batch_size, random_shuffle=True, use_cache=True)
                 teacher_model(*input_data)
                 student_model(*input_data)
             #
         #
-
         if isinstance(student_model_path, str):
             convert.ConvertModel._run_func(student_model, student_model_path, example_inputs)
         #
         return student_model
     
-    def _get_input_from_dataloader(self, index, batch_size=1, random_shuffle=False):
+    def _get_input_from_dataloader(self, index, calibration_frames, batch_size=1, random_shuffle=False, use_cache=False):
         import torch
-        dataset_size = len(self.dataloader)
+        dataset_size = calibration_frames #len(self.dataloader)
         input_list = []
         for batch_index in range(batch_size):
             if random_shuffle:
@@ -127,12 +128,17 @@ class DistillModel(compile.CompileModel):
             else:
                 index = (index + batch_index) % dataset_size
             #
-            input_data, info_dict = self.dataloader(index)
-            input_data, info_dict = self.preprocess(input_data, info_dict=info_dict) if self.preprocess else (input_data, info_dict)
-            input_data, info_dict = self.input_normalizer(input_data, info_dict)
-            input_data = copy.deepcopy(input_data)
-            # make copy to remove negative indexes in tensors that torch.from_numpy does not like
-            input_data = tuple([torch.from_numpy(input_tensor) for input_tensor in input_data]) if isinstance(input_data, (list, tuple)) else (torch.from_numpy(input_data),)
+            if use_cache and index in self.calibration_data_cache:
+                input_data, info_dict = self.calibration_data_cache[index]
+            else:
+                input_data, info_dict = self.dataloader(index)
+                input_data, info_dict = self.preprocess(input_data, info_dict=info_dict) if self.preprocess else (input_data, info_dict)
+                input_data, info_dict = self.input_normalizer(input_data, info_dict)
+                input_data = copy.deepcopy(input_data)
+                # make copy to remove negative indexes in tensors that torch.from_numpy does not like
+                input_data = tuple([torch.from_numpy(input_tensor) for input_tensor in input_data]) if isinstance(input_data, (list, tuple)) else (torch.from_numpy(input_data),)
+                self.calibration_data_cache[index] = (input_data, info_dict)
+            #
             input_list.append(input_data)
         #
         input_batch = tuple([torch.cat([t[idx] for t in input_list], dim=0) for idx in range(len(input_list[0]))]) if batch_size > 1 else input_list[0]

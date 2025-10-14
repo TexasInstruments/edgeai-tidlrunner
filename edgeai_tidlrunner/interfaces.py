@@ -64,6 +64,12 @@ def matching_command_name(command_name):
     command_names = list(command_pipelines.keys())
     if command_name not in command_pipelines.keys():
         command_name_matches = difflib.get_close_matches(command_name, command_names)
+        if not command_name_matches:
+            command_name_matches = [cname for cname in command_names if command_name in cname]
+        #
+        if not command_name_matches or len(command_name_matches) > 1:
+            raise RuntimeError(f'ERROR: invalid command_name: {command_name}, available commands are: {list(command_names)}')
+        #
         command_name = command_name_matches[0]
     #
     if command_name not in command_names:
