@@ -115,7 +115,7 @@ class CommonPipelineBase(bases.PipelineBase):
         #
         model_id_underscore = model_id + '_'
 
-        tensor_bits = self.kwargs.get('session.runtime_options.tensor_bits', '') or ''
+        tensor_bits = self.kwargs.get('session.runtime_options.tensor_bits', '') or 'x'
         tensor_bits_str = f'{str(tensor_bits)}' if tensor_bits else ''
         tensor_bits_slash = f'{str(tensor_bits)}' + os.sep if tensor_bits else ''
 
@@ -126,7 +126,7 @@ class CommonPipelineBase(bases.PipelineBase):
         model_basename_wo_ext, model_ext = os.path.splitext(model_basename)
         model_ext = model_ext[1:] if len(model_ext)>0 else model_ext
 
-        runtime_name = self.kwargs.get('session.name', '') or ''
+        runtime_name = self.kwargs.get('session.name', '') or 'x'
 
         run_dir = run_dir.replace('{work_path}', self.work_path) if self.work_path else run_dir
         run_dir = run_dir.replace('{pipeline_type}', pipeline_type)

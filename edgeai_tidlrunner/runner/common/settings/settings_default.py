@@ -254,6 +254,8 @@ SETTINGS_DEFAULT['convert'] = SETTINGS_DEFAULT['basic'] | {
     'run_dir':            {'dest': 'session.run_dir', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'run_dir'},
     'pipeline_type':          {'dest': 'common.pipeline_type', 'default': 'convert', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},    
     'output_model_path':      {'dest': 'common.output_model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'output model'},
+    'model_selection':          {'dest': 'common.model_selection', 'default': None, 'type': str, 'metavar': 'value', 'help': 'select a subset of models to run - path of the model is compared using this model_selection regex to select a particular model or not'},
+    'model_shortlist':          {'dest': 'common.model_shortlist', 'default': None, 'type': str, 'metavar': 'value', 'help': 'select a subset of models to run - models configs with model_shortlist value <= this specified value will be used'},
 }
 
 COPY_SETTINGS_DEFAULT['convert'] = COPY_SETTINGS_DEFAULT['basic'] | {
@@ -266,7 +268,7 @@ SETTINGS_DEFAULT['distill'] = SETTINGS_DEFAULT['compile'] | {
     'teacher_model_path':       {'dest': 'common.teacher_model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'teacher model'},
     'output_model_path':        {'dest': 'common.output_model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'output model'},
     'calibration_frames':       {'dest': 'session.runtime_options.advanced_options:calibration_frames', 'default': 100, 'type': int, 'metavar': 'value', 'help': 'number of frames for quantization calibration'},
-    'calibration_iterations':   {'dest': 'session.runtime_options.advanced_options:calibration_iterations', 'default': 10, 'type': int, 'metavar': 'value', 'help': 'number of calibration iterations'},
+    'calibration_iterations':   {'dest': 'session.runtime_options.advanced_options:calibration_iterations', 'default': 5, 'type': int, 'metavar': 'value', 'help': 'number of calibration iterations'},
     'calibration_batch_size':   {'dest': 'session.runtime_options.advanced_options:calibration_batch_size', 'default': 16, 'type': int, 'metavar': 'value', 'help': 'number of calibration batch size'},
     'num_frames':               {'dest': 'common.num_frames', 'default': 1000, 'type': int, 'metavar': 'value', 'help': 'number of frames to process'},
 }

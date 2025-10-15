@@ -27,12 +27,14 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+from .convert import ConvertModel
 from .distill import DistillModel
 from .quantize import QuantizeModel
 
 
 def get_command_pipelines(**kwargs):
     command_module_name_dict = {
+        'convert':'ConvertModel',
         'distill':'DistillModel',
         'quantize':'QuantizeModel',
     }

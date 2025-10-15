@@ -65,6 +65,18 @@ class ConvertModel(common_base.CommonPipelineBase):
 
         input_model_path = self.model_path
         output_model_path = common_kwargs.get('output_model_path', None)
+        if not output_model_path:
+            output_model_name = os.path.basename(input_model_path)
+            if input_model_path.endswith('.onnx'):
+                output_model_name = os.path.splitext(output_model_name)[0] + '.pt2'
+            elif input_model_path.endswith('.pt') or input_model_path.endswith('.pt2'):
+                output_model_name = os.path.splitext(output_model_name)[0] + '.onnx'
+            else:
+                raise ValueError(f'ERROR: unsupported model format: {input_model_path}')
+            #
+            output_model_path = os.path.join(self.run_dir, 'output', output_model_name)
+            os.makedirs(os.path.dirname(output_model_path), exist_ok=True)
+        #
         output_model_folder = os.path.dirname(output_model_path)
 
         os.makedirs(self.model_folder, exist_ok=True)
@@ -152,14 +164,7 @@ class ConvertModel(common_base.CommonPipelineBase):
     @classmethod
     def _onnx2torchfile(cls, model_path, output_model_path=None, example_torch_inputs=None, **kwargs):
         if isinstance(model_path, str) and model_path.endswith('.onnx'):
-            try:
-                import edgeai_onnx2torchmodel
-            except Exception as e:
-                print(f"WARNING: failed to install edgeai_onnx2torchmodel package, error: {e}")
-                install_url = "edgeai_onnx2torchmodel@git+ssh://git@bitbucket.itg.ti.com/edgeai-algo/edgeai-modeloptimization.git@2025_kunal_onnx2torch#subdirectory=onnx2torchmodel", ##"edgeai_onnx2torchmodel@git+https://github.com/TexasInstruments/edgeai-modeloptimization.git@main#subdirectory=onnx2torchmodel"
-                print(f"ERROR: trying to install package from url: {install_url}")
-                raise
-            #
+            import edgeai_onnx2torchmodel
             torch_model = edgeai_onnx2torchmodel.convert(model_path, **kwargs)
         else:
             torch_model = model_path
@@ -176,9 +181,11 @@ class ConvertModel(common_base.CommonPipelineBase):
     def _torch2torchfile(cls, torch_model, output_model_path=None, example_torch_inputs=None):
         import torch
         if output_model_path.endswith('.pt2'):
-            torch.export.export(torch_model, example_torch_inputs, output_model_path)
+            exported_program = torch.export.export(torch_model, example_torch_inputs)
+            torch.export.save(exported_program, output_model_path)
         elif output_model_path.endswith('.pt'):
-            torch.jit.export(torch_model, example_torch_inputs, output_model_path)
+            fx_graph = torch.jit.export(torch_model, example_torch_inputs)
+            torch.jit.save(fx_graph, output_model_path)
         else:
             raise ValueError(f'ERROR: unsupported student model format: {output_model_path}')
         #
