@@ -38,3 +38,8 @@ pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 pip3 install torchao onnxscript
 
 pip3 install onnx-graphsurgeon==0.5.8 --extra-index-url https://pypi.ngc.nvidia.com
+
+# pip3 install edgeai_onnx2torchmodel@git+https://github.com/TexasInstruments/edgeai-modeloptimization.git@main#subdirectory=onnx2torchmodel
+pip3 install edgeai_onnx2torchmodel@git+ssh://git@bitbucket.itg.ti.com/edgeai-algo/edgeai-modeloptimization.git@2025_kunal_onnx2torch#subdirectory=onnx2torchmodel 
+
+
