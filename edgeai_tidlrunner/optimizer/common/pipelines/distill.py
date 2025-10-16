@@ -43,70 +43,6 @@ from edgeai_tidlrunner.runner.common.pipelines import compile
 from . import convert
 
 
-def get_distill_wrapper_module():
-    # define inside a function, to avoid torch and torchao depdency at start
-    import torch
-    import torchao
-    class _DistillWrapperModule(torch.nn.Module):
-        def __init__(self, student_model, teacher_model, **kwargs):
-            super().__init__()
-            self.student_model = student_model
-            self.teacher_model = teacher_model
-            
-            self.criterion = torch.nn.SmoothL1Loss() #torch.nn.MSELoss() #torch.nn.KLDivLoss()
-            self.epochs = kwargs.get('epochs', 10)
-            self.lr = kwargs.get('lr', 0.0001)
-            self.lr_min = kwargs.get('lr_min', self.lr/100)
-            self.momentum = kwargs.get('momentum', 0.9)
-            self.weight_decay = kwargs.get('weight_decay', 1e-4)
-            self.temperature = kwargs.get('temperature', 1)
-
-            self.optimizer = torch.optim.SGD(student_model.parameters(), lr=self.lr, momentum=self.momentum, weight_decay=self.weight_decay)
-            self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max=self.epochs, eta_min=self.lr_min)
-        
-        def forward(self, *inputs):
-            with torch.no_grad():
-                teacher_outputs = self.teacher_model(*inputs)
-            #
-            student_outputs = self.student_model(*inputs)
-            return student_outputs, teacher_outputs
-        
-        def eval(self):
-            # super().eval()
-            self.teacher_model.eval()
-            torchao.quantization.pt2e.move_exported_model_to_eval(self.teacher_model)
-            self.student_model.eval()
-            torchao.quantization.pt2e.move_exported_model_to_eval(self.student_model)
-            return self
-        
-        def train(self):
-            # super().train()
-            self.teacher_model.eval()
-            torchao.quantization.pt2e.move_exported_model_to_eval(self.teacher_model)
-            self.student_model.train()
-            torchao.quantization.pt2e.move_exported_model_to_train(self.student_model)
-            return self
-        
-        def step_iter(self, outputs, targets):
-            if isinstance(outputs, (list, tuple)) and isinstance(targets, (list, tuple)):
-                assert len(outputs) == len(targets), f'number of outputs {len(outputs)} and targets {len(targets)} should be same'
-                loss = sum([self.criterion(o, t) for o,t in zip(outputs, targets)])
-            else:
-                loss = self.criterion(outputs, targets)
-            #
-            lr = round(self.scheduler.get_last_lr()[0], 6)
-            loss_value = round(loss.item(), 6)
-            self.optimizer.zero_grad()
-            loss.backward()
-            self.optimizer.step()
-            return {'lr':lr, 'loss':loss_value}
-        
-        def step_epoch(self):
-            self.scheduler.step()
-
-    return _DistillWrapperModule
-
-
 class DistillModel(compile.CompileModel):
     ARGS_DICT=SETTINGS_DEFAULT['distill']
     COPY_ARGS=COPY_SETTINGS_DEFAULT['distill']
@@ -131,6 +67,8 @@ class DistillModel(compile.CompileModel):
     def _run(self):
         import torch
         import torchao
+        from ..utils.distill_module import DistillWrapperModule
+
         print(f'INFO: starting model quantize with parameters: {self.kwargs}')
         print(f'INFO: running model quantize {self.model_path}')
         common_kwargs = self.settings[self.common_prefix]
@@ -168,7 +106,6 @@ class DistillModel(compile.CompileModel):
         calibration_iterations = min(calibration_iterations, len(self.dataloader)) if calibration_iterations else len(self.dataloader)
         calibration_frames = min(calibration_frames, len(self.dataloader)) if calibration_frames else len(self.dataloader)
 
-        DistillWrapperModule = get_distill_wrapper_module()
         self.distill_model = DistillWrapperModule(student_model, teacher_model, epochs=calibration_iterations, **distill_kwargs)
         self.distill_model.train()
 
