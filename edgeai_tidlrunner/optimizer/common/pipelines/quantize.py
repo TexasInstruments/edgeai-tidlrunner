@@ -75,6 +75,48 @@ class QuantizeModel(distill.DistillModel):
         student_model = self._prepare_quantize(teacher_model, example_inputs)
         common_kwargs['output_model_path'] = student_model
 
+    def _prepare_quantize(self, teacher_model, example_inputs, device=None):
+        import torch
+        import torchao
+
+        # create student model
+        # from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule 
+        # student_model = quantization.v3.QATPT2EModule(teacher_model, example_inputs, total_epochs=calibration_iterations)
+
+        teacher_model_final = teacher_model #torch.export.export(teacher_model, example_inputs).module()
+        # we get a model with aten ops
+        # from torchao.quantization.pt2e import allow_exported_model_train_eval
+        # allow_exported_model_train_eval(teacher_model_final)
+
+        student_model_final = torch.export.export(teacher_model, example_inputs).module()
+
+        # Step 2. quantization
+        from torchao.quantization.pt2e.quantize_pt2e import (prepare_qat_pt2e, convert_pt2e)
+        from torchao.quantization.pt2e import allow_exported_model_train_eval
+
+        # backend developer will write their own Quantizer and expose methods to allow
+        # from torchao.quantization.pt2e.quantizer.arm_inductor_quantizer import (ArmInductorQuantizer, get_default_arm_inductor_quantization_config)
+        # quantizer = ArmInductorQuantizer().set_global(get_default_arm_inductor_quantization_config(is_qat=True))
+
+        # from torchao.quantization.pt2e.quantizer.x86_inductor_quantizer import (X86InductorQuantizer, get_default_x86_inductor_quantization_config)
+        # quantizer = X86InductorQuantizer().set_global(get_default_x86_inductor_quantization_config(is_qat=True))
+
+        # from torchao.quantization.pt2e.quantizer.xpu_inductor_quantizer import (XPUInductorQuantizer, get_default_xpu_inductor_quantization_config)
+        # quantizer = XPUInductorQuantizer().set_global(get_default_xpu_inductor_quantization_config(is_qat=True))
+
+        # install executorch: `pip install executorch`
+        from executorch.backends.xnnpack.quantizer.xnnpack_quantizer import (get_symmetric_quantization_config, XNNPACKQuantizer)
+        # # quantizer = XNNPACKQuantizer().set_global(get_symmetric_quantization_config(is_qat=True, per_channel=True))
+        quantizer = XNNPACKQuantizer().set_global(get_symmetric_quantization_config(is_qat=True))
+
+        student_model = prepare_qat_pt2e(student_model_final, quantizer)
+        allow_exported_model_train_eval(student_model)
+
+        if device:
+            student_model.to(device)
+        #
+        return student_model
+
     def _run(self):
         import torch
         import torchao
@@ -96,43 +138,3 @@ class QuantizeModel(distill.DistillModel):
         convert.ConvertModel._run_func(student_model, self.student_model_path, common_kwargs['example_inputs'])
 
         shutil.copyfile(self.student_model_path, self.model_path)
-
-    def _prepare_quantize(self, teacher_model, example_inputs, device=None):
-        import torch
-        import torchao
-
-        # create student model
-        # from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule 
-        # student_model = quantization.v3.QATPT2EModule(teacher_model, example_inputs, total_epochs=calibration_iterations)
-
-        teacher_model_pte = torch.export.export(teacher_model, example_inputs).module()
-        # we get a model with aten ops
-        # from torchao.quantization.pt2e import allow_exported_model_train_eval
-        # allow_exported_model_train_eval(teacher_model_pte)
-
-        # Step 2. quantization
-        from torchao.quantization.pt2e.quantize_pt2e import (prepare_qat_pt2e, convert_pt2e)
-        from torchao.quantization.pt2e import allow_exported_model_train_eval
-
-        # backend developer will write their own Quantizer and expose methods to allow
-        # from torchao.quantization.pt2e.quantizer.arm_inductor_quantizer import (ArmInductorQuantizer, get_default_arm_inductor_quantization_config)
-        # quantizer = ArmInductorQuantizer().set_global(get_default_arm_inductor_quantization_config(is_qat=True))
-
-        # from torchao.quantization.pt2e.quantizer.x86_inductor_quantizer import (X86InductorQuantizer, get_default_x86_inductor_quantization_config)
-        # quantizer = X86InductorQuantizer().set_global(get_default_x86_inductor_quantization_config(is_qat=True))
-
-        # from torchao.quantization.pt2e.quantizer.xpu_inductor_quantizer import (XPUInductorQuantizer, get_default_xpu_inductor_quantization_config)
-        # quantizer = XPUInductorQuantizer().set_global(get_default_xpu_inductor_quantization_config(is_qat=True))
-
-        # install executorch: `pip install executorch`
-        from executorch.backends.xnnpack.quantizer.xnnpack_quantizer import (get_symmetric_quantization_config, XNNPACKQuantizer)
-        # # quantizer = XNNPACKQuantizer().set_global(get_symmetric_quantization_config(is_qat=True, per_channel=True))
-        quantizer = XNNPACKQuantizer().set_global(get_symmetric_quantization_config(is_qat=True))
-
-        student_model = prepare_qat_pt2e(teacher_model_pte, quantizer)
-        allow_exported_model_train_eval(student_model)
-
-        if device:
-            student_model.to(device)
-        #
-        return student_model

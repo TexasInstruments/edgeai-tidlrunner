@@ -88,7 +88,12 @@ def get_distill_wrapper_module():
             return self
         
         def step_iter(self, outputs, targets):
-            loss = self.criterion(outputs, targets)
+            if isinstance(outputs, (list, tuple)) and isinstance(targets, (list, tuple)):
+                assert len(outputs) == len(targets), f'number of outputs {len(outputs)} and targets {len(targets)} should be same'
+                loss = sum([self.criterion(o, t) for o,t in zip(outputs, targets)])
+            else:
+                loss = self.criterion(outputs, targets)
+            #
             lr = round(self.scheduler.get_last_lr()[0], 6)
             loss_value = round(loss.item(), 6)
             self.optimizer.zero_grad()
