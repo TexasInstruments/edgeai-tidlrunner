@@ -32,6 +32,7 @@ import sys
 import shutil
 import copy
 import random
+import tqdm
 from edgeai_tidlrunner import runner
 
 from edgeai_tidlrunner.runner.common import utils
@@ -80,6 +81,10 @@ class DistillModel(compile.CompileModel):
         student_model_path = common_kwargs.get('output_model_path', None)
         example_inputs = common_kwargs.get('example_inputs', None)
 
+        if not example_inputs:
+            example_inputs, info_dict = self._get_input_from_dataloader(0)
+        #
+
         teacher_model = teacher_model_path
         if isinstance(teacher_model_path, str):
             teacher_model = convert.ConvertModel._get_torch_model(teacher_model_path)
@@ -96,10 +101,6 @@ class DistillModel(compile.CompileModel):
             #
         #
 
-        if not example_inputs:
-            input_data, info_dict = self._get_input_from_dataloader(0)
-        #
-
         calibration_iterations = runtime_options['advanced_options:calibration_iterations']
         calibration_frames = runtime_options['advanced_options:calibration_frames']
         calibration_batch_size = runtime_options['advanced_options:calibration_batch_size']
@@ -110,16 +111,19 @@ class DistillModel(compile.CompileModel):
         self.distill_model.train()
 
         # distill loop here
-        for calib_index in range(calibration_iterations):
-            print(f'INFO: running model quantize iteration: {calib_index}')
-            for input_index in range(calibration_frames):
-                print(f'INFO: input batch for quantize: {input_index}')
+        tqdm_epoch = tqdm.tqdm(range(calibration_iterations), desc='Distill Epoch', leave=False)
+        for calib_index in tqdm_epoch:
+            # print(f'INFO: running model quantize iteration: {calib_index}')
+            tqdm_batch = tqdm.tqdm(range(calibration_frames), desc='Distill Batch', leave=False)
+            for input_index in tqdm_batch:
+                # print(f'INFO: input batch for quantize: {input_index}')
                 input_data, info_dict = self._get_input_from_dataloader(
                     input_index, calibration_frames, calibration_batch_size, random_shuffle=True, use_cache=True)
                 distill_outputs = self.distill_model(*input_data)
                 distil_metrics = self.distill_model.step_iter(*distill_outputs)
-                print(f'INFO: input batch for quantize: {input_index}, {distil_metrics}')
+                tqdm_batch.set_postfix(refresh=True, epoch=calib_index, batch=input_index, **distil_metrics)
             #
+            tqdm_epoch.set_postfix(refresh=True, epoch=calib_index, num_batches=calibration_frames, **distil_metrics)
             self.distill_model.step_epoch()
         #
         if isinstance(student_model_path, str):
@@ -144,7 +148,7 @@ class DistillModel(compile.CompileModel):
             else:
                 input_data, info_dict = self.dataloader(index)
                 input_data, info_dict = self.preprocess(input_data, info_dict=info_dict) if self.preprocess else (input_data, info_dict)
-                input_data, info_dict = self.input_normalizer(input_data, info_dict)
+                input_data, info_dict = self.input_normalizer(input_data, info_dict) if self.input_normalizer else (input_data, info_dict)
                 input_data = copy.deepcopy(input_data)
                 # make copy to remove negative indexes in tensors that torch.from_numpy does not like
                 input_data = tuple([torch.from_numpy(input_tensor) for input_tensor in input_data]) if isinstance(input_data, (list, tuple)) else (torch.from_numpy(input_data),)
@@ -154,3 +158,19 @@ class DistillModel(compile.CompileModel):
         #
         input_batch = tuple([torch.cat([t[idx] for t in input_list], dim=0) for idx in range(len(input_list[0]))]) if batch_size > 1 else input_list[0]
         return input_batch, info_dict
+    
+    def _register_parametrization(self, module, parametrization_type=None):
+        import torch
+        import torch.nn.utils.parametrize as parametrize
+        from ..utils.distill_module import DeltaClampParametrization
+        parametrization_type = parametrization_type or DeltaClampParametrization
+        
+        for name, child in module.named_children():
+            self._register_parametrization(child, parametrization_type=parametrization_type)
+        #
+        for name_p, param in list(module.named_parameters(recurse=False)):
+            if isinstance(param, torch.nn.Parameter) and param is not None:
+                parametrize.register_parametrization(module, name_p, parametrization_type(param))
+            #
+        #
+        return module

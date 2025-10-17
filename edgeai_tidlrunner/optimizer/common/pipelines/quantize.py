@@ -73,11 +73,15 @@ class QuantizeModel(distill.DistillModel):
         common_kwargs['example_inputs'] = example_inputs
         
         student_model = self._prepare_quantize(teacher_model, example_inputs)
+
+        # student_model = self._register_parametrization(student_model)
+        
         common_kwargs['output_model_path'] = student_model
 
     def _prepare_quantize(self, teacher_model, example_inputs, device=None):
         import torch
         import torchao
+        from ..utils.distill_module import DistillWrapperModule
 
         # create student model
         # from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule 
@@ -88,7 +92,9 @@ class QuantizeModel(distill.DistillModel):
         # from torchao.quantization.pt2e import allow_exported_model_train_eval
         # allow_exported_model_train_eval(teacher_model_final)
 
-        student_model_final = torch.export.export(teacher_model, example_inputs).module()
+        student_model_initial = copy.deepcopy(teacher_model)
+
+        student_model = torch.export.export(student_model_initial, example_inputs).module()
 
         # Step 2. quantization
         from torchao.quantization.pt2e.quantize_pt2e import (prepare_qat_pt2e, convert_pt2e)
@@ -109,7 +115,7 @@ class QuantizeModel(distill.DistillModel):
         # # quantizer = XNNPACKQuantizer().set_global(get_symmetric_quantization_config(is_qat=True, per_channel=True))
         quantizer = XNNPACKQuantizer().set_global(get_symmetric_quantization_config(is_qat=True))
 
-        student_model = prepare_qat_pt2e(student_model_final, quantizer)
+        student_model = prepare_qat_pt2e(student_model, quantizer)
         allow_exported_model_train_eval(student_model)
 
         if device:

@@ -35,15 +35,14 @@ import random
 
 import torch
 import torch.nn.utils.parametrize as parametrize
-
 import torchao
 
 
-class ConstrainWeightsParametrization(torch.nn.Module):
+class DeltaClampParametrization(torch.nn.Module):
     def __init__(self, orig_value, delta_factor = 0.01):
         super().__init__()
         self.delta_factor = delta_factor
-        delta_w = torch.abs(orig_value.detach()) * self.delta_factor
+        delta_w = torch.abs(orig_value.detach().data) * self.delta_factor
         self.min_val = orig_value - delta_w
         self.max_val = orig_value + delta_w
 
@@ -56,13 +55,6 @@ class DistillWrapperModule(torch.nn.Module):
         super().__init__()
         self.student_model = student_model
         self.teacher_model = teacher_model
-
-        for m in self.student_model.modules():
-            if isinstance(m, (torch.nn.Conv2d, torch.nn.Linear)):
-                if hasattr(m, 'weight') and m.weight is not None:
-                    parametrize.register_parametrization(m, 'weight', ConstrainWeightsParametrization(m.weight))
-                if hasattr(m, 'bias') and m.bias is not None:
-                    parametrize.register_parametrization(m, 'bias', ConstrainWeightsParametrization(m.bias))
 
         self.criterion = torch.nn.SmoothL1Loss() #torch.nn.MSELoss() #torch.nn.KLDivLoss()
         self.epochs = kwargs.get('epochs', 10)
@@ -81,7 +73,7 @@ class DistillWrapperModule(torch.nn.Module):
         #
         student_outputs = self.student_model(*inputs)
         return student_outputs, teacher_outputs
-    
+
     def eval(self):
         # super().eval()
         self.teacher_model.eval()

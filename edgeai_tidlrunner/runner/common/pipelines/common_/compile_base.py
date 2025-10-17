@@ -79,18 +79,20 @@ class CompileModelBase(CommonPipelineBase):
             runtime_options = session_kwargs['runtime_options']
 
             ###################################################################################
-            if not dataloader_kwargs['name']:
-                print(f'WARNING: dataloader name is was not provided - will use random_dataloader'
-                    f'\n  and the resultant compiled artifacts may not be accurate.'
-                    f'\n  please specify a dataloader using the argument data_name or dataloader.name'
-                    f'\n  in addition data_path or dataloader.path may need to be provided.')
-                dataloader_kwargs['name'] = 'random_dataloader'
-            #
-            if not preprocess_kwargs['name']:
-                preprocess_kwargs['name'] = 'no_preprocess'
-            #
-            if not postprocess_kwargs['name']:
-                postprocess_kwargs['name'] = 'no_postprocess'
+            if self.pipeline_config is None:
+                if not dataloader_kwargs['name']:
+                    print(f'WARNING: dataloader name is was not provided - will use random_dataloader'
+                        f'\n  and the resultant compiled artifacts may not be accurate.'
+                        f'\n  please specify a dataloader using the argument data_name or dataloader.name'
+                        f'\n  in addition data_path or dataloader.path may need to be provided.')
+                    dataloader_kwargs['name'] = 'random_dataloader'
+                #
+                if not preprocess_kwargs['name']:
+                    preprocess_kwargs['name'] = 'no_preprocess'
+                #
+                if not postprocess_kwargs['name']:
+                    postprocess_kwargs['name'] = 'no_postprocess'
+                #
             #
 
             ###################################################################################
