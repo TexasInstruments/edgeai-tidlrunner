@@ -149,13 +149,20 @@ def _get_configs(config_path, **kwargs):
         elif os.path.exists(config_path) and os.path.isdir(config_path):
             print(f"INFO: config_path is a configs module from edgeai-benchmark: {config_path}")
             import edgeai_benchmark
+            
             settings_file = edgeai_benchmark.get_settings_file()
+
             model_shortlist = kwargs.get('common.model_shortlist', None)
             model_shortlist = int(model_shortlist) if model_shortlist is not None else None
             model_selection=kwargs.get('common.model_selection', None)
             model_selection = utils.formatted_nargs(model_selection)
-            settings = edgeai_benchmark.config_settings.ConfigSettings(settings_file, model_shortlist=model_shortlist, model_selection=model_selection)
-            settings.configs_path = os.path.abspath(config_path)
+            target_device = kwargs.get('session.target_device', None)
+
+            settings = edgeai_benchmark.config_settings.ConfigSettings(
+                settings_file, model_shortlist=model_shortlist, model_selection=model_selection, 
+                target_device=target_device,
+                configs_path = os.path.abspath(config_path))
+
             if not os.path.exists(settings.datasets_path):
                 benchmark_dependencies_path = '../edgeai-benchmark/dependencies'
                 local_dependencies_path = './dependencies'
@@ -175,6 +182,7 @@ def _get_configs(config_path, **kwargs):
                 print('INFO', 'model_shortlist has been set', 'it will cause only a subset of models to run:')
                 print('INFO', 'model_shortlist', f'{settings.model_shortlist}')
             #
+
             work_path = kwargs['common.work_path']
             print(f'\nINFO: work_path: {work_path}')
             pipeline_configs = edgeai_benchmark.interfaces.get_configs(settings, work_path)
