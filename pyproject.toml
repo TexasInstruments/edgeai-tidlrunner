@@ -43,8 +43,8 @@ pc = [
     "opencv-python-headless",
     "numpy==1.23.0",
     "onnxsim==0.4.35",
-    "osrt_model_tools@git+ssh://git@bitbucket.itg.ti.com/processor-sdk-vision/edgeai-tidl-tools.git@main#subdirectory=osrt-model-tools", ##"osrt_model_tools@git+https://github.com/TexasInstruments/edgeai-tidl-tools.git@11_01_06_00#subdirectory=osrt-model-tools",
-    "edgeai_onnx2torchmodel@git+ssh://git@bitbucket.itg.ti.com/edgeai-algo/edgeai-modeloptimization.git@main#subdirectory=onnx2torchmodel",
+    "osrt_model_tools@git+https://github.com/TexasInstruments/edgeai-tidl-tools.git@11_01_06_00#subdirectory=osrt-model-tools", ##"osrt_model_tools@git+ssh://git@bitbucket.itg.ti.com/processor-sdk-vision/edgeai-tidl-tools.git@master#subdirectory=osrt-model-tools",
+    ##"edgeai_onnx2torchmodel@git+ssh://git@bitbucket.itg.ti.com/edgeai-algo/edgeai-modeloptimization.git@main#subdirectory=onnx2torchmodel",
 ]
 evm = [
     "pycocotools"
@@ -58,9 +58,8 @@ dev = [
 
 [project.scripts]
 download-tidlrunner-tools = "edgeai_tidlrunner.download:main"
-tidlrunnercli = "edgeai_tidlrunner.main:main"
-tidlrunnercli-pc = "edgeai_tidlrunner.main:main_pc"
-tidlrunnercli-evm = "edgeai_tidlrunner.main:main_evm"
+tidlrunnercli = "edgeai_tidlrunner.main:main_runner"
+tidloptimizercli = "edgeai_tidlrunner.main:main_optimizer"
 
 [tool.setuptools]
 include-package-data = true

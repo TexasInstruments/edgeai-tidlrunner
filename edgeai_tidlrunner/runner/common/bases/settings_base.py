@@ -48,5 +48,6 @@ SETTING_PIPELINE_RUNNER_ARGS_DICT = {
     'parallel_processes':       {'dest': 'common.parallel_processes', 'default': SettingsBaseDefaults.NUM_PARALLEL_PROCESSES, 'type': int, 'metavar': 'value'},
     'parallel_devices':         {'dest': 'common.parallel_devices', 'default': None, 'type': int, 'metavar': 'value', 'help': 'number of parallel gpu devices to use for compilation (used only if gpu based tidl-tools is installed)'},
     'target_machine':           {'dest': 'session.target_machine', 'default': 'pc', 'type': str, 'metavar': 'value', 'help': 'target machine for running the inference (pc, evm)'},
+    'package_name':           {'dest': 'common.package_name', 'default': None, 'type': str, 'metavar': 'value', 'help': 'internal argument to select package_name (runner, optimizer etc) - no need to specify explicitly'},
 }
 

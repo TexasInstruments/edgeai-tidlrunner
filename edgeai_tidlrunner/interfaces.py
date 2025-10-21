@@ -46,9 +46,10 @@ def get_package_names():
     return ['runner', 'optimizer']
 
 
-def get_command_pipelines(**kwargs):
+def get_command_pipelines(package_name=None, **kwargs):
     command_pipelines = {}
-    for package_module_name in get_package_names():
+    package_names = get_package_names() if package_name is None else [package_name]
+    for package_module_name in package_names:
         package_module = getattr(edgeai_tidlrunner, package_module_name)
         for target_module_name in package_module.get_target_modules():
             target_module = getattr(package_module, target_module_name)
@@ -60,8 +61,8 @@ def get_command_pipelines(**kwargs):
     return command_pipelines
 
 
-def matching_command_name(command_name):
-    command_pipelines = get_command_pipelines()
+def matching_command_name(command_name, package_name=None):
+    command_pipelines = get_command_pipelines(package_name=package_name)
     command_names = list(command_pipelines.keys())
     if command_name not in command_pipelines.keys():
         command_name_matches = difflib.get_close_matches(command_name, command_names)
@@ -79,12 +80,20 @@ def matching_command_name(command_name):
     return command_name
 
 
-def get_target_module(command_name):
-    command_name = matching_command_name(command_name)
+def get_target_module(command_name, **kwargs):
+    package_name = kwargs.get('common.package_name', None)
+    
+    command_name = matching_command_name(command_name, package_name=package_name)
     command_name_split = command_name.split('.')
     assert len(command_name_split) == 3, f'ERROR: invalid command_name: {command_name}'
-    assert command_name_split[0] in get_package_names(), f'ERROR: invalid package name: {command_name_split[0]}'
-    target_module = getattr(getattr(edgeai_tidlrunner, command_name_split[0]), command_name_split[1])
+
+    if package_name:
+        assert package_name in get_package_names(), f'ERROR: invalid package_name: {package_name}'
+        assert package_name == command_name_split[0], f'ERROR: given package_name: {package_name} does not match: {command_name_split[0]}'
+    else:
+        package_name = command_name_split[0]
+    #
+    target_module = getattr(getattr(edgeai_tidlrunner, package_name), command_name_split[1])
     return target_module
 
 
@@ -97,7 +106,7 @@ def _run_command(task_index, command_name, pipeline_name, command_kwargs, captur
     #
     command_kwargs['common.capture_log'] = capture_log
 
-    target_module = get_target_module(command_name)
+    target_module = get_target_module(command_name, **command_kwargs)
     command_module_name_dict = target_module.get_command_pipelines(**command_kwargs)
     assert command_name in command_module_name_dict, f'ERROR: unknown command: {command_name}'
     command_module = getattr(target_module.pipelines, pipeline_name)
@@ -202,7 +211,7 @@ def _get_configs(config_path, **kwargs):
 
 def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs):
     # which target module to use
-    target_module = get_target_module(command)
+    target_module = get_target_module(command, **kwargs)
     pipeline_names = target_module.get_command_pipelines(**kwargs)[command]
     pipeline_names = pipeline_names if isinstance(pipeline_names, list) else [pipeline_names]
 
