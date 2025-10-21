@@ -38,17 +38,24 @@ import torch.nn.utils.parametrize as parametrize
 import torchao
 
 
-class DeltaClampParametrization(torch.nn.Module):
+class DistillParametrizationBaseModule(torch.nn.Module):
+    pass
+
+
+class DeltaClampParametrization(DistillParametrizationBaseModule):
     def __init__(self, orig_value, delta_factor = 0.01):
         super().__init__()
         self.delta_factor = delta_factor
-        delta_w = torch.abs(orig_value.detach().data) * self.delta_factor
-        self.min_val = orig_value - delta_w
-        self.max_val = orig_value + delta_w
+        self.with_parametrization = orig_value.dtype in [torch.float16, torch.bfloat16, torch.float32, torch.float64]
+        if self.with_parametrization:
+            delta_w = torch.abs(orig_value.detach().data) * self.delta_factor
+            self.register_buffer('min_range', orig_value - delta_w)
+            self.register_buffer('max_range', orig_value + delta_w)
+        #
 
-    def forward(self, W):
-        W = torch.clamp(W, min=self.min_val, max=self.max_val)
-        return W
+    def forward(self, w_in):
+        w_out = torch.clamp(w_in, min=self.min_range, max=self.max_range) if self.with_parametrization else w_in
+        return w_out
 
 class DistillWrapperModule(torch.nn.Module):
     def __init__(self, student_model, teacher_model, **kwargs):
@@ -77,17 +84,15 @@ class DistillWrapperModule(torch.nn.Module):
     def eval(self):
         # super().eval()
         self.teacher_model.eval()
-        torchao.quantization.pt2e.move_exported_model_to_eval(self.teacher_model)
         self.student_model.eval()
-        torchao.quantization.pt2e.move_exported_model_to_eval(self.student_model)
+        self.training = False
         return self
     
     def train(self):
         # super().train()
         self.teacher_model.eval()
-        torchao.quantization.pt2e.move_exported_model_to_eval(self.teacher_model)
         self.student_model.train()
-        torchao.quantization.pt2e.move_exported_model_to_train(self.student_model)
+        self.training = True
         return self
     
     def step_iter(self, outputs, targets):

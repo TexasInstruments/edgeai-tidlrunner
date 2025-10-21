@@ -67,38 +67,35 @@ class QuantizeModel(distill.DistillModel):
         self.teacher_model_path = os.path.join(self.teacher_folder, os.path.basename(self.model_path))
         shutil.move(self.model_path, self.teacher_model_path)
 
-        teacher_model = convert.ConvertModel._get_torch_model(self.teacher_model_path)
         example_inputs = convert.ConvertModel._get_example_inputs(self.teacher_model_path, to_torch=True)
-        common_kwargs['teacher_model_path'] = teacher_model
-        common_kwargs['example_inputs'] = example_inputs
+        teacher_model = convert.ConvertModel._get_torch_model(self.teacher_model_path)
+        # it is important to freeze the teacher model's bn
+        teacher_model.eval()
         
         student_model = self._prepare_quantize(teacher_model, example_inputs)
-
-        # student_model = self._register_parametrization(student_model)
+        # student_model.train() #eval()
         
+        common_kwargs['teacher_model_path'] = teacher_model
+        common_kwargs['example_inputs'] = example_inputs
         common_kwargs['output_model_path'] = student_model
 
     def _prepare_quantize(self, teacher_model, example_inputs, device=None):
         import torch
         import torchao
         from ..utils.distill_module import DistillWrapperModule
+        from torchao.quantization.pt2e.quantize_pt2e import (prepare_qat_pt2e, convert_pt2e)
+        from torchao.quantization.pt2e import allow_exported_model_train_eval
 
         # create student model
         # from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule 
         # student_model = quantization.v3.QATPT2EModule(teacher_model, example_inputs, total_epochs=calibration_iterations)
 
         teacher_model_final = teacher_model #torch.export.export(teacher_model, example_inputs).module()
-        # we get a model with aten ops
-        # from torchao.quantization.pt2e import allow_exported_model_train_eval
-        # allow_exported_model_train_eval(teacher_model_final)
 
-        student_model_initial = copy.deepcopy(teacher_model)
+        student_model_initial = copy.deepcopy(teacher_model_final)
 
         student_model = torch.export.export(student_model_initial, example_inputs).module()
-
-        # Step 2. quantization
-        from torchao.quantization.pt2e.quantize_pt2e import (prepare_qat_pt2e, convert_pt2e)
-        from torchao.quantization.pt2e import allow_exported_model_train_eval
+        allow_exported_model_train_eval(student_model)
 
         # backend developer will write their own Quantizer and expose methods to allow
         # from torchao.quantization.pt2e.quantizer.arm_inductor_quantizer import (ArmInductorQuantizer, get_default_arm_inductor_quantization_config)

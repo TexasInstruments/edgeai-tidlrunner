@@ -108,13 +108,16 @@ class DistillModel(compile.CompileModel):
         calibration_frames = min(calibration_frames, len(self.dataloader)) if calibration_frames else len(self.dataloader)
 
         self.distill_model = DistillWrapperModule(student_model, teacher_model, epochs=calibration_iterations, **distill_kwargs)
-        self.distill_model.train()
+
+        # self.distill_model.train()
+        
+        self._register_parametrizations(self.distill_model.student_model)
 
         # distill loop here
-        tqdm_epoch = tqdm.tqdm(range(calibration_iterations), desc='Distill Epoch', leave=False)
+        tqdm_epoch = tqdm.tqdm(range(calibration_iterations), desc='DistillEpoch', leave=False)
         for calib_index in tqdm_epoch:
             # print(f'INFO: running model quantize iteration: {calib_index}')
-            tqdm_batch = tqdm.tqdm(range(calibration_frames), desc='Distill Batch', leave=False)
+            tqdm_batch = tqdm.tqdm(range(calibration_frames), desc='DistillBatch', leave=False)
             for input_index in tqdm_batch:
                 # print(f'INFO: input batch for quantize: {input_index}')
                 input_data, info_dict = self._get_input_from_dataloader(
@@ -126,12 +129,19 @@ class DistillModel(compile.CompileModel):
             tqdm_epoch.set_postfix(refresh=True, epoch=calib_index, num_batches=calibration_frames, **distil_metrics)
             self.distill_model.step_epoch()
         #
+
+        self._remove_parametrizations(self.distill_model.student_model)
+
+        # self.distill_model.eval()
+
         if isinstance(student_model_path, str):
-            convert.ConvertModel._run_func(student_model, student_model_path, example_inputs)
+            convert.ConvertModel._run_func(self.distill_model.student_model, student_model_path, example_inputs)
+            common_kwargs['output_model_path'] = student_model_path
+        else:
+            common_kwargs['output_model_path'] = self.distill_model.student_model
         #
 
-        self.distill_model.eval()
-        return student_model
+        return self.distill_model.student_model
     
     def _get_input_from_dataloader(self, index, calibration_frames=None, batch_size=1, random_shuffle=False, use_cache=False):
         import torch
@@ -159,18 +169,45 @@ class DistillModel(compile.CompileModel):
         input_batch = tuple([torch.cat([t[idx] for t in input_list], dim=0) for idx in range(len(input_list[0]))]) if batch_size > 1 else input_list[0]
         return input_batch, info_dict
     
-    def _register_parametrization(self, module, parametrization_type=None):
+    def _register_parametrizations(self, module, parametrization_type=None):
         import torch
+        import torchao
         import torch.nn.utils.parametrize as parametrize
-        from ..utils.distill_module import DeltaClampParametrization
+        from ..utils.distill_module import DeltaClampParametrization, DistillParametrizationBaseModule
         parametrization_type = parametrization_type or DeltaClampParametrization
         
         for name, child in module.named_children():
-            self._register_parametrization(child, parametrization_type=parametrization_type)
+            self._register_parametrizations(child, parametrization_type=parametrization_type)
+        #
+        if not isinstance(module, (DistillParametrizationBaseModule, torchao.quantization.pt2e.ObserverBase, torchao.quantization.pt2e.FakeQuantizeBase)):
+            for name_p, param in list(module.named_parameters(recurse=False)):
+                if param is not None:
+                    parametrize.register_parametrization(module, name_p, parametrization_type(param))
+                #
+            #
+            for name_p, param in list(module.named_buffers(recurse=False)):
+                if param is not None:
+                    parametrize.register_parametrization(module, name_p, parametrization_type(param))
+                #
+            #
+        #
+        return module
+    
+    def _remove_parametrizations(self, module):
+        import torch
+        import torch.nn.utils.parametrize as parametrize
+        
+        for name, child in module.named_children():
+            self._remove_parametrizations(child)
         #
         for name_p, param in list(module.named_parameters(recurse=False)):
-            if isinstance(param, torch.nn.Parameter) and param is not None:
-                parametrize.register_parametrization(module, name_p, parametrization_type(param))
+            if param is not None and parametrize.is_parametrized(module, name_p):
+                parametrize.remove_parametrizations(module, name_p)
+            #
+        #
+        for name_p, param in list(module.named_buffers(recurse=False)):
+            if param is not None and parametrize.is_parametrized(module, name_p):
+                parametrize.remove_parametrizations(module, name_p)
             #
         #
         return module
