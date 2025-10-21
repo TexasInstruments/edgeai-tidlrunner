@@ -30,6 +30,7 @@
 from .convert import ConvertModel
 from .distill import DistillModel
 from .quantize import QuantizeModel
+from .qad import QAD
 
 
 def get_command_pipelines(**kwargs):
@@ -37,5 +38,6 @@ def get_command_pipelines(**kwargs):
         'convert':'ConvertModel',
         'distill':'DistillModel',
         'quantize':'QuantizeModel',
+        'qad':'QAD',
     }
     return command_module_name_dict

@@ -40,22 +40,22 @@ from . import convert
 from . import distill
 
 
-class QuantizeModel(distill.DistillModel):
-    ARGS_DICT=SETTINGS_DEFAULT['quantize']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['quantize']
+class QAD(distill.DistillModel):
+    ARGS_DICT=SETTINGS_DEFAULT['qad']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['qad']
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(parametrization_types=('clip_const',), **kwargs)
 
     def info():
-        print(f'INFO: Model quantize - {__file__}')
+        print(f'INFO: Model QAD - {__file__}')
 
     def _prepare(self):
         import torch
         import torchao
 
         # from edgeai_torchmodelopt.xmodelopt import quantization
-        print(f'INFO: preparing model quantize with parameters: {self.kwargs}')
+        print(f'INFO: preparing model for QAD with parameters: {self.kwargs}')
         super()._prepare()
 
         common_kwargs = self.settings[self.common_prefix]
@@ -82,37 +82,8 @@ class QuantizeModel(distill.DistillModel):
     def _prepare_model(self, teacher_model, example_inputs, device=None):
         import torch
         import torchao
-        from torchao.quantization.pt2e.quantize_pt2e import (prepare_qat_pt2e, convert_pt2e)
-        from torchao.quantization.pt2e import allow_exported_model_train_eval
 
-        # create student model
-        # from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule 
-        # student_model = quantization.v3.QATPT2EModule(teacher_model, example_inputs, total_epochs=calibration_iterations)
-
-        teacher_model_final = teacher_model #torch.export.export(teacher_model, example_inputs).module()
-
-        student_model_initial = copy.deepcopy(teacher_model_final)
-
-        student_model = torch.export.export(student_model_initial, example_inputs).module()
-        allow_exported_model_train_eval(student_model)
-
-        # backend developer will write their own Quantizer and expose methods to allow
-        # from torchao.quantization.pt2e.quantizer.arm_inductor_quantizer import (ArmInductorQuantizer, get_default_arm_inductor_quantization_config)
-        # quantizer = ArmInductorQuantizer().set_global(get_default_arm_inductor_quantization_config(is_qat=True))
-
-        # from torchao.quantization.pt2e.quantizer.x86_inductor_quantizer import (X86InductorQuantizer, get_default_x86_inductor_quantization_config)
-        # quantizer = X86InductorQuantizer().set_global(get_default_x86_inductor_quantization_config(is_qat=True))
-
-        # from torchao.quantization.pt2e.quantizer.xpu_inductor_quantizer import (XPUInductorQuantizer, get_default_xpu_inductor_quantization_config)
-        # quantizer = XPUInductorQuantizer().set_global(get_default_xpu_inductor_quantization_config(is_qat=True))
-
-        # install executorch: `pip install executorch`
-        from executorch.backends.xnnpack.quantizer.xnnpack_quantizer import (get_symmetric_quantization_config, XNNPACKQuantizer)
-        # # quantizer = XNNPACKQuantizer().set_global(get_symmetric_quantization_config(is_qat=True, per_channel=True))
-        quantizer = XNNPACKQuantizer().set_global(get_symmetric_quantization_config(is_qat=True))
-
-        student_model = prepare_qat_pt2e(student_model, quantizer)
-        allow_exported_model_train_eval(student_model)
+        student_model = copy.deepcopy(teacher_model)
 
         if device:
             student_model.to(device)
@@ -122,18 +93,22 @@ class QuantizeModel(distill.DistillModel):
     def _run(self):
         import torch
         import torchao
+        from ..utils import parametrization_module
 
         common_kwargs = self.settings[self.common_prefix]
         session_kwargs = self.settings[self.session_prefix]
         runtime_options = session_kwargs['runtime_options']
         calibration_iterations = runtime_options['advanced_options:calibration_iterations']
 
-        print(f'INFO: starting model quantize with parameters: {self.kwargs}')
+        print(f'INFO: starting model QAD with parameters: {self.kwargs}')
+
+        parametrization_module.register_parametrizations(self.distill_model.student_model, parametrization_types=('clip_const',))
+
         super()._run()
 
-        from torchao.quantization.pt2e.quantize_pt2e import (prepare_qat_pt2e, convert_pt2e,)
+        parametrization_module.remove_parametrizations(self.distill_model.student_model)
+
         student_model = common_kwargs['output_model_path']
-        student_model = convert_pt2e(student_model)
 
         os.makedirs(self.student_folder, exist_ok=True)
         self.student_model_path = os.path.join(self.student_folder, os.path.basename(self.model_path))

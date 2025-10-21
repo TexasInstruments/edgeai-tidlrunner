@@ -48,9 +48,10 @@ class DistillModel(compile.CompileModel):
     ARGS_DICT=SETTINGS_DEFAULT['distill']
     COPY_ARGS=COPY_SETTINGS_DEFAULT['distill']
 
-    def __init__(self, **kwargs):
+    def __init__(self, parametrization_types=None, **kwargs):
         super().__init__(**kwargs)
         self.calibration_data_cache = {}
+        self.parametrization_types = parametrization_types
 
     def _prepare(self):
         super()._prepare()
@@ -99,6 +100,8 @@ class DistillModel(compile.CompileModel):
             if not example_inputs:
                 example_inputs = convert.ConvertModel._get_example_inputs(student_model_path, to_torch=True)
             #
+        elif student_model_path is None:
+            student_model = copy.deepcopy(teacher_model)
         #
 
         calibration_iterations = runtime_options['advanced_options:calibration_iterations']
@@ -109,9 +112,7 @@ class DistillModel(compile.CompileModel):
 
         self.distill_model = DistillWrapperModule(student_model, teacher_model, epochs=calibration_iterations, **distill_kwargs)
 
-        # self.distill_model.train()
-        
-        self._register_parametrizations(self.distill_model.student_model)
+        self.distill_model.train()
 
         # distill loop here
         tqdm_epoch = tqdm.tqdm(range(calibration_iterations), desc='DistillEpoch', leave=False)
@@ -130,9 +131,7 @@ class DistillModel(compile.CompileModel):
             self.distill_model.step_epoch()
         #
 
-        self._remove_parametrizations(self.distill_model.student_model)
-
-        # self.distill_model.eval()
+        self.distill_model.eval()
 
         if isinstance(student_model_path, str):
             convert.ConvertModel._run_func(self.distill_model.student_model, student_model_path, example_inputs)
@@ -169,45 +168,3 @@ class DistillModel(compile.CompileModel):
         input_batch = tuple([torch.cat([t[idx] for t in input_list], dim=0) for idx in range(len(input_list[0]))]) if batch_size > 1 else input_list[0]
         return input_batch, info_dict
     
-    def _register_parametrizations(self, module, parametrization_type=None):
-        import torch
-        import torchao
-        import torch.nn.utils.parametrize as parametrize
-        from ..utils.distill_module import DeltaClampParametrization, DistillParametrizationBaseModule
-        parametrization_type = parametrization_type or DeltaClampParametrization
-        
-        for name, child in module.named_children():
-            self._register_parametrizations(child, parametrization_type=parametrization_type)
-        #
-        if not isinstance(module, (DistillParametrizationBaseModule, torchao.quantization.pt2e.ObserverBase, torchao.quantization.pt2e.FakeQuantizeBase)):
-            for name_p, param in list(module.named_parameters(recurse=False)):
-                if param is not None:
-                    parametrize.register_parametrization(module, name_p, parametrization_type(param))
-                #
-            #
-            for name_p, param in list(module.named_buffers(recurse=False)):
-                if param is not None:
-                    parametrize.register_parametrization(module, name_p, parametrization_type(param))
-                #
-            #
-        #
-        return module
-    
-    def _remove_parametrizations(self, module):
-        import torch
-        import torch.nn.utils.parametrize as parametrize
-        
-        for name, child in module.named_children():
-            self._remove_parametrizations(child)
-        #
-        for name_p, param in list(module.named_parameters(recurse=False)):
-            if param is not None and parametrize.is_parametrized(module, name_p):
-                parametrize.remove_parametrizations(module, name_p)
-            #
-        #
-        for name_p, param in list(module.named_buffers(recurse=False)):
-            if param is not None and parametrize.is_parametrized(module, name_p):
-                parametrize.remove_parametrizations(module, name_p)
-            #
-        #
-        return module

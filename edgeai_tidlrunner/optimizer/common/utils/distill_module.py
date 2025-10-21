@@ -37,25 +37,8 @@ import torch
 import torch.nn.utils.parametrize as parametrize
 import torchao
 
+from . import parametrization_module
 
-class DistillParametrizationBaseModule(torch.nn.Module):
-    pass
-
-
-class DeltaClampParametrization(DistillParametrizationBaseModule):
-    def __init__(self, orig_value, delta_factor = 0.01):
-        super().__init__()
-        self.delta_factor = delta_factor
-        self.with_parametrization = orig_value.dtype in [torch.float16, torch.bfloat16, torch.float32, torch.float64]
-        if self.with_parametrization:
-            delta_w = torch.abs(orig_value.detach().data) * self.delta_factor
-            self.register_buffer('min_range', orig_value - delta_w)
-            self.register_buffer('max_range', orig_value + delta_w)
-        #
-
-    def forward(self, w_in):
-        w_out = torch.clamp(w_in, min=self.min_range, max=self.max_range) if self.with_parametrization else w_in
-        return w_out
 
 class DistillWrapperModule(torch.nn.Module):
     def __init__(self, student_model, teacher_model, **kwargs):
@@ -70,10 +53,9 @@ class DistillWrapperModule(torch.nn.Module):
         self.momentum = kwargs.get('momentum', 0.9)
         self.weight_decay = kwargs.get('weight_decay', 1e-4)
         self.temperature = kwargs.get('temperature', 1)
-
         self.optimizer = torch.optim.SGD(student_model.parameters(), lr=self.lr, momentum=self.momentum, weight_decay=self.weight_decay)
         self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max=self.epochs, eta_min=self.lr_min)
-    
+        
     def forward(self, *inputs):
         with torch.no_grad():
             teacher_outputs = self.teacher_model(*inputs)
