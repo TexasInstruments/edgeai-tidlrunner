@@ -160,7 +160,8 @@ class DistillModel(compile.CompileModel):
             if use_cache and index in self.calibration_data_cache:
                 input_data, info_dict = self.calibration_data_cache[index]
             else:
-                input_data, info_dict = self.dataloader(index)
+                info_dict = self.get_info_dict(index)
+                input_data, info_dict = self.dataloader(index, info_dict)
                 input_data, info_dict = self.preprocess(input_data, info_dict=info_dict) if self.preprocess else (input_data, info_dict)
                 input_data, info_dict = self.input_normalizer(input_data, info_dict) if self.input_normalizer else (input_data, info_dict)
                 input_data = copy.deepcopy(input_data)

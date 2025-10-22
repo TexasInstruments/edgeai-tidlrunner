@@ -48,13 +48,17 @@ class DistillWrapperModule(torch.nn.Module):
 
         self.criterion = torch.nn.SmoothL1Loss() #torch.nn.MSELoss() #torch.nn.KLDivLoss()
         self.epochs = kwargs.get('epochs', 10)
-        self.lr = kwargs.get('lr', 0.0001)
-        self.lr_min = kwargs.get('lr_min', self.lr/100)
+        self.warmup_epochs = kwargs.get('warmup_epochs', 3)
+        self.warmup_factor = kwargs.get('warmup_factor', 1/100.0)
+        self.lr = kwargs.get('lr', 1e-3)
+        self.lr_min = kwargs.get('lr_min', self.lr/100.0)
         self.momentum = kwargs.get('momentum', 0.9)
-        self.weight_decay = kwargs.get('weight_decay', 1e-4)
+        self.weight_decay = kwargs.get('weight_decay', 1e-3)
         self.temperature = kwargs.get('temperature', 1)
         self.optimizer = torch.optim.SGD(student_model.parameters(), lr=self.lr, momentum=self.momentum, weight_decay=self.weight_decay)
-        self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max=self.epochs, eta_min=self.lr_min)
+        self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max=self.epochs-self.warmup_epochs, eta_min=self.lr_min)
+        self.warmup_scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer, start_factor=self.warmup_factor, end_factor=1.0, total_iters=self.warmup_epochs)
+        self.current_epoch = 0
 
         self.activation_decay = activation_decay
         self.hook_handles = []
@@ -108,18 +112,31 @@ class DistillWrapperModule(torch.nn.Module):
         if self.activations_dict:
             act_loss = 0.0
             for k, v in self.activations_dict.items():
-                act_loss = act_loss + torch.mean(v*v)
+                # act_deviation = (v-1.0).pow(2).mean()
+                # act_deviation = torch.quantile(torch.abs(v[:]), 0.99)
+                # act_deviation = torch.kthvalue(v.reshape(-1), int(0.99*torch.numel(v)), dim=0)[0]
+                act_deviation = v.abs().mean() + v.std()
+                act_loss = act_loss + act_deviation
             #
             act_loss = act_loss / len(self.activations_dict)
             loss += act_loss
         #
 
-        lr = round(self.scheduler.get_last_lr()[0], 6)
+        lr = round(self.get_scheduler().get_last_lr()[0], 6)
         loss_value = round(loss.item(), 6)
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
         return {'lr':lr, 'loss':loss_value}
     
+    def get_scheduler(self):
+        if self.current_epoch < self.warmup_epochs:
+            scheduler = self.warmup_scheduler
+        else:
+            scheduler = self.scheduler
+        #
+        return scheduler
+
     def step_epoch(self):
-        self.scheduler.step()
+        self.get_scheduler().step()
+        self.current_epoch += 1
