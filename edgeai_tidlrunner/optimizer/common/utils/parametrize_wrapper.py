@@ -102,7 +102,7 @@ class ClipDeltaParametrization(ParametrizationBaseModule):
         return w_out
     
 
-class ClipConstParametrization(ParametrizationBaseModule):
+class ClipValueParametrization(ParametrizationBaseModule):
     def __init__(self, orig_value, clip_value = 15.0):
         super().__init__()
         self.clip_value = clip_value
@@ -119,7 +119,7 @@ class ClipConstParametrization(ParametrizationBaseModule):
 
 PARAMETRIZATION_TYPES_DICT = {
     'clip_delta': ClipDeltaParametrization,
-    'clip_const': ClipConstParametrization,
+    'clip_value': ClipValueParametrization,
 }
 
 

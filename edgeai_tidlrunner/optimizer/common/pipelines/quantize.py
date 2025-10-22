@@ -51,12 +51,10 @@ class QuantizeModel(distill.DistillModel):
         print(f'INFO: Model quantize - {__file__}')
 
     def _prepare(self):
+        super()._prepare()
+        
         import torch
         import torchao
-
-        # from edgeai_torchmodelopt.xmodelopt import quantization
-        print(f'INFO: preparing model quantize with parameters: {self.kwargs}')
-        super()._prepare()
 
         common_kwargs = self.settings[self.common_prefix]
         
@@ -65,24 +63,18 @@ class QuantizeModel(distill.DistillModel):
         os.makedirs(self.teacher_folder, exist_ok=True)
 
         self.teacher_model_path = os.path.join(self.teacher_folder, os.path.basename(self.model_path))
+        
         shutil.move(self.model_path, self.teacher_model_path)
-
         teacher_model = convert.ConvertModel._get_torch_model(self.teacher_model_path)
         # it is important to freeze the teacher model's BN and Dropouts
         teacher_model.eval()
 
-        student_model = self._prepare_model(teacher_model, self.example_inputs)
-        # student_model.train() #eval()
-        
-        common_kwargs['teacher_model_path'] = teacher_model
-        common_kwargs['example_inputs'] = self.example_inputs
-        common_kwargs['output_model_path'] = student_model
-
-    def _prepare_model(self, teacher_model, example_inputs, device=None):
+        #################################################################################
         import torch
         import torchao
         from torchao.quantization.pt2e.quantize_pt2e import (prepare_qat_pt2e, convert_pt2e)
         from torchao.quantization.pt2e import allow_exported_model_train_eval
+        # from edgeai_torchmodelopt.xmodelopt import quantization
 
         # create student model
         # from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule 
@@ -91,7 +83,7 @@ class QuantizeModel(distill.DistillModel):
         teacher_model_final = teacher_model #torch.export.export(teacher_model, example_inputs).module()
 
         student_model_initial = teacher_model_final #copy.deepcopy(teacher_model_final)
-        student_model = torch.export.export(student_model_initial, example_inputs).module()
+        student_model = torch.export.export(student_model_initial, self.example_inputs).module()
         allow_exported_model_train_eval(student_model)
 
         # backend developer will write their own Quantizer and expose methods to allow
@@ -111,11 +103,11 @@ class QuantizeModel(distill.DistillModel):
 
         student_model = prepare_qat_pt2e(student_model, quantizer)
         allow_exported_model_train_eval(student_model)
-
-        if device:
-            student_model.to(device)
-        #
-        return student_model
+        #################################################################################
+        
+        common_kwargs['teacher_model_path'] = teacher_model
+        common_kwargs['example_inputs'] = self.example_inputs
+        common_kwargs['output_model_path'] = student_model
 
     def _run(self):
         import torch

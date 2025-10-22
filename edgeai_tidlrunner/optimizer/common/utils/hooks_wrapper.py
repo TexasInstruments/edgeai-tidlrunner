@@ -45,10 +45,7 @@ def _register_layer_forward_hook(module, hook):
     return module.register_forward_hook(hook)
 
 
-def register_model_activation_store_hook(model, activations_dict):
-    def hook_fn(m, input, output):
-        activations_dict[m.__module_name_info__] = output.detach()
-
+def register_model_forward_hook(model, hook_fn):
     hook_handles = []
     for n, m in model.named_modules():
         m.__module_name_info__ = n

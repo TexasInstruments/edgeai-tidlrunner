@@ -53,32 +53,36 @@ class DistillModel(compile.CompileModel):
         self.calibration_data_cache = {}
         self.parametrization_types = parametrization_types
 
-    def _prepare(self):
-        super()._prepare()
-
     def info():
         print(f'INFO: Model distill - {__file__}')
 
+    def _prepare_model(self):
+        # no model surgery - override the method in compile
+        return self.model_path
+
     def _prepare(self):
-        from ..utils.distill_wrapper import DistillWrapperModule
+        super()._prepare()
 
         print(f'INFO: preparing model distill with parameters: {self.kwargs}')
         common_kwargs = self.settings[self.common_prefix]
         session_kwargs = self.settings[self.session_prefix]
         runtime_options = session_kwargs['runtime_options']
         distill_kwargs = common_kwargs.get('distill', {})
-
-        super()._prepare()
-
+    
         self.input_normalizer = sessions.create_input_normalizer(**(session_kwargs | dict(input_optimization=False)))
-
-        self.teacher_model_path = common_kwargs.get('teacher_model_path', None) or self.model_path
-        self.student_model_path = common_kwargs.get('output_model_path', None)
+        
         self.example_inputs = common_kwargs.get('example_inputs', None)
-
         if not self.example_inputs:
             self.example_inputs, info_dict = self._get_input_from_dataloader(0)
         #
+
+        ###################################################################3
+        # prepare model
+        from ..utils.distill_wrapper import DistillWrapperModule
+
+        self.teacher_model_path = common_kwargs.get('teacher_model_path', None) or self.model_path
+        self.student_model_path = common_kwargs.get('output_model_path', None)
+        self.example_inputs = common_kwargs.get('example_inputs', None) or self.example_inputs
 
         teacher_model = self.teacher_model_path
         if isinstance(self.teacher_model_path, str):
@@ -133,6 +137,7 @@ class DistillModel(compile.CompileModel):
         #
 
         self.distill_model.eval()
+        self.distill_model.cleanup()
 
         if isinstance(self.student_model_path, str):
             convert.ConvertModel._run_func(self.distill_model.student_model, self.student_model_path, self.example_inputs)

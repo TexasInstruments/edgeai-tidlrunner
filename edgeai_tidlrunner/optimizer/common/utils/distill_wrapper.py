@@ -37,9 +37,11 @@ import torch
 import torch.nn.utils.parametrize as parametrize
 import torchao
 
+from ..utils import hooks_wrapper, parametrize_wrapper
+
 
 class DistillWrapperModule(torch.nn.Module):
-    def __init__(self, student_model, teacher_model, **kwargs):
+    def __init__(self, student_model, teacher_model, activation_decay=True, **kwargs):
         super().__init__()
         self.student_model = student_model
         self.teacher_model = teacher_model
@@ -53,7 +55,28 @@ class DistillWrapperModule(torch.nn.Module):
         self.temperature = kwargs.get('temperature', 1)
         self.optimizer = torch.optim.SGD(student_model.parameters(), lr=self.lr, momentum=self.momentum, weight_decay=self.weight_decay)
         self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max=self.epochs, eta_min=self.lr_min)
-        
+
+        self.activation_decay = activation_decay
+        self.hook_handles = []
+        self.activations_dict = {}
+
+        if self.activation_decay:
+            def activation_store_hook_fn(m, input, output):
+                self.activations_dict[m.__module_name_info__] = output.detach()
+            #
+            self.hook_handles += hooks_wrapper.register_model_forward_hook(self.student_model, activation_store_hook_fn)
+        #
+        parametrize_wrapper.register_parametrizations(self.student_model, parametrization_types=('clip_value',), param_names=('weight', 'bias'))
+
+    def cleanup(self):
+        hook_handles = self.hook_handles
+        hook_handles = list(hook_handles.values()) if isinstance(hook_handles, dict) else hook_handles
+        hook_handles = [hook_handles] if not isinstance(hook_handles, list) else hook_handles
+        for hook_handle in hook_handles:
+            hook_handle.remove()
+        #
+        parametrize_wrapper.remove_parametrizations(self.student_model)
+
     def forward(self, *inputs):
         with torch.no_grad():
             teacher_outputs = self.teacher_model(*inputs)
@@ -82,6 +105,15 @@ class DistillWrapperModule(torch.nn.Module):
         else:
             loss = self.criterion(outputs, targets)
         #
+        if self.activations_dict:
+            act_loss = 0.0
+            for k, v in self.activations_dict.items():
+                act_loss = act_loss + torch.mean(v*v)
+            #
+            act_loss = act_loss / len(self.activations_dict)
+            loss += act_loss
+        #
+
         lr = round(self.scheduler.get_last_lr()[0], 6)
         loss_value = round(loss.item(), 6)
         self.optimizer.zero_grad()

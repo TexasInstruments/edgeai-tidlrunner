@@ -146,11 +146,12 @@ class CompileModel(CompileModelBase):
                 raise RuntimeError(f'ERROR: invalid postprocess args: {postprocess_kwargs}')
             #
         #
+        self._prepare_model()
         
     def info(self):
         print(f'INFO: Model import - {__file__}')
 
-    def _model_surgery(self):
+    def _prepare_model(self):
         print(f'INFO: running model optimize {self.model_path}')
         common_kwargs = self.settings[self.common_prefix]
         optimize_kwargs = common_kwargs['optimize']
@@ -164,8 +165,6 @@ class CompileModel(CompileModelBase):
         preprocess_kwargs = self.settings[self.preprocess_prefix]
         postprocess_kwargs = self.settings[self.postprocess_prefix]
         runtime_options = session_kwargs['runtime_options']
-
-        self._model_surgery()
 
         # session
         session_name = session_kwargs['name']

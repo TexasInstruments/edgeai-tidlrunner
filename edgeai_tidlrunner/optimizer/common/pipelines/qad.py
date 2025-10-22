@@ -51,12 +51,13 @@ class QAD(distill.DistillModel):
         print(f'INFO: Model QAD - {__file__}')
 
     def _prepare(self):
+        super()._prepare()
+        
         import torch
         import torchao
 
         # from edgeai_torchmodelopt.xmodelopt import quantization
         print(f'INFO: preparing model for QAD with parameters: {self.kwargs}')
-        super()._prepare()
 
         common_kwargs = self.settings[self.common_prefix]
         
@@ -65,29 +66,18 @@ class QAD(distill.DistillModel):
         os.makedirs(self.teacher_folder, exist_ok=True)
 
         self.teacher_model_path = os.path.join(self.teacher_folder, os.path.basename(self.model_path))
-        shutil.move(self.model_path, self.teacher_model_path)
 
-        teacher_model = convert.ConvertModel._get_torch_model(self.teacher_model_path)
+        shutil.move(self.model_path, self.teacher_model_path)
+        teacher_model = convert.ConvertModel._get_torch_model(self.teacher_model_path, example_inputs=self.example_inputs)
         # it is important to freeze the teacher model's bn
         teacher_model.eval()
         
-        student_model = self._prepare_model(teacher_model, self.example_inputs)
+        student_model = copy.deepcopy(teacher_model)
         # student_model.train() #eval()
         
         common_kwargs['teacher_model_path'] = teacher_model
         common_kwargs['example_inputs'] = self.example_inputs
         common_kwargs['output_model_path'] = student_model
-
-    def _prepare_model(self, teacher_model, example_inputs, device=None):
-        import torch
-        import torchao
-
-        student_model = copy.deepcopy(teacher_model)
-
-        if device:
-            student_model.to(device)
-        #
-        return student_model
 
     def _run(self):
         import torch
@@ -102,25 +92,13 @@ class QAD(distill.DistillModel):
 
         print(f'INFO: starting model QAD with parameters: {self.kwargs}')
 
-        parametrize_wrapper.register_parametrizations(self.distill_model.student_model, parametrization_types=('clip_const',))
-
-        self.activations_dict = {}
-        hook_handles = hooks_wrapper.register_model_activation_store_hook(self.distill_model.student_model, self.activations_dict)
-
         super()._run()
-
-        parametrize_wrapper.remove_parametrizations(self.distill_model.student_model)
-
-        hook_handles = list(hook_handles.values()) if isinstance(hook_handles, dict) else hook_handles
-        hook_handles = [hook_handles] if not isinstance(hook_handles, list) else hook_handles
-        for hook_handle in hook_handles:
-            hook_handle.remove()
 
         student_model = common_kwargs['output_model_path']
 
         os.makedirs(self.student_folder, exist_ok=True)
         self.student_model_path = os.path.join(self.student_folder, os.path.basename(self.model_path))
-        convert.ConvertModel._run_func(student_model, self.student_model_path, common_kwargs['example_inputs'])
+        convert.ConvertModel._run_func(student_model, self.student_model_path, self.example_inputs)
 
         shutil.copyfile(self.student_model_path, self.model_path)
 

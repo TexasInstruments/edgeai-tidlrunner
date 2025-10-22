@@ -63,8 +63,8 @@ class CompileAnalyzeNoTIDL(compile.CompileModel):
         kargs_copy['common.postprocess_enable'] = False        
         super().__init__(**kargs_copy)
 
-    def _model_surgery(self):
-        super()._model_surgery()
+    def _prepare_model(self):
+        super()._prepare_model()
         if self.kwargs['common.analyze_level'] >= 2:
             model_path = self.model_path
             # Load the original ONNX model and add intermediate outputs

@@ -89,30 +89,30 @@ class ConvertModel(common_base.CommonPipelineBase):
         return output_model
 
     @classmethod
-    def _run_func(cls, input_model_path, output_model_path=None, example_torch_inputs=None, opset_version=constants.ONNX_OPSET_VERSION_DEFAULT, dynamo=True, **convert_kwargs):
+    def _run_func(cls, input_model_path, output_model_path=None, example_inputs=None, opset_version=constants.ONNX_OPSET_VERSION_DEFAULT, dynamo=True, **convert_kwargs):
         import torch
         if isinstance(input_model_path, str) and input_model_path.endswith('.onnx'):
-            output_model = cls._onnx2torchfile(input_model_path, output_model_path, example_torch_inputs, **convert_kwargs)
+            output_model = cls._onnx2torchfile(input_model_path, output_model_path, example_inputs, **convert_kwargs)
         elif isinstance(input_model_path, str) and input_model_path.endswith('.pt'):
-            output_model = cls._torch2onnxfile(input_model_path, output_model_path, example_torch_inputs, opset_version=opset_version, dynamo=dynamo, **convert_kwargs)
+            output_model = cls._torch2onnxfile(input_model_path, output_model_path, example_inputs, opset_version=opset_version, dynamo=dynamo, **convert_kwargs)
         elif isinstance(input_model_path, str) and input_model_path.endswith('.pt2'):
-            output_model = cls._torch2onnxfile(input_model_path, output_model_path, example_torch_inputs, opset_version=opset_version, dynamo=dynamo, **convert_kwargs)
+            output_model = cls._torch2onnxfile(input_model_path, output_model_path, example_inputs, opset_version=opset_version, dynamo=dynamo, **convert_kwargs)
         elif isinstance(input_model_path, torch.nn.Module):
-            output_model = cls._torch2onnxfile(input_model_path, output_model_path, example_torch_inputs, opset_version=opset_version, dynamo=dynamo, **convert_kwargs)
+            output_model = cls._torch2onnxfile(input_model_path, output_model_path, example_inputs, opset_version=opset_version, dynamo=dynamo, **convert_kwargs)
         else:
             raise ValueError(f'ERROR: unsupported model format: {input_model_path}')
         #
         return output_model
 
     @classmethod
-    def _get_torch_model(cls, input_model_path, output_model_path=None, example_torch_inputs=None, opset_version=constants.ONNX_OPSET_VERSION_DEFAULT, dynamo=True, training=True, **convert_kwargs):
+    def _get_torch_model(cls, input_model_path, output_model_path=None, example_inputs=None, opset_version=constants.ONNX_OPSET_VERSION_DEFAULT, dynamo=True, training=False, **convert_kwargs):
         import torch
         if isinstance(input_model_path, str) and input_model_path.endswith('.onnx'):
-            output_model = cls._onnx2torchfile(input_model_path, output_model_path, example_torch_inputs, for_training=training, **convert_kwargs)
+            output_model = cls._onnx2torchfile(input_model_path, output_model_path, example_inputs, for_training=training, **convert_kwargs)
+        elif dynamo or (isinstance(input_model_path, str) and input_model_path.endswith('.pt2')):
+            output_model = torch.export.load(input_model_path)
         elif isinstance(input_model_path, str) and input_model_path.endswith('.pt'):
             output_model = torch.jit.load(input_model_path)
-        elif isinstance(input_model_path, str) and input_model_path.endswith('.pt2'):
-            output_model = torch.export.load(input_model_path)
         elif isinstance(input_model_path, torch.nn.Module):
             output_model = input_model_path
         else:
@@ -162,7 +162,7 @@ class ConvertModel(common_base.CommonPipelineBase):
             return None
 
     @classmethod
-    def _onnx2torchfile(cls, model_path, output_model_path=None, example_torch_inputs=None, **kwargs):
+    def _onnx2torchfile(cls, model_path, output_model_path=None, example_inputs=None, **kwargs):
         if isinstance(model_path, str) and model_path.endswith('.onnx'):
             import edgeai_onnx2torchmodel
             torch_model = edgeai_onnx2torchmodel.convert(model_path, **kwargs)
@@ -170,28 +170,28 @@ class ConvertModel(common_base.CommonPipelineBase):
             torch_model = model_path
         #
         if output_model_path:
-            if not example_torch_inputs:
-                example_torch_inputs = cls._get_onnx_example_inputs(model_path, to_torch=True)
+            if not example_inputs:
+                example_inputs = cls._get_onnx_example_inputs(model_path, to_torch=True)
             #
-            cls._torch2torchfile(torch_model, output_model_path, example_torch_inputs)
+            cls._torch2torchfile(torch_model, output_model_path, example_inputs)
         #
         return torch_model
 
     @classmethod
-    def _torch2torchfile(cls, torch_model, output_model_path=None, example_torch_inputs=None):
+    def _torch2torchfile(cls, torch_model, output_model_path=None, dynamo=True, example_inputs=None):
         import torch
-        if output_model_path.endswith('.pt2'):
-            exported_program = torch.export.export(torch_model, example_torch_inputs)
+        if dynamo or output_model_path.endswith('.pt2'):
+            exported_program = torch.export.export(torch_model, example_inputs)
             torch.export.save(exported_program, output_model_path)
         elif output_model_path.endswith('.pt'):
-            fx_graph = torch.jit.export(torch_model, example_torch_inputs)
+            fx_graph = torch.jit.export(torch_model, example_inputs)
             torch.jit.save(fx_graph, output_model_path)
         else:
             raise ValueError(f'ERROR: unsupported student model format: {output_model_path}')
         #
 
     @classmethod
-    def _torch2onnxfile(cls, torch_model, onnx_model_path, example_torch_inputs, opset_version, dynamo=True):
+    def _torch2onnxfile(cls, torch_model, onnx_model_path, example_inputs, opset_version, dynamo=True):
         import torch
         if isinstance(torch_model, str) and torch_model.endswith('.pt2'):
             torch_model = torch.export.load(torch_model)
@@ -202,12 +202,12 @@ class ConvertModel(common_base.CommonPipelineBase):
             print('INFO: dynamo based onnx export ...')
             custom_translation_table = cls._register_quantized_symbolics(opset_version=opset_version)
             artifacts_dir = os.path.dirname(onnx_model_path)
-            onnx_program = torch.onnx.export(torch_model, example_torch_inputs, opset_version=opset_version, dynamo=True, report=True, artifacts_dir=artifacts_dir, custom_translation_table=custom_translation_table)
+            onnx_program = torch.onnx.export(torch_model, example_inputs, opset_version=opset_version, dynamo=True, report=True, artifacts_dir=artifacts_dir, custom_translation_table=custom_translation_table)
             onnx_program.save(onnx_model_path)
         else:
             # traditional torchscript based onnx export
             print('INFO: torchscript based onnx export ...')
-            torch.onnx.export(torch_model, example_torch_inputs, onnx_model_path, export_params=True, opset_version=opset_version, do_constant_folding=True, training=torch.onnx.TrainingMode.PRESERVE, dynamo=False)
+            torch.onnx.export(torch_model, example_inputs, onnx_model_path, export_params=True, opset_version=opset_version, do_constant_folding=True, training=torch.onnx.TrainingMode.PRESERVE, dynamo=False)
 
     @classmethod
     def _register_quantized_symbolics(cls, opset_version):
