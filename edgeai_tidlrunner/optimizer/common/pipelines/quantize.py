@@ -67,16 +67,15 @@ class QuantizeModel(distill.DistillModel):
         self.teacher_model_path = os.path.join(self.teacher_folder, os.path.basename(self.model_path))
         shutil.move(self.model_path, self.teacher_model_path)
 
-        example_inputs = convert.ConvertModel._get_example_inputs(self.teacher_model_path, to_torch=True)
         teacher_model = convert.ConvertModel._get_torch_model(self.teacher_model_path)
-        # it is important to freeze the teacher model's bn
+        # it is important to freeze the teacher model's BN and Dropouts
         teacher_model.eval()
-        
-        student_model = self._prepare_model(teacher_model, example_inputs)
+
+        student_model = self._prepare_model(teacher_model, self.example_inputs)
         # student_model.train() #eval()
         
         common_kwargs['teacher_model_path'] = teacher_model
-        common_kwargs['example_inputs'] = example_inputs
+        common_kwargs['example_inputs'] = self.example_inputs
         common_kwargs['output_model_path'] = student_model
 
     def _prepare_model(self, teacher_model, example_inputs, device=None):
@@ -91,8 +90,7 @@ class QuantizeModel(distill.DistillModel):
 
         teacher_model_final = teacher_model #torch.export.export(teacher_model, example_inputs).module()
 
-        student_model_initial = copy.deepcopy(teacher_model_final)
-
+        student_model_initial = teacher_model_final #copy.deepcopy(teacher_model_final)
         student_model = torch.export.export(student_model_initial, example_inputs).module()
         allow_exported_model_train_eval(student_model)
 

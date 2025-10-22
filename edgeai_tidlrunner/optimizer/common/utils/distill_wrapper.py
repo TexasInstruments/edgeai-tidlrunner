@@ -37,8 +37,6 @@ import torch
 import torch.nn.utils.parametrize as parametrize
 import torchao
 
-from . import parametrization_module
-
 
 class DistillWrapperModule(torch.nn.Module):
     def __init__(self, student_model, teacher_model, **kwargs):

@@ -45,12 +45,13 @@ class ParametrizationBaseModule(torch.nn.Module):
 def _register_parametrizations(module, parametrization_class=None, param_names=None):
     import torch
     import torchao
+    from torchao.quantization import pt2e
     import torch.nn.utils.parametrize as parametrize
 
     for name, child in module.named_children():
         _register_parametrizations(child, parametrization_class=parametrization_class)
     #
-    if not isinstance(module, (ParametrizationBaseModule, torchao.quantization.pt2e.ObserverBase, torchao.quantization.pt2e.FakeQuantizeBase)):
+    if not isinstance(module, (ParametrizationBaseModule, pt2e.ObserverBase, pt2e.FakeQuantizeBase)):
         for name_p, param in list(module.named_parameters(recurse=False)):
             if param is not None and (param_names is None or name_p in param_names):
                 parametrize.register_parametrization(module, name_p, parametrization_class(param))
@@ -102,14 +103,13 @@ class ClipDeltaParametrization(ParametrizationBaseModule):
     
 
 class ClipConstParametrization(ParametrizationBaseModule):
-    def __init__(self, orig_value, clip_value = 15):
+    def __init__(self, orig_value, clip_value = 15.0):
         super().__init__()
         self.clip_value = clip_value
         self.with_parametrization = orig_value.dtype in [torch.float16, torch.bfloat16, torch.float32, torch.float64]
         if self.with_parametrization:
-            delta_w = self.clip_value
-            self.register_buffer('min_range', -delta_w)
-            self.register_buffer('max_range', +delta_w)
+            self.min_range = -self.clip_value
+            self.max_range = +self.clip_value
         #
 
     def forward(self, w_in):
