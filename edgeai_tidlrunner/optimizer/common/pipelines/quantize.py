@@ -51,11 +51,11 @@ class QuantizeModel(distill.DistillModel):
         print(f'INFO: Model quantize - {__file__}')
 
     def _prepare(self):
-        super()._prepare()
-        
         import torch
         import torchao
 
+        super()._prepare()
+        
         common_kwargs = self.settings[self.common_prefix]
         
         self.teacher_folder = os.path.join(self.run_dir, 'teacher')
@@ -63,9 +63,18 @@ class QuantizeModel(distill.DistillModel):
         os.makedirs(self.teacher_folder, exist_ok=True)
 
         self.teacher_model_path = os.path.join(self.teacher_folder, os.path.basename(self.model_path))
-        
         shutil.move(self.model_path, self.teacher_model_path)
-        teacher_model = convert.ConvertModel._get_torch_model(self.teacher_model_path)
+
+    def _run(self):
+        import torch
+        import torchao
+
+        common_kwargs = self.settings[self.common_prefix]
+        session_kwargs = self.settings[self.session_prefix]
+        runtime_options = session_kwargs['runtime_options']
+        calibration_iterations = runtime_options['advanced_options:calibration_iterations']
+
+        teacher_model = convert.ConvertModel._get_torch_model(self.teacher_model_path, example_inputs=self.example_inputs)
         # it is important to freeze the teacher model's BN and Dropouts
         teacher_model.eval()
 
@@ -109,16 +118,6 @@ class QuantizeModel(distill.DistillModel):
         common_kwargs['example_inputs'] = self.example_inputs
         common_kwargs['output_model_path'] = student_model
 
-    def _run(self):
-        import torch
-        import torchao
-
-        common_kwargs = self.settings[self.common_prefix]
-        session_kwargs = self.settings[self.session_prefix]
-        runtime_options = session_kwargs['runtime_options']
-        calibration_iterations = runtime_options['advanced_options:calibration_iterations']
-
-        print(f'INFO: starting model quantize with parameters: {self.kwargs}')
         super()._run()
 
         from torchao.quantization.pt2e.quantize_pt2e import (prepare_qat_pt2e, convert_pt2e,)

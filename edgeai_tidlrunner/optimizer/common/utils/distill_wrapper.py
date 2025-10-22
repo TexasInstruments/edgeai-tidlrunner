@@ -41,7 +41,7 @@ from ..utils import hooks_wrapper, parametrize_wrapper
 
 
 class DistillWrapperModule(torch.nn.Module):
-    def __init__(self, student_model, teacher_model, activation_decay=True, **kwargs):
+    def __init__(self, student_model, teacher_model, weight_clip=False, activation_decay=False, **kwargs):
         super().__init__()
         self.student_model = student_model
         self.teacher_model = teacher_model
@@ -49,17 +49,18 @@ class DistillWrapperModule(torch.nn.Module):
         self.criterion = torch.nn.SmoothL1Loss() #torch.nn.MSELoss() #torch.nn.KLDivLoss()
         self.epochs = kwargs.get('epochs', 10)
         self.warmup_epochs = kwargs.get('warmup_epochs', 3)
-        self.warmup_factor = kwargs.get('warmup_factor', 1/100.0)
-        self.lr = kwargs.get('lr', 1e-3)
+        self.warmup_factor = kwargs.get('warmup_factor', 1.0) #1/100.0)
+        self.lr = kwargs.get('lr', 1e-5)
         self.lr_min = kwargs.get('lr_min', self.lr/100.0)
         self.momentum = kwargs.get('momentum', 0.9)
-        self.weight_decay = kwargs.get('weight_decay', 1e-3)
+        self.weight_decay = kwargs.get('weight_decay', 1e-4)
         self.temperature = kwargs.get('temperature', 1)
         self.optimizer = torch.optim.SGD(student_model.parameters(), lr=self.lr, momentum=self.momentum, weight_decay=self.weight_decay)
-        self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max=self.epochs-self.warmup_epochs, eta_min=self.lr_min)
-        self.warmup_scheduler = torch.optim.lr_scheduler.LinearLR(self.optimizer, start_factor=self.warmup_factor, end_factor=1.0, total_iters=self.warmup_epochs)
         self.current_epoch = 0
+        self.current_iter = 0
+        self.scheduler = torch.optim.lr_scheduler.ConstantLR(self.optimizer, factor=self.warmup_factor, total_iters=self.warmup_epochs)
 
+        self.weight_clip = weight_clip
         self.activation_decay = activation_decay
         self.hook_handles = []
         self.activations_dict = {}
@@ -70,7 +71,9 @@ class DistillWrapperModule(torch.nn.Module):
             #
             self.hook_handles += hooks_wrapper.register_model_forward_hook(self.student_model, activation_store_hook_fn)
         #
-        parametrize_wrapper.register_parametrizations(self.student_model, parametrization_types=('clip_value',), param_names=('weight', 'bias'))
+        if self.weight_clip:
+            parametrize_wrapper.register_parametrizations(self.student_model, parametrization_types=('clip_delta',), param_names=('weight', 'bias'))
+        #
 
     def cleanup(self):
         hook_handles = self.hook_handles
@@ -79,7 +82,9 @@ class DistillWrapperModule(torch.nn.Module):
         for hook_handle in hook_handles:
             hook_handle.remove()
         #
-        parametrize_wrapper.remove_parametrizations(self.student_model)
+        if self.weight_clip:
+            parametrize_wrapper.remove_parametrizations(self.student_model)
+        #
 
     def forward(self, *inputs):
         with torch.no_grad():
@@ -121,21 +126,22 @@ class DistillWrapperModule(torch.nn.Module):
             act_loss = act_loss / len(self.activations_dict)
             loss += act_loss
         #
-
-        lr = round(self.get_scheduler().get_last_lr()[0], 6)
-        loss_value = round(loss.item(), 6)
-        self.optimizer.zero_grad()
+        if True: #self.current_iter == 0 or self.current_iter % 8 == 0:
+            self.optimizer.zero_grad()
+        #
         loss.backward()
         self.optimizer.step()
+        lr = round(self.get_last_lr(), 6)
+        loss_value = round(loss.item(), 6)
+        self.current_iter += 1
         return {'lr':lr, 'loss':loss_value}
     
     def get_scheduler(self):
-        if self.current_epoch < self.warmup_epochs:
-            scheduler = self.warmup_scheduler
-        else:
-            scheduler = self.scheduler
-        #
-        return scheduler
+        return self.scheduler
+    
+    def get_last_lr(self):
+        lr = self.get_scheduler().get_last_lr()[0]
+        return lr
 
     def step_epoch(self):
         self.get_scheduler().step()

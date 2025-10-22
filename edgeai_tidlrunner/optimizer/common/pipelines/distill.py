@@ -57,7 +57,7 @@ class DistillModel(compile.CompileModel):
         print(f'INFO: Model distill - {__file__}')
 
     def _prepare_model(self):
-        # no model surgery - override the method in compile
+        # no model surgery required - override the method in compile
         return self.model_path
 
     def _prepare(self):
@@ -69,18 +69,37 @@ class DistillModel(compile.CompileModel):
         runtime_options = session_kwargs['runtime_options']
         distill_kwargs = common_kwargs.get('distill', {})
     
-        self.input_normalizer = sessions.create_input_normalizer(**(session_kwargs | dict(input_optimization=False)))
-        
+        self.input_normalizer = common_kwargs.get('input_normalizer', None)
+        if not self.input_normalizer:
+            self.input_normalizer = sessions.create_input_normalizer(**(session_kwargs | dict(input_optimization=False)))
+        #
         self.example_inputs = common_kwargs.get('example_inputs', None)
         if not self.example_inputs:
             self.example_inputs, info_dict = self._get_input_from_dataloader(0)
         #
 
+    def _run(self):
+        import torch
+        import torchao
+
+        print(f'INFO: starting model quantize with parameters: {self.kwargs}')
+        print(f'INFO: running model quantize {self.model_path}')
+        common_kwargs = self.settings[self.common_prefix]
+        session_kwargs = self.settings[self.session_prefix]
+        runtime_options = session_kwargs['runtime_options']
+        distill_kwargs = common_kwargs.get('distill', {})
+    
+        calibration_iterations = runtime_options['advanced_options:calibration_iterations']
+        calibration_frames = runtime_options['advanced_options:calibration_frames']
+        calibration_batch_size = runtime_options['advanced_options:calibration_batch_size']
+        calibration_iterations = min(calibration_iterations, len(self.dataloader)) if calibration_iterations else len(self.dataloader)
+        calibration_frames = min(calibration_frames, len(self.dataloader)) if calibration_frames else len(self.dataloader)
+
         ###################################################################3
         # prepare model
         from ..utils.distill_wrapper import DistillWrapperModule
 
-        self.teacher_model_path = common_kwargs.get('teacher_model_path', None) or self.model_path
+        self.teacher_model_path = common_kwargs.get('teacher_model_path', None)
         self.student_model_path = common_kwargs.get('output_model_path', None)
         self.example_inputs = common_kwargs.get('example_inputs', None) or self.example_inputs
 
@@ -92,31 +111,17 @@ class DistillModel(compile.CompileModel):
         student_model = self.student_model_path
         if isinstance(self.student_model_path, str):
             student_model = convert.ConvertModel._get_torch_model(self.student_model_path)
-        elif self.student_model_path is None:
-            student_model = copy.deepcopy(teacher_model)
         #
+
+        teacher_model.eval()
+        student_model.eval() #.train()
 
         calibration_iterations = runtime_options['advanced_options:calibration_iterations']
         calibration_iterations = min(calibration_iterations, len(self.dataloader)) if calibration_iterations else len(self.dataloader)
         self.distill_model = DistillWrapperModule(student_model, teacher_model, epochs=calibration_iterations, **distill_kwargs)
+        ###################################################################3
 
-    def _run(self):
-        import torch
-        import torchao
-
-        print(f'INFO: starting model quantize with parameters: {self.kwargs}')
-        print(f'INFO: running model quantize {self.model_path}')
-        common_kwargs = self.settings[self.common_prefix]
-        session_kwargs = self.settings[self.session_prefix]
-        runtime_options = session_kwargs['runtime_options']
-    
-        calibration_iterations = runtime_options['advanced_options:calibration_iterations']
-        calibration_frames = runtime_options['advanced_options:calibration_frames']
-        calibration_batch_size = runtime_options['advanced_options:calibration_batch_size']
-        calibration_iterations = min(calibration_iterations, len(self.dataloader)) if calibration_iterations else len(self.dataloader)
-        calibration_frames = min(calibration_frames, len(self.dataloader)) if calibration_frames else len(self.dataloader)
-
-        self.distill_model.train()
+        # self.distill_model.train()
 
         # distill loop here
         tqdm_epoch = tqdm.tqdm(range(calibration_iterations), desc='DistillEpoch', leave=False)
@@ -136,8 +141,11 @@ class DistillModel(compile.CompileModel):
             self.distill_model.step_epoch()
         #
 
-        self.distill_model.eval()
+        # self.distill_model.eval()
         self.distill_model.cleanup()
+
+        teacher_model.eval()
+        student_model.eval()
 
         if isinstance(self.student_model_path, str):
             convert.ConvertModel._run_func(self.distill_model.student_model, self.student_model_path, self.example_inputs)

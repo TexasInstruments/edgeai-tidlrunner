@@ -66,18 +66,7 @@ class QAD(distill.DistillModel):
         os.makedirs(self.teacher_folder, exist_ok=True)
 
         self.teacher_model_path = os.path.join(self.teacher_folder, os.path.basename(self.model_path))
-
         shutil.move(self.model_path, self.teacher_model_path)
-        teacher_model = convert.ConvertModel._get_torch_model(self.teacher_model_path, example_inputs=self.example_inputs)
-        # it is important to freeze the teacher model's bn
-        teacher_model.eval()
-        
-        student_model = copy.deepcopy(teacher_model)
-        # student_model.train() #eval()
-        
-        common_kwargs['teacher_model_path'] = teacher_model
-        common_kwargs['example_inputs'] = self.example_inputs
-        common_kwargs['output_model_path'] = student_model
 
     def _run(self):
         import torch
@@ -90,7 +79,18 @@ class QAD(distill.DistillModel):
         runtime_options = session_kwargs['runtime_options']
         calibration_iterations = runtime_options['advanced_options:calibration_iterations']
 
-        print(f'INFO: starting model QAD with parameters: {self.kwargs}')
+        #################################################################################
+        teacher_model = convert.ConvertModel._get_torch_model(self.teacher_model_path, example_inputs=self.example_inputs)
+        # it is important to freeze the teacher model's bn
+        teacher_model.eval()
+        
+        student_model = copy.deepcopy(teacher_model)
+        # student_model.train() #eval()
+        
+        common_kwargs['teacher_model_path'] = teacher_model
+        common_kwargs['example_inputs'] = self.example_inputs
+        common_kwargs['output_model_path'] = student_model
+        #################################################################################
 
         super()._run()
 
