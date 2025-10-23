@@ -40,8 +40,8 @@ import torchao
 from ..utils import hooks_wrapper, parametrize_wrapper
 
 
-class DistillWrapperModule(torch.nn.Module):
-    def __init__(self, student_model, teacher_model, weight_clip=False, activation_decay=False, **kwargs):
+class DistillWrapperBaseModule(torch.nn.Module):
+    def __init__(self, student_model, teacher_model, **kwargs):
         super().__init__()
         self.student_model = student_model
         self.teacher_model = teacher_model
@@ -59,8 +59,6 @@ class DistillWrapperModule(torch.nn.Module):
 
         self.current_epoch = 0
         self.current_iter = 0
-        self.weight_clip = weight_clip
-        self.activation_decay = activation_decay
         self.hook_handles = []
         self.activations_dict = {}
 
@@ -68,26 +66,8 @@ class DistillWrapperModule(torch.nn.Module):
         self.scheduler = torch.optim.lr_scheduler.ConstantLR(self.optimizer, factor=self.warmup_factor, total_iters=self.warmup_epochs)
         self.optimizer.zero_grad()
 
-        if self.activation_decay:
-            def activation_store_hook_fn(m, input, output):
-                self.activations_dict[m.__module_name_info__] = output.detach()
-            #
-            self.hook_handles += hooks_wrapper.register_model_forward_hook(self.student_model, activation_store_hook_fn)
-        #
-        if self.weight_clip:
-            parametrize_wrapper.register_parametrizations(self.student_model, parametrization_types=('clip_delta',), param_names=('weight', 'bias'))
-        #
-
     def cleanup(self):
-        hook_handles = self.hook_handles
-        hook_handles = list(hook_handles.values()) if isinstance(hook_handles, dict) else hook_handles
-        hook_handles = [hook_handles] if not isinstance(hook_handles, list) else hook_handles
-        for hook_handle in hook_handles:
-            hook_handle.remove()
-        #
-        if self.weight_clip:
-            parametrize_wrapper.remove_parametrizations(self.student_model)
-        #
+        pass
 
     def forward(self, *inputs):
         with torch.no_grad():
@@ -111,7 +91,7 @@ class DistillWrapperModule(torch.nn.Module):
         return self
     
     def step_iter(self, outputs, targets):
-        loss = self._compute_loss(outputs, targets)
+        loss = self._compute_loss(outputs, targets)  / self.optimizer_step_interval
         loss.backward()
         is_optimizer_step = (self.current_iter == 0 or self.current_iter % self.optimizer_step_interval == 0)
         if is_optimizer_step:
@@ -130,19 +110,6 @@ class DistillWrapperModule(torch.nn.Module):
         else:
             loss = self.criterion(outputs, targets)
         #
-        if self.activations_dict:
-            act_loss = 0.0
-            for k, v in self.activations_dict.items():
-                # act_deviation = (v-1.0).pow(2).mean()
-                # act_deviation = torch.quantile(torch.abs(v[:]), 0.99)
-                # act_deviation = torch.kthvalue(v.reshape(-1), int(0.99*torch.numel(v)), dim=0)[0]
-                act_deviation = v.abs().mean() + v.std()
-                act_loss = act_loss + act_deviation
-            #
-            act_loss = act_loss / len(self.activations_dict)
-            loss += act_loss
-        #
-        loss = loss / self.optimizer_step_interval
         return loss
         
     def _get_scheduler(self):
@@ -155,3 +122,55 @@ class DistillWrapperModule(torch.nn.Module):
     def step_epoch(self):
         self._get_scheduler().step()
         self.current_epoch += 1
+
+
+class DistillWrapperModule(DistillWrapperBaseModule):
+    def __init__(self, student_model, teacher_model, weight_clip_delta=True, activation_decay=False, **kwargs):
+        super().__init__(student_model, teacher_model, **kwargs)
+        self.weight_clip_delta = weight_clip_delta
+        self.activation_decay = activation_decay
+        if self.activation_decay:
+            def activation_store_hook_fn(m, input, output):
+                self.activations_dict[m.__module_name_info__] = output.detach()
+            #
+            self.hook_handles += hooks_wrapper.register_model_forward_hook(self.student_model, activation_store_hook_fn)
+        #
+        if self.weight_clip_delta:
+            param_names = ('weight', 'bias')
+            # clip the range of thes parameters within a certain percentage of the original value
+            parametrize_wrapper.register_parametrizations(self.student_model, parametrization_types=('weight_clip_delta',), param_names=param_names)
+            # freeze all the other parameters
+            for p_name, p in self.student_model.named_parameters():
+                if p_name.split('.')[-1] not in param_names:
+                    p.requires_grad = False
+                #
+            #
+        #
+
+    def cleanup(self):
+        super().cleanup()
+        hook_handles = self.hook_handles
+        hook_handles = list(hook_handles.values()) if isinstance(hook_handles, dict) else hook_handles
+        hook_handles = [hook_handles] if not isinstance(hook_handles, list) else hook_handles
+        for hook_handle in hook_handles:
+            hook_handle.remove()
+        #
+        if self.weight_clip_delta:
+            parametrize_wrapper.remove_parametrizations(self.student_model)
+        #
+
+    def _compute_loss(self, outputs, targets):
+        loss = super()._compute_loss(outputs, targets)
+        if self.activations_dict:
+            act_loss = 0.0
+            for k, v in self.activations_dict.items():
+                # act_deviation = (v-1.0).pow(2).mean()
+                # act_deviation = torch.quantile(torch.abs(v[:]), 0.99)
+                # act_deviation = torch.kthvalue(v.reshape(-1), int(0.99*torch.numel(v)), dim=0)[0]
+                act_deviation = v.abs().mean() + v.std()
+                act_loss = act_loss + act_deviation
+            #
+            act_loss = act_loss / len(self.activations_dict)
+            loss += act_loss
+        #
+        return loss

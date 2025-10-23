@@ -67,7 +67,7 @@ def matching_command_name(command_name, package_name=None):
     if command_name not in command_pipelines.keys():
         command_name_matches = difflib.get_close_matches(command_name, command_names)
         if not command_name_matches:
-            command_name_matches = [cname for cname in command_names if command_name in cname]
+            command_name_matches = [cname for cname in command_names if command_name == cname.split('.')[-1]]
         #
         if not command_name_matches or len(command_name_matches) > 1:
             raise RuntimeError(f'ERROR: invalid command_name: {command_name}, available commands are: {list(command_names)}')
@@ -158,7 +158,7 @@ def _get_configs(config_path, **kwargs):
         elif os.path.exists(config_path) and os.path.isdir(config_path):
             print(f"INFO: config_path is a configs module from edgeai-benchmark: {config_path}")
             import edgeai_benchmark
-            
+
             runner_settings = bases.pipeline_base.PipelineBase._parse_to_dict(**kwargs)
             runtime_options = runner_settings.get('session', {}).get('runtime_options', {})
             calibration_frames = runtime_options.get('advanced_options:calibration_frames', None)

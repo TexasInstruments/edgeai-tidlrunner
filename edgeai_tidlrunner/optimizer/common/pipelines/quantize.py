@@ -89,9 +89,10 @@ class QuantizeModel(distill.DistillModel):
         # from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule 
         # student_model = quantization.v3.QATPT2EModule(teacher_model, example_inputs, total_epochs=calibration_iterations)
 
-        teacher_model_final = teacher_model #torch.export.export(teacher_model, example_inputs).module()
+        #teacher_model = torch.export.export(teacher_model, self.example_inputs).module()
+        #allow_exported_model_train_eval(teacher_model)
 
-        student_model_initial = teacher_model_final #copy.deepcopy(teacher_model_final)
+        student_model_initial = teacher_model #copy.deepcopy(teacher_model)
         student_model = torch.export.export(student_model_initial, self.example_inputs).module()
         allow_exported_model_train_eval(student_model)
 

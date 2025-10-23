@@ -86,7 +86,10 @@ def _remove_parametrizations(module):
     return module
 
 
-class ClipDeltaParametrization(ParametrizationBaseModule):
+class WeightClipDeltaParametrization(ParametrizationBaseModule):
+    '''
+    Clip the weights of a layer within a certain delta range.
+    '''
     def __init__(self, orig_value, delta_factor = 0.01):
         super().__init__()
         self.delta_factor = delta_factor
@@ -102,7 +105,7 @@ class ClipDeltaParametrization(ParametrizationBaseModule):
         return w_out
     
 
-class ClipValueParametrization(ParametrizationBaseModule):
+class WeightClipValueParametrization(ParametrizationBaseModule):
     def __init__(self, orig_value, clip_value = 15.0):
         super().__init__()
         self.clip_value = clip_value
@@ -118,8 +121,8 @@ class ClipValueParametrization(ParametrizationBaseModule):
 
 
 PARAMETRIZATION_TYPES_DICT = {
-    'clip_delta': ClipDeltaParametrization,
-    'clip_value': ClipValueParametrization,
+    'weight_clip_delta': WeightClipDeltaParametrization,
+    'weight_clip_value': WeightClipValueParametrization,
 }
 
 
