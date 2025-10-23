@@ -242,12 +242,13 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
                     
         config_path = kwargs_cmd.get('common.config_path', None)
         kwargs_combined = (kwargs_cmd | kwargs)
+        model_path = kwargs_combined.get('session.model_path', None)
         if config_path:
             configs = _get_configs(config_path, **kwargs_combined)
         else:
             if model_id is None:
                 print('WARNING: model_id is not given, generating randomly')
-                model_id = utils.generate_unique_id(kwargs_combined['session.model_path'])
+                model_id = "x-" + utils.generate_unique_id(model_path) if model_path else "x-x"
             #
             configs = {model_id:dict()}
         #
@@ -256,6 +257,7 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
         for model_id, config_entry in configs.items():
             if isinstance(config_entry, str):
                 if not (config_entry.startswith('/') or config_entry.startswith('.')):
+                    print('INFO: config_entry is not an absolute path, resolving relative to config_path')
                     config_base_path = os.path.dirname(config_path)
                     config_entry = os.path.join(config_base_path, config_entry)
                 #

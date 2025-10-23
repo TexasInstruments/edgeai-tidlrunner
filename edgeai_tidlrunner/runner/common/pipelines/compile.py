@@ -224,7 +224,7 @@ class CompileModel(CompileModelBase):
     
     def get_info_dict(self, input_index):
         info_dict = {'dataset_info': getattr(self.dataloader, 'dataset_info', None),
-                     'label_offset_pred': self.pipeline_config.get('metric',{}).get('label_offset_pred',None) if self.pipeline_config else None,
+                     'label_offset_pred': self.pipeline_config.get('metric',{}).get('label_offset_pred',None) if isinstance(self.pipeline_config, dict) else None,
                      'sample_idx': input_index,
-                     'task_name': self.pipeline_config.get('task_name',{}) if self.pipeline_config else None}
+                     'task_name': self.pipeline_config.get('task_name',{}) if isinstance(self.pipeline_config, dict) else None}
         return info_dict
