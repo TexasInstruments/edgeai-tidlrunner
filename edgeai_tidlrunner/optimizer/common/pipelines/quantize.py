@@ -34,7 +34,7 @@ import copy
 
 from edgeai_tidlrunner.runner.common import utils
 from edgeai_tidlrunner.runner.common import bases
-from edgeai_tidlrunner.runner.common.settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
+from ..settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
 
 from . import convert
 from . import distill

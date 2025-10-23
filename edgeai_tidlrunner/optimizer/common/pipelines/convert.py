@@ -39,8 +39,8 @@ from edgeai_tidlrunner.runner.common import utils
 from edgeai_tidlrunner.runner.common import bases
 
 from edgeai_tidlrunner.runner.common.settings import constants
-from edgeai_tidlrunner.runner.common.settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
 from edgeai_tidlrunner.runner.common.pipelines.common_ import common_base
+from ..settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
 
 
 class ConvertModel(common_base.CommonPipelineBase):

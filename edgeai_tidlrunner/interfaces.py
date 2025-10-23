@@ -159,6 +159,19 @@ def _get_configs(config_path, **kwargs):
             print(f"INFO: config_path is a configs module from edgeai-benchmark: {config_path}")
             import edgeai_benchmark
             
+            runner_settings = bases.pipeline_base.PipelineBase._parse_to_dict(**kwargs)
+            runtime_options = runner_settings.get('session', {}).get('runtime_options', {})
+            calibration_frames = runtime_options.get('advanced_options:calibration_frames', None)
+            calibration_iterations = runtime_options.get('advanced_options:calibration_iterations', None)
+            num_frames = runner_settings.get('common', {}).get('num_frames', None)
+            settings_kwargs = {}
+            for arg in ['runtime_options', 'calibration_frames', 'calibration_iterations', 'num_frames']:
+                arg_value = locals()[arg]
+                if arg_value:
+                    settings_kwargs[arg] = arg_value
+                #
+            #
+            
             settings_file = edgeai_benchmark.get_settings_file()
 
             model_shortlist = kwargs.get('common.model_shortlist', None)
@@ -169,8 +182,9 @@ def _get_configs(config_path, **kwargs):
 
             settings = edgeai_benchmark.config_settings.ConfigSettings(
                 settings_file, model_shortlist=model_shortlist, model_selection=model_selection, 
-                target_device=target_device,
-                configs_path = os.path.abspath(config_path))
+                target_device=target_device, 
+                configs_path = os.path.abspath(config_path),
+                **settings_kwargs)
 
             if not os.path.exists(settings.datasets_path):
                 benchmark_dependencies_path = '../edgeai-benchmark/dependencies'

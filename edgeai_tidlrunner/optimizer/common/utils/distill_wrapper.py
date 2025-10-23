@@ -55,15 +55,18 @@ class DistillWrapperModule(torch.nn.Module):
         self.momentum = kwargs.get('momentum', 0.9)
         self.weight_decay = kwargs.get('weight_decay', 1e-4)
         self.temperature = kwargs.get('temperature', 1)
-        self.optimizer = torch.optim.SGD(student_model.parameters(), lr=self.lr, momentum=self.momentum, weight_decay=self.weight_decay)
+        self.optimizer_step_interval = kwargs.get('optimizer_step_interval', 16)
+
         self.current_epoch = 0
         self.current_iter = 0
-        self.scheduler = torch.optim.lr_scheduler.ConstantLR(self.optimizer, factor=self.warmup_factor, total_iters=self.warmup_epochs)
-
         self.weight_clip = weight_clip
         self.activation_decay = activation_decay
         self.hook_handles = []
         self.activations_dict = {}
+
+        self.optimizer = torch.optim.SGD(student_model.parameters(), lr=self.lr, momentum=self.momentum, weight_decay=self.weight_decay)
+        self.scheduler = torch.optim.lr_scheduler.ConstantLR(self.optimizer, factor=self.warmup_factor, total_iters=self.warmup_epochs)
+        self.optimizer.zero_grad()
 
         if self.activation_decay:
             def activation_store_hook_fn(m, input, output):
@@ -108,6 +111,19 @@ class DistillWrapperModule(torch.nn.Module):
         return self
     
     def step_iter(self, outputs, targets):
+        loss = self._compute_loss(outputs, targets)
+        loss.backward()
+        is_optimizer_step = (self.current_iter == 0 or self.current_iter % self.optimizer_step_interval == 0)
+        if is_optimizer_step:
+            self.optimizer.step()
+            self.optimizer.zero_grad()
+        #
+        lr = round(self._get_last_lr(), 6)
+        loss_value = round(loss.item(), 6)
+        self.current_iter += 1
+        return {'lr':lr, 'loss':loss_value}
+    
+    def _compute_loss(self, outputs, targets):
         if isinstance(outputs, (list, tuple)) and isinstance(targets, (list, tuple)):
             assert len(outputs) == len(targets), f'number of outputs {len(outputs)} and targets {len(targets)} should be same'
             loss = sum([self.criterion(o, t) for o,t in zip(outputs, targets)])
@@ -126,23 +142,16 @@ class DistillWrapperModule(torch.nn.Module):
             act_loss = act_loss / len(self.activations_dict)
             loss += act_loss
         #
-        if True: #self.current_iter == 0 or self.current_iter % 8 == 0:
-            self.optimizer.zero_grad()
-        #
-        loss.backward()
-        self.optimizer.step()
-        lr = round(self.get_last_lr(), 6)
-        loss_value = round(loss.item(), 6)
-        self.current_iter += 1
-        return {'lr':lr, 'loss':loss_value}
-    
-    def get_scheduler(self):
+        loss = loss / self.optimizer_step_interval
+        return loss
+        
+    def _get_scheduler(self):
         return self.scheduler
     
-    def get_last_lr(self):
-        lr = self.get_scheduler().get_last_lr()[0]
+    def _get_last_lr(self):
+        lr = self._get_scheduler().get_last_lr()[0]
         return lr
 
     def step_epoch(self):
-        self.get_scheduler().step()
+        self._get_scheduler().step()
         self.current_epoch += 1

@@ -37,9 +37,9 @@ from edgeai_tidlrunner import runner
 
 from edgeai_tidlrunner.runner.common import utils
 from edgeai_tidlrunner.runner.common import bases
-from edgeai_tidlrunner.runner.common.settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
 from edgeai_tidlrunner.runner.common.blocks import sessions
 from edgeai_tidlrunner.runner.common.pipelines import compile
+from ..settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
 
 from . import convert
 
