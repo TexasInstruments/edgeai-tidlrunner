@@ -87,6 +87,14 @@ class CompileModel(CompileModelBase):
                                source_dir=config_path)
         #
 
+        # session
+        if not self.pipeline_config and not self.session and session_kwargs.get('name',None):
+            session_name = session_kwargs['name']
+            session_type = blocks.sessions.SESSION_TYPES_MAPPING[session_name]
+            self.session = session_type(self.settings, **session_kwargs)
+            self.session.start_import()
+        #
+
         # input_data
         if self.pipeline_config and 'dataloader' in self.pipeline_config:
             self.dataloader = self.pipeline_config['dataloader']
@@ -167,10 +175,12 @@ class CompileModel(CompileModelBase):
         runtime_options = session_kwargs['runtime_options']
 
         # session
-        session_name = session_kwargs['name']
-        session_type = blocks.sessions.SESSION_TYPES_MAPPING[session_name]
-        self.session = session_type(self.settings, **session_kwargs)
-        self.session.start_import()
+        if not self.session:
+            session_name = session_kwargs['name']
+            session_type = blocks.sessions.SESSION_TYPES_MAPPING[session_name]
+            self.session = session_type(self.settings, **session_kwargs)
+            self.session.start_import()
+        #
 
         if common_kwargs['incremental']:
             if os.path.exists(self.param_yaml):

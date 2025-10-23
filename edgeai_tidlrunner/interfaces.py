@@ -241,10 +241,14 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
         provided_args = kwargs_cmd.pop('_provided_args', set())
                     
         config_path = kwargs_cmd.get('common.config_path', None)
+        kwargs_combined = (kwargs_cmd | kwargs)
         if config_path:
-            configs = _get_configs(config_path, **(kwargs_cmd | kwargs))
+            configs = _get_configs(config_path, **kwargs_combined)
         else:
-            assert model_id is not None, 'ERROR: model_id is required when config_path is not given'
+            if model_id is None:
+                print('WARNING: model_id is not given, generating randomly')
+                model_id = utils.generate_unique_id(kwargs_combined['session.model_path'])
+            #
             configs = {model_id:dict()}
         #
 

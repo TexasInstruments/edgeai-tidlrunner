@@ -79,7 +79,7 @@ class CompileModelBase(CommonPipelineBase):
             runtime_options = session_kwargs['runtime_options']
 
             ###################################################################################
-            if self.pipeline_config is None:
+            if not self.pipeline_config:
                 if not dataloader_kwargs['name']:
                     print(f'WARNING: dataloader name is was not provided - will use random_dataloader'
                         f'\n  and the resultant compiled artifacts may not be accurate.'
@@ -118,9 +118,10 @@ class CompileModelBase(CommonPipelineBase):
     def _upgrade_kwargs(cls, **kwargs):
         kwargs_in = kwargs
 
-        upgrade_config = kwargs_in.get('common.upgrade_config', False)
+        upgrade_config = kwargs_in.get('common.upgrade_config', True)
         model_path = kwargs_in.get('session.model_path', None)
-
+        model_ext = os.path.splitext(model_path)[1][1:] if model_path else None
+        
         if not upgrade_config:
             kwargs_out = copy.deepcopy(kwargs_in)
         else:
