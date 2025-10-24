@@ -113,8 +113,8 @@ class DistillModel(compile.CompileModel):
             student_model = convert.ConvertModel._get_torch_model(self.student_model_path)
         #
 
-        teacher_model.eval()
-        student_model.eval() #.train()
+        # teacher_model.eval()
+        # student_model.eval() #.train()
 
         calibration_iterations = runtime_options['advanced_options:calibration_iterations']
         calibration_iterations = min(calibration_iterations, len(self.dataloader)) if calibration_iterations else len(self.dataloader)
@@ -144,8 +144,8 @@ class DistillModel(compile.CompileModel):
         # self.distill_model.eval()
         self.distill_model.cleanup()
 
-        teacher_model.eval()
-        student_model.eval()
+        # teacher_model.eval()
+        # student_model.eval()
 
         if isinstance(self.student_model_path, str):
             convert.ConvertModel._run_func(self.distill_model.student_model, self.student_model_path, self.example_inputs)

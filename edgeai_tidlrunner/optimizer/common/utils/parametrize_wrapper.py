@@ -49,7 +49,7 @@ def _register_parametrizations(module, parametrization_class=None, param_names=N
     import torch.nn.utils.parametrize as parametrize
 
     for name, child in module.named_children():
-        _register_parametrizations(child, parametrization_class=parametrization_class)
+        _register_parametrizations(child, parametrization_class=parametrization_class, param_names=param_names)
     #
     if not isinstance(module, (ParametrizationBaseModule, pt2e.ObserverBase, pt2e.FakeQuantizeBase)):
         for name_p, param in list(module.named_parameters(recurse=False)):
@@ -93,7 +93,8 @@ class WeightClipDeltaParametrization(ParametrizationBaseModule):
     def __init__(self, orig_value, delta_factor = 0.01):
         super().__init__()
         self.delta_factor = delta_factor
-        self.with_parametrization = orig_value.dtype in [torch.float16, torch.bfloat16, torch.float32, torch.float64]
+        self.with_parametrization = (orig_value.dtype in [torch.float16, torch.bfloat16, torch.float32, torch.float64]) and \
+            (not torch.isnan(orig_value).any()) and (not torch.isinf(orig_value).any())
         if self.with_parametrization:
             delta_w = torch.abs(orig_value.detach().data) * self.delta_factor
             self.register_buffer('min_range', orig_value - delta_w)

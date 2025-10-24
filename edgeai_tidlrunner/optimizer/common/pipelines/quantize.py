@@ -74,28 +74,32 @@ class QuantizeModel(distill.DistillModel):
         runtime_options = session_kwargs['runtime_options']
         calibration_iterations = runtime_options['advanced_options:calibration_iterations']
 
+        # get pytorch model
         teacher_model = convert.ConvertModel._get_torch_model(self.teacher_model_path, example_inputs=self.example_inputs)
         # it is important to freeze the teacher model's BN and Dropouts
         teacher_model.eval()
 
         #################################################################################
+        # prepare the model
         import torch
         import torchao
         from torchao.quantization.pt2e.quantize_pt2e import (prepare_qat_pt2e, convert_pt2e)
         from torchao.quantization.pt2e import allow_exported_model_train_eval
         # from edgeai_torchmodelopt.xmodelopt import quantization
 
-        # create student model
-        # from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule 
-        # student_model = quantization.v3.QATPT2EModule(teacher_model, example_inputs, total_epochs=calibration_iterations)
-
-        #teacher_model = torch.export.export(teacher_model, self.example_inputs).module()
+        #teacher_model = torch.export.export(teacher_model, example_inputs=self.example_inputs).module()
         #allow_exported_model_train_eval(teacher_model)
 
         student_model_initial = teacher_model #copy.deepcopy(teacher_model)
         student_model = torch.export.export(student_model_initial, self.example_inputs).module()
         allow_exported_model_train_eval(student_model)
 
+        # create student model
+        from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule 
+        student_model = QATPT2EModule(teacher_model, example_inputs=self.example_inputs, total_epochs=calibration_iterations)
+
+        # ---------------------------------------------------------------------------------
+        # for experimentation only - remove later
         # backend developer will write their own Quantizer and expose methods to allow
         # from torchao.quantization.pt2e.quantizer.arm_inductor_quantizer import (ArmInductorQuantizer, get_default_arm_inductor_quantization_config)
         # quantizer = ArmInductorQuantizer().set_global(get_default_arm_inductor_quantization_config(is_qat=True))
@@ -107,26 +111,34 @@ class QuantizeModel(distill.DistillModel):
         # quantizer = XPUInductorQuantizer().set_global(get_default_xpu_inductor_quantization_config(is_qat=True))
 
         # install executorch: `pip install executorch`
-        from executorch.backends.xnnpack.quantizer.xnnpack_quantizer import (get_symmetric_quantization_config, XNNPACKQuantizer)
-        # # quantizer = XNNPACKQuantizer().set_global(get_symmetric_quantization_config(is_qat=True, per_channel=True))
-        quantizer = XNNPACKQuantizer().set_global(get_symmetric_quantization_config(is_qat=True))
+        # from executorch.backends.xnnpack.quantizer.xnnpack_quantizer import (get_symmetric_quantization_config, XNNPACKQuantizer)
+        # # # quantizer = XNNPACKQuantizer().set_global(get_symmetric_quantization_config(is_qat=True, per_channel=True))
+        # quantizer = XNNPACKQuantizer().set_global(get_symmetric_quantization_config(is_qat=True))
 
-        student_model = prepare_qat_pt2e(student_model, quantizer)
-        allow_exported_model_train_eval(student_model)
+        # student_model = prepare_qat_pt2e(student_model, quantizer)
+        # allow_exported_model_train_eval(student_model)
+        # ---------------------------------------------------------------------------------
+
         #################################################################################
-        
+        # run the distillation
         common_kwargs['teacher_model_path'] = teacher_model
         common_kwargs['example_inputs'] = self.example_inputs
         common_kwargs['output_model_path'] = student_model
 
         super()._run()
 
+        # convert student model
         from torchao.quantization.pt2e.quantize_pt2e import (prepare_qat_pt2e, convert_pt2e,)
         student_model = common_kwargs['output_model_path']
-        student_model = convert_pt2e(student_model)
-
+        student_model = student_model.convert(make_copy=False) if isinstance(student_model, QATPT2EModule) else convert_pt2e(student_model)
+        
+        # save student model - create folder
         os.makedirs(self.student_folder, exist_ok=True)
         self.student_model_path = os.path.join(self.student_folder, os.path.basename(self.model_path))
+        # export to pt2 - optional
+        self.student_model_path_pt2 = os.path.splitext(self.student_model_path)[0] + ".pt2"
+        convert.ConvertModel._run_func(student_model, self.student_model_path_pt2, common_kwargs['example_inputs'])
+        # export to onnx
         convert.ConvertModel._run_func(student_model, self.student_model_path, common_kwargs['example_inputs'])
-
+        # copy to model_path
         shutil.copyfile(self.student_model_path, self.model_path)

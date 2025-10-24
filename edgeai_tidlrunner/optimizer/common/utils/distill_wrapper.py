@@ -46,7 +46,6 @@ class DistillWrapperBaseModule(torch.nn.Module):
         self.student_model = student_model
         self.teacher_model = teacher_model
 
-        self.criterion = torch.nn.SmoothL1Loss() #torch.nn.MSELoss() #torch.nn.KLDivLoss()
         self.epochs = kwargs.get('epochs', 10)
         self.warmup_epochs = kwargs.get('warmup_epochs', 3)
         self.warmup_factor = kwargs.get('warmup_factor', 1.0) #1/100.0)
@@ -55,7 +54,7 @@ class DistillWrapperBaseModule(torch.nn.Module):
         self.momentum = kwargs.get('momentum', 0.9)
         self.weight_decay = kwargs.get('weight_decay', 1e-4)
         self.temperature = kwargs.get('temperature', 1)
-        self.optimizer_step_interval = kwargs.get('optimizer_step_interval', 16)
+        self.optimizer_step_interval = kwargs.get('optimizer_step_interval', 10)
 
         self.current_epoch = 0
         self.current_iter = 0
@@ -106,12 +105,20 @@ class DistillWrapperBaseModule(torch.nn.Module):
     def _compute_loss(self, outputs, targets):
         if isinstance(outputs, (list, tuple)) and isinstance(targets, (list, tuple)):
             assert len(outputs) == len(targets), f'number of outputs {len(outputs)} and targets {len(targets)} should be same'
-            loss = sum([self.criterion(o, t) for o,t in zip(outputs, targets)])
+            loss = sum([self._criterion(o, t) for o,t in zip(outputs, targets)])
         else:
-            loss = self.criterion(outputs, targets)
+            loss = self._criterion(outputs, targets)
         #
         return loss
-        
+    
+    def _criterion(self, outputs, targets):
+        if outputs.dtype in (torch.long, torch.int, torch.int8, torch.int16, torch.int32, torch.int64):
+            assert False, "ERROR: Cannot compute loss on integer outputs directly."
+        else:
+            loss = torch.nn.functional.smooth_l1_loss(outputs, targets)
+        #
+        return loss
+
     def _get_scheduler(self):
         return self.scheduler
     
