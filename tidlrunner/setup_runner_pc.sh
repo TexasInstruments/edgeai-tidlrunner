@@ -70,30 +70,20 @@ done
 pip3 install -e ./tools --verbose
 
 
-# unsintall onnxruntime and install onnxruntime-tild along with tidl-tools
-# pip3 uninstall -y onnxruntime
-
-
-# download-tidl-tools is a script that defined in and installed via tools/pyproject.toml
+######################################################################
+# tidlrunner-tools-download is a script that defined in and installed via tools/pyproject.toml
 # download and install tidl-tools - this invokes: python3 tools/tidl_tools_package/download.py
-echo "Running: download-tidl-tools..."
-download-tidl-tools
+echo "Running: tidlrunner-tools-download..."
+tidlrunner-tools-download
 
 
 ######################################################################
+echo "Installing edgeai_tidirunner package..."
 pip3 install -e ./[pc] --verbose
 
-# download-tidlrunner-tools is a script that defined in and installed via ./pyproject.toml
-# download and install packages - this invokes: python3 edgeai_tidlrunner/download.py
-# pip3 install --no-input onnx-graphsurgeon==0.3.26 --extra-index-url https://pypi.ngc.nvidia.com
-# pip3 install --no-input osrt_model_tools @ git+https://github.com/TexasInstruments/edgeai-tidl-tools.git@11_00_08_00#subdirectory=osrt-model-tools
-echo "Running: download-tidlrunner-tools..."
-download-tidlrunner-tools
 
-
-#######################################################################
-# pillow-simd for faster resize
-# there as issue with installing pillow-simd through requirements - force it here
-# pip3 uninstall --yes pillow
-# pip3 install --no-input -U --force-reinstall pillow-simd
-
+######################################################################
+# tidlrunner-tools-install is a script that defined in and installed via ./pyproject.toml
+# it installs additional python packages and tools
+echo "Running: tidlrunner-tools-install..."
+tidlrunner-tools-install

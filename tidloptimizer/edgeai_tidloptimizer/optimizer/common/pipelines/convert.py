@@ -197,7 +197,7 @@ class ConvertModel(common_base.CommonPipelineBase):
         #
 
     @classmethod
-    def _torch2onnxfile(cls, torch_model, onnx_model_path, example_inputs, opset_version, dynamo=True):
+    def _torch2onnxfile(cls, torch_model, onnx_model_path, example_inputs, opset_version, dynamo=True, simplify=False, onnx_ir_version=None):
         import torch
         if isinstance(torch_model, str) and torch_model.endswith('.pt2'):
             torch_model = torch.export.load(torch_model)
@@ -214,6 +214,20 @@ class ConvertModel(common_base.CommonPipelineBase):
             # traditional torchscript based onnx export
             print('INFO: torchscript based onnx export ...')
             torch.onnx.export(torch_model, example_inputs, onnx_model_path, export_params=True, opset_version=opset_version, do_constant_folding=True, training=torch.onnx.TrainingMode.PRESERVE, dynamo=False)
+        #
+        if simplify:
+            print('INFO: simplifying onnx model ...')
+            import onnxsim
+            onnx_model, onnx_check = onnxsim.simplify(onnx_model_path)
+            onnx.save(onnx_model, onnx_model_path)
+        #
+        if onnx_ir_version:
+            print('INFO: converting ONNX IR version ...')
+            import onnx
+            onnx_model = onnx.load(onnx_model_path)
+            onnx_model = onnx.version_converter.convert_version(onnx_model, onnx_ir_version)
+            onnx.save(onnx_model, onnx_model_path)
+        #
 
     @classmethod
     def _register_quantized_symbolics(cls, opset_version):

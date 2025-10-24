@@ -41,6 +41,8 @@ dependencies = [
 [project.optional-dependencies]
 pc = [
     "opencv-python-headless",
+    "onnx==1.14.0",
+    "protobuf==3.20.3",
     "numpy==1.23.0",
     "onnxsim==0.4.35",
     "osrt_model_tools@git+https://github.com/TexasInstruments/edgeai-tidl-tools.git@11_01_06_00#subdirectory=osrt-model-tools", ##"osrt_model_tools@git+ssh://git@bitbucket.itg.ti.com/processor-sdk-vision/edgeai-tidl-tools.git@master#subdirectory=osrt-model-tools",
@@ -56,9 +58,8 @@ dev = [
 ]
 
 [project.scripts]
-download-tidlrunner-tools = "edgeai_tidlrunner.download:main"
-tidlrunnercli = "edgeai_tidlrunner.main:main_runner"
-tidloptimizercli = "edgeai_tidlrunner.main:main_optimizer"
+tidlrunner-tools-install = "edgeai_tidlrunner.download:main"
+tidlrunner-cli = "edgeai_tidlrunner.main:main"
 
 [tool.setuptools]
 include-package-data = true

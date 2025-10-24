@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=42", "pyyaml", "tqdm", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "edgeai-tidloptimizer"
+version = "11.1.0"
+description = "Edge AI TIDL Optimizer"
+authors = [
+    { name = "Edge AI Development Team", email = "edgeai-dev@list.ti.com" }
+]
+readme = "README.md"
+license = {file = "LICENSE.md"}
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3.10",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence"
+]
+dependencies = [
+    "onnx==1.17.0",
+    "protobuf",
+    "numpy==1.23.0",
+    "onnxsim==0.4.35",
+    "edgeai_torchmodelopt @ git+ssh://git@bitbucket.itg.ti.com/edgeai-algo/edgeai-modeloptimization.git@develop#subdirectory=torchmodelopt",
+    "edgeai_onnx2torchmodel @ git+ssh://git@bitbucket.itg.ti.com/edgeai-algo/edgeai-modeloptimization.git@develop#subdirectory=onnx2torchmodel",
+    "torch@https://download.pytorch.org/whl/cpu/torch-2.8.0%2Bcpu-cp310-cp310-manylinux_2_28_x86_64.whl#sha256=16d75fa4e96ea28a785dfd66083ca55eb1058b6d6c5413f01656ca965ee2077e",
+    "torchvision@https://download.pytorch.org/whl/cpu/torchvision-0.23.0%2Bcpu-cp310-cp310-manylinux_2_28_x86_64.whl#sha256=bc6cee94bcc145d59426fd5289ca91e42cdb60e9886590f29d88f9f03c6bdea3",
+    "torchao==0.13.0", ## https://github.com/pytorch/ao/issues/2919
+    "onnxscript==0.5.3"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/TexasInstruments/edgeai-tidlrunner"
+"Bug Reports" = "https://github.com/TexasInstruments/edgeai-tidlrunner/issues"
+"Source" = "https://github.com/TexasInstruments/edgeai-tidlrunner"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "black",
+    "flake8",
+    "mypy"
+]
+
+[project.scripts]
+tidloptimizer-tools-install = "edgeai_tidloptimizer.download:main"
+tidloptimizer-cli = "edgeai_tidloptimizer.main:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["edgeai_tidloptimizer*"]
+
+#[tool.pip]
+#index-url = "https://download.pytorch.org/whl/cpu"
+#extra-index-url = ["https://pypi.ngc.nvidia.com"]

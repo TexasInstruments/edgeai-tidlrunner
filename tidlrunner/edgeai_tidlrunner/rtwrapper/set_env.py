@@ -33,10 +33,11 @@ import os
 import sys
 import subprocess
 import glob
-import tidl_tools_package
 
 
 def set_env():
+  import tidl_tools_package
+  
   print("INFO: Setting environment variables for TIDL Runner...")
 
   if 'TARGET_DEVICE' not in os.environ:

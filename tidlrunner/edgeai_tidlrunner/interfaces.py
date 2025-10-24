@@ -35,22 +35,25 @@ import difflib
 import warnings
 import functools
 import re
+import importlib
 
 import edgeai_tidlrunner
-from edgeai_tidlrunner import runner, optimizer
+from edgeai_tidlrunner import runner
 from edgeai_tidlrunner.runner.common import utils
 from edgeai_tidlrunner.runner.common import bases
 
 
 def get_package_names():
-    return ['runner', 'optimizer']
+    return ['edgeai_tidlrunner.runner']
 
 
 def get_command_pipelines(package_name=None, **kwargs):
     command_pipelines = {}
     package_names = get_package_names() if package_name is None else [package_name]
     for package_module_name in package_names:
-        package_module = getattr(edgeai_tidlrunner, package_module_name)
+        package_module_name_splits = package_module_name.split('.')
+        package_import = importlib.import_module(package_module_name_splits[0])
+        package_module = getattr(package_import, package_module_name_splits[1])
         for target_module_name in package_module.get_target_modules():
             target_module = getattr(package_module, target_module_name)
             target_comand_pipelines = target_module.get_command_pipelines(**kwargs)
@@ -82,18 +85,12 @@ def matching_command_name(command_name, package_name=None):
 
 def get_target_module(command_name, **kwargs):
     package_name = kwargs.get('common.package_name', None)
-    
     command_name = matching_command_name(command_name, package_name=package_name)
     command_name_split = command_name.split('.')
-    assert len(command_name_split) == 3, f'ERROR: invalid command_name: {command_name}'
-
-    if package_name:
-        assert package_name in get_package_names(), f'ERROR: invalid package_name: {package_name}'
-        assert package_name == command_name_split[0], f'ERROR: given package_name: {package_name} does not match: {command_name_split[0]}'
-    else:
-        package_name = command_name_split[0]
-    #
-    target_module = getattr(getattr(edgeai_tidlrunner, package_name), command_name_split[1])
+    assert len(command_name_split) == 4, f'ERROR: invalid command_name: {command_name}'
+    package_import = importlib.import_module(command_name_split[0])
+    package_module = getattr(package_import, command_name_split[1])
+    target_module = getattr(package_module, command_name_split[2])
     return target_module
 
 

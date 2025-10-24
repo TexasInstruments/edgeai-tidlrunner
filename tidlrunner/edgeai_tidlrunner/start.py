@@ -37,7 +37,7 @@ import functools
 import subprocess
 
 import edgeai_tidlrunner
-from edgeai_tidlrunner import rtwrapper, runner, optimizer, interfaces
+from edgeai_tidlrunner import rtwrapper, runner, interfaces
 
 
 COMMAND_PIPELINES = edgeai_tidlrunner.get_command_pipelines()
@@ -80,8 +80,15 @@ class StartRunner(runner.common.bases.PipelineBase):
         return interfaces._run(run_dict)
 
     @classmethod
-    def main(cls):
+    def main(cls, **kwargs):
+        # add args and continue with normal execution
         sys.argv[0] = os.environ.get('RUNNER_INVOKE_NAME', sys.argv[0])
+        for k, v in kwargs.items():
+            has_arg = any([f'--{k}' in arg for arg in sys.argv])
+            if not has_arg:
+                sys.argv.append(f'--{k}={v}')
+            #
+        #
 
         if len(sys.argv) == 1 or (len(sys.argv) > 1 and sys.argv[1] in ('help', 'h', '--help', '-h')):
             print('============================================================')

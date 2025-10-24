@@ -96,7 +96,7 @@ class QuantizeModel(distill.DistillModel):
 
         # create student model
         from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule 
-        student_model = QATPT2EModule(teacher_model, example_inputs=self.example_inputs, total_epochs=calibration_iterations)
+        student_model = QATPT2EModule(teacher_model, example_inputs=self.example_inputs, total_epochs=calibration_iterations, outlier_clipping=False, bias_calibration=False)
 
         # ---------------------------------------------------------------------------------
         # for experimentation only - remove later

@@ -36,51 +36,14 @@ import yaml
 import functools
 import subprocess
 
-from edgeai_tidlrunner import rtwrapper, runner
 from edgeai_tidlrunner.start import StartRunner
 
 
-def main_with_proper_environment(**kwargs):
-    print(f'INFO: running - {sys.argv}')
-    if os.environ.get('TIDL_TOOLS_PATH', None) is None or \
-       os.environ.get('LD_LIBRARY_PATH', None) is None:
-        print("INFO: TIDL_TOOLS_PATH or LD_LIBRARY_PATH is not set, restarting with proper environment...")
-        rtwrapper.restart_with_proper_environment()
-    else:
-        # Continue with normal execution
-        for k, v in kwargs.items():
-            has_arg = any([f'--{k}' in arg for arg in sys.argv])
-            if not has_arg:
-                sys.argv.append(f'--{k}={v}')
-            #
-        #
-        StartRunner.main()
-
-
-# def main_pc():
-#     main_with_proper_environment(target_machine='pc')
-
-
-# def main_evm():
-#     main_with_proper_environment(target_machine='evm')
-
-
-def main(**kwargs):
-    print(f"INFO: checking machine architecture...")
-    result = subprocess.run(['uname', '-m'], capture_output=True, text=True)
-    arch = result.stdout.strip()
-    print(f"INFO: machine architecture found: {arch}")   
-    target_machine = 'pc' if 'x86' in arch or 'amd64' in arch else 'evm'
-    print(f"INFO: setting target_machine to: {target_machine}")
-    main_with_proper_environment(target_machine=target_machine, **kwargs)
-
-
-def main_runner(package_name='runner', **kwargs):
-    main(package_name=package_name, **kwargs)
-
-
-def main_optimizer(package_name='optimizer', **kwargs):
-    main(package_name=package_name, **kwargs)
+def main(package_name='edgeai_tidloptimizer.optimizer', **kwargs):
+    # tidloptimizer does not need TIDL_TOOLS_PATH, but just set it to empty to pass through checks for it
+    os.environ['TIDL_TOOLS_PATH'] = ''
+    # start
+    StartRunner.main(package_name=package_name, **kwargs)
 
 
 if __name__ == "__main__":
