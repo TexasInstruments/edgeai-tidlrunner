@@ -51,9 +51,6 @@ class QuantizeModel(distill.DistillModel):
         print(f'INFO: Model quantize - {__file__}')
 
     def _prepare(self):
-        import torch
-        import torchao
-
         super()._prepare()
         
         common_kwargs = self.settings[self.common_prefix]
@@ -66,9 +63,6 @@ class QuantizeModel(distill.DistillModel):
         shutil.move(self.model_path, self.teacher_model_path)
 
     def _run(self):
-        import torch
-        import torchao
-
         common_kwargs = self.settings[self.common_prefix]
         session_kwargs = self.settings[self.session_prefix]
         runtime_options = session_kwargs['runtime_options']
@@ -82,17 +76,12 @@ class QuantizeModel(distill.DistillModel):
         #################################################################################
         # prepare the model
         import torch
-        import torchao
-        from torchao.quantization.pt2e.quantize_pt2e import (prepare_qat_pt2e, convert_pt2e)
-        from torchao.quantization.pt2e import allow_exported_model_train_eval
-        # from edgeai_torchmodelopt.xmodelopt import quantization
 
-        #teacher_model = torch.export.export(teacher_model, example_inputs=self.example_inputs).module()
-        #allow_exported_model_train_eval(teacher_model)
-
-        student_model_initial = teacher_model #copy.deepcopy(teacher_model)
+        student_model_initial = teacher_model
         student_model = torch.export.export(student_model_initial, self.example_inputs).module()
-        allow_exported_model_train_eval(student_model)
+
+        # from torch.ao.quantization.pt2e import allow_exported_model_train_eval
+        # allow_exported_model_train_eval(student_model)
 
         # create student model
         from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule 
@@ -128,7 +117,7 @@ class QuantizeModel(distill.DistillModel):
         super()._run()
 
         # convert student model
-        from torchao.quantization.pt2e.quantize_pt2e import (prepare_qat_pt2e, convert_pt2e,)
+        from torch.ao.quantization.quantize_pt2e import convert_pt2e, prepare_qat_pt2e
         student_model = common_kwargs['output_model_path']
         student_model = student_model.convert(make_copy=False) if isinstance(student_model, QATPT2EModule) else convert_pt2e(student_model)
         

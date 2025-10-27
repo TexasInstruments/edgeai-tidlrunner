@@ -79,9 +79,6 @@ class DistillModel(compile.CompileModel):
         #
 
     def _run(self):
-        import torch
-        import torchao
-
         print(f'INFO: starting model quantize with parameters: {self.kwargs}')
         print(f'INFO: running model quantize {self.model_path}')
         common_kwargs = self.settings[self.common_prefix]

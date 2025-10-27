@@ -34,7 +34,6 @@ import copy
 import random
 
 import torch
-import torchao
 
 
 def _register_global_forward_hook(hook):

@@ -35,7 +35,6 @@ import random
 
 import torch
 import torch.nn.utils.parametrize as parametrize
-import torchao
 
 
 class ParametrizationBaseModule(torch.nn.Module):
@@ -43,15 +42,25 @@ class ParametrizationBaseModule(torch.nn.Module):
 
 
 def _register_parametrizations(module, parametrization_class=None, param_names=None):
-    import torch
-    import torchao
-    from torchao.quantization import pt2e
     import torch.nn.utils.parametrize as parametrize
-
+    try: 
+        from torch.ao.quantization.pt2e import ObserverBase as TorchObserverBase
+        from torch.ao.quantization.pt2e import FakeQuantizeBase as TorchFakeQuantizeBase
+    except:
+        TorchObserverBase = type(None)
+        TorchFakeQuantizeBase = type(None)
+    #
+    try: 
+        from torchao.quantization.pt2e import ObserverBase as TorchaoObserverBase
+        from torchao.quantization.pt2e import FakeQuantizeBase as TorchaoFakeQuantizeBase
+    except:
+        TorchaoObserverBase = type(None)
+        TorchaoFakeQuantizeBase = type(None)
+    #
     for name, child in module.named_children():
         _register_parametrizations(child, parametrization_class=parametrization_class, param_names=param_names)
     #
-    if not isinstance(module, (ParametrizationBaseModule, pt2e.ObserverBase, pt2e.FakeQuantizeBase)):
+    if not isinstance(module, (ParametrizationBaseModule, TorchObserverBase, TorchFakeQuantizeBase, TorchaoObserverBase, TorchaoFakeQuantizeBase)):
         for name_p, param in list(module.named_parameters(recurse=False)):
             if param is not None and (param_names is None or name_p in param_names):
                 parametrize.register_parametrization(module, name_p, parametrization_class(param))

@@ -35,7 +35,6 @@ import random
 
 import torch
 import torch.nn.utils.parametrize as parametrize
-import torchao
 
 from ..utils import hooks_wrapper, parametrize_wrapper
 

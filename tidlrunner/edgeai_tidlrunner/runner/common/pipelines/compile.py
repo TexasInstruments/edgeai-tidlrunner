@@ -88,12 +88,12 @@ class CompileModel(CompileModelBase):
         #
 
         # session
-        if not self.pipeline_config and not self.session and session_kwargs.get('name',None):
-            session_name = session_kwargs['name']
-            session_type = blocks.sessions.SESSION_TYPES_MAPPING[session_name]
-            self.session = session_type(self.settings, **session_kwargs)
-            self.session.start_import()
-        #
+        # if not self.pipeline_config and not self.session and session_kwargs.get('name',None):
+        #     session_name = session_kwargs['name']
+        #     session_type = blocks.sessions.SESSION_TYPES_MAPPING[session_name]
+        #     self.session = session_type(self.settings, **session_kwargs)
+        #     self.session.start_import()
+        # #
 
         # input_data
         if self.pipeline_config and 'dataloader' in self.pipeline_config:
@@ -108,7 +108,7 @@ class CompileModel(CompileModelBase):
         elif hasattr(blocks.dataloaders, dataloader_kwargs['name']):
             dataloader_method = getattr(blocks.dataloaders, dataloader_kwargs['name'])
             self.dataloader = dataloader_method(self.settings, shuffle=True, **dataloader_kwargs)
-            if hasattr(self.dataloader, 'set_size_details'):
+            if self.session and hasattr(self.dataloader, 'set_size_details'):
                 input_details, output_details = self.session.get_input_output_details()
                 self.dataloader.set_size_details(input_details)
             #
@@ -124,7 +124,7 @@ class CompileModel(CompileModelBase):
             self.preprocess = preprocess_method()
         elif hasattr(blocks.preprocess, preprocess_kwargs['name']):
             preprocess_method = getattr(blocks.preprocess, preprocess_kwargs['name'])
-            if not (preprocess_kwargs.get('resize', None) and preprocess_kwargs.get('crop', None)):
+            if self.session and not (preprocess_kwargs.get('resize', None) and preprocess_kwargs.get('crop', None)):
                 # input shape was not provided - use the model input size
                 input_details, output_details = self.session.get_input_output_details()
                 if preprocess_kwargs.get('data_layout') == presets.DataLayoutType.NCHW:

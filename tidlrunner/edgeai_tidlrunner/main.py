@@ -68,10 +68,10 @@ def _main(**kwargs):
     main_with_proper_environment(target_machine=target_machine, **kwargs)
 
 
-def main(package_name='edgeai_tidlrunner.runner', **kwargs):
-    _main(package_name=package_name, **kwargs)
+def main(**kwargs):
+    _main(package_name='edgeai_tidlrunner.runner', **kwargs)
 
 
 if __name__ == "__main__":
     print(f'INFO: running {__file__} __main__')  
-    _main()
+    _main(package_name='edgeai_tidlrunner.runner')
