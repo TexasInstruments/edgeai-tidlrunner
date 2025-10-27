@@ -63,6 +63,9 @@ class DistillModel(compile.CompileModel):
     def _prepare(self):
         super()._prepare()
 
+        # make deterministic random for distill
+        random.seed(1)
+
         print(f'INFO: preparing model distill with parameters: {self.kwargs}')
         common_kwargs = self.settings[self.common_prefix]
         session_kwargs = self.settings[self.session_prefix]
@@ -79,6 +82,9 @@ class DistillModel(compile.CompileModel):
         #
 
     def _run(self):
+        # make deterministic random for distill
+        random.seed(1)
+
         print(f'INFO: starting model quantize with parameters: {self.kwargs}')
         print(f'INFO: running model quantize {self.model_path}')
         common_kwargs = self.settings[self.common_prefix]
@@ -117,7 +123,6 @@ class DistillModel(compile.CompileModel):
         calibration_iterations = min(calibration_iterations, len(self.dataloader)) if calibration_iterations else len(self.dataloader)
         self.distill_model = DistillWrapperModule(student_model, teacher_model, epochs=calibration_iterations, **distill_kwargs)
         ###################################################################3
-
         # self.distill_model.train()
 
         # distill loop here
@@ -132,6 +137,7 @@ class DistillModel(compile.CompileModel):
                 
                 distill_outputs = self.distill_model(*input_data)
                 distil_metrics = self.distill_model.step_iter(*distill_outputs)
+                
                 tqdm_batch.set_postfix(refresh=True, epoch=calib_index, batch=input_index, **distil_metrics)
             #
             tqdm_epoch.set_postfix(refresh=True, epoch=calib_index, num_batches=calibration_frames, **distil_metrics)

@@ -34,6 +34,7 @@ import sys
 import shutil
 import copy
 import numpy as np
+from typing import Tuple, Any
 
 from edgeai_tidlrunner.runner.common import utils
 from edgeai_tidlrunner.runner.common import bases
@@ -231,134 +232,58 @@ class ConvertModel(common_base.CommonPipelineBase):
 
     @classmethod
     def _register_quantized_symbolics(cls, opset_version):
-        # import torch
-        # import onnxscript
-        # from onnxscript.onnx_types import TensorType
+        import torch
+        import onnxscript.onnx_opset as op
+        from onnxscript.function_libs.torch_lib.registration import torch_op
+        from onnxscript import (
+            BOOL,
+            COMPLEX64,
+            COMPLEX128,
+            DOUBLE,
+            FLOAT,
+            INT8,
+            INT16,
+            INT32,
+            INT64,
+            UINT8,
+            graph,
+            ir,
+        )
+        from onnxscript.function_libs.torch_lib.tensor_typing import (
+            IntType,
+            RealType,
+            TFloat,
+            TFloatHighPrecision,
+            TInt,
+            TReal,
+            TRealOrUInt8,
+            TRealUnlessFloat16OrInt8,
+            TRealUnlessInt16OrInt8,
+            TTensor,
+            TTensor2,
+            TTensorOrString,
+        )
 
-        # from edgeai_torchmodelopt.xmodelopt.quantization.v3 import quant_utils 
-        # quant_utils.register_onnx_symbolics(opset_version)
+        #@torch_op("aten::index_select", trace_only=True)
+        def custom_aten_index_select(self, dim: int, index: IntType):
+            """index_select(Tensor self, int dim, Tensor index) -> Tensor"""
 
-        # Copyright (c) Microsoft Corporation.
-        # Licensed under the MIT License.
-        # mypy: disable-error-code="misc,arg-type,type-arg,valid-type,assignment,return-value"
-        # pylint: disable=unused-argument
-        """quantized_decomposed ops defined in https://github.com/pytorch/pytorch/blob/main/torch/ao/quantization/fx/_decomposed.py
+            self_is_scalar = len(self.shape) == 0
+            if self_is_scalar:
+                self = op.Reshape(self, op.Constant(value_ints=[-1]))
 
-        - No inplace operators.
-        - All functions should not have the script() decorator. This is because
-            we want to delay the compilation of the function.
-        """
+            # Index may be a scalar. Reshape it to a rank 1 tensor.
+            index = op.Reshape(index, op.Constant(value_ints=[-1]))
+            index = op.Cast(index, to=INT64.dtype)
+            result = op.Gather(self, index, axis=dim)
 
-        # from onnxscript.function_libs.torch_lib.ops import common
-        # from onnxscript.function_libs.torch_lib.registration import torch_op
-        # from onnxscript.onnx_opset import opset18 as op
-        # from onnxscript.onnx_types import TensorType
+            if self_is_scalar:
+                result = op.Squeeze(result)
 
+            return result
 
-        # @torch_op(
-        #     (
-        #         "quantized_decomposed::quantize_per_tensor",
-        #         "quantized_decomposed::quantize_per_tensor.tensor",
-        #         "quantized_decomposed::quantize_per_tensor.tensor2",
-        #     ),
-        #     trace_only=True,
-        # )
-        # def quantized_decomposed_quantize_per_tensor(
-        #     input: TensorType,
-        #     scale: float,
-        #     zero_point: int,
-        #     quant_min: int,
-        #     quant_max: int,
-        #     dtype: int,
-        # ) -> TensorType:
-        #     # TODO(justinchuby): Use dtype when we use opset 21
-        #     return op.QuantizeLinear(input, scale, common.constant(zero_point, dtype=dtype))
+        custom_translation_table = {
+            #torch.ops.aten.index.Tensor: custom_aten_index_select #custom_index_tensor,
+        }
 
-
-        # @torch_op(
-        #     (
-        #         "quantized_decomposed::dequantize_per_tensor",
-        #         "quantized_decomposed::dequantize_per_tensor.tensor",
-        #         "quantized_decomposed::dequantize_per_tensor.tensor2",
-        #     ),
-        #     trace_only=True,
-        # )
-        # def quantized_decomposed_dequantize_per_tensor(
-        #     input: TensorType,
-        #     scale: float,
-        #     zero_point: int,
-        #     quant_min: int,
-        #     quant_max: int,
-        #     dtype: int,
-        #     out_dtype: int = -1,
-        # ) -> TensorType:
-        #     # TODO(justinchuby): Use dtype when we use opset 21
-        #     dequantized = op.DequantizeLinear(input, scale, common.constant(zero_point, dtype=dtype))
-        #     if out_dtype in (-1, None):
-        #         # out_dtype can be None as well
-        #         return dequantized
-        #     assert out_dtype > 0, f"out_dtype must be -1 or > 0 not {out_dtype}"
-        #     return op.Cast(dequantized, to=out_dtype)
-        
-        # #----
-        # @torch_op(
-        #     (
-        #         "quantized_decomposed::quantize_per_channel",
-        #         "quantized_decomposed::quantize_per_channel.tensor",
-        #         "quantized_decomposed::quantize_per_channel.tensor2",
-        #     ),
-        #     trace_only=True,
-        # )
-        # def quantized_decomposed_quantize_per_channel(
-        #     input: TensorType,
-        #     scale: float,
-        #     zero_point: int,
-        #     quant_min: int,
-        #     quant_max: int,
-        #     dtype: int,
-        # ) -> TensorType:
-        #     # TODO(justinchuby): Use dtype when we use opset 21
-        #     return op.QuantizeLinear(input, scale, common.constant(zero_point, dtype=dtype))
-
-
-        # @torch_op(
-        #     (
-        #         "quantized_decomposed::dequantize_per_tensor",
-        #         "quantized_decomposed::dequantize_per_tensor.tensor",
-        #         "quantized_decomposed::dequantize_per_tensor.tensor2",
-        #     ),
-        #     trace_only=True,
-        # )
-        # def quantized_decomposed_dequantize_per_channel(
-        #     input: TensorType,
-        #     scale: TensorType,
-        #     zero_point: TensorType,
-        #     unknown: int,
-        #     quant_min: int,
-        #     quant_max: int,
-        #     dtype: int,
-        #     out_dtype: int = -1,
-        # ) -> TensorType:
-        #     # TODO(justinchuby): Use dtype when we use opset 21
-        #     dequantized = op.DequantizeLinear(input, scale, common.constant(zero_point, dtype=dtype))
-        #     if out_dtype in (-1, None):
-        #         # out_dtype can be None as well
-        #         return dequantized
-        #     assert out_dtype > 0, f"out_dtype must be -1 or > 0 not {out_dtype}"
-        #     return op.Cast(dequantized, to=out_dtype)
-        
-        # custom_translation_table = {
-        #     # "quantized_decomposed::quantize_per_tensor": quantized_decomposed_quantize_per_tensor,
-        #     # "quantized_decomposed::quantize_per_tensor.tensor": quantized_decomposed_quantize_per_tensor,
-        #     # "quantized_decomposed::quantize_per_tensor.tensor2": quantized_decomposed_quantize_per_tensor,
-        #     # "quantized_decomposed::dequantize_per_tensor": quantized_decomposed_dequantize_per_tensor,
-        #     # "quantized_decomposed::dequantize_per_tensor.tensor": quantized_decomposed_dequantize_per_tensor,
-        #     # "quantized_decomposed::dequantize_per_tensor.tensor2": quantized_decomposed_dequantize_per_tensor,
-        #     torch.ops.quantized_decomposed.quantize_per_tensor.default: quantized_decomposed_quantize_per_tensor,
-        #     torch.ops.quantized_decomposed.dequantize_per_tensor.default: quantized_decomposed_dequantize_per_tensor,
-        #     torch.ops.quantized_decomposed.quantize_per_channel.default: quantized_decomposed_quantize_per_channel,
-        #     torch.ops.quantized_decomposed.dequantize_per_channel.default: torch.ops.quantized_decomposed.dequantize,
-        # }
-        # return custom_translation_table
-
-        return None
+        return custom_translation_table

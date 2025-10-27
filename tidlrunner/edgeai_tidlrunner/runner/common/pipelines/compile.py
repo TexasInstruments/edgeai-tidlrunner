@@ -88,12 +88,13 @@ class CompileModel(CompileModelBase):
         #
 
         # session
-        # if not self.pipeline_config and not self.session and session_kwargs.get('name',None):
-        #     session_name = session_kwargs['name']
-        #     session_type = blocks.sessions.SESSION_TYPES_MAPPING[session_name]
-        #     self.session = session_type(self.settings, **session_kwargs)
-        #     self.session.start_import()
-        # #
+        if self.kwargs['common.pipeline_type'] == 'compile' and not self.session and \
+            not self.pipeline_config and session_kwargs.get('name',None):
+            session_name = session_kwargs['name']
+            session_type = blocks.sessions.SESSION_TYPES_MAPPING[session_name]
+            self.session = session_type(self.settings, **session_kwargs)
+            self.session.start_import()
+        #
 
         # input_data
         if self.pipeline_config and 'dataloader' in self.pipeline_config:

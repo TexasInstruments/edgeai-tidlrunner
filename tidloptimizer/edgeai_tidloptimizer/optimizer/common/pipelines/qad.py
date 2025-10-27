@@ -53,9 +53,6 @@ class QAD(distill.DistillModel):
     def _prepare(self):
         super()._prepare()
         
-        import torch
-        import torchao
-
         # from edgeai_torchmodelopt.xmodelopt import quantization
         print(f'INFO: preparing model for QAD with parameters: {self.kwargs}')
 
@@ -69,8 +66,6 @@ class QAD(distill.DistillModel):
         shutil.move(self.model_path, self.teacher_model_path)
 
     def _run(self):
-        import torch
-        import torchao
         from ..utils import parametrize_wrapper
         from ..utils import hooks_wrapper
 
