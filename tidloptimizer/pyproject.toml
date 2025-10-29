@@ -20,16 +20,8 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence"
 ]
 dependencies = [
-    "onnx==1.17.0",
-    "protobuf",
-    "numpy==1.23.0",
-    "onnxsim==0.4.35",
-    "edgeai_torchmodelopt @ git+ssh://git@bitbucket.itg.ti.com/edgeai-algo/edgeai-modeloptimization.git@develop#subdirectory=torchmodelopt",
-    "edgeai_onnx2torchmodel @ git+ssh://git@bitbucket.itg.ti.com/edgeai-algo/edgeai-modeloptimization.git@develop#subdirectory=onnx2torchmodel",
-    "torch@https://download.pytorch.org/whl/cpu/torch-2.8.0%2Bcpu-cp310-cp310-manylinux_2_28_x86_64.whl#sha256=16d75fa4e96ea28a785dfd66083ca55eb1058b6d6c5413f01656ca965ee2077e",
-    "torchvision@https://download.pytorch.org/whl/cpu/torchvision-0.23.0%2Bcpu-cp310-cp310-manylinux_2_28_x86_64.whl#sha256=bc6cee94bcc145d59426fd5289ca91e42cdb60e9886590f29d88f9f03c6bdea3",
-    "onnxscript==0.5.3"
-    #"torchao==0.13.0", ## https://github.com/pytorch/ao/issues/2919
+    #"edgeai_torchmodelopt @ git+ssh://git@bitbucket.itg.ti.com/edgeai-algo/edgeai-modeloptimization.git@develop#subdirectory=torchmodelopt",
+    #"edgeai_onnx2torchmodel @ git+ssh://git@bitbucket.itg.ti.com/edgeai-algo/edgeai-modeloptimization.git@develop#subdirectory=onnx2torchmodel",
 ]
 
 [project.urls]
@@ -38,13 +30,22 @@ dependencies = [
 "Source" = "https://github.com/TexasInstruments/edgeai-tidlrunner"
 
 [project.optional-dependencies]
+torch29 = [
+    "onnx==1.16.1",
+    "protobuf",
+    "numpy==1.23.0",
+    "onnxsim==0.4.35",
+    "torch@https://download.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp310-cp310-manylinux_2_28_x86_64.whl#sha256=bd2a257e670ede9fc01c6d76dccdc473040913b8e9328169bf177dbdc38e2484",
+    "torchvision@https://download.pytorch.org/whl/cpu/torchvision-0.24.0%2Bcpu-cp310-cp310-manylinux_2_28_x86_64.whl#sha256=81063c59524c2f1c3f0751d6f61961072e51f7faba2db9758b6524af7c6d072a",
+    "onnxscript==0.5.3",
+    #"torchao==0.14.1",   ## https://github.com/pytorch/ao/issues/2919
+    #"executorch==1.0.0", ## requires numpy >= 2.0
+]
 torch24 = [
     "onnx==1.14.0",
     "protobuf==3.20.3",
     "numpy==1.23.0",
     "onnxsim==0.4.35",
-    "edgeai_torchmodelopt @ git+ssh://git@bitbucket.itg.ti.com/edgeai-algo/edgeai-modeloptimization.git@develop#subdirectory=torchmodelopt",
-    "edgeai_onnx2torchmodel @ git+ssh://git@bitbucket.itg.ti.com/edgeai-algo/edgeai-modeloptimization.git@develop#subdirectory=onnx2torchmodel",
     "torch@https://download.pytorch.org/whl/cpu/torch-2.4.0%2Bcpu-cp310-cp310-linux_x86_64.whl#sha256=0e59377b27823dda6d26528febb7ca06fc5b77816eaa58b4420cc8785e33d4ce",
     "torchvision@https://download.pytorch.org/whl/cpu/torchvision-0.19.0%2Bcpu-cp310-cp310-linux_x86_64.whl#sha256=7b2b46d3c757fa1fe7d08d48bdae6c9d97d82ace707474a79219c10991fee6ff",
 ]
