@@ -111,10 +111,10 @@ class DistillWrapperBaseModule(torch.nn.Module):
         return loss
     
     def _criterion(self, outputs, targets):
-        if outputs.dtype in (torch.long, torch.int, torch.int8, torch.int16, torch.int32, torch.int64):
-            assert False, "ERROR: Cannot compute loss on integer outputs directly."
-        else:
+        if torch.is_floating_point(outputs):
             loss = torch.nn.functional.smooth_l1_loss(outputs, targets)
+        else:
+            assert False, "ERROR: Cannot compute loss on integer outputs directly."
         #
         return loss
 

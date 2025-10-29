@@ -73,6 +73,12 @@ class QuantizeModel(distill.DistillModel):
         # it is important to freeze the teacher model's BN and Dropouts
         teacher_model.eval()
 
+        # export teacher model - optional
+        os.makedirs(self.teacher_folder, exist_ok=True)
+        teacher_model_path = os.path.join(self.teacher_folder, os.path.basename(self.model_path))
+        teacher_model_path_pt2 = os.path.splitext(teacher_model_path)[0] + ".pt2"
+        convert.ConvertModel._run_func(teacher_model, teacher_model_path_pt2, self.example_inputs)
+        
         #################################################################################
         # prepare the model
         import torch
@@ -85,7 +91,7 @@ class QuantizeModel(distill.DistillModel):
 
         # create student model
         from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule 
-        student_model = QATPT2EModule(teacher_model, example_inputs=self.example_inputs, total_epochs=calibration_iterations, outlier_clipping=False, bias_calibration=False)
+        student_model = QATPT2EModule(teacher_model, example_inputs=self.example_inputs, total_epochs=calibration_iterations) #outlier_clipping=True, bias_calibration=True
 
         # ---------------------------------------------------------------------------------
         # for experimentation only - remove later
@@ -123,11 +129,11 @@ class QuantizeModel(distill.DistillModel):
         
         # save student model - create folder
         os.makedirs(self.student_folder, exist_ok=True)
-        self.student_model_path = os.path.join(self.student_folder, os.path.basename(self.model_path))
+        student_model_path = os.path.join(self.student_folder, os.path.basename(self.model_path))
         # export to pt2 - optional
-        self.student_model_path_pt2 = os.path.splitext(self.student_model_path)[0] + ".pt2"
-        convert.ConvertModel._run_func(student_model, self.student_model_path_pt2, common_kwargs['example_inputs'])
+        student_model_path_pt2 = os.path.splitext(student_model_path)[0] + ".pt2"
+        convert.ConvertModel._run_func(student_model, student_model_path_pt2, self.example_inputs)
         # export to onnx
-        convert.ConvertModel._run_func(student_model, self.student_model_path, common_kwargs['example_inputs'])
+        convert.ConvertModel._run_func(student_model, student_model_path, self.example_inputs)
         # copy to model_path
-        shutil.copyfile(self.student_model_path, self.model_path)
+        shutil.copyfile(student_model_path, self.model_path)
