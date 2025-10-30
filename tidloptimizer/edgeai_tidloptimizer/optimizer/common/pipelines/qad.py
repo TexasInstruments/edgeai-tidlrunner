@@ -66,8 +66,7 @@ class QAD(distill.DistillModel):
         shutil.move(self.model_path, self.teacher_model_path)
 
     def _run(self):
-        from ..utils import parametrize_wrapper
-        from ..utils import hooks_wrapper
+        import torch
 
         common_kwargs = self.settings[self.common_prefix]
         session_kwargs = self.settings[self.session_prefix]
@@ -79,9 +78,14 @@ class QAD(distill.DistillModel):
         # it is important to freeze the teacher model's bn
         teacher_model.eval()
         
-        student_model = copy.deepcopy(teacher_model)
-        # student_model.train() #eval()
-        
+        # create student model
+        # student_model = copy.deepcopy(teacher_model)
+
+        # create student model
+        student_model = torch.export.export(teacher_model, self.example_inputs).module()
+        from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule, QConfigType
+        student_model = QATPT2EModule(teacher_model, example_inputs=self.example_inputs, qconfig_type=QConfigType.CLIP_RANGE, total_epochs=calibration_iterations)
+    
         common_kwargs['teacher_model_path'] = teacher_model
         common_kwargs['example_inputs'] = self.example_inputs
         common_kwargs['output_model_path'] = student_model

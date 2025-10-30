@@ -100,7 +100,7 @@ class DistillModel(compile.CompileModel):
 
         ###################################################################3
         # prepare model
-        from ..utils.distill_wrapper import DistillWrapperModule
+        from ..utils.distill_wrapper import DistillWrapperBaseModule, DistillWrapperModule
 
         self.teacher_model_path = common_kwargs.get('teacher_model_path', None)
         self.student_model_path = common_kwargs.get('output_model_path', None)
@@ -121,7 +121,7 @@ class DistillModel(compile.CompileModel):
 
         calibration_iterations = runtime_options['advanced_options:calibration_iterations']
         calibration_iterations = min(calibration_iterations, len(self.dataloader)) if calibration_iterations else len(self.dataloader)
-        self.distill_model = DistillWrapperModule(student_model, teacher_model, epochs=calibration_iterations, **distill_kwargs)
+        self.distill_model = DistillWrapperBaseModule(student_model, teacher_model, epochs=calibration_iterations, **distill_kwargs)
         ###################################################################3
         # self.distill_model.train()
 
