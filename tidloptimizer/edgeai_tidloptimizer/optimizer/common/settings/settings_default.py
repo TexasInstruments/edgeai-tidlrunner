@@ -71,11 +71,11 @@ COPY_SETTINGS_DEFAULT['distill'] = COPY_SETTINGS_DEFAULT['compile'] | {
 
 
 ##########################################################################
-SETTINGS_DEFAULT['qad'] = SETTINGS_DEFAULT['distill'] | {
-    'pipeline_type':          {'dest': 'common.pipeline_type', 'default': 'qad', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'}, 
+SETTINGS_DEFAULT['qdistill'] = SETTINGS_DEFAULT['distill'] | {
+    'pipeline_type':          {'dest': 'common.pipeline_type', 'default': 'qdistill', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'}, 
 }
 
-COPY_SETTINGS_DEFAULT['qad'] = COPY_SETTINGS_DEFAULT['distill'] | {
+COPY_SETTINGS_DEFAULT['qdistill'] = COPY_SETTINGS_DEFAULT['distill'] | {
 }
 
 
