@@ -49,6 +49,7 @@ class QuantAwareDistillation(distill.DistillModel):
 
         from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule, QConfigType
         self.qconfig_type = QConfigType.CLIP_RANGE
+        self.quantizer_type = 'basic' #'advanced'
         self.with_convert = True #False
 
     def info():
@@ -102,7 +103,9 @@ class QuantAwareDistillation(distill.DistillModel):
         # create student model
         from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule, QConfigType
         from edgeai_torchmodelopt.xmodelopt.quantization.v3.fake_quantize_types import ADAPTIVE_ACTIVATION_FAKE_QUANT_TYPES
-        student_model = QATPT2EModule(teacher_model, example_inputs=self.example_inputs, qconfig_type=self.qconfig_type, total_epochs=calibration_iterations)
+        student_model = QATPT2EModule(teacher_model, example_inputs=self.example_inputs, 
+                                      qconfig_type=self.qconfig_type, quantizer_type=self.quantizer_type,
+                                      total_epochs=calibration_iterations)
 
         #################################################################################
         # run the distillation
@@ -113,6 +116,7 @@ class QuantAwareDistillation(distill.DistillModel):
         super()._run()
 
         student_model = common_kwargs['output_model_path']
+        onnx_ir_version = common_kwargs['onnx_ir_version']
 
         if self.with_convert:
             student_model = self._convert_model(student_model)
@@ -123,7 +127,7 @@ class QuantAwareDistillation(distill.DistillModel):
         student_model_path_pt2 = os.path.splitext(student_model_path)[0] + ".pt2"
         convert.ConvertModel._run_func(student_model, student_model_path_pt2, self.example_inputs)
         # export to onnx
-        convert.ConvertModel._run_func(student_model, student_model_path, self.example_inputs)
+        convert.ConvertModel._run_func(student_model, student_model_path, self.example_inputs, onnx_ir_version=onnx_ir_version)
         # copy to model_path
         shutil.copyfile(student_model_path, self.model_path)
 

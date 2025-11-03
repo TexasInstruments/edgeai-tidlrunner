@@ -64,6 +64,7 @@ SETTINGS_DEFAULT['distill'] = SETTINGS_DEFAULT['compile'] | {
     'calibration_iterations':   {'dest': 'session.runtime_options.advanced_options:calibration_iterations', 'default': 10, 'type': int, 'metavar': 'value', 'help': 'number of calibration iterations'},
     'calibration_batch_size':   {'dest': 'session.runtime_options.advanced_options:calibration_batch_size', 'default': 1, 'type': int, 'metavar': 'value', 'help': 'number of calibration batch size'},
     'num_frames':               {'dest': 'common.num_frames', 'default': 1000, 'type': int, 'metavar': 'value', 'help': 'number of frames to process'},
+    'onnx_ir_version':          {'dest': 'common.onnx_ir_version', 'default': 9, 'type': int, 'metavar': 'value', 'help': 'ONNX IR version to export the model'},
 }
 
 COPY_SETTINGS_DEFAULT['distill'] = COPY_SETTINGS_DEFAULT['compile'] | {

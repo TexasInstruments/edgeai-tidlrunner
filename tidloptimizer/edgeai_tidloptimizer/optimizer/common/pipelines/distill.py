@@ -105,6 +105,7 @@ class DistillModel(compile.CompileModel):
         teacher_model_path = common_kwargs.get('teacher_model_path', None)
         student_model_path = common_kwargs.get('output_model_path', None)
         self.example_inputs = common_kwargs.get('example_inputs', None) or self.example_inputs
+        onnx_ir_version = common_kwargs['onnx_ir_version']
 
         teacher_model = teacher_model_path
         if isinstance(teacher_model_path, str):
@@ -154,7 +155,7 @@ class DistillModel(compile.CompileModel):
         # student_model.eval()
 
         if isinstance(student_model_path, str):
-            convert.ConvertModel._run_func(self.distill_model.student_model, student_model_path, self.example_inputs)
+            convert.ConvertModel._run_func(self.distill_model.student_model, student_model_path, self.example_inputs, onnx_ir_version=onnx_ir_version)
             common_kwargs['output_model_path'] = student_model_path
         else:
             common_kwargs['output_model_path'] = self.distill_model.student_model

@@ -226,7 +226,8 @@ class ConvertModel(common_base.CommonPipelineBase):
             print('INFO: converting ONNX IR version ...')
             import onnx
             onnx_model = onnx.load(onnx_model_path)
-            onnx_model = onnx.version_converter.convert_version(onnx_model, onnx_ir_version)
+            # onnx_model = onnx.version_converter.convert_version(onnx_model, onnx_ir_version)
+            onnx_model.ir_version = onnx_ir_version
             onnx.save(onnx_model, onnx_model_path)
         #
 
