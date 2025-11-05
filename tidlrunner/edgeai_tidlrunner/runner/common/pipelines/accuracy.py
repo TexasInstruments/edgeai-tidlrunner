@@ -67,8 +67,10 @@ class InferAccuracy(infer.InferModel):
         # now calculate the accuracy
         if hasattr(self.dataloader, 'evaluate'):
             metric_kwargs = self.settings.get('metric', dict())
-            metric_kwargs['task_name'] = self.pipeline_config.get('task_name', {}) if self.pipeline_config else None
-            metric_kwargs['dataset_category'] = self.pipeline_config.get('dataset_category', {}) if self.pipeline_config else None
+            if isinstance(self.pipeline_config, dict):
+                metric_kwargs['task_name'] = self.pipeline_config.get('task_name', {})
+                metric_kwargs['dataset_category'] = self.pipeline_config.get('dataset_category', {})
+            #
 
             accuracy = self.dataloader.evaluate(run_data, **metric_kwargs)
 

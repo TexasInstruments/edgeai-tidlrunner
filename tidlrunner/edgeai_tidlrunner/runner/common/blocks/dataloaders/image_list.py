@@ -132,6 +132,7 @@ class ImageFilesDataLoader(ImageListDataLoader):
         num_frames = 0
         for prediction, label in zip(predictions, self.labels):
             prediction = prediction[0] if isinstance(prediction, list) else prediction
+            prediction = list(prediction.values())[0] if isinstance(prediction, dict) else prediction
             pred = np.argmax(prediction, axis=1) if prediction.ndim > 1 else np.argmax(prediction)
             correctly_classified += int(int(pred) == int(label))
             num_frames += len(pred)
