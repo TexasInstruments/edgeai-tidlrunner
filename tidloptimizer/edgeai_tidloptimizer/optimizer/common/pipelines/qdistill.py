@@ -46,10 +46,9 @@ class QuantAwareDistillation(distill.DistillModel):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs) #parametrization_types=('clip_const',),
-
-        from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule, QConfigType
-        self.qconfig_type = QConfigType.CLIP_RANGE
-        self.quantizer_type = 'basic' #'advanced'
+        from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule, QConfigType, QuantizerTypes
+        self.qconfig_type = QConfigType.WF_AFCLIP #DEFAULT 
+        self.quantizer_type = QuantizerTypes.ADVANCED #QuantizerTypes.BASIC  #QuantizerTypes.ADVANCED
         self.with_convert = True #False
 
     def info():
@@ -119,7 +118,7 @@ class QuantAwareDistillation(distill.DistillModel):
         onnx_ir_version = common_kwargs['onnx_ir_version']
 
         if self.with_convert:
-            student_model = self._convert_model(student_model)
+            student_model = student_model.convert()
         #
         
         # save student model
@@ -130,38 +129,3 @@ class QuantAwareDistillation(distill.DistillModel):
         convert.ConvertModel._run_func(student_model, student_model_path, self.example_inputs, onnx_ir_version=onnx_ir_version)
         # copy to model_path
         shutil.copyfile(student_model_path, self.model_path)
-
-    def _convert_model(self, student_model):
-        import torch
-        from torch.ao.quantization.quantize_pt2e import convert_pt2e
-        from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule, QConfigType
-        if self.qconfig_type == QConfigType.CLIP_RANGE:
-            self._convert_layers(student_model)
-            student_model.module.graph.lint()
-            student_model.module.recompile()
-        else:
-            student_model = student_model.convert(make_copy=False) \
-                if isinstance(student_model, QATPT2EModule) else convert_pt2e(student_model)
-        #
-        return student_model
-
-    def _convert_layers(self, module):
-        import torch
-        from edgeai_torchmodelopt.xmodelopt.quantization.v3.fake_quantize_types import ADAPTIVE_ACTIVATION_FAKE_QUANT_TYPES, ADAPTIVE_WEIGHT_FAKE_QUANT_TYPES
-        for n, m in list(module.named_children()):
-            if isinstance(m, ADAPTIVE_ACTIVATION_FAKE_QUANT_TYPES):
-                # print(f'WARNING: Found FakeQuantize in the model at {n}, replace it with Clip operator before convert!')
-                min_val, max_val = m.activation_post_process.min_val.item(), m.activation_post_process.max_val.item()
-                if max_val > min_val:
-                    clip_layer = torch.nn.Hardtanh(min_val=min_val, max_val=max_val)
-                    setattr(module, n, clip_layer)
-                else:
-                    setattr(module, n, torch.nn.Identity())
-                #
-            #
-            if isinstance(m, ADAPTIVE_WEIGHT_FAKE_QUANT_TYPES):
-                setattr(module, n, torch.nn.Identity())
-            #
-            self._convert_layers(m)
-        #
-

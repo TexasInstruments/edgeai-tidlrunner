@@ -35,6 +35,7 @@ import shutil
 import copy
 import numpy as np
 from typing import Tuple, Any
+import onnx
 
 from edgeai_tidlrunner.runner.common import utils
 from edgeai_tidlrunner.runner.common import bases
@@ -209,22 +210,25 @@ class ConvertModel(common_base.CommonPipelineBase):
             print('INFO: dynamo based onnx export ...')
             custom_translation_table = cls._register_quantized_symbolics(opset_version=opset_version)
             artifacts_dir = os.path.dirname(onnx_model_path)
-            onnx_program = torch.onnx.export(torch_model, example_inputs, opset_version=opset_version, dynamo=True, report=True, artifacts_dir=artifacts_dir, custom_translation_table=custom_translation_table)
+            onnx_program = torch.onnx.export(torch_model, example_inputs, opset_version=opset_version, dynamo=True, report=True, 
+                                             training=torch.onnx.TrainingMode.PRESERVE, artifacts_dir=artifacts_dir, custom_translation_table=custom_translation_table)
             onnx_program.save(onnx_model_path)
         else:
             # traditional torchscript based onnx export
             print('INFO: torchscript based onnx export ...')
-            torch.onnx.export(torch_model, example_inputs, onnx_model_path, export_params=True, opset_version=opset_version, do_constant_folding=True, training=torch.onnx.TrainingMode.PRESERVE, dynamo=False)
+            torch.onnx.export(torch_model, example_inputs, onnx_model_path, export_params=True, 
+                              opset_version=opset_version, do_constant_folding=True, 
+                              training=torch.onnx.TrainingMode.PRESERVE, dynamo=False)
         #
         if simplify:
             print('INFO: simplifying onnx model ...')
             import onnxsim
-            onnx_model, onnx_check = onnxsim.simplify(onnx_model_path)
+            onnx_model = onnx.load(onnx_model_path)
+            onnx_model, onnx_check = onnxsim.simplify(onnx_model)
             onnx.save(onnx_model, onnx_model_path)
         #
         if onnx_ir_version:
             print('INFO: converting ONNX IR version ...')
-            import onnx
             onnx_model = onnx.load(onnx_model_path)
             # onnx_model = onnx.version_converter.convert_version(onnx_model, onnx_ir_version)
             onnx_model.ir_version = onnx_ir_version
@@ -234,57 +238,43 @@ class ConvertModel(common_base.CommonPipelineBase):
     @classmethod
     def _register_quantized_symbolics(cls, opset_version):
         import torch
-        import onnxscript.onnx_opset as op
-        from onnxscript.function_libs.torch_lib.registration import torch_op
-        from onnxscript import (
-            BOOL,
-            COMPLEX64,
-            COMPLEX128,
-            DOUBLE,
-            FLOAT,
-            INT8,
-            INT16,
-            INT32,
-            INT64,
-            UINT8,
-            graph,
-            ir,
-        )
-        from onnxscript.function_libs.torch_lib.tensor_typing import (
-            IntType,
-            RealType,
-            TFloat,
-            TFloatHighPrecision,
-            TInt,
-            TReal,
-            TRealOrUInt8,
-            TRealUnlessFloat16OrInt8,
-            TRealUnlessInt16OrInt8,
-            TTensor,
-            TTensor2,
-            TTensorOrString,
-        )
+        # import onnxscript.onnx_opset as op
+        from onnxscript.onnx_opset import opset18 as op
+        from onnxscript.onnx_types import TensorType
+        from onnxscript.function_libs.torch_lib.tensor_typing import TTensor
+        from onnxscript.function_libs.torch_lib.ops import common
+        from collections.abc import Sequence
+        
+        def custom_dequantize_per_channel(
+            input: TTensor,
+            scale: TTensor,
+            zero_point: TTensor,
+            quant_min: int,
+            quant_max: int,
+            dtype: int,
+            out_dtype: int = -1,
+        ) -> TTensor:
+            # TODO(justinchuby): Use dtype when we use opset 21
+            dequantized = op.DequantizeLinear(input, scale, zero_point)
+            if out_dtype in (-1, None):
+                # out_dtype can be None as well
+                return dequantized
+            assert out_dtype > 0, f"out_dtype must be -1 or > 0 not {out_dtype}"
+            return op.Cast(dequantized, to=out_dtype)
 
-        #@torch_op("aten::index_select", trace_only=True)
-        def custom_aten_index_select(self, dim: int, index: IntType):
-            """index_select(Tensor self, int dim, Tensor index) -> Tensor"""
-
-            self_is_scalar = len(self.shape) == 0
-            if self_is_scalar:
-                self = op.Reshape(self, op.Constant(value_ints=[-1]))
-
-            # Index may be a scalar. Reshape it to a rank 1 tensor.
-            index = op.Reshape(index, op.Constant(value_ints=[-1]))
-            index = op.Cast(index, to=INT64.dtype)
-            result = op.Gather(self, index, axis=dim)
-
-            if self_is_scalar:
-                result = op.Squeeze(result)
-
-            return result
-
+        def custom_adaptive_avg_pool2d(input: TTensor, output_size: Sequence[int]):
+            if len(output_size) >= 2 and output_size[-1] == 1 and output_size[-2] == 1:
+                avg_pool = op.GlobalAveragePool(input)
+                return avg_pool
+            else:
+                kernel_shape= (input.shape[-1] // output_size[-1], input.shape[-2] // output_size[-2])
+                strides= (input.shape[-1] // output_size[-1], input.shape[-2] // output_size[-2])
+                avg_pool = op.AveragePool(input, kernel_shape=kernel_shape, strides=strides)
+                return avg_pool
+    
         custom_translation_table = {
-            #torch.ops.aten.index.Tensor: custom_aten_index_select #custom_index_tensor,
+            torch.ops.aten.adaptive_avg_pool2d.default: custom_adaptive_avg_pool2d,
+            torch.ops.quantized_decomposed.dequantize_per_channel.default: custom_dequantize_per_channel
         }
 
         return custom_translation_table
