@@ -34,10 +34,11 @@ torch29 = [
     "onnx==1.16.1",
     "protobuf",
     "numpy==1.23.0",
-    "onnxsim==0.4.35",
+    "onnxsim==0.4.36",
     "torch@https://download.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp310-cp310-manylinux_2_28_x86_64.whl#sha256=bd2a257e670ede9fc01c6d76dccdc473040913b8e9328169bf177dbdc38e2484",
     "torchvision@https://download.pytorch.org/whl/cpu/torchvision-0.24.0%2Bcpu-cp310-cp310-manylinux_2_28_x86_64.whl#sha256=81063c59524c2f1c3f0751d6f61961072e51f7faba2db9758b6524af7c6d072a",
-    "onnxscript==0.5.3",
+    "onnxscript==0.5.6",
+    "onnxruntime==1.23.2",
     #"torchao==0.14.1",   ## https://github.com/pytorch/ao/issues/2919
     #"executorch==1.0.0", ## requires numpy >= 2.0
 ]
@@ -45,7 +46,7 @@ torch24 = [
     "onnx==1.14.0",
     "protobuf==3.20.3",
     "numpy==1.23.0",
-    "onnxsim==0.4.35",
+    "onnxsim==0.4.36",
     "torch@https://download.pytorch.org/whl/cpu/torch-2.4.0%2Bcpu-cp310-cp310-linux_x86_64.whl#sha256=0e59377b27823dda6d26528febb7ca06fc5b77816eaa58b4420cc8785e33d4ce",
     "torchvision@https://download.pytorch.org/whl/cpu/torchvision-0.19.0%2Bcpu-cp310-cp310-linux_x86_64.whl#sha256=7b2b46d3c757fa1fe7d08d48bdae6c9d97d82ace707474a79219c10991fee6ff",
 ]
