@@ -199,7 +199,7 @@ class ConvertModel(common_base.CommonPipelineBase):
         #
 
     @classmethod
-    def _torch2onnxfile(cls, torch_model, onnx_model_path, example_inputs, opset_version, dynamo=True, simplify=False, onnx_ir_version=None):
+    def _torch2onnxfile(cls, torch_model, onnx_model_path, example_inputs, opset_version, dynamo=True, simplify=True, onnx_ir_version=None):
         import torch
         if isinstance(torch_model, str) and torch_model.endswith('.pt2'):
             torch_model = torch.export.load(torch_model)
@@ -220,13 +220,6 @@ class ConvertModel(common_base.CommonPipelineBase):
                               opset_version=opset_version, do_constant_folding=True, 
                               training=torch.onnx.TrainingMode.PRESERVE, dynamo=False)
         #
-        if simplify:
-            print('INFO: simplifying onnx model ...')
-            import onnxsim
-            onnx_model = onnx.load(onnx_model_path)
-            onnx_model, onnx_check = onnxsim.simplify(onnx_model)
-            onnx.save(onnx_model, onnx_model_path)
-        #
         if onnx_ir_version:
             print('INFO: converting ONNX IR version ...')
             onnx_model = onnx.load(onnx_model_path)
@@ -234,28 +227,58 @@ class ConvertModel(common_base.CommonPipelineBase):
             onnx_model.ir_version = onnx_ir_version
             onnx.save(onnx_model, onnx_model_path)
         #
+        if simplify:
+            print('INFO: simplifying onnx model ...')
+            import onnxsim
+            onnx_model = onnx.load(onnx_model_path)
+            onnx_model, onnx_check = onnxsim.simplify(onnx_model)
+            onnx.save(onnx_model, onnx_model_path)
+        #
 
     @classmethod
     def _register_quantized_symbolics(cls, opset_version):
         import torch
+        from typing import List
         # import onnxscript.onnx_opset as op
+        from onnxscript import ir
         from onnxscript.onnx_opset import opset18 as op
-        from onnxscript.onnx_types import TensorType
-        from onnxscript.function_libs.torch_lib.tensor_typing import TTensor
+        from onnxscript.onnx_types import TensorType, FLOAT
+        from onnxscript.function_libs.torch_lib.tensor_typing import TTensor, FLOAT
         from onnxscript.function_libs.torch_lib.ops import common
         from collections.abc import Sequence
         
+        def custom_dequantize_per_tensor(
+            input: TensorType,
+            scale: float,
+            zero_point: float,
+            quant_min: int,
+            quant_max: int,
+            dtype: int,
+            out_dtype: int = -1,
+        ) -> TensorType:
+            # TODO: Use dtype when we use opset 21
+            zero_point = float(zero_point)
+            dequantized = op.DequantizeLinear(input, scale, zero_point)
+            if out_dtype in (-1, None):
+                # out_dtype can be None as well
+                return dequantized
+            assert out_dtype > 0, f"out_dtype must be -1 or > 0 not {out_dtype}"
+            return op.Cast(dequantized, to=out_dtype)
+
         def custom_dequantize_per_channel(
             input: TTensor,
-            scale: TTensor,
-            zero_point: TTensor,
+            scale: List[float],
+            zero_point: List[float],
+            axis: int,
             quant_min: int,
             quant_max: int,
             dtype: int,
             out_dtype: int = -1,
         ) -> TTensor:
-            # TODO(justinchuby): Use dtype when we use opset 21
-            dequantized = op.DequantizeLinear(input, scale, zero_point)
+            # TODO: Use dtype when we use opset 21
+            # scale = op.Constant(value_floats=scale)
+            # zero_point = op.Constant(value_ints=zero_point)
+            dequantized = op.DequantizeLinear(input, scale, zero_point, axis=axis)
             if out_dtype in (-1, None):
                 # out_dtype can be None as well
                 return dequantized
@@ -274,6 +297,7 @@ class ConvertModel(common_base.CommonPipelineBase):
     
         custom_translation_table = {
             torch.ops.aten.adaptive_avg_pool2d.default: custom_adaptive_avg_pool2d,
+            torch.ops.quantized_decomposed.dequantize_per_tensor.default: custom_dequantize_per_tensor,
             torch.ops.quantized_decomposed.dequantize_per_channel.default: custom_dequantize_per_channel
         }
 
