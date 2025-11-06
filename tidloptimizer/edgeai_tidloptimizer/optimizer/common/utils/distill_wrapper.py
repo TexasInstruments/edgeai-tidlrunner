@@ -48,19 +48,20 @@ class DistillWrapperBaseModule(torch.nn.Module):
         self.epochs = kwargs.get('epochs', 10)
         self.warmup_epochs = kwargs.get('warmup_epochs', 3)
         self.warmup_factor = kwargs.get('warmup_factor', 1.0) #1/100.0)
-        self.lr = kwargs.get('lr', 1e-5)
-        self.lr_min = kwargs.get('lr_min', self.lr/100.0)
         self.momentum = kwargs.get('momentum', 0.9)
         self.weight_decay = kwargs.get('weight_decay', 1e-4)
         self.temperature = kwargs.get('temperature', 1)
         self.optimizer_step_interval = kwargs.get('optimizer_step_interval', 10)
-
+        self.lr = kwargs.get('lr', 1e-5)
+        self.lr_min = kwargs.get('lr_min', self.lr/100.0)
+    
         self.current_epoch = 0
         self.current_iter = 0
         self.hook_handles = []
         self.activations_dict = {}
 
-        self.optimizer = torch.optim.SGD(student_model.parameters(), lr=self.lr, momentum=self.momentum, weight_decay=self.weight_decay)
+        lr = self.lr
+        self.optimizer = torch.optim.SGD(student_model.parameters(), lr=lr, momentum=self.momentum, weight_decay=self.weight_decay)
         self.scheduler = torch.optim.lr_scheduler.ConstantLR(self.optimizer, factor=self.warmup_factor, total_iters=self.warmup_epochs)
         self.optimizer.zero_grad()
 
@@ -89,7 +90,7 @@ class DistillWrapperBaseModule(torch.nn.Module):
         return self
     
     def step_iter(self, outputs, targets):
-        loss = self._compute_loss(outputs, targets)  / self.optimizer_step_interval
+        loss = self._compute_loss(outputs, targets)
         loss.backward()
         is_optimizer_step = (self.current_iter == 0 or self.current_iter % self.optimizer_step_interval == 0)
         if is_optimizer_step:
