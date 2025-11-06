@@ -185,6 +185,18 @@ def normalize_mean_scale(tensor, mean, scale, data_layout, inplace):
     """
 
     mean, scale = _normalize_pre(tensor, mean, scale, data_layout, inplace)
+    
+    if data_layout == 'NCHW':
+        channel_index = 1
+    elif data_layout == 'NHWC':
+        channel_index = 3
+    else:
+        channel_index = None
+
+    if channel_index:
+        if tensor.shape[channel_index] != mean.shape[channel_index] or tensor.shape[channel_index] != scale.shape[channel_index]:
+            raise ValueError(f'ERROR: normalize_mean_scale mismatch: tensor shape {tensor.shape} mean.shape={mean.shape} scale.shape={scale.shape}')
+    
     tensor = (tensor - mean) * scale
     return tensor
 

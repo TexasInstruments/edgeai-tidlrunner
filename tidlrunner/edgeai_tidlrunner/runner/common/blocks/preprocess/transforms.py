@@ -234,13 +234,13 @@ class ImageNormMeanScale(object):
                 tensor_ = []
                 num_norm = min(len(tensor), len(self.mean))
                 for t_idx in range(num_norm):
-                    tensor_.append(F.normalize_mean_scale(tensor[t_idx], self.mean[t_idx], self.scale[t_idx], self.data_layout, self.inplace))
+                    tensor_.append(self._apply_normalize_mean_scale(tensor[t_idx], self.mean[t_idx], self.scale[t_idx], self.data_layout, self.inplace))
                 #
                 for t_idx in range(num_norm, len(tensor)):
                     tensor_.append(tensor[t_idx])
                 #
             else:
-                tensor_ = [F.normalize_mean_scale(t, self.mean, self.scale, self.data_layout, self.inplace) for t in tensor]
+                tensor_ = [self._apply_normalize_mean_scale(t, self.mean, self.scale, self.data_layout, self.inplace) for t in tensor]
             #
         elif isinstance(tensor, tuple):
             #tensor = tuple([F.normalize_mean_scale(t, self.mean, self.scale, self.data_layout, self.inplace) for t in tensor])
@@ -248,7 +248,7 @@ class ImageNormMeanScale(object):
             for t in tensor:
                 # for image tensor (ndim = 4, RGB channel)
                 if t.ndim == 4:
-                    tensor_.append(F.normalize_mean_scale(t, self.mean, self.scale, self.data_layout, self.inplace))
+                    tensor_.append(self._apply_normalize_mean_scale(t, self.mean, self.scale, self.data_layout, self.inplace))
                 else:
                    assert False, f'ImageNormMeanScale: shape mismatch - {t.shape} {self.mean}'
                 #
@@ -259,14 +259,17 @@ class ImageNormMeanScale(object):
             for name, t in tensor.items():
                 # only for image tensor
                 if t.ndim == 4:
-                    tensor_[name] = F.normalize_mean_scale(t, self.mean, self.scale, self.data_layout, self.inplace)
+                    tensor_[name] = self._apply_normalize_mean_scale(t, self.mean, self.scale, self.data_layout, self.inplace)
                 else:
                    assert False, f'ImageNormMeanScale: shape mismatch - {t.shape} {self.mean}'
                 #
         else:
-            tensor_ = F.normalize_mean_scale(tensor, self.mean, self.scale, self.data_layout, self.inplace)
+            tensor_ = self._apply_normalize_mean_scale(tensor, self.mean, self.scale, self.data_layout, self.inplace)
 
         return tensor_, info_dict
+
+    def _apply_normalize_mean_scale(self, tensor, mean, scale, data_layout, inplace):
+        return F.normalize_mean_scale(tensor, mean, scale, data_layout, inplace)
 
     def __repr__(self):
         return self.__class__.__name__ + '(mean={0}, scale={1})'.format(self.mean, self.scale)

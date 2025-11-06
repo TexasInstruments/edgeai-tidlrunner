@@ -245,7 +245,7 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
         else:
             if model_id is None:
                 print('WARNING: model_id is not given, generating randomly')
-                model_id = "x-" + utils.generate_unique_id(model_path) if model_path else "x-x"
+                model_id = "x-" + utils.generate_unique_id(model_path, num_characters=8) if model_path else "x-x"
             #
             configs = {model_id:dict()}
         #
