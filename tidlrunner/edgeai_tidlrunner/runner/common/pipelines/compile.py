@@ -52,20 +52,20 @@ class CompileModel(CompileModelBase):
 
     def _prepare(self):
         super()._prepare()
+        common_kwargs = self.settings[self.common_prefix]
         self.param_yaml = os.path.join(self.run_dir,'param.yaml')
         
-        common_kwargs = self.settings[self.common_prefix]
-        dataloader_kwargs = self.settings[self.dataloader_prefix]
-        session_kwargs = self.settings[self.session_prefix]
-        preprocess_kwargs = self.settings[self.preprocess_prefix]
-        postprocess_kwargs = self.settings[self.postprocess_prefix]
-        runtime_options = session_kwargs['runtime_options']
-
         if common_kwargs['incremental']:
             if os.path.exists(self.param_yaml):
                 return
             #
         #
+
+        dataloader_kwargs = self.settings[self.dataloader_prefix]
+        session_kwargs = self.settings[self.session_prefix]
+        preprocess_kwargs = self.settings[self.preprocess_prefix]
+        postprocess_kwargs = self.settings[self.postprocess_prefix]
+        runtime_options = session_kwargs['runtime_options']
 
         if os.path.exists(self.run_dir):
             print(f'INFO: clearing run_dir folder before compile: {self.run_dir}')
@@ -169,6 +169,15 @@ class CompileModel(CompileModelBase):
     def _run(self):
         print(f'INFO: starting model import')
         common_kwargs = self.settings[self.common_prefix]
+
+        if common_kwargs['incremental']:
+            if os.path.exists(self.param_yaml):
+                print(f'INFO: incremental={common_kwargs["incremental"]} AND param.yaml exists: {self.param_yaml}')
+                print(f'INFO: skipping compile. To re-run, delete the param.yaml file OR set incremental to False')
+                return
+            #
+        #
+
         dataloader_kwargs = self.settings[self.dataloader_prefix]
         session_kwargs = self.settings[self.session_prefix]
         preprocess_kwargs = self.settings[self.preprocess_prefix]
@@ -181,14 +190,6 @@ class CompileModel(CompileModelBase):
             session_type = blocks.sessions.SESSION_TYPES_MAPPING[session_name]
             self.session = session_type(self.settings, **session_kwargs)
             self.session.start_import()
-        #
-
-        if common_kwargs['incremental']:
-            if os.path.exists(self.param_yaml):
-                print(f'INFO: incremental {common_kwargs["incremental"]} param.yaml exists: {self.param_yaml}')
-                print(f'INFO: skipping compile')
-                return
-            #
         #
 
         super()._run()

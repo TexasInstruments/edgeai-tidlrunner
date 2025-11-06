@@ -55,8 +55,8 @@ class InferAccuracy(infer.InferModel):
         common_kwargs = self.settings[self.common_prefix]
         if common_kwargs['incremental']:
             if os.path.exists(self.result_yaml):
-                print(f'INFO: incremental {common_kwargs["incremental"]} param.yaml exists: {self.result_yaml}')
-                print(f'INFO: skipping infer/accuracy')
+                print(f'INFO: incremental={common_kwargs["incremental"]} AND result.yaml exists: {self.result_yaml}')
+                print(f'INFO: skipping infer/accuracy. o re-run, delete the result.yaml file OR set incremental to False')
                 return
             #
         #
