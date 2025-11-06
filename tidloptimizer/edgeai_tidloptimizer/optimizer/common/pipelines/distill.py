@@ -71,7 +71,8 @@ class DistillModel(compile.CompileModel):
         session_kwargs = self.settings[self.session_prefix]
         runtime_options = session_kwargs['runtime_options']
         distill_kwargs = common_kwargs.get('distill', {})
-    
+        torch_device = common_kwargs['torch_device']
+        
         self.input_normalizer = common_kwargs.get('input_normalizer', None)
         if not self.input_normalizer:
             self.input_normalizer = sessions.create_input_normalizer(**(session_kwargs | dict(input_optimization=False)))
@@ -80,6 +81,7 @@ class DistillModel(compile.CompileModel):
         if not self.example_inputs:
             self.example_inputs, info_dict = self._get_input_from_dataloader(0)
         #
+        self.example_inputs= tuple([tensor.to(torch_device) for tensor in self.example_inputs])
 
     def _run(self):
         # make deterministic random for distill
@@ -91,7 +93,8 @@ class DistillModel(compile.CompileModel):
         session_kwargs = self.settings[self.session_prefix]
         runtime_options = session_kwargs['runtime_options']
         distill_kwargs = common_kwargs.get('distill', {})
-    
+        torch_device = common_kwargs['torch_device']
+
         calibration_iterations = runtime_options['advanced_options:calibration_iterations']
         calibration_frames = runtime_options['advanced_options:calibration_frames']
         calibration_batch_size = runtime_options['advanced_options:calibration_batch_size']
@@ -110,11 +113,13 @@ class DistillModel(compile.CompileModel):
         teacher_model = teacher_model_path
         if isinstance(teacher_model_path, str):
             teacher_model = convert.ConvertModel._get_torch_model(teacher_model_path)
+            teacher_model.to(torch_device)
         #
 
         student_model = student_model_path
         if isinstance(student_model_path, str):
             student_model = convert.ConvertModel._get_torch_model(student_model_path)
+            student_model.to(torch_device)
         #
 
         # teacher_model.eval()
@@ -136,6 +141,8 @@ class DistillModel(compile.CompileModel):
                 # print(f'INFO: input batch for quantize: {input_index}')
                 input_data, info_dict = self._get_input_from_dataloader(
                     input_index, calibration_frames, calibration_batch_size, random_shuffle=True, use_cache=True)
+                
+                input_data = tuple([tensor.to(torch_device) for tensor in input_data])
                 
                 distill_outputs = self.distill_model(*input_data)
                 distil_metrics = self.distill_model.step_iter(*distill_outputs)
