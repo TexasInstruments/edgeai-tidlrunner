@@ -79,7 +79,7 @@ class InferModel(CompileModelBase):
             session_name = session_kwargs['name']
             session_type = blocks.sessions.SESSION_TYPES_MAPPING[session_name]
             self.session = session_type(self.settings, **session_kwargs)
-            self.session.start_import()
+            self.session.start_inference()
         #
 
         # input_data
@@ -151,8 +151,6 @@ class InferModel(CompileModelBase):
         common_kwargs = self.settings[self.common_prefix]
         session_kwargs = self.settings[self.session_prefix]
         
-
-
         if common_kwargs['incremental']:
             if os.path.exists(self.result_yaml):
                 print(f'INFO: incremental {common_kwargs["incremental"]} param.yaml exists: {self.result_yaml}')
