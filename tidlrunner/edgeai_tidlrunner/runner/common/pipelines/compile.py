@@ -50,6 +50,12 @@ class CompileModel(CompileModelBase):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+    def _prepare_model(self):
+        print(f'INFO: running model surgery {self.model_path}')
+        common_kwargs = self.settings[self.common_prefix]
+        surgery_kwargs = common_kwargs['surgery']
+        surgery.ModelSurgery._run_func(self.settings, self.model_path, self.model_path, **surgery_kwargs)
+        
     def _prepare(self):
         super()._prepare()
         common_kwargs = self.settings[self.common_prefix]
@@ -160,12 +166,6 @@ class CompileModel(CompileModelBase):
         
     def info(self):
         print(f'INFO: Model import - {__file__}')
-
-    def _prepare_model(self):
-        print(f'INFO: running model surgery {self.model_path}')
-        common_kwargs = self.settings[self.common_prefix]
-        surgery_kwargs = common_kwargs['surgery']
-        surgery.ModelSurgery._run_func(self.settings, self.model_path, self.model_path, **surgery_kwargs)
 
     def _run(self):
         print(f'INFO: starting model import')

@@ -77,7 +77,7 @@ class ModelSurgery(common_base.CommonPipelineBase):
         self._run_func(self.settings, self.model_path, output_model, **surgery_kwargs)
 
     @classmethod
-    def _run_func(cls, settings, model_source, model_path, optimize_model=True, **kwargs):
+    def _run_func(cls, settings, model_source, model_path, model_surgery=True, **kwargs):
         try:
             shutil.copy2(model_source, model_path)
         except shutil.SameFileError:
@@ -102,8 +102,8 @@ class ModelSurgery(common_base.CommonPipelineBase):
                     #
                 #
             #
-            if not optimize_model:
-                # optimize_model is false, but shape_inference and input_optimization may still be required
+            if not model_surgery:
+                # model_surgery is false, but shape_inference and input_optimization may still be required
                 from osrt_model_tools.onnx_tools import tidl_onnx_model_optimizer
                 custom_optimizers = {
                     'shape_inference_mode': kwargs.get('shape_inference_mode', 'pre'), 
@@ -112,8 +112,8 @@ class ModelSurgery(common_base.CommonPipelineBase):
                 }
                 tidl_onnx_model_optimizer.optimize(model_path, model_path, custom_optimizers=custom_optimizers)
             else:
-                if isinstance(optimize_model, dict):
-                    kwargs.update(optimize_model)
+                if isinstance(model_surgery, dict):
+                    kwargs.update(model_surgery)
                 #
                 from osrt_model_tools.onnx_tools import tidl_onnx_model_optimizer
                 tidl_onnx_model_optimizer.optimize(model_path, model_path, **kwargs)
