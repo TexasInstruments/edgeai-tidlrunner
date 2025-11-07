@@ -257,7 +257,7 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
 
         selected_models = []
         for model_id, config_entry in configs.items():
-            pipeline_config = config_entry.pop('common.pipeline_config', None)
+            pipeline_config = config_entry.pop('common.pipeline_config', None) if isinstance(config_entry, dict) else None
 
             if isinstance(config_entry, str):
                 if not (config_entry.startswith('/') or config_entry.startswith('.')):
