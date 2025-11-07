@@ -87,6 +87,8 @@ class CompileModel(CompileModelBase):
                                source_dir=config_path)
         #
 
+        self._prepare_model()
+        
         # session
         if self.kwargs['common.pipeline_type'] == 'compile' and not self.session and \
             not self.pipeline_config and session_kwargs.get('name',None):
@@ -148,14 +150,13 @@ class CompileModel(CompileModelBase):
             if callable(postprocess_kwargs['name']):
                 postprocess_method = postprocess_kwargs['name']
                 self.postprocess = postprocess_method()
-            elif hasattr(blocks.postprocess, postprocess_kwargs['name']):
+            elif postprocess_kwargs['name'] and hasattr(blocks.postprocess, postprocess_kwargs['name']):
                 postprocess_method = getattr(blocks.postprocess, postprocess_kwargs['name'])
                 self.postprocess = postprocess_method(self.settings, **postprocess_kwargs)
             else:
                 raise RuntimeError(f'ERROR: invalid postprocess args: {postprocess_kwargs}')
             #
         #
-        self._prepare_model()
         
     def info(self):
         print(f'INFO: Model import - {__file__}')

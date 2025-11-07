@@ -73,9 +73,20 @@ class InferModel(CompileModelBase):
 
         # shutil.copy2(self.model_source, self.model_path)
 
+        # session
+        if self.kwargs['common.pipeline_type'] == 'compile' and not self.session and \
+            not self.pipeline_config and session_kwargs.get('name',None):
+            session_name = session_kwargs['name']
+            session_type = blocks.sessions.SESSION_TYPES_MAPPING[session_name]
+            self.session = session_type(self.settings, **session_kwargs)
+            self.session.start_import()
+        #
+
         # input_data
         if self.pipeline_config and 'dataloader' in self.pipeline_config:
             self.dataloader = self.pipeline_config['dataloader']
+        elif self.pipeline_config and 'calibration_dataset' in self.pipeline_config:
+            self.dataloader = self.pipeline_config['calibration_dataset']
         elif self.pipeline_config and 'input_dataset' in self.pipeline_config:
             self.dataloader = self.pipeline_config['input_dataset']
         elif callable(dataloader_kwargs['name']):
@@ -84,7 +95,7 @@ class InferModel(CompileModelBase):
         elif hasattr(blocks.dataloaders, dataloader_kwargs['name']):
             dataloader_method = getattr(blocks.dataloaders, dataloader_kwargs['name'])
             self.dataloader = dataloader_method(self.settings, **dataloader_kwargs)
-            if hasattr(self.dataloader, 'set_size_details'):
+            if self.session and hasattr(self.dataloader, 'set_size_details'):
                 input_details, output_details = self.session.get_input_output_details()
                 self.dataloader.set_size_details(input_details)
             #
@@ -100,7 +111,7 @@ class InferModel(CompileModelBase):
             self.preprocess = preprocess_method()
         elif hasattr(blocks.preprocess, preprocess_kwargs['name']):
             preprocess_method = getattr(blocks.preprocess, preprocess_kwargs['name'])
-            if not (preprocess_kwargs.get('resize', None) and preprocess_kwargs.get('crop', None)):
+            if self.session and not (preprocess_kwargs.get('resize', None) and preprocess_kwargs.get('crop', None)):
                 # input shape was not provided - use the model input size
                 input_details, output_details = self.session.get_input_output_details()
                 if preprocess_kwargs.get('data_layout') == presets.DataLayoutType.NCHW:
@@ -140,11 +151,7 @@ class InferModel(CompileModelBase):
         common_kwargs = self.settings[self.common_prefix]
         session_kwargs = self.settings[self.session_prefix]
         
-        # session
-        session_name = session_kwargs['name']
-        session_type = blocks.sessions.SESSION_TYPES_MAPPING[session_name]
-        self.session = session_type(self.settings, **session_kwargs)
-        self.session.start_inference()
+
 
         if common_kwargs['incremental']:
             if os.path.exists(self.result_yaml):
@@ -165,6 +172,13 @@ class InferModel(CompileModelBase):
         postprocess_kwargs = self.settings[self.postprocess_prefix]
         runtime_options = session_kwargs['runtime_options']
 
+        # session
+        if not self.session:
+            session_name = session_kwargs['name']
+            session_type = blocks.sessions.SESSION_TYPES_MAPPING[session_name]
+            self.session = session_type(self.settings, **session_kwargs)
+            self.session.start_inference()
+        #
         # infer model
         run_data = []
         num_frames = min(len(self.dataloader), common_kwargs['num_frames'])
