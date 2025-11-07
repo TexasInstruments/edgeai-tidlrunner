@@ -39,8 +39,8 @@ from .common_ import common_base
 
 
 class ModelSurgery(common_base.CommonPipelineBase):
-    ARGS_DICT=SETTINGS_DEFAULT['optimize']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['optimize']
+    ARGS_DICT=SETTINGS_DEFAULT['surgery']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['surgery']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -50,13 +50,13 @@ class ModelSurgery(common_base.CommonPipelineBase):
         os.makedirs(self.run_dir, exist_ok=True)
 
     def info():
-        print(f'INFO: Model optimize - {__file__}')
+        print(f'INFO: Model surgery - {__file__}')
 
     def _run(self):
-        print(f'INFO: starting model optimize with parameters: {self.kwargs}')
+        print(f'INFO: starting model surgery with parameters: {self.kwargs}')
 
         common_kwargs = self.settings[self.common_prefix]
-        optimize_kwargs = common_kwargs.get('optimize', {})
+        surgery_kwargs = common_kwargs.get('surgery', {})
 
         if os.path.exists(self.run_dir):
             print(f'INFO: clearing run_dir folder before compile: {self.run_dir}')
@@ -74,7 +74,7 @@ class ModelSurgery(common_base.CommonPipelineBase):
         self.download_file(self.model_source, model_folder=self.model_folder, source_dir=config_path)
 
         output_model = os.path.join(output_path, os.path.basename(self.model_path))
-        self._run_func(self.settings, self.model_path, output_model, **optimize_kwargs)
+        self._run_func(self.settings, self.model_path, output_model, **surgery_kwargs)
 
     @classmethod
     def _run_func(cls, settings, model_source, model_path, optimize_model=True, **kwargs):
@@ -128,6 +128,6 @@ class ModelSurgery(common_base.CommonPipelineBase):
                 #
             #
         else:
-            raise RuntimeError(f'ERROR: optimization for supported for model format: {model_ext}')
+            raise RuntimeError(f'ERROR: surgery not supported for model format: {model_ext}')
         #
         return
