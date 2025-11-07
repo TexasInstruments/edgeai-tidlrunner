@@ -41,7 +41,7 @@ This package provides all the resources to enables all these steps. This will be
 
 [Usage documentation](docs/usage_basic.md): Basic usage 
 
-[Custom models and datasets](./custom_models_and_datasets.md): You have tried the off-the-shelf examples provided in this repository and is ready to compile own models and datasets - then look as this section on custom datasets & models
+[Custom models and datasets](docs/custom_models_and_datasets.md): You have tried the off-the-shelf examples provided in this repository and is ready to compile own models and datasets - then look as this section on custom datasets & models
 
 [Advanced usage documentation](docs/usage_advanced.md): Advanced usage (for experts)
 
