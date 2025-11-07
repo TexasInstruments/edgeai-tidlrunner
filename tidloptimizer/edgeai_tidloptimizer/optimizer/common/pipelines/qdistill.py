@@ -74,12 +74,15 @@ class QuantAwareDistillation(distill.DistillModel):
         session_kwargs = self.settings[self.session_prefix]
         runtime_options = session_kwargs['runtime_options']
         calibration_iterations = runtime_options['advanced_options:calibration_iterations']
+        distill_kwargs = common_kwargs.get('distill', {})
+        torch_device = common_kwargs['torch_device']
 
         teacher_model_path = os.path.join(self.teacher_folder, os.path.basename(self.model_path))
         student_model_path = os.path.join(self.student_folder, os.path.basename(self.model_path))
 
         # get pytorch model
         teacher_model = convert.ConvertModel._get_torch_model(teacher_model_path, example_inputs=self.example_inputs)
+        teacher_model.to(torch_device)
         # it is important to freeze the teacher model's BN and Dropouts
         teacher_model.eval()
 

@@ -42,6 +42,18 @@ torch29 = [
     #"torchao==0.14.1",   ## https://github.com/pytorch/ao/issues/2919
     #"executorch==1.0.0", ## requires numpy >= 2.0
 ]
+torch29cu126 = [
+    "onnx==1.16.1",
+    "protobuf",
+    "numpy==1.23.0",
+    "onnxsim==0.4.36",
+    "torch@https://download.pytorch.org/whl/cu126/torch-2.9.0%2Bcu126-cp310-cp310-manylinux_2_28_x86_64.whl#sha256=653962a66d992e3ba850154356e9ecd83c9beb07663065a3a01d083c8c49b6a5",
+    "torchvision@https://download.pytorch.org/whl/cu126/torchvision-0.24.0%2Bcu126-cp310-cp310-manylinux_2_28_x86_64.whl#sha256=ea3b04a9844c1fc095c49829d02f498fc019c7236964f6e02e0ca22be4536ceb",
+    "onnxscript==0.5.6",
+    "onnxruntime==1.23.2",
+    #"torchao==0.14.1",   ## https://github.com/pytorch/ao/issues/2919
+    #"executorch==1.0.0", ## requires numpy >= 2.0
+]
 torch24 = [
     "onnx==1.14.0",
     "protobuf==3.20.3",

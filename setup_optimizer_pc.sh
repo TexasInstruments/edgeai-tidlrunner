@@ -31,6 +31,7 @@
 
 ######################################################################
 echo "Installing edgeai_tidloptimizer package..."
+#pip3 install -e ./tidloptimizer[torch29cu126] --verbose
 pip3 install -e ./tidloptimizer[torch29] --verbose
 
 
