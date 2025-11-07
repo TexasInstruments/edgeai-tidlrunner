@@ -73,9 +73,19 @@ class GenReport(bases.PipelineBase):
             if result_or_config_yaml:
                 with open(result_or_config_yaml) as fp:
                     result = yaml.safe_load(fp)
+
                     model_id = result['session']['model_id']
                     session_name = result['session'].get('session_name', result['session'].get('name','NONE'))
                     artifact_id = f'{model_id}_{session_name}'
+
+                    run_dir_basename = os.path.basename(run_dir)
+                    run_dir_splits = run_dir_basename.split('_')
+                    artifact_id_from_run_dir = '_'.join(run_dir_splits[:2]) if len(run_dir_splits) > 1 else run_dir_splits[0]
+                    model_id_from_run_dir = run_dir_splits[0]
+
+                    assert artifact_id == artifact_id_from_run_dir, f"artifact_id={artifact_id} doesnt match artifact_id_from_run_dir={artifact_id_from_run_dir}"
+                    assert model_id == model_id_from_run_dir, f"model_id={model_id} doesnt match model_id_from_run_dir={model_id_from_run_dir}"
+
                     results[artifact_id] = result
                 #
             #
@@ -196,7 +206,7 @@ class GenReport(bases.PipelineBase):
                 results_line_dict['model_path'] = os.path.basename(model_path)
                 results_line_dict['task_type'] = pipeline_params_anchor['task_type'] \
                     if 'task_type' in pipeline_params_anchor else None
-                results_line_dict['model_shortlist'] = pipeline_params_anchor['model_info'].get('model_shortlist', None)
+                results_line_dict['model_shortlist'] = pipeline_params_anchor.get('model_info', {}).get('model_shortlist', None)
                 results_line_dict['dataset_name'] = pipeline_params_anchor.get('dataset_category', None)
 
                 model_path = pipeline_params_anchor['session']['model_path']
