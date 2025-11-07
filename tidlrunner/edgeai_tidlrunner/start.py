@@ -142,5 +142,5 @@ def start():
 if __name__ == "__main__":
     print(f'INFO: running {__file__} __main__')
     print(f'INFO: This doesn not setup environment variables. Make sure TIDL_TOOLS_PATH and LD_LIBRARY_PATH are set properly.')
-    print(f'INFO: OR run tidlrunnercli which is setup to call main:main_auto() in pyproject.toml')    
+    print(f'INFO: OR run tidlrunner-cli which is setup to call main:main() in pyproject.toml')    
     start()

@@ -16,7 +16,7 @@ The simplest way to get started is by providing only the model path. This approa
 
 **Example:**
 ```bash
-tidlrunnercli compile --model_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx
+tidlrunner-cli compile --model_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx
 ```
 
 This command will:
@@ -32,7 +32,7 @@ For more control and reproducible workflows, you can use configuration files. Th
 
 **Example:**
 ```bash
-tidlrunnercli compile --config_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml
+tidlrunner-cli compile --config_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml
 ```
 
 This approach provides:
@@ -68,8 +68,8 @@ For detailed information about each command and its parameters, refer to:
 
 For command-specific help, use:
 ```bash
-tidlrunnercli --help
-tidlrunnercli <command> --help
+tidlrunner-cli --help
+tidlrunner-cli <command> --help
 ```
 
 This will show you all available options for each specific command.
