@@ -161,10 +161,10 @@ class CompileModel(CompileModelBase):
         print(f'INFO: Model import - {__file__}')
 
     def _prepare_model(self):
-        print(f'INFO: running model optimize {self.model_path}')
+        print(f'INFO: running model surgery {self.model_path}')
         common_kwargs = self.settings[self.common_prefix]
-        optimize_kwargs = common_kwargs['optimize']
-        surgery.ModelSurgery._run_func(self.settings, self.model_path, self.model_path, **optimize_kwargs)
+        surgery_kwargs = common_kwargs['surgery']
+        surgery.ModelSurgery._run_func(self.settings, self.model_path, self.model_path, **surgery_kwargs)
 
     def _run(self):
         print(f'INFO: starting model import')
