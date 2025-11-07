@@ -67,7 +67,7 @@ done
 
 
 #######################################################################
-pip3 install -e ../tools --verbose
+pip3 install -e ./tools --verbose
 
 
 ######################################################################
@@ -79,7 +79,7 @@ tidlrunner-tools-download
 
 ######################################################################
 echo "Installing edgeai_tidirunner package..."
-pip3 install -e ./[pc] --verbose
+pip3 install -e ./tidlrunner[pc] --verbose
 
 
 ######################################################################

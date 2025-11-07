@@ -6,7 +6,7 @@ Model compilation is done on on PC (Ubuntu Linux). Scripts starting with setup_p
 ### To setup on PC, run:
 
 ```
-./setup_pc.sh
+./setup_runner_pc.sh
 ```
 
 This will download the tidl_tools in the [tools](../tools) folder. 
@@ -18,7 +18,7 @@ Running with CUDA GPU has dependencies - the details of dependencies are in the 
 
 Example:
 ```
-./setup_pc_gpu.sh
+./setup_runner_pc_gpu.sh
 ```
 
 This script installs the CUDA based tidl-tools and nvidia-hpc-sdk. The user has to make sure the system has CUDA gpus appropriate nvidia graphics drivers. 
@@ -27,11 +27,11 @@ This script installs the CUDA based tidl-tools and nvidia-hpc-sdk. The user has 
 Version of tidl-tools can be specified during the setup process.
 
 ```
-TIDL_TOOLS_VERSION="11.1" ./setup_pc_gpu.sh
+TIDL_TOOLS_VERSION="11.1" ./setup_runner_pc_gpu.sh
 ```
 
 ```
-TIDL_TOOLS_VERSION="11.0" ./setup_pc_gpu.sh
+TIDL_TOOLS_VERSION="11.0" ./setup_runner_pc_gpu.sh
 ```
 
 **Important Note**: The version of tidl-tools that is installed will be used for model compilation. The version of tidl-tools used for compiling a generating model artifacts has to match with the version on the EVM/device. Other the model artifacts will not run on the device.
@@ -45,7 +45,7 @@ TIDL_TOOLS_VERSION="11.0" ./setup_pc_gpu.sh
 Run this on the EVM to setup on the EVM
 
 ```
-./setup_evm.sh
+./setup_runner_evm.sh
 ```
 
 
