@@ -1,0 +1,73 @@
+[build-system]
+requires = ["setuptools>=42", "pyyaml", "tqdm", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "edgeai-tidloptimizer"
+version = "11.1.0"
+description = "Edge AI TIDL Optimizer"
+authors = [
+    { name = "Edge AI Development Team", email = "edgeai-dev@list.ti.com" }
+]
+readme = "README.md"
+license = {file = "LICENSE.md"}
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3.10",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence"
+]
+dependencies = [
+    #"edgeai_torchmodelopt @ git+ssh://git@bitbucket.itg.ti.com/edgeai-algo/edgeai-modeloptimization.git@develop#subdirectory=torchmodelopt",
+    #"edgeai_onnx2torchmodel @ git+ssh://git@bitbucket.itg.ti.com/edgeai-algo/edgeai-modeloptimization.git@develop#subdirectory=onnx2torchmodel",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/TexasInstruments/edgeai-tidlrunner"
+"Bug Reports" = "https://github.com/TexasInstruments/edgeai-tidlrunner/issues"
+"Source" = "https://github.com/TexasInstruments/edgeai-tidlrunner"
+
+[project.optional-dependencies]
+torch29 = [
+    "onnx==1.16.1",
+    "protobuf",
+    "numpy==1.23.0",
+    "onnxsim==0.4.36",
+    "torch@https://download.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp310-cp310-manylinux_2_28_x86_64.whl#sha256=bd2a257e670ede9fc01c6d76dccdc473040913b8e9328169bf177dbdc38e2484",
+    "torchvision@https://download.pytorch.org/whl/cpu/torchvision-0.24.0%2Bcpu-cp310-cp310-manylinux_2_28_x86_64.whl#sha256=81063c59524c2f1c3f0751d6f61961072e51f7faba2db9758b6524af7c6d072a",
+    "onnxscript==0.5.6",
+    "onnxruntime==1.23.2",
+    #"torchao==0.14.1",   ## https://github.com/pytorch/ao/issues/2919
+    #"executorch==1.0.0", ## requires numpy >= 2.0
+]
+torch24 = [
+    "onnx==1.14.0",
+    "protobuf==3.20.3",
+    "numpy==1.23.0",
+    "onnxsim==0.4.36",
+    "torch@https://download.pytorch.org/whl/cpu/torch-2.4.0%2Bcpu-cp310-cp310-linux_x86_64.whl#sha256=0e59377b27823dda6d26528febb7ca06fc5b77816eaa58b4420cc8785e33d4ce",
+    "torchvision@https://download.pytorch.org/whl/cpu/torchvision-0.19.0%2Bcpu-cp310-cp310-linux_x86_64.whl#sha256=7b2b46d3c757fa1fe7d08d48bdae6c9d97d82ace707474a79219c10991fee6ff",
+]
+dev = [
+    "pytest",
+    "black",
+    "flake8",
+    "mypy"
+]
+
+[project.scripts]
+tidloptimizer-tools-install = "edgeai_tidloptimizer.download:main"
+tidloptimizer-cli = "edgeai_tidloptimizer.main:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["edgeai_tidloptimizer*"]
+
+#[tool.pip]
+#index-url = "https://download.pytorch.org/whl/cpu"
+#extra-index-url = ["https://pypi.ngc.nvidia.com"]
