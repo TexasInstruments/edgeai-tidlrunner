@@ -206,9 +206,13 @@ def _get_configs(config_path, **kwargs):
             work_path = kwargs['common.work_path']
             print(f'\nINFO: work_path: {work_path}')
             pipeline_configs = edgeai_benchmark.interfaces.get_configs(settings, work_path)
-            configs = edgeai_benchmark.pipelines.PipelineRunner(settings, pipeline_configs).get_pipeline_configs()
-            upgrade_config = {'common.upgrade_config':False}
-            configs = {model_id: (upgrade_config | pipeline_config) for model_id, pipeline_config in configs.items()}
+            pipeline_configs = edgeai_benchmark.pipelines.PipelineRunner(settings, pipeline_configs).get_pipeline_configs()
+            upgrade_config = {'common.upgrade_config': False}
+            configs = {}
+            for model_id, pipeline_config in pipeline_configs.items():
+                combined_config = upgrade_config | pipeline_config | {'common.pipeline_config': pipeline_config}
+                configs[model_id] = combined_config
+            #
         else:
             raise RuntimeError(f'ERROR: invalid config_path: {config_path}')
         #
@@ -240,18 +244,21 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
         config_path = kwargs_cmd.get('common.config_path', None)
         kwargs_combined = (kwargs_cmd | kwargs)
         model_path = kwargs_combined.get('session.model_path', None)
+        pipeline_type = kwargs_cmd.get('common.pipeline_type', None)
         if config_path:
             configs = _get_configs(config_path, **kwargs_combined)
         else:
             if model_id is None:
                 print('WARNING: model_id is not given, generating randomly')
-                model_id = "x-" + utils.generate_unique_id(model_path, num_characters=8) if model_path else "x-x"
+                model_id = f"{pipeline_type}-" + utils.generate_unique_id(model_path, num_characters=8) if model_path else "x-x"
             #
-            configs = {model_id:dict()}
+            configs = {model_id:{'session.model_id':model_id}}
         #
 
         selected_models = []
         for model_id, config_entry in configs.items():
+            pipeline_config = config_entry.pop('common.pipeline_config', None)
+
             if isinstance(config_entry, str):
                 if not (config_entry.startswith('/') or config_entry.startswith('.')):
                     print('INFO: config_entry is not an absolute path, resolving relative to config_path')
@@ -293,7 +300,7 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
             else:
                 config_entry_path = None
             #
-            kwargs_model['common.pipeline_config'] = config_entry
+            kwargs_model['common.pipeline_config'] = pipeline_config
 
             verbose = kwargs_model.get('common.verbose', 0)
             model_shortlist = kwargs_model.get('common.model_shortlist', None)
