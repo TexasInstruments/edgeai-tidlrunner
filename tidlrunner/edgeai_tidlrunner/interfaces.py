@@ -140,6 +140,7 @@ def _model_shortlist(model_shortlist, model_shortlist_for_model):
 
 
 def _get_configs(config_path, **kwargs):
+    is_aggregate_config_file = False
     if isinstance(config_path, str):
         if config_path.endswith('.yaml'):
             with open(config_path) as fp:
@@ -148,6 +149,7 @@ def _get_configs(config_path, **kwargs):
             kwargs_config.pop('command', None)
             if 'configs' in kwargs_config:
                 configs = kwargs_config.get('configs')
+                is_aggregate_config_file = True
             else:
                 model_id = kwargs_config.get('session',{}).get('model_id', None) or kwargs.get('session.model_id', None)
                 configs = {model_id:config_path}
@@ -221,7 +223,7 @@ def _get_configs(config_path, **kwargs):
     else:
         raise RuntimeError(f'ERROR: invalid config_path: {config_path}')
     #
-    return configs
+    return configs, is_aggregate_config_file
 
 
 def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs):
@@ -246,7 +248,7 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
         model_path = kwargs_combined.get('session.model_path', None)
         pipeline_type = kwargs_cmd.get('common.pipeline_type', None)
         if config_path:
-            configs = _get_configs(config_path, **kwargs_combined)
+            configs, is_aggregate_config_file = _get_configs(config_path, **kwargs_combined)
         else:
             if model_id is None:
                 print('WARNING: model_id is not given, generating randomly')
@@ -260,7 +262,7 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
             pipeline_config = config_entry.pop('common.pipeline_config', None) if isinstance(config_entry, dict) else None
 
             if isinstance(config_entry, str):
-                if not (config_entry.startswith('/') or config_entry.startswith('.')):
+                if is_aggregate_config_file and not (config_entry.startswith('/') or config_entry.startswith('.')):
                     print('INFO: config_entry is not an absolute path, resolving relative to config_path')
                     config_base_path = os.path.dirname(config_path)
                     config_entry = os.path.join(config_base_path, config_entry)
