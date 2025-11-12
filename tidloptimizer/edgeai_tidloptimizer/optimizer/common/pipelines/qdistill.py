@@ -105,9 +105,10 @@ class QuantAwareDistillation(distill.DistillModel):
         # create student model
         from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule, QConfigType
         from edgeai_torchmodelopt.xmodelopt.quantization.v3.fake_quantize_types import ADAPTIVE_ACTIVATION_FAKE_QUANT_TYPES
-        # ['linear', 'linear_relu', 'conv', 'conv_relu', 'conv_transpose_relu', 'conv_bn', 'conv_bn_relu', 'conv_transpose_bn', 'conv_transpose_bn_relu', 'gru_io_only', 'adaptive_avg_pool2d', 'add_relu', 'add', 'mul_relu', 'mul', 'cat']
-        # ['linear', 'linear_relu', 'conv', 'conv_relu', 'conv_bn', 'conv_bn_relu', 'conv_transpose_relu', 'conv_transpose_bn', 'conv_transpose_bn_relu']
-        annotation_patterns = ['linear', 'linear_relu', 'conv', 'conv_relu', 'conv_bn', 'conv_bn_relu', 'conv_transpose_relu', 'conv_transpose_bn', 'conv_transpose_bn_relu']
+        # full: ['linear', 'linear_relu', 'conv', 'conv_relu', 'conv_transpose_relu', 'conv_bn', 'conv_bn_relu', 'conv_transpose_bn', 'conv_transpose_bn_relu', 'gru_io_only', 'adaptive_avg_pool2d', 'add_relu', 'add', 'mul_relu', 'mul', 'cat']
+        # minimal: ['linear', 'linear_relu', 'conv', 'conv_relu', 'conv_bn', 'conv_bn_relu', 'conv_transpose_relu', 'conv_transpose_bn', 'conv_transpose_bn_relu']
+        # added by us in advanced quantizer: 'matmul'
+        annotation_patterns = ['linear', 'linear_relu', 'conv', 'conv_relu', 'conv_bn', 'conv_bn_relu', 'conv_transpose_relu', 'conv_transpose_bn', 'conv_transpose_bn_relu', 'add_relu', 'add', 'mul_relu', 'mul', 'cat', 'matmul']
         student_model = QATPT2EModule(teacher_model, example_inputs=self.example_inputs, 
                                       qconfig_type=self.qconfig_type, quantizer_type=self.quantizer_type,
                                       total_epochs=calibration_iterations, annotation_patterns=annotation_patterns)
