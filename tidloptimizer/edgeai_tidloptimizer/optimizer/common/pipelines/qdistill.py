@@ -133,5 +133,13 @@ class QuantAwareDistillation(distill.DistillModel):
         convert.ConvertModel._run_func(student_model, student_model_path_pt2, self.example_inputs)
         # export to onnx
         convert.ConvertModel._run_func(student_model, student_model_path, self.example_inputs, onnx_ir_version=onnx_ir_version)
-        # copy to model_path
-        shutil.copyfile(student_model_path, self.model_path)
+        # copy to model folder
+        pipeline_type = common_kwargs['pipeline_type']
+        final_model_path_wo_ext, final_model_ext = os.path.splitext(self.model_path)
+        final_model_path = final_model_path_wo_ext + f'_{pipeline_type}' + final_model_ext
+        shutil.copyfile(student_model_path, final_model_path)
+        # create symlink to model_path
+        cur_dir = os.getcwd()
+        os.chdir(os.path.dirname(self.model_path))
+        os.symlink(os.path.basename(final_model_path), os.path.basename(self.model_path))
+        os.chdir(cur_dir)

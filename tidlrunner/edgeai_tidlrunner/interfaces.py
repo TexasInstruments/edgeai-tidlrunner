@@ -115,16 +115,18 @@ def _run_command(task_index, command_name, pipeline_name, command_kwargs, captur
 
 def _model_selection(model_selection, *args):
     if model_selection is None:
-        is_selected = True
-    else:
-        model_selection = utils.formatted_nargs(model_selection)
-        is_selected = False
-        for m in model_selection:
-            for arg in args:
-                if isinstance(arg, str):
-                    is_selected = is_selected or (re.search(m, arg) is not None)
-                #
+        return True
+    
+    model_selection = utils.formatted_nargs(model_selection)
+    is_selected = False
+    for m in model_selection:
+        for arg in args:
+            if isinstance(arg, str):
+                selected_parts = all([re.search(m_part, arg) is not None for m_part in m.split('+')])
+            else:
+                selected_parts = True
             #
+            is_selected = is_selected or selected_parts
         #
     #
     return is_selected

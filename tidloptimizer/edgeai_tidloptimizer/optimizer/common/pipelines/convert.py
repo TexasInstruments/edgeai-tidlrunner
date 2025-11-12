@@ -86,8 +86,11 @@ class ConvertModel(common_base.CommonPipelineBase):
 
         config_path = os.path.dirname(common_kwargs['config_path']) if common_kwargs['config_path'] else None
         self.download_file(self.model_source, model_folder=self.model_folder, source_dir=config_path)
-
-        output_model = self._run_func(input_model_path, output_model_path, **convert_kwargs)
+        try:
+            output_model = self._run_func(input_model_path, output_model_path, **convert_kwargs)
+        except Exception as e:
+            print(f'ERROR: convert failed for: {input_model_path} \nERROR: {e}')
+            raise e
         return output_model
 
     @classmethod
