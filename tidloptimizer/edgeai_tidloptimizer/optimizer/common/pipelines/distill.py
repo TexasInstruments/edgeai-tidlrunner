@@ -81,7 +81,7 @@ class DistillModel(compile.CompileModel):
         if not self.example_inputs:
             self.example_inputs, info_dict = self._get_input_from_dataloader(0)
         #
-        self.example_inputs= tuple([tensor.to(torch_device) for tensor in self.example_inputs])
+        self.example_inputs_on_device = tuple([tensor.to(torch_device) for tensor in self.example_inputs])
 
     def _run(self):
         # make deterministic random for distill
@@ -112,13 +112,13 @@ class DistillModel(compile.CompileModel):
 
         teacher_model = teacher_model_path
         if isinstance(teacher_model_path, str):
-            teacher_model = convert.ConvertModel._get_torch_model(teacher_model_path)
+            teacher_model = convert.ConvertModel._get_torch_model(teacher_model_path, example_inputs=self.example_inputs)
             teacher_model.to(torch_device)
         #
 
         student_model = student_model_path
         if isinstance(student_model_path, str):
-            student_model = convert.ConvertModel._get_torch_model(student_model_path)
+            student_model = convert.ConvertModel._get_torch_model(student_model_path, example_inputs=self.example_inputs)
             student_model.to(torch_device)
         #
 

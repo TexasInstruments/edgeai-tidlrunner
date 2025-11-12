@@ -90,15 +90,14 @@ class QuantAwareDistillation(distill.DistillModel):
         os.makedirs(self.teacher_folder, exist_ok=True)
         teacher_model_path = os.path.join(self.teacher_folder, os.path.basename(self.model_path))
         teacher_model_path_pt2 = os.path.splitext(teacher_model_path)[0] + ".pt2"
-        convert.ConvertModel._run_func(teacher_model, teacher_model_path_pt2, self.example_inputs)
+        convert.ConvertModel._run_func(teacher_model, teacher_model_path_pt2, self.example_inputs_on_device)
         
         #################################################################################
         # prepare the student model
         import torch
 
-        # create student model
-        student_model = torch.export.export(teacher_model, self.example_inputs).module()
-
+        # create student model - no need to do this - QATPT2EModule will do it
+        # student_model = torch.export.export(teacher_model, self.example_inputs_on_device).module()
         # from torch.ao.quantization.pt2e import allow_exported_model_train_eval
         # allow_exported_model_train_eval(student_model)
 
@@ -108,15 +107,15 @@ class QuantAwareDistillation(distill.DistillModel):
         # full: ['linear', 'linear_relu', 'conv', 'conv_relu', 'conv_transpose_relu', 'conv_bn', 'conv_bn_relu', 'conv_transpose_bn', 'conv_transpose_bn_relu', 'gru_io_only', 'adaptive_avg_pool2d', 'add_relu', 'add', 'mul_relu', 'mul', 'cat']
         # minimal: ['linear', 'linear_relu', 'conv', 'conv_relu', 'conv_bn', 'conv_bn_relu', 'conv_transpose_relu', 'conv_transpose_bn', 'conv_transpose_bn_relu']
         # added by us in advanced quantizer: 'matmul'
-        annotation_patterns = ['linear', 'linear_relu', 'conv', 'conv_relu', 'conv_bn', 'conv_bn_relu', 'conv_transpose_relu', 'conv_transpose_bn', 'conv_transpose_bn_relu', 'add_relu', 'add', 'mul_relu', 'mul', 'cat', 'matmul']
-        student_model = QATPT2EModule(teacher_model, example_inputs=self.example_inputs, 
+        annotation_patterns = ['linear', 'linear_relu', 'conv', 'conv_relu', 'conv_bn', 'conv_bn_relu', 'conv_transpose_relu', 'conv_transpose_bn', 'conv_transpose_bn_relu', 'add_relu', 'add',  'cat', 'matmul'] #'mul_relu', 'mul'
+        student_model = QATPT2EModule(teacher_model, example_inputs=self.example_inputs_on_device, 
                                       qconfig_type=self.qconfig_type, quantizer_type=self.quantizer_type,
                                       total_epochs=calibration_iterations, annotation_patterns=annotation_patterns)
 
         #################################################################################
         # run the distillation
         common_kwargs['teacher_model_path'] = teacher_model
-        common_kwargs['example_inputs'] = self.example_inputs
+        common_kwargs['example_inputs'] = self.example_inputs_on_device
         common_kwargs['output_model_path'] = student_model
 
         super()._run()
@@ -131,9 +130,9 @@ class QuantAwareDistillation(distill.DistillModel):
         # save student model
         # export to pt2 - optional
         student_model_path_pt2 = os.path.splitext(student_model_path)[0] + ".pt2"
-        convert.ConvertModel._run_func(student_model, student_model_path_pt2, self.example_inputs)
+        convert.ConvertModel._run_func(student_model, student_model_path_pt2, self.example_inputs_on_device)
         # export to onnx
-        convert.ConvertModel._run_func(student_model, student_model_path, self.example_inputs, onnx_ir_version=onnx_ir_version)
+        convert.ConvertModel._run_func(student_model, student_model_path, self.example_inputs_on_device, onnx_ir_version=onnx_ir_version)
         # copy to model folder
         pipeline_type = common_kwargs['pipeline_type']
         final_model_path_wo_ext, final_model_ext = os.path.splitext(self.model_path)
