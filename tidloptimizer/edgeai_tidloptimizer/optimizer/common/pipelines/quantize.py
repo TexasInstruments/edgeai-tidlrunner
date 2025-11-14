@@ -44,7 +44,7 @@ class QuantizeModel(qdistill.QuantAwareDistillation):
         super().__init__(**kwargs)
 
         from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule, QConfigType
-        self.qconfig_type = QConfigType.MSA_WC8SYM_AT8SYM #DEFAULT
+        self.qconfig_type = QConfigType.DEFAULT #MSA_WC8SYM_AT8SYM #DEFAULT
         self.with_convert = True
 
     def info(self):

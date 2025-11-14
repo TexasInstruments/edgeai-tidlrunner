@@ -47,9 +47,15 @@ class QuantAwareDistillation(distill.DistillModel):
     def __init__(self, **kwargs):
         super().__init__(**kwargs) #parametrization_types=('clip_const',),
         from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule, QConfigType, QuantizerTypes
+
         self.qconfig_type = QConfigType.WF_AFCLIP #WF_AFCLIP #DEFAULT 
         self.quantizer_type = QuantizerTypes.TIDLRT_ADVANCED
         self.with_convert = True #False
+
+        # full: ['linear', 'linear_relu', 'conv', 'conv_relu', 'conv_transpose_relu', 'conv_bn', 'conv_bn_relu', 'conv_transpose_bn', 'conv_transpose_bn_relu', 'gru_io_only', 'adaptive_avg_pool2d', 'add_relu', 'add', 'mul_relu', 'mul', 'cat']
+        # minimal: ['linear', 'linear_relu', 'conv', 'conv_relu', 'conv_bn', 'conv_bn_relu', 'conv_transpose_relu', 'conv_transpose_bn', 'conv_transpose_bn_relu']
+        # added by us in advanced quantizer: 'matmul'
+        self.annotation_patterns = ['linear', 'linear_relu', 'conv', 'conv_relu', 'conv_bn', 'conv_bn_relu', 'conv_transpose_relu', 'conv_transpose_bn', 'conv_transpose_bn_relu', 'add_relu', 'add',  'cat'] #'matmul', 'mul_relu', 'mul'
 
     def info():
         print(f'INFO: Model qdistill - {__file__}')
@@ -104,13 +110,9 @@ class QuantAwareDistillation(distill.DistillModel):
         # create student model
         from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule, QConfigType
         from edgeai_torchmodelopt.xmodelopt.quantization.v3.fake_quantize_types import ADAPTIVE_ACTIVATION_FAKE_QUANT_TYPES
-        # full: ['linear', 'linear_relu', 'conv', 'conv_relu', 'conv_transpose_relu', 'conv_bn', 'conv_bn_relu', 'conv_transpose_bn', 'conv_transpose_bn_relu', 'gru_io_only', 'adaptive_avg_pool2d', 'add_relu', 'add', 'mul_relu', 'mul', 'cat']
-        # minimal: ['linear', 'linear_relu', 'conv', 'conv_relu', 'conv_bn', 'conv_bn_relu', 'conv_transpose_relu', 'conv_transpose_bn', 'conv_transpose_bn_relu']
-        # added by us in advanced quantizer: 'matmul'
-        annotation_patterns = ['linear', 'linear_relu', 'conv', 'conv_relu', 'conv_bn', 'conv_bn_relu', 'conv_transpose_relu', 'conv_transpose_bn', 'conv_transpose_bn_relu', 'add_relu', 'add',  'cat', 'matmul'] #'mul_relu', 'mul'
         student_model = QATPT2EModule(teacher_model, example_inputs=self.example_inputs_on_device, 
                                       qconfig_type=self.qconfig_type, quantizer_type=self.quantizer_type,
-                                      total_epochs=calibration_iterations, annotation_patterns=annotation_patterns)
+                                      total_epochs=calibration_iterations, annotation_patterns=self.annotation_patterns)
 
         #################################################################################
         # run the distillation
