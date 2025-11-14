@@ -37,8 +37,8 @@ import numpy as np
 from typing import Tuple, Any
 import onnx
 
-from edgeai_tidlrunner.runner.common import utils
-from edgeai_tidlrunner.runner.common import bases
+import torch
+from typing import List, Optional
 
 from edgeai_tidlrunner.runner.common.settings import constants
 from edgeai_tidlrunner.runner.common.pipelines.common_ import common_base
@@ -211,7 +211,7 @@ class ConvertModel(common_base.CommonPipelineBase):
         #
         if dynamo:
             print('INFO: dynamo based onnx export ...')
-            custom_translation_table = cls._register_quantized_symbolics(opset_version=opset_version)
+            custom_translation_table = cls._get_custom_onnx_translation_table(opset_version=opset_version)
             artifacts_dir = os.path.dirname(onnx_model_path)
             onnx_program = torch.onnx.export(torch_model, example_inputs, opset_version=opset_version, dynamo=True, report=True, 
                                              training=torch.onnx.TrainingMode.PRESERVE, artifacts_dir=artifacts_dir, custom_translation_table=custom_translation_table)
@@ -239,69 +239,7 @@ class ConvertModel(common_base.CommonPipelineBase):
         #
 
     @classmethod
-    def _register_quantized_symbolics(cls, opset_version):
-        import torch
-        from typing import List
-        # import onnxscript.onnx_opset as op
-        from onnxscript import ir
-        from onnxscript.onnx_opset import opset18 as op
-        from onnxscript.onnx_types import TensorType, FLOAT
-        from onnxscript.function_libs.torch_lib.tensor_typing import TTensor, FLOAT
-        from onnxscript.function_libs.torch_lib.ops import common
-        from collections.abc import Sequence
-        
-        def custom_dequantize_per_tensor(
-            input: TensorType,
-            scale: float,
-            zero_point: float,
-            quant_min: int,
-            quant_max: int,
-            dtype: int,
-            out_dtype: int = -1,
-        ) -> TensorType:
-            # TODO: Use dtype when we use opset 21
-            zero_point = float(zero_point)
-            dequantized = op.DequantizeLinear(input, scale, zero_point)
-            if out_dtype in (-1, None):
-                # out_dtype can be None as well
-                return dequantized
-            assert out_dtype > 0, f"out_dtype must be -1 or > 0 not {out_dtype}"
-            return op.Cast(dequantized, to=out_dtype)
-
-        def custom_dequantize_per_channel(
-            input: TTensor,
-            scale: List[float],
-            zero_point: List[float],
-            axis: int,
-            quant_min: int,
-            quant_max: int,
-            dtype: int,
-            out_dtype: int = -1,
-        ) -> TTensor:
-            # TODO: Use dtype when we use opset 21
-            # scale = op.Constant(value_floats=scale)
-            # zero_point = op.Constant(value_ints=zero_point)
-            dequantized = op.DequantizeLinear(input, scale, zero_point, axis=axis)
-            if out_dtype in (-1, None):
-                # out_dtype can be None as well
-                return dequantized
-            assert out_dtype > 0, f"out_dtype must be -1 or > 0 not {out_dtype}"
-            return op.Cast(dequantized, to=out_dtype)
-
-        def custom_adaptive_avg_pool2d(input: TTensor, output_size: Sequence[int]):
-            if len(output_size) >= 2 and output_size[-1] == 1 and output_size[-2] == 1:
-                avg_pool = op.GlobalAveragePool(input)
-                return avg_pool
-            else:
-                kernel_shape= (input.shape[-1] // output_size[-1], input.shape[-2] // output_size[-2])
-                strides= (input.shape[-1] // output_size[-1], input.shape[-2] // output_size[-2])
-                avg_pool = op.AveragePool(input, kernel_shape=kernel_shape, strides=strides)
-                return avg_pool
-    
-        custom_translation_table = {
-            torch.ops.aten.adaptive_avg_pool2d.default: custom_adaptive_avg_pool2d,
-            torch.ops.quantized_decomposed.dequantize_per_tensor.default: custom_dequantize_per_tensor,
-            torch.ops.quantized_decomposed.dequantize_per_channel.default: custom_dequantize_per_channel
-        }
-
+    def _get_custom_onnx_translation_table(cls, opset_version):
+        from ..utils.onnxscript_utils import get_custom_onnx_translation_table
+        custom_translation_table = get_custom_onnx_translation_table(opset_version=opset_version)
         return custom_translation_table
