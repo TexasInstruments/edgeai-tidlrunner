@@ -499,7 +499,7 @@ class DetectionFilter():
 
 
 class LogitsToLabelScore():
-    def __init__(self, scores_index=0, bbox_index=1, background_class_id=-1):
+    def __init__(self, scores_index=0, bbox_index=1, background_class_id=None):
         self.scores_index = scores_index
         self.bbox_index = bbox_index
         self.background_class_id = background_class_id
@@ -519,8 +519,6 @@ class LogitsToLabelScore():
         tensor_list_softmax.append(np.max(softmax_score,axis=-1).reshape(-1,1))
         return tensor_list_softmax, info_dict  
     
-
-
 
 class DetectionImageSave():
     def __init__(self, num_output_frames=None):

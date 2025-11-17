@@ -79,12 +79,16 @@ class DetectionXYWH2XYXYCenterXY():
         y1 = bbox[..., 1] - 0.5 * bbox[..., 3]
         x2 = bbox[..., 0] + 0.5 * bbox[..., 2]
         y2 = bbox[..., 1] + 0.5 * bbox[..., 3]
-        img_shape =  info_dict['data_shape']
-        resize_shape =  info_dict['resize_shape']
-        bbox[..., 0] = x1 * resize_shape[1]
-        bbox[..., 1] = y1 * resize_shape[0]
-        bbox[..., 2] = x2 * resize_shape[1]
-        bbox[..., 3] = y2 * resize_shape[0]
+        # img_shape =  info_dict['data_shape']
+        # resize_shape =  info_dict['resize_shape']
+        # bbox[..., 0] = x1 * resize_shape[1]
+        # bbox[..., 1] = y1 * resize_shape[0]
+        # bbox[..., 2] = x2 * resize_shape[1]
+        # bbox[..., 3] = y2 * resize_shape[0]
+        bbox[..., 0] = x1
+        bbox[..., 1] = y1
+        bbox[..., 2] = x2
+        bbox[..., 3] = y2
         return bbox, info_dict
     
 

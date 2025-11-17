@@ -301,8 +301,20 @@ class CompileModelBase(CommonPipelineBase):
         super()._write_params(settings, filename, param_template=param_template)
 
     def get_info_dict(self, input_index):
-        info_dict = {'dataset_info': getattr(self.dataloader, 'dataset_info', None),
-                     'label_offset_pred': self.pipeline_config.get('metric',{}).get('label_offset_pred',None) if isinstance(self.pipeline_config, dict) else None,
+        if isinstance(self.pipeline_config, dict):
+            label_offset_pred = self.pipeline_config.get('metric',{}).get('label_offset_pred',None)
+            task_name = self.pipeline_config.get('task_name',{})
+        else:
+            label_offset_pred = self.kwargs.get('label_offset_pred', None)
+            task_name = self.kwargs.get('common.task_name', None)
+        #
+        dataset_info = self.dataloader.peek_param('dataset_info')
+        label_offset_pred = self.kwargs.get('metric.label_offset_pred', None)
+        info_dict = {'dataset_info': dataset_info,
+                     'label_offset_pred': label_offset_pred,
                      'sample_idx': input_index,
-                     'task_name': self.pipeline_config.get('task_name',{}) if isinstance(self.pipeline_config, dict) else None}
+                     'task_name': task_name,
+                     'run_dir': self.run_dir,
+                     'label_offset_pred': label_offset_pred,
+                     }
         return info_dict
