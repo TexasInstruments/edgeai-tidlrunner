@@ -37,6 +37,7 @@ class RandomDataLoader(dataset_base.DatasetBase):
         super().__init__()
         self.num_frames = num_frames
         self.size_details = size_details or [{'shape':[1, 3, 224, 224], 'type':'float'}]
+        self.get_dataset_info()
 
     def __getitem__(self, index, info_dict=None):
         info_dict = info_dict or {}
@@ -52,6 +53,10 @@ class RandomDataLoader(dataset_base.DatasetBase):
     def set_size_details(self, size_details):
         self.size_details = size_details
 
+    def get_dataset_info(self, *args, **kwargs):
+        dataset_info = None
+        self.kwargs['dataset_info'] = dataset_info
+        return dataset_info
 
 def random_dataloader(settings, name, **kwargs):
     return RandomDataLoader(**kwargs)

@@ -116,9 +116,10 @@ class QuantAwareDistillation(distill.DistillModel):
         #################################################################################
         teacher_model.to(torch_device)
 
-        has_gm_module = hasattr(student_model, 'module') and isinstance(student_model.module, torch.fx.GraphModule)
-        module_to_move = student_model.module if has_gm_module else student_model
-        model_utils.move_model_to_device(module_to_move, self.example_inputs_on_device, None, torch_device)
+        student_model.to(torch_device)
+        # has_gm_module = hasattr(student_model, 'module') and isinstance(student_model.module, torch.fx.GraphModule)
+        # module_to_move = student_model.module if has_gm_module else student_model
+        # model_utils.move_model_to_device(module_to_move, self.example_inputs_on_device, None, torch_device)
 
         #################################################################################
         # run the distillation
