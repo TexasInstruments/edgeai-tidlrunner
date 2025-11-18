@@ -32,9 +32,10 @@ import sys
 import shutil
 import copy
 
-from edgeai_tidlrunner.runner.common import utils
-from edgeai_tidlrunner.runner.common import bases
+import torch
+
 from ..settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
+from ..utils import model_utils
 
 from . import convert
 from . import distill
@@ -55,7 +56,7 @@ class QuantAwareDistillation(distill.DistillModel):
         # full: ['linear', 'linear_relu', 'conv', 'conv_relu', 'conv_transpose_relu', 'conv_bn', 'conv_bn_relu', 'conv_transpose_bn', 'conv_transpose_bn_relu', 'gru_io_only', 'adaptive_avg_pool2d', 'add_relu', 'add', 'mul_relu', 'mul', 'cat']
         # minimal: ['linear', 'linear_relu', 'conv', 'conv_relu', 'conv_bn', 'conv_bn_relu', 'conv_transpose_relu', 'conv_transpose_bn', 'conv_transpose_bn_relu']
         # added by us in advanced quantizer: 'matmul'
-        self.annotation_patterns = ['linear', 'linear_relu', 'conv', 'conv_relu', 'conv_bn', 'conv_bn_relu', 'conv_transpose_relu', 'conv_transpose_bn', 'conv_transpose_bn_relu', 'add_relu', 'add',  'cat'] #'matmul', 'mul_relu', 'mul'
+        self.annotation_patterns = ['linear', 'linear_relu', 'conv', 'conv_relu', 'conv_bn', 'conv_bn_relu', 'conv_transpose_relu', 'conv_transpose_bn', 'conv_transpose_bn_relu']
 
     def info():
         print(f'INFO: Model qdistill - {__file__}')
@@ -88,7 +89,6 @@ class QuantAwareDistillation(distill.DistillModel):
 
         # get pytorch model
         teacher_model = convert.ConvertModel._get_torch_model(teacher_model_path, example_inputs=self.example_inputs)
-        teacher_model.to(torch_device)
         # it is important to freeze the teacher model's BN and Dropouts
         teacher_model.eval()
 
@@ -108,11 +108,17 @@ class QuantAwareDistillation(distill.DistillModel):
         # allow_exported_model_train_eval(student_model)
 
         # create student model
-        from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule, QConfigType
-        from edgeai_torchmodelopt.xmodelopt.quantization.v3.fake_quantize_types import ADAPTIVE_ACTIVATION_FAKE_QUANT_TYPES
-        student_model = QATPT2EModule(teacher_model, example_inputs=self.example_inputs_on_device, 
+        from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule
+        student_model = QATPT2EModule(teacher_model, example_inputs=self.example_inputs, 
                                       qconfig_type=self.qconfig_type, quantizer_type=self.quantizer_type,
                                       total_epochs=calibration_iterations, annotation_patterns=self.annotation_patterns)
+
+        #################################################################################
+        teacher_model.to(torch_device)
+
+        has_gm_module = hasattr(student_model, 'module') and isinstance(student_model.module, torch.fx.GraphModule)
+        module_to_move = student_model.module if has_gm_module else student_model
+        model_utils.move_model_to_device(module_to_move, self.example_inputs_on_device, None, torch_device)
 
         #################################################################################
         # run the distillation
