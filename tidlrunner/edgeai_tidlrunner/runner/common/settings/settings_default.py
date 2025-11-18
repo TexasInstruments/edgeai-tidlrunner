@@ -148,11 +148,18 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | SETTINGS_DEFAULT['surg
     # postprocess
     'postprocess_enable':       {'dest': 'common.postprocess_enable', 'default': False, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable postprocessing after inference'},
     'postprocess_name':         {'dest': 'postprocess.name', 'default': None, 'type': str, 'metavar': 'value', 'help': 'name of the postprocessing pipeline'},
+    # not needed - defined in session fields above. The copy fields will take care of copying to postprocess
+    #'postprocess_detection_threshold':    {'dest':'postprocess.detection_threshold', 'default':None, 'type':utils.float_or_none, 'metavar':'value', 'help': 'detection confidence threshold for postprocessing'},
+    #'postprocess_detection_top_k':        {'dest':'postprocess.detection_top_k', 'default':None, 'type':utils.int_or_none, 'metavar':'value', 'help': 'top-k detections to keep in postprocessing'},
+    #'postprocess_detection_keep_top_k':   {'dest':'postprocess.detection_keep_top_k', 'default':None, 'type':utils.float_or_none, 'metavar':'value', 'help': 'number of detections to keep after NMS in postprocessing'},
 }
 
 COPY_SETTINGS_DEFAULT['compile'] = COPY_SETTINGS_DEFAULT['basic'] | COPY_SETTINGS_DEFAULT['surgery'] | {
     'session.data_layout': 'preprocess.data_layout', 
-    'postprocess.data_layout': 'preprocess.data_layout'     
+    'postprocess.data_layout': 'preprocess.data_layout',
+    'postprocess.detection_threshold': 'session.runtime_options.object_detection:confidence_threshold',
+    # 'postprocess.detection_keep_top_k': 'session.runtime_options.object_detection:keep_top_k',
+    # 'postprocess.detection_top_k': 'session.runtime_options.object_detection:top_k'    
 }
 
 ##########################################################################
@@ -179,18 +186,12 @@ SETTINGS_DEFAULT['accuracy'] = SETTINGS_DEFAULT['compile'] | {
     'postprocess_reshape_list':           {'dest':'postprocess.reshape_list', 'default':None, 'type':utils.str_to_list_of_tuples, 'metavar':'value', 'help': 'list of reshape operations for output tensors'},
     'postprocess_ignore_index':           {'dest':'postprocess.ignore_index', 'default':None, 'type':str, 'metavar':'value', 'help': 'index to ignore during accuracy calculation'},
     'postprocess_logits_bbox_to_bbox_ls': {'dest':'postprocess.logits_bbox_to_bbox_ls', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', 'help': 'convert logits bounding box format to bounding box list'},
-    #'postprocess_detection_threshold':    {'dest':'postprocess.detection_threshold', 'default':None, 'type':utils.float_or_none, 'metavar':'value', 'help': 'detection confidence threshold for postprocessing'},
-    #'postprocess_detection_top_k':        {'dest':'postprocess.detection_top_k', 'default':None, 'type':utils.int_or_none, 'metavar':'value', 'help': 'top-k detections to keep in postprocessing'},
-    #'postprocess_detection_keep_top_k':   {'dest':'postprocess.detection_keep_top_k', 'default':None, 'type':utils.float_or_none, 'metavar':'value', 'help': 'number of detections to keep after NMS in postprocessing'},
     'postprocess_keypoint':               {'dest':'postprocess.keypoint', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', 'help': 'enable keypoint postprocessing'},
-    'postprocess_save_output':            {'dest':'postprocess.save_output', 'default':False, 'type':bool, 'metavar':'value', 'help': 'save postprocessed output to files'},
-    'postprocess_save_output_frames':     {'dest':'postprocess.save_output_frames', 'default':1, 'type':int, 'metavar':'value', 'help': 'number of output frames to save'},
+    'postprocess_save_output':            {'dest':'postprocess.save_output', 'default':True, 'type':bool, 'metavar':'value', 'help': 'save postprocessed output to files'},
+    'postprocess_save_output_frames':     {'dest':'postprocess.save_output_frames', 'default':0, 'type':int, 'metavar':'value', 'help': 'number of output frames to save'},
 }
 
-COPY_SETTINGS_DEFAULT['accuracy'] = COPY_SETTINGS_DEFAULT['compile'] | {
-    'postprocess.detection_threshold': 'session.runtime_options.object_detection:confidence_threshold',
-    # 'postprocess.detection_keep_top_k': 'session.runtime_options.object_detection:keep_top_k',
-    # 'postprocess.detection_top_k': 'session.runtime_options.object_detection:top_k'       
+COPY_SETTINGS_DEFAULT['accuracy'] = COPY_SETTINGS_DEFAULT['compile'] | {   
 }
 
 ##########################################################################
