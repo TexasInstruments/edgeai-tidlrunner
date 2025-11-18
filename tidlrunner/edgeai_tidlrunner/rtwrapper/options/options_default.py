@@ -130,13 +130,11 @@ RUNTIME_OPTIONS_DEFAULT = {
     # 3 - Input and output format conversion
     'advanced_options:add_data_convert_ops': presets.DataConvertOps.DATA_CONVERT_OPS_INPUT_OUTPUT,
 
-    # max number of nodes in a subgraph (default is 750)
-    #'advanced_options:max_num_subgraph_nodes': 2000,
-
     # 0 - NC_PERFSIM_DISABLE
     # 1 - NC_PERFSIM_ENABLE
     'ti_internal_nc_flag': presets.NCPerfsimFlag.NC_PERFSIM_ENABLE,
 
+    # max number of nodes in a subgraph (default is 750)
     # This option allows the user to specify the maximum number of nodes allowed in a particular subgraph 
     # (If it exceeds this number, it will try to evenly divide the network)
     'advanced_options:max_num_subgraph_nodes': 2000,
