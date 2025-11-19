@@ -35,24 +35,16 @@ import subprocess
 import glob
 
 
-def set_env():
+def set_env(**kwargs):
   import tidl_tools_package
   
   print("INFO: Setting environment variables for TIDL Runner...")
-
-  if 'TARGET_DEVICE' not in os.environ:
-    os.environ['TARGET_DEVICE'] = os.getenv("TARGET_DEVICE", "AM68A")
-  #
-  print('INFO: TARGET_DEVICE is set to:', os.environ['TARGET_DEVICE'])
-
-  if 'TARGET_MACHINE' not in os.environ:
-    os.environ['TARGET_MACHINE'] = os.getenv("TARGET_MACHINE", "pc")
-  #
-  print('INFO: TARGET_MACHINE is set to:', os.environ['TARGET_MACHINE'])
+  print('INFO: TARGET_DEVICE is set to:', kwargs['target_device'])
+  print('INFO: TARGET_MACHINE is set to:', kwargs['target_machine'])
 
   if 'TIDL_TOOLS_PATH' not in os.environ or 'LD_LIBRARY_PATH' not in os.environ:
     try:
-      tidl_tools_path = tidl_tools_package.get_tidl_tools_path(os.environ['TARGET_DEVICE'])
+      tidl_tools_path = tidl_tools_package.get_tidl_tools_path(kwargs['target_device'])
       tidl_tools_path = os.path.abspath(tidl_tools_path)
       os.environ['TIDL_TOOLS_PATH'] = tidl_tools_path
       print('INFO: TIDL_TOOLS_PATH is set to:', os.environ['TIDL_TOOLS_PATH'])
@@ -108,18 +100,19 @@ def set_env():
   #   # Print the PYTHONPATH to verify
   #   print('INFO: PYTHONPATH is set to:', os.environ['PYTHONPATH'])
 
+  return kwargs
 
-def update_tvm_artifacts():
+def update_tvm_artifacts(**kwargs):
     # tvmdlr artifacts are different for pc and evm device
     # point to the right artifact before this script executes
     print("INFO: settings the correct symlinks in tvmdlr compiled artifacts")
 
-    TARGET_DEVICE = os.environ['TARGET_DEVICE']
+    target_device = kwargs['target_device']
 
     if 'ARTIFACTS_BASE_PATH' not in os.environ:
         # Set the default artifacts base path if not already set
         # This can be overridden by environment variables
-        os.environ['ARTIFACTS_BASE_PATH'] = f'./work_dirs/compile/{TARGET_DEVICE}/8bits'
+        os.environ['ARTIFACTS_BASE_PATH'] = f'./work_dirs/compile/{target_device}/8bits'
     #
     print(f"INFO: ARTIFACTS_BASE_PATH is set to: {os.environ['ARTIFACTS_BASE_PATH']}")
     ARTIFACTS_BASE_PATH = os.environ['ARTIFACTS_BASE_PATH']
@@ -154,23 +147,23 @@ def update_tvm_artifacts():
     os.environ['TIDL_ARTIFACT_SYMLINKS']="1"
 
 
-def set_environment(update_artifacts=True):
+def set_environment(update_artifacts=True, **kwargs):
     # Set the environment variables for TIDL Runner
-    set_env()
+    kwargs = set_env(**kwargs)
 
     # Update the TVM artifacts symlinks based on the target device and machine
     if update_artifacts:
-      update_tvm_artifacts()
+      update_tvm_artifacts(**kwargs)
 
     print("INFO: Environment variables for TIDL Runner have been set successfully.")
 
 
-def restart_with_proper_environment():
+def restart_with_proper_environment(**kwargs):
     """
     Restart the process with correct environment.
     This should be called only if TIDL_TOOLS_PATH or LD_LIBRARY_PATH is not properly set
     """
-    set_environment()
+    set_environment(**kwargs)
 
     # Prepare the new environment
     new_env = os.environ.copy()

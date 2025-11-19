@@ -156,6 +156,12 @@ def _get_configs(config_path, **kwargs):
                 model_id = kwargs_config.get('session',{}).get('model_id', None) or kwargs.get('session.model_id', None)
                 configs = {model_id:config_path}
             #
+            if 'session.target_device' in kwargs_config:
+                assert kwargs['target_device'] == kwargs_config['session.target_device'], f"WARNING: config file {config_path} contains session.target_device: {kwargs_config['session.target_device']} - not recommended. To override the default, provide through commandline argument."
+            #
+            if 'session.target_machine' in kwargs_config:
+                assert kwargs['target_machine'] != kwargs_config['session.target_machine'], f"WARNING: config file {config_path} contains session.target_machine: {kwargs_config['session.target_machine']} - not recommended. To override the default, provide through commandline argument."
+            #
         elif os.path.exists(config_path) and os.path.isdir(config_path):
             print(f"INFO: config_path is a configs module from edgeai-benchmark: {config_path}")
             import edgeai_benchmark
