@@ -137,7 +137,7 @@ RUNTIME_OPTIONS_DEFAULT = {
     # max number of nodes in a subgraph (default is 750)
     # This option allows the user to specify the maximum number of nodes allowed in a particular subgraph 
     # (If it exceeds this number, it will try to evenly divide the network)
-    'advanced_options:max_num_subgraph_nodes': 2000,
+    'advanced_options:max_num_subgraph_nodes': 3000,
 
     # In case you are using firmware released as part of processor SDK RTOS, this field can be ignored. If you are using TIDL firmware release with a new patch release of the same "release line" then it is essential to use c7x_firmware_version explicitly
     # None - c7x_firmware_version not used if this is None
