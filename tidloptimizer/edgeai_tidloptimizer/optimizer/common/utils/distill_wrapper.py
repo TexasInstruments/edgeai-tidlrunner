@@ -52,6 +52,7 @@ class DistillWrapperBaseModule(torch.nn.Module):
         self.weight_decay = kwargs.get('weight_decay', 1e-4)
         self.temperature = kwargs.get('temperature', 1)
         self.optimizer_step_interval = kwargs.get('optimizer_step_interval', 10)
+        self.optimizer_type = kwargs.get('optimizer_type', 'SGD')
         self.lr = kwargs.get('lr', 1e-5)
         self.lr_min = kwargs.get('lr_min', self.lr/100.0)
     
@@ -61,7 +62,13 @@ class DistillWrapperBaseModule(torch.nn.Module):
         self.activations_dict = {}
 
         lr = self.lr
-        self.optimizer = torch.optim.SGD(student_model.parameters(), lr=lr, momentum=self.momentum, weight_decay=self.weight_decay)
+        if self.optimizer_type == 'SGD':
+            self.optimizer = torch.optim.SGD(student_model.parameters(), lr=lr, momentum=self.momentum, weight_decay=self.weight_decay)
+        elif self.optimizer_type == 'Adam':
+            self.optimizer = torch.optim.Adam(student_model.parameters(), lr=lr, weight_decay=self.weight_decay)
+        else:
+            raise ValueError(f'ERROR: Unsupported optimizer type {self.optimizer_type}')
+        #
         self.scheduler = torch.optim.lr_scheduler.ConstantLR(self.optimizer, factor=self.warmup_factor, total_iters=self.warmup_epochs)
         self.optimizer.zero_grad()
 
@@ -76,17 +83,13 @@ class DistillWrapperBaseModule(torch.nn.Module):
         return student_outputs, teacher_outputs
 
     def eval(self):
-        # super().eval()
-        self.teacher_model.eval()
-        self.student_model.eval()
-        self.training = False
+        self.train(False)
         return self
     
-    def train(self):
-        # super().train()
+    def train(self, mode: bool=True):
+        super().train(mode)
         self.teacher_model.eval()
-        self.student_model.train()
-        self.training = True
+        self.student_model.train(mode)
         return self
     
     def step_iter(self, outputs, targets):
@@ -131,7 +134,7 @@ class DistillWrapperBaseModule(torch.nn.Module):
         self.current_epoch += 1
 
 
-class DistillWrapperModule(DistillWrapperBaseModule):
+class DistillWrapperParametrizeModule(DistillWrapperBaseModule):
     def __init__(self, student_model, teacher_model, weight_clip_delta=True, activation_decay=False, **kwargs):
         super().__init__(student_model, teacher_model, **kwargs)
         self.weight_clip_delta = weight_clip_delta
@@ -147,11 +150,11 @@ class DistillWrapperModule(DistillWrapperBaseModule):
             # clip the range of thes parameters within a certain percentage of the original value
             parametrize_wrapper.register_parametrizations(self.student_model, parametrization_types=('weight_clip_delta',), param_names=param_names)
             # freeze all the other parameters
-            for p_name, p in self.student_model.named_parameters():
-                if p_name.split('.')[-1] not in param_names:
-                    p.requires_grad = False
-                #
-            #
+            # for p_name, p in self.student_model.named_parameters():
+            #     if p_name.split('.')[-1] not in param_names:
+            #         p.requires_grad = False
+            #     #
+            # #
         #
 
     def cleanup(self):

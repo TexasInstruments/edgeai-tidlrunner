@@ -65,6 +65,7 @@ SETTINGS_DEFAULT['distill'] = SETTINGS_DEFAULT['compile'] | {
     'calibration_batch_size':   {'dest': 'session.runtime_options.advanced_options:calibration_batch_size', 'default': 1, 'type': int, 'metavar': 'value', 'help': 'number of calibration batch size'},
     'num_frames':               {'dest': 'common.num_frames', 'default': 1000, 'type': int, 'metavar': 'value', 'help': 'number of frames to process'},
     'lr':                       {'dest': 'common.distill.lr', 'default': 1e-5, 'type': float, 'metavar': 'value', 'help': 'learning rate for distillation'},
+    'optimizer_type':           {'dest': 'common.distill.optimizer_type', 'default': 'SGD', 'type': str, 'metavar': 'value', 'help': 'type of optimizer to use'},
     'optimizer_step_interval':  {'dest': 'common.distill.optimizer_step_interval', 'default': 10, 'type': int, 'metavar': 'value', 'help': 'interval of optimizer steps'},
     'onnx_ir_version':          {'dest': 'common.onnx_ir_version', 'default': 9, 'type': int, 'metavar': 'value', 'help': 'ONNX IR version to export the model'},
     'torch_device':             {'dest': 'common.torch_device', 'default': 'cpu', 'type': str, 'metavar': 'value', 'help': 'Device to use for Pytorch distillation - cpu or cuda'},

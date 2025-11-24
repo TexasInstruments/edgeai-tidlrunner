@@ -314,7 +314,7 @@ class CompileModelBase(CommonPipelineBase):
             label_offset_pred = self.kwargs.get('label_offset_pred', None)
             task_name = self.kwargs.get('common.task_name', None)
         #
-        dataset_info = self.dataloader.peek_param('dataset_info')
+        dataset_info = self.dataloader.peek_param('dataset_info', None)
         label_offset_pred = self.kwargs.get('metric.label_offset_pred', None)
         info_dict = {'dataset_info': dataset_info,
                      'label_offset_pred': label_offset_pred,

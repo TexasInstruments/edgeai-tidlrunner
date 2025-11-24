@@ -110,7 +110,7 @@ class QuantAwareDistillation(distill.DistillModel):
         # create student model
         from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule
         student_model = QATPT2EModule(teacher_model, example_inputs=self.example_inputs, 
-                                      qconfig_type=self.qconfig_type, quantizer_type=self.quantizer_type,
+                                      qconfig_type=self.qconfig_type, quantizer_type=self.quantizer_type, num_batch_norm_update_epochs=0,
                                       total_epochs=calibration_iterations, annotation_patterns=self.annotation_patterns)
 
         #################################################################################
