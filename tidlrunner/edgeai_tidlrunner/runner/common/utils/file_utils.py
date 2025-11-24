@@ -28,6 +28,7 @@
 
 
 import os
+import PIL
 import numpy as np
 from . import download_utils
 
@@ -65,7 +66,6 @@ def get_data_list(input, dest_dir=None, image_formats=None):
         #
         in_files = [os.path.join(path, f) for f in in_files]
     elif isinstance(input, np.ndarray):
-        import PIL
         assert dest_dir is not None, 'dest_dir should be provided to save ndarray and return it in a list'
         input_dir = os.path.join(dest_dir, 'in_data')
         os.makedirs(input_dir, exist_ok=True)
