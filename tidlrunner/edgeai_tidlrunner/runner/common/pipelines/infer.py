@@ -79,6 +79,7 @@ class InferModel(CompileModelBase):
             session_name = session_kwargs['name']
             session_type = blocks.sessions.SESSION_TYPES_MAPPING[session_name]
             self.session = session_type(self.settings, **session_kwargs)
+            self._update_settings_after_init()
             self.session.start_inference()
         #
 
@@ -175,6 +176,7 @@ class InferModel(CompileModelBase):
             session_name = session_kwargs['name']
             session_type = blocks.sessions.SESSION_TYPES_MAPPING[session_name]
             self.session = session_type(self.settings, **session_kwargs)
+            self._update_settings_after_init()
             self.session.start_inference()
         #
         # infer model

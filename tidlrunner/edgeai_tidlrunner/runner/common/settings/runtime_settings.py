@@ -37,13 +37,26 @@ from edgeai_tidlrunner.rtwrapper.options.runtime_options import RuntimeOptions
 from . import settings_default as runtime_settings_default_module
 
 
+def update_runtime_settings(runtime_settings, **kwargs):
+    '''
+    making this a function (and not a method) so that it can be used without creating an instance
+    '''
+    self_runtime_options = runtime_settings.pop('runtime_options', {})
+    kwargs_runtime_options = kwargs.pop('runtime_options', {})
+    runtime_settings.update(kwargs)
+    self_runtime_options.update(kwargs_runtime_options)
+    runtime_settings['runtime_options'] = self_runtime_options
+    return runtime_settings
+
+
 class RuntimeSettings(attr_dict.AttrDict):
     def __init__(self, **kwargs):
         self.calibration_iterations_factor = None
         self.target_device_preset = True
         self.target_device = presets.TargetDeviceType.TARGET_DEVICE_AM68A
         super().__init__()
-        self.update(self._get_runtime_settings(**kwargs))
+        runtime_settings = self._get_runtime_settings(**kwargs)
+        update_runtime_settings(self, **runtime_settings)
 
     def get_runtime_settings(self):
         return self
@@ -59,8 +72,8 @@ class RuntimeSettings(attr_dict.AttrDict):
 
     def _get_runtime_settings(self, model_quant_type=None, settings_type=None, is_qat=False, fast_calibration=True,
             det_options=None, ext_options=None, **kwargs):
+        
         runtime_settings = self._get_runtime_settings_with_default(**kwargs)
-        self.update(runtime_settings)
 
         # target device presets
         if isinstance(self.target_device_preset, dict):
@@ -71,34 +84,28 @@ class RuntimeSettings(attr_dict.AttrDict):
             preset_dict = None
         #
         if preset_dict:
-            self.update(preset_dict)
+            update_runtime_settings(runtime_settings, **preset_dict)
         #
 
         calibration_iterations_factor = self._get_calibration_iterations_factor(fast_calibration)
 
         # quant_params_file_path is specified as required, create one based on model_path
-        quant_params_file_path = self['runtime_options'].get('advanced_options:quant_params_proto_path', None)
+        quant_params_file_path = runtime_settings['runtime_options'].get('advanced_options:quant_params_proto_path', None)
         if quant_params_file_path is True:
-            model_path = self['model_path']
+            model_path = runtime_settings['model_path']
             quant_params_file_path = os.path.splitext(model_path)[0] + "_qparams.prototxt"
-            self['runtime_options']['advanced_options:quant_params_proto_path'] = quant_params_file_path            
+            runtime_settings['runtime_options']['advanced_options:quant_params_proto_path'] = quant_params_file_path            
         elif quant_params_file_path is False:
-            self['runtime_options']['advanced_options:quant_params_proto_path'] = None
+            runtime_settings['runtime_options']['advanced_options:quant_params_proto_path'] = None
         #
 
         runtime_options = RuntimeOptions(
             model_quant_type=model_quant_type, settings_type=settings_type, is_qat=is_qat,
             calibration_iterations_factor=calibration_iterations_factor,
-            det_options=det_options, ext_options=ext_options, **self['runtime_options'])
-        self['runtime_options'] = runtime_options
+            det_options=det_options, ext_options=ext_options, **runtime_settings['runtime_options'])
+        runtime_settings['runtime_options'] = runtime_options
 
-        return self
-
-    def update_runtime_settings(self, **kwargs):
-        runtime_options = kwargs.pop('runtime_options', {})
-        self.update(kwargs)
-        self.runtime_options.update(runtime_options)
-        return self
+        return runtime_settings
 
     @classmethod
     def _get_runtime_settings_with_default(cls, model_quant_type=None, verbose=False, runtime_settings_default=None, **kwargs):

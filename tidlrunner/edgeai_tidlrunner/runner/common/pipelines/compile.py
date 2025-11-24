@@ -82,9 +82,6 @@ class CompileModel(CompileModelBase):
         os.makedirs(self.artifacts_folder, exist_ok=True)
         os.makedirs(self.model_folder, exist_ok=True)
 
-        # write config to a file
-        self._write_params(self.settings, os.path.join(self.run_dir,'config.yaml'), param_template=common_kwargs.get('config_template', None))
-
         config_path = os.path.dirname(common_kwargs['config_path']) if common_kwargs['config_path'] else None
         self.download_file(self.model_source, model_folder=self.model_folder, source_dir=config_path)
 
@@ -101,8 +98,13 @@ class CompileModel(CompileModelBase):
             session_name = session_kwargs['name']
             session_type = blocks.sessions.SESSION_TYPES_MAPPING[session_name]
             self.session = session_type(self.settings, **session_kwargs)
+            self._update_settings_after_init()
             self.session.start_import()
         #
+
+        # write config to a file
+        # config_yaml_template = common_kwargs.get('config_template', None)
+        self._write_params(self.settings, os.path.join(self.run_dir,'config.yaml'), param_template=None)
 
         # input_data
         if self.pipeline_config and 'dataloader' in self.pipeline_config:
@@ -190,6 +192,7 @@ class CompileModel(CompileModelBase):
             session_name = session_kwargs['name']
             session_type = blocks.sessions.SESSION_TYPES_MAPPING[session_name]
             self.session = session_type(self.settings, **session_kwargs)
+            self._update_settings_after_init()
             self.session.start_import()
         #
 

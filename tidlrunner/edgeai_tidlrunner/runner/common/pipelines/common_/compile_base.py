@@ -288,8 +288,14 @@ class CompileModelBase(CommonPipelineBase):
                 kwargs_out['session.runtime_options.advanced_options:calibration_iterations'] = 5
             #
         #
-
         return kwargs_out
+
+    def _update_settings_after_init(self):
+        if self.session and hasattr(self.session, 'get_runtime_options'):
+            session_runtime_options = self.session.get_runtime_options()
+            self.settings[self.session_prefix]['runtime_options']['advanced_options:quantization_scale_type'] = \
+                session_runtime_options['advanced_options:quantization_scale_type']
+        #
 
     def _write_params(self, settings, filename, param_template=None):
         # adjustments for backward compatibility with 

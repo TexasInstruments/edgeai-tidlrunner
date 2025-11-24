@@ -37,10 +37,8 @@ import glob
 
 def set_env(**kwargs):
   import tidl_tools_package
-  
-  print("INFO: Setting environment variables for TIDL Runner...")
-  print('INFO: TARGET_DEVICE is set to:', kwargs['target_device'])
-  print('INFO: TARGET_MACHINE is set to:', kwargs['target_machine'])
+
+  print("INFO: Setting environment variables for TIDL Runner: {}".format(kwargs))
 
   if 'TIDL_TOOLS_PATH' not in os.environ or 'LD_LIBRARY_PATH' not in os.environ:
     try:
@@ -169,13 +167,13 @@ def restart_with_proper_environment(**kwargs):
     new_env = os.environ.copy()
     
     # Restart the current script with the new environment
+    print("INFO: Restarting script with updated environment...")
     result = subprocess.run([sys.executable] + sys.argv, env=new_env, check=True)
     
     if result.returncode != 0:
         print("ERROR: Failed to restart the script with updated environment.")
         sys.exit(result.returncode)
     else:
-        print("INFO: Script restarted successfully with updated environment.")
         sys.exit(0)
 
 

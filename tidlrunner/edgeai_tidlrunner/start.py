@@ -146,11 +146,17 @@ def start_with_proper_environment(**kwargs):
         print("INFO: TIDL_TOOLS_PATH or LD_LIBRARY_PATH is not set, restarting with proper environment...")
         command_args, rest_args = StartRunner.get_arg_parser().parse_known_args()  
         command_kwargs = vars(command_args)
-        start_kwargs = {
-            'target_device': command_kwargs.get('session.target_device', None),
-            'target_machine': command_kwargs.get('session.target_machine', None)
+        start_kwargs = kwargs.copy()
+        cmd_keys_mapping = {
+            'session.target_device': 'target_device',
+            'session.target_machine': 'target_machine',
         }
-        start_kwargs.update(kwargs)
+        for cmd_key in cmd_keys_mapping:
+            if cmd_key in command_kwargs:
+                kwarg_key = cmd_keys_mapping[cmd_key]
+                start_kwargs[kwarg_key] = command_kwargs[cmd_key]
+            #
+        #
         rtwrapper.restart_with_proper_environment(**start_kwargs)
     else:
         StartRunner.main(**kwargs)
