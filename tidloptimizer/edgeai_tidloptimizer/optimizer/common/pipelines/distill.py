@@ -130,7 +130,7 @@ class DistillModel(compile.CompileModel):
         tqdm_epoch = tqdm.tqdm(range(calibration_iterations), desc='DistillEpoch', leave=False)
         for calib_index in tqdm_epoch:
             # print(f'INFO: running model quantize iteration: {calib_index}')
-            # self.distill_model.train()
+            self.distill_model.train()
 
             tqdm_batch = tqdm.tqdm(range(calibration_frames), desc='DistillBatch', leave=False)
             for input_index in tqdm_batch:
@@ -146,7 +146,7 @@ class DistillModel(compile.CompileModel):
                 tqdm_batch.set_postfix(refresh=True, epoch=calib_index, batch=input_index, **distil_metrics)
             #
 
-            # self.distill_model.eval()
+            self.distill_model.eval()
 
             tqdm_epoch.set_postfix(refresh=True, epoch=calib_index, num_batches=calibration_frames, **distil_metrics)
             self.distill_model.step_epoch()
