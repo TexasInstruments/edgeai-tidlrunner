@@ -50,7 +50,7 @@ class ModelmakerDetectionDataset(object_detection.ObjectDetectionDataLoader):
 
 
 def modelmaker_detection_dataloader(settings, name, path, label_path=None, **kwargs):
-    is_images_path = 'val' in os.path.split(path)[-1] or 'images' in os.path.split(path)[-1]
+    is_images_path = 'val' in os.path.split(path)[-1] or os.path.split(path)[-1] == 'images'
     if is_images_path:
         data_path = path
     else:
