@@ -166,6 +166,10 @@ def restart_with_proper_environment(**kwargs):
     # Prepare the new environment
     new_env = os.environ.copy()
     
+    _package_short_name = kwargs.get('_package_short_name')
+    if _package_short_name not in os.path.abspath(sys.executable):
+        print(f'WARNING: recommended to use a Python virtual environment with {_package_short_name} in its name. This is to avoid using the wrong Python enviroment.')
+
     # Restart the current script with the new environment
     print("INFO: Restarting script with updated environment...")
     result = subprocess.run([sys.executable] + sys.argv, env=new_env, check=True)

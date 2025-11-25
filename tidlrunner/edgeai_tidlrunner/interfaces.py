@@ -47,9 +47,9 @@ def get_package_names():
     return ['edgeai_tidlrunner.runner']
 
 
-def get_command_pipelines(package_name=None, **kwargs):
+def get_command_pipelines(_package_name=None, **kwargs):
     command_pipelines = {}
-    package_names = get_package_names() if package_name is None else [package_name]
+    package_names = get_package_names() if _package_name is None else [_package_name]
     for package_module_name in package_names:
         package_module_name_splits = package_module_name.split('.')
         package_import = importlib.import_module(package_module_name_splits[0])
@@ -64,8 +64,8 @@ def get_command_pipelines(package_name=None, **kwargs):
     return command_pipelines
 
 
-def matching_command_name(command_name, package_name=None):
-    command_pipelines = get_command_pipelines(package_name=package_name)
+def matching_command_name(command_name, _package_name=None):
+    command_pipelines = get_command_pipelines(_package_name=_package_name)
     command_names = list(command_pipelines.keys())
     if command_name not in command_pipelines.keys():
         command_name_matches = difflib.get_close_matches(command_name, command_names)
@@ -84,8 +84,8 @@ def matching_command_name(command_name, package_name=None):
 
 
 def get_target_module(command_name, **kwargs):
-    package_name = kwargs.get('common.package_name', None)
-    command_name = matching_command_name(command_name, package_name=package_name)
+    _package_name = kwargs.get('common._package_name', None)
+    command_name = matching_command_name(command_name, _package_name=_package_name)
     command_name_split = command_name.split('.')
     assert len(command_name_split) == 4, f'ERROR: invalid command_name: {command_name}'
     package_import = importlib.import_module(command_name_split[0])

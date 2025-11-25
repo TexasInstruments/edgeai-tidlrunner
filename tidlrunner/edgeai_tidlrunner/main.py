@@ -59,9 +59,9 @@ def _main(**kwargs):
 
 
 def main(**kwargs):
-    _main(package_name='edgeai_tidlrunner.runner', **kwargs)
+    _main(_package_name='edgeai_tidlrunner.runner', **kwargs)
 
 
 if __name__ == "__main__":
     print(f'INFO: running {__file__} __main__')  
-    _main(package_name='edgeai_tidlrunner.runner')
+    _main(_package_name='edgeai_tidlrunner.runner', _package_short_name='tidlrunner')
