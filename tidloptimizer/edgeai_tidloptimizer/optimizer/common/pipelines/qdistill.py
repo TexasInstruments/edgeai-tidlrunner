@@ -47,16 +47,12 @@ class QuantAwareDistillation(distill.DistillModel):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs) #parametrization_types=('clip_const',),
-        from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule, QConfigType, QuantizerTypes
+        from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule, QConfigType, QuantizerTypes, QuantizerAnnotationPatterns
 
         self.qconfig_type = QConfigType.WF_AFCLIP #WF_AFCLIP #DEFAULT 
         self.quantizer_type = QuantizerTypes.TIDLRT_ADVANCED
+        self.annotation_patterns = QuantizerAnnotationPatterns.DEFAULT
         self.with_convert = True #False
-
-        # full: ['linear', 'linear_relu', 'conv', 'conv_relu', 'conv_transpose_relu', 'conv_bn', 'conv_bn_relu', 'conv_transpose_bn', 'conv_transpose_bn_relu', 'gru_io_only', 'adaptive_avg_pool2d', 'add_relu', 'add', 'mul_relu', 'mul', 'cat']
-        # minimal: ['linear', 'linear_relu', 'conv', 'conv_relu', 'conv_bn', 'conv_bn_relu', 'conv_transpose_relu', 'conv_transpose_bn', 'conv_transpose_bn_relu']
-        # added by us in advanced quantizer: 'matmul'
-        self.annotation_patterns = ['linear', 'linear_relu', 'conv', 'conv_relu', 'conv_bn', 'conv_bn_relu', 'conv_transpose_relu', 'conv_transpose_bn', 'conv_transpose_bn_relu']
 
     def info():
         print(f'INFO: Model qdistill - {__file__}')
