@@ -73,6 +73,8 @@ class QuantAwareDistillation(distill.DistillModel):
         student_model_path = os.path.join(self.student_folder, os.path.basename(self.model_path))
 
     def _run(self):
+        from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule, QConfigType, QuantizerTypes, QuantizerAnnotationPatterns
+
         common_kwargs = self.settings[self.common_prefix]
         session_kwargs = self.settings[self.session_prefix]
         runtime_options = session_kwargs['runtime_options']
@@ -96,26 +98,24 @@ class QuantAwareDistillation(distill.DistillModel):
         
         #################################################################################
         # prepare the student model
-        import torch
-
-        # create student model - no need to do this - QATPT2EModule will do it
+          # create student model - no need to do this - QATPT2EModule will do it
         # student_model = torch.export.export(teacher_model, self.example_inputs_on_device).module()
         # from torch.ao.quantization.pt2e import allow_exported_model_train_eval
         # allow_exported_model_train_eval(student_model)
 
         # create student model
-        from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule
+
         student_model = QATPT2EModule(teacher_model, example_inputs=self.example_inputs, 
                                       qconfig_type=self.qconfig_type, quantizer_type=self.quantizer_type, num_batch_norm_update_epochs=0,
                                       total_epochs=calibration_iterations, annotation_patterns=self.annotation_patterns)
+        student_model.to(torch_device)
+
 
         #################################################################################
+        teacher_model = QATPT2EModule(teacher_model, example_inputs=self.example_inputs, 
+                                      qconfig_type=QConfigType.PLACEHOLDER, quantizer_type=self.quantizer_type, num_batch_norm_update_epochs=0,
+                                      total_epochs=calibration_iterations, annotation_patterns=self.annotation_patterns)
         teacher_model.to(torch_device)
-
-        student_model.to(torch_device)
-        # has_gm_module = hasattr(student_model, 'module') and isinstance(student_model.module, torch.fx.GraphModule)
-        # module_to_move = student_model.module if has_gm_module else student_model
-        # model_utils.move_model_to_device(module_to_move, self.example_inputs_on_device, None, torch_device)
 
         #################################################################################
         # run the distillation

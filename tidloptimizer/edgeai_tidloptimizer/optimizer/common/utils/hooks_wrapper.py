@@ -44,11 +44,13 @@ def _register_layer_forward_hook(module, hook):
     return module.register_forward_hook(hook)
 
 
-def register_model_forward_hook(model, hook_fn):
+def register_model_forward_hook(model, hook_fn, module_type=torch.nn.Module):
     hook_handles = []
     for n, m in model.named_modules():
         m.__module_name_info__ = n
-        hook_handle = _register_layer_forward_hook(m, hook_fn)
-        hook_handles.append(hook_handle)
-
+        if isinstance(m, module_type):
+            hook_handle = _register_layer_forward_hook(m, hook_fn)
+            hook_handles.append(hook_handle)
+        #
+    #
     return hook_handles

@@ -101,7 +101,7 @@ class WeightClipDeltaParametrization(ParametrizationBaseModule):
     '''
     Clip the weights of a layer within a certain delta range.
     '''
-    def __init__(self, orig_value, delta_factor = 0.01):
+    def __init__(self, orig_value, delta_factor = 0.02):
         super().__init__()
         self.delta_factor = delta_factor
         self.with_parametrization = (orig_value.dtype in [torch.float16, torch.bfloat16, torch.float32, torch.float64]) and \

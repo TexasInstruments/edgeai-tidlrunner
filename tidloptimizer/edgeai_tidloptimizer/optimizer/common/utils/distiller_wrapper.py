@@ -35,11 +35,14 @@ import random
 
 import torch
 import torch.nn.utils.parametrize as parametrize
+from torch.ao.quantization import FakeQuantizeBase
 
-from ..utils import hooks_wrapper, parametrize_wrapper
+from edgeai_tidlrunner.runner.common.utils import print_once
+
+from . import hooks_wrapper, parametrize_wrapper
 
 
-class DistillWrapperBaseModule(torch.nn.Module):
+class DistillerWrapperModule(torch.nn.Module):
     def __init__(self, student_model, teacher_model, **kwargs):
         super().__init__()
         self.student_model = student_model
@@ -59,7 +62,8 @@ class DistillWrapperBaseModule(torch.nn.Module):
         self.current_epoch = 0
         self.current_iter = 0
         self.hook_handles = []
-        self.activations_dict = {}
+        self.student_activations_dict = {}
+        self.teacher_activations_dict = {}
 
         lr = self.lr
         if self.optimizer_type == 'SGD':
@@ -134,17 +138,27 @@ class DistillWrapperBaseModule(torch.nn.Module):
         self.current_epoch += 1
 
 
-class DistillWrapperParametrizeModule(DistillWrapperBaseModule):
-    def __init__(self, student_model, teacher_model, weight_clip_delta=True, activation_decay=False, **kwargs):
+class DistillerWrapperParametrizeModule(DistillerWrapperModule):
+    def __init__(self, student_model, teacher_model, weight_clip_delta=False, layer_activation_loss=True, **kwargs):
         super().__init__(student_model, teacher_model, **kwargs)
         self.weight_clip_delta = weight_clip_delta
-        self.activation_decay = activation_decay
-        if self.activation_decay:
-            def activation_store_hook_fn(m, input, output):
-                self.activations_dict[m.__module_name_info__] = output.detach()
+        self.layer_activation_loss = layer_activation_loss
+        self.layer_activation_loss_scale = 1.0
+
+        if self.layer_activation_loss:
+            def student_activation_store_hook_fn(m, input, output):
+                self.student_activations_dict[m.__module_name_info__] = output
             #
-            self.hook_handles += hooks_wrapper.register_model_forward_hook(self.student_model, activation_store_hook_fn)
+            self.hook_handles += hooks_wrapper.register_model_forward_hook(self.student_model, student_activation_store_hook_fn, module_type=FakeQuantizeBase)
+
+            def teacher_activation_store_hook_fn(m, input, output):
+                output = output.detach() if hasattr(output, 'detach') else output
+                self.teacher_activations_dict[m.__module_name_info__] = output
+            #
+            self.hook_handles += hooks_wrapper.register_model_forward_hook(self.teacher_model, teacher_activation_store_hook_fn, module_type=FakeQuantizeBase)
         #
+
+    def _register_parametrizations(self):
         if self.weight_clip_delta:
             param_names = ('weight', 'bias')
             # clip the range of thes parameters within a certain percentage of the original value
@@ -157,30 +171,46 @@ class DistillWrapperParametrizeModule(DistillWrapperBaseModule):
             # #
         #
 
-    def cleanup(self):
-        super().cleanup()
-        hook_handles = self.hook_handles
-        hook_handles = list(hook_handles.values()) if isinstance(hook_handles, dict) else hook_handles
-        hook_handles = [hook_handles] if not isinstance(hook_handles, list) else hook_handles
-        for hook_handle in hook_handles:
-            hook_handle.remove()
-        #
+    def _remove_parametrizations(self):
         if self.weight_clip_delta:
             parametrize_wrapper.remove_parametrizations(self.student_model)
         #
 
     def _compute_loss(self, outputs, targets):
         loss = super()._compute_loss(outputs, targets)
-        if self.activations_dict:
-            act_loss = 0.0
-            for k, v in self.activations_dict.items():
-                # act_deviation = (v-1.0).pow(2).mean()
-                # act_deviation = torch.quantile(torch.abs(v[:]), 0.99)
-                # act_deviation = torch.kthvalue(v.reshape(-1), int(0.99*torch.numel(v)), dim=0)[0]
-                act_deviation = v.abs().mean() + v.std()
-                act_loss = act_loss + act_deviation
+        if self.layer_activation_loss:
+            activations_match = len(self.student_activations_dict) == len(self.teacher_activations_dict) and all([k1 == k2 for k1, k2 in zip(self.student_activations_dict, self.teacher_activations_dict)])
+            if activations_match:
+                print_once(f"INFO: can apply layer_activation_loss - student layers:{len(self.student_activations_dict)} vs teacher layers:{len(self.teacher_activations_dict)}")
+                act_loss = 0.0
+                for k1, k2 in zip(self.student_activations_dict, self.teacher_activations_dict):
+                    student_v = self.student_activations_dict[k1]
+                    teacher_v = self.teacher_activations_dict[k2]
+                    diff = (student_v-teacher_v)
+                    act_deviation = diff.abs().mean()
+                    act_loss = act_loss + act_deviation * self.layer_activation_loss_scale
+                #
+                act_loss = act_loss / len(self.student_activations_dict)
+                loss += act_loss
+            else:
+                print_once(f"WARNING: layer_activation_loss cannot be applied - layers mismatch - student layers:{len(self.student_activations_dict)} vs teacher layers:{len(self.teacher_activations_dict)}")
             #
-            act_loss = act_loss / len(self.activations_dict)
-            loss += act_loss
         #
         return loss
+    
+    def eval(self):
+        self._remove_parametrizations()
+        super().eval()
+    
+    def train(self, mode: bool=True):
+        m = super().train(mode)
+        self._register_parametrizations()
+        return m
+    
+    def cleanup(self):
+        hook_handles = self.hook_handles
+        hook_handles = list(hook_handles.values()) if isinstance(hook_handles, dict) else hook_handles
+        hook_handles = [hook_handles] if not isinstance(hook_handles, list) else hook_handles
+        for hook_handle in hook_handles:
+            hook_handle.remove()
+        #
