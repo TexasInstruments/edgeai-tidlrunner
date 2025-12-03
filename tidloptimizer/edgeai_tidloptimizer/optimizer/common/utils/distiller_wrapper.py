@@ -32,10 +32,9 @@ import sys
 import shutil
 import copy
 import random
+import math
 
 import torch
-import torch.nn.functional as F
-import torch.nn.utils.parametrize as parametrize
 from torch.ao.quantization import FakeQuantizeBase
 
 from edgeai_tidlrunner.runner.common.utils import print_once
@@ -63,6 +62,7 @@ class DistillerBaseModule(torch.nn.Module):
         self.current_epoch = 0
         self.current_iter = 0
         self.hook_handles = []
+        self.loss_scales = {}
 
         lr = self.lr
         if self.optimizer_type == 'SGD':
@@ -110,10 +110,24 @@ class DistillerBaseModule(torch.nn.Module):
         self.current_iter += 1
         return {'lr':lr, 'loss':loss_value}
     
+    def _update_loss_scale(self, index, target):
+        std = torch.std(target).detach().item()
+        scale = 1.0 if math.isnan(std) else 1.0 / (std + 1e-6)
+        if index in self.loss_scales:
+            self.loss_scales[index] = self.loss_scales[index] * 0.9 + scale * 0.1
+        else:
+            self.loss_scales[index] = scale
+        #
+        return self.loss_scales[index]
+
     def _compute_loss(self, outputs, targets):
         if isinstance(outputs, (list, tuple)) and isinstance(targets, (list, tuple)):
             assert len(outputs) == len(targets), f'number of outputs {len(outputs)} and targets {len(targets)} should be same'
-            loss = sum([self._criterion(o, t) for o,t in zip(outputs, targets)])
+            loss = 0.0
+            for index, (o,t) in enumerate(zip(outputs, targets)):
+                loss_scale = self._update_loss_scale(index, t)
+                loss = loss + self._criterion(o, t) * loss_scale
+            #
         else:
             loss = self._criterion(outputs, targets)
         #
@@ -144,7 +158,7 @@ class DistillerModule(DistillerBaseModule):
         super().__init__(student_model, teacher_model, **kwargs)
         self.weight_clip_delta = weight_clip_delta
         self.per_layer_loss = per_layer_loss
-        self.layer_out_loss_scale = 0.5
+        self.layer_out_loss_scale = 0.25
         self.layer_quant_loss_scale = 0.25
 
         self.teacher_tensors_dict = {}
@@ -193,14 +207,17 @@ class DistillerModule(DistillerBaseModule):
                 print_once(f"INFO: can apply per_layer_loss - student layers:{len(self.student_tensors_dict)} vs teacher layers:{len(self.teacher_tensors_dict)}")
                 layer_loss = 0.0
                 num_layer_loss = 0
-                for k1, k2 in zip(self.student_tensors_dict, self.teacher_tensors_dict):
+                for layer_index, (k1, k2) in enumerate(zip(self.student_tensors_dict, self.teacher_tensors_dict)):
                     teacher_v = self.teacher_tensors_dict[k2]
                     student_v = self.student_tensors_dict[k1]
                     student_in = self.student_tensors_pre_dict[k1][0]
-                    if torch.is_floating_point(student_v):
-                        out_deviation = F.smooth_l1_loss(student_v, teacher_v)
-                        quant_deviation = F.smooth_l1_loss(student_v, student_in)
-                        layer_loss = layer_loss + out_deviation * self.layer_out_loss_scale + quant_deviation * self.layer_quant_loss_scale
+                    if torch.is_floating_point(student_in) and torch.is_floating_point(student_v):
+                        layer_loss_scale = self._update_loss_scale('layer_'+str(layer_index), teacher_v)
+                        out_deviation = self._criterion(student_v, teacher_v) * layer_loss_scale
+                        layer_loss = layer_loss + out_deviation * self.layer_out_loss_scale 
+                        # layer_q_loss_scale = self._update_loss_scale('layer_q_'+str(layer_index), student_in)
+                        # quant_deviation = self._criterion(student_v, student_in) * layer_q_loss_scale
+                        # layer_loss = layer_loss = quant_deviation * self.layer_quant_loss_scale
                         num_layer_loss += 1
                     #
                 #

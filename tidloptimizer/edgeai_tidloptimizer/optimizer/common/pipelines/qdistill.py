@@ -90,6 +90,16 @@ class QuantAwareDistillation(distill.DistillModel):
         # it is important to freeze the teacher model's BN and Dropouts
         teacher_model.eval()
 
+        # model to device
+        if torch_device != 'cpu':
+            teacher_model.to(torch_device)
+            for m in teacher_model.modules():
+                for key in dir(m):
+                    value = getattr(m, key)
+                    if isinstance(value, torch.Tensor):
+                        value = value.to(torch_device)
+                        setattr(m, key, value)
+                
         # export teacher model - optional
         os.makedirs(self.teacher_folder, exist_ok=True)
         teacher_model_path = os.path.join(self.teacher_folder, os.path.basename(self.model_path))
@@ -98,24 +108,16 @@ class QuantAwareDistillation(distill.DistillModel):
         
         #################################################################################
         # prepare the student model
-          # create student model - no need to do this - QATPT2EModule will do it
-        # student_model = torch.export.export(teacher_model, self.example_inputs_on_device).module()
-        # from torch.ao.quantization.pt2e import allow_exported_model_train_eval
-        # allow_exported_model_train_eval(student_model)
-
-        # create student model
-
-        student_model = QATPT2EModule(teacher_model, example_inputs=self.example_inputs, 
+        student_model = QATPT2EModule(teacher_model, example_inputs=self.example_inputs_on_device, 
                                       qconfig_type=self.qconfig_type, quantizer_type=self.quantizer_type, num_batch_norm_update_epochs=0,
                                       total_epochs=calibration_iterations, annotation_patterns=self.annotation_patterns)
-        student_model.to(torch_device)
 
 
         #################################################################################
-        teacher_model = QATPT2EModule(teacher_model, example_inputs=self.example_inputs, 
+        # prepare the teacher with placeholder observers and fq - this is for use in distillation
+        teacher_model = QATPT2EModule(teacher_model, example_inputs=self.example_inputs_on_device, 
                                       qconfig_type=QConfigType.PLACEHOLDER, quantizer_type=self.quantizer_type, num_batch_norm_update_epochs=0,
                                       total_epochs=calibration_iterations, annotation_patterns=self.annotation_patterns)
-        teacher_model.to(torch_device)
 
         #################################################################################
         # run the distillation
