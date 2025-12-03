@@ -27,47 +27,14 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-import os
-import sys
-import shutil
-import copy
 import random
-
 import torch
+from torch.nn import functional as F
 
 
-def _register_global_forward_hook(hook):
-    return torch.nn.modules.module.register_module_forward_hook(hook)
-
-
-def _register_layer_forward_hook(module, hook):
-    return module.register_forward_hook(hook)
-
-
-def _register_layer_forward_pre_hook(module, hook):
-    return module.register_forward_pre_hook(hook)
-
-
-def register_model_forward_hook(model, hook_fn, module_type=torch.nn.Module):
-    hook_handles = []
-    for n, m in model.named_modules():
-        m.__module_name_info__ = n
-        if isinstance(m, module_type):
-            hook_handle = _register_layer_forward_hook(m, hook_fn)
-            hook_handles.append(hook_handle)
-        #
-    #
-    return hook_handles
-
-
-def register_model_forward_pre_hook(model, hook_fn, module_type=torch.nn.Module):
-    hook_handles = []
-    for n, m in model.named_modules():
-        m.__module_name_info__ = n
-        if isinstance(m, module_type):
-            hook_handle = _register_layer_forward_pre_hook(m, hook_fn)
-            hook_handles.append(hook_handle)
-        #
-    #
-    return hook_handles
-
+def softargmax1d(input, dim=-1):
+    n = input.shape[dim]
+    series = torch.tensor(random.randint(0, n-1), device=input.device)
+    prob = F.softmax(input, dim=dim)
+    out = torch.sum(series * prob, dim=dim)
+    return out
