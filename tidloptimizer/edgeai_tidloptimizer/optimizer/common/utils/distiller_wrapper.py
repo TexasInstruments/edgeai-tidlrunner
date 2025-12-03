@@ -43,7 +43,7 @@ from edgeai_tidlrunner.runner.common.utils import print_once
 from . import hooks_wrapper, parametrize_wrapper, torch_functional
 
 
-class DistillerWrapperModule(torch.nn.Module):
+class DistillerBaseModule(torch.nn.Module):
     def __init__(self, student_model, teacher_model, **kwargs):
         super().__init__()
         self.student_model = student_model
@@ -90,7 +90,9 @@ class DistillerWrapperModule(torch.nn.Module):
         return self
     
     def train(self, mode: bool=True):
-        super().train(mode)
+        if not isinstance(mode, bool):
+            raise ValueError("training mode is expected to be boolean")
+        self.training = mode
         self.teacher_model.eval()
         self.student_model.train(mode)
         return self
@@ -137,7 +139,7 @@ class DistillerWrapperModule(torch.nn.Module):
         self.current_epoch += 1
 
 
-class DistillerWrapperParametrizeModule(DistillerWrapperModule):
+class DistillerModule(DistillerBaseModule):
     def __init__(self, student_model, teacher_model, per_layer_loss=True, weight_clip_delta=False, **kwargs):
         super().__init__(student_model, teacher_model, **kwargs)
         self.weight_clip_delta = weight_clip_delta
@@ -190,15 +192,19 @@ class DistillerWrapperParametrizeModule(DistillerWrapperModule):
             if activations_match:
                 print_once(f"INFO: can apply per_layer_loss - student layers:{len(self.student_tensors_dict)} vs teacher layers:{len(self.teacher_tensors_dict)}")
                 layer_loss = 0.0
+                num_layer_loss = 0
                 for k1, k2 in zip(self.student_tensors_dict, self.teacher_tensors_dict):
                     teacher_v = self.teacher_tensors_dict[k2]
                     student_v = self.student_tensors_dict[k1]
                     student_in = self.student_tensors_pre_dict[k1][0]
-                    out_deviation = F.smooth_l1_loss(student_v, teacher_v)
-                    quant_deviation = F.smooth_l1_loss(student_v, student_in)
-                    layer_loss = layer_loss + out_deviation * self.layer_out_loss_scale + quant_deviation * self.layer_quant_loss_scale
+                    if torch.is_floating_point(student_v):
+                        out_deviation = F.smooth_l1_loss(student_v, teacher_v)
+                        quant_deviation = F.smooth_l1_loss(student_v, student_in)
+                        layer_loss = layer_loss + out_deviation * self.layer_out_loss_scale + quant_deviation * self.layer_quant_loss_scale
+                        num_layer_loss += 1
+                    #
                 #
-                layer_loss = layer_loss / len(self.student_tensors_dict)
+                layer_loss = layer_loss / num_layer_loss
                 loss += layer_loss
             else:
                 print_once(f"WARNING: per_layer_loss cannot be applied - layers mismatch - student layers:{len(self.student_tensors_dict)} vs teacher layers:{len(self.teacher_tensors_dict)}")

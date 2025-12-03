@@ -103,8 +103,8 @@ class DistillModel(compile.CompileModel):
 
         ###################################################################3
         # prepare model
-        # from ..utils.distiller_wrapper import DistillerWrapperModule as DistillerModule
-        from ..utils.distiller_wrapper import DistillerWrapperParametrizeModule as DistillerModule
+        # from ..utils.distiller_wrapper import DistillerBaseModule as DistillerModule
+        from ..utils.distiller_wrapper import DistillerModule
 
         teacher_model_path = common_kwargs.get('teacher_model_path', None)
         student_model_path = common_kwargs.get('output_model_path', None)
