@@ -43,10 +43,11 @@ from . import hooks_wrapper, parametrize_wrapper, torch_functional
 
 
 class DistillerBaseModule(torch.nn.Module):
-    def __init__(self, student_model, teacher_model, **kwargs):
+    def __init__(self, student_model, teacher_model, loss_type, **kwargs):
         super().__init__()
         self.student_model = student_model
         self.teacher_model = teacher_model
+        self.loss_type = loss_type
 
         self.epochs = kwargs.get('epochs', 10)
         self.warmup_epochs = kwargs.get('warmup_epochs', 3)
@@ -121,21 +122,40 @@ class DistillerBaseModule(torch.nn.Module):
         return self.loss_scales[index]
 
     def _compute_loss(self, outputs, targets):
-        if isinstance(outputs, (list, tuple)) and isinstance(targets, (list, tuple)):
-            assert len(outputs) == len(targets), f'number of outputs {len(outputs)} and targets {len(targets)} should be same'
-            loss = 0.0
-            for index, (o,t) in enumerate(zip(outputs, targets)):
-                loss_scale = self._update_loss_scale(index, t)
-                loss = loss + self._criterion(o, t) * loss_scale
+        if not isinstance(outputs, (list, tuple)) and not isinstance(targets, (list, tuple)):
+            outputs = [outputs]
+            targets = [targets]
+        #
+        assert len(outputs) == len(targets), f'number of outputs {len(outputs)} and targets {len(targets)} should be same'
+        loss = 0.0
+        for index, (o,t) in enumerate(zip(outputs, targets)):
+            loss_type = self.loss_type[index] if isinstance(self.loss_type, (list,tuple)) else None
+            if loss_type == 'sigmoid':
+                loss_func = torch.nn.functional.sigmoid
+            elif loss_type == 'softmax':
+                loss_func = torch.nn.functional.softmax
+            else:
+                loss_func = lambda x: x
             #
-        else:
-            loss = self._criterion(outputs, targets)
+            o = loss_func(o)
+            t = loss_func(t)
+            loss_scale = self._update_loss_scale(index, t)
+            loss = loss + self._criterion(o, t, loss_type) * loss_scale
         #
         return loss
     
-    def _criterion(self, outputs, targets):
+    def _criterion(self, outputs, targets, loss_type):
         if torch.is_floating_point(outputs):
-            loss = torch.nn.functional.smooth_l1_loss(outputs, targets)
+            if loss_type in ('sigmoid', 'softmax'):
+                eps = 1e-6 #torch.finfo(torch.float32).eps
+                outputs = torch.clamp(outputs, eps, 1-eps)
+                targets = torch.clamp(targets, eps, 1-eps)
+                loss = -(targets*torch.log(outputs) + (1-targets)*torch.log(1-outputs))
+                loss = torch.clamp(loss, -100, 100)
+                loss = loss.mean()
+            else:
+                loss = torch.nn.functional.smooth_l1_loss(outputs, targets)
+            #
         else:
             assert False, "ERROR: Cannot compute loss on integer outputs directly."
         #
@@ -213,7 +233,7 @@ class DistillerModule(DistillerBaseModule):
                     student_in = self.student_tensors_pre_dict[k1][0]
                     if torch.is_floating_point(student_in) and torch.is_floating_point(student_v):
                         layer_loss_scale = self._update_loss_scale('layer_'+str(layer_index), teacher_v)
-                        out_deviation = self._criterion(student_v, teacher_v) * layer_loss_scale
+                        out_deviation = self._criterion(student_v, teacher_v, None) * layer_loss_scale
                         layer_loss = layer_loss + out_deviation * self.layer_out_loss_scale 
                         # layer_q_loss_scale = self._update_loss_scale('layer_q_'+str(layer_index), student_in)
                         # quant_deviation = self._criterion(student_v, student_in) * layer_q_loss_scale

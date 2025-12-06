@@ -94,7 +94,7 @@ class ConvertModel(common_base.CommonPipelineBase):
         return output_model
 
     @classmethod
-    def _run_func(cls, input_model_path, output_model_path=None, example_inputs=None, opset_version=constants.ONNX_OPSET_VERSION_DEFAULT, dynamo=True, **convert_kwargs):
+    def _run_func(cls, input_model_path, output_model_path=None, example_inputs=None, opset_version=constants.ONNX_OPSET_VERSION_DEFAULT, dynamo=True, batch_size=1, **convert_kwargs):
         import torch
         if isinstance(input_model_path, str) and input_model_path.endswith('.onnx'):
             output_model = cls._onnx2torchfile(input_model_path, output_model_path, example_inputs, **convert_kwargs)
@@ -103,17 +103,38 @@ class ConvertModel(common_base.CommonPipelineBase):
         elif isinstance(input_model_path, str) and input_model_path.endswith('.pt2'):
             output_model = cls._torch2onnxfile(input_model_path, output_model_path, example_inputs, opset_version=opset_version, dynamo=dynamo, **convert_kwargs)
         elif isinstance(input_model_path, torch.nn.Module) and output_model_path.endswith('.onnx'):
+            input_model_path = cls._change_batch_size(input_model_path, example_inputs, batch_size)
             output_model = cls._torch2onnxfile(input_model_path, output_model_path, example_inputs, opset_version=opset_version, dynamo=dynamo, **convert_kwargs)
         elif isinstance(input_model_path, torch.nn.Module) and output_model_path.endswith('.pt'):
+            input_model_path = cls._change_batch_size(input_model_path, example_inputs, batch_size)
             exported_model = torch.jit.export(input_model_path, example_inputs)
             torch.jit.save(exported_model, output_model_path)
         elif isinstance(input_model_path, torch.nn.Module) and output_model_path.endswith('.pt2'):
+            input_model_path = cls._change_batch_size(input_model_path, example_inputs, batch_size)
             exported_program = torch.export.export(input_model_path, example_inputs)
             torch.export.save(exported_program, output_model_path)
         else:
             raise ValueError(f'ERROR: unsupported model format: {input_model_path}')
         #
         return output_model_path
+
+    @classmethod
+    def _change_batch_size(cls, torch_model, example_inputs, batch_size):
+        assert isinstance(example_inputs, tuple), f"example_inputs must he a tuple. got {type(example_inputs)}"
+        example_inputs_b1 = []
+        for inp in example_inputs:
+            if batch_size < inp.shape[0]:
+                inp = inp[:1]
+            elif batch_size > inp.shape[0]:
+                new_shape = list(copy.deepcopy(inp.shape))
+                new_shape[0] = batch_size
+                inp = torch.expand_copy(inp[:1], new_shape)
+            #
+            example_inputs_b1.append(inp)
+        #
+        example_inputs_b1 = tuple(example_inputs_b1)
+        exported_model = torch.export.export(torch_model, example_inputs_b1).module()
+        return exported_model
 
     @classmethod
     def _get_torch_model(cls, input_model_path, output_model_path=None, example_inputs=None, opset_version=constants.ONNX_OPSET_VERSION_DEFAULT, dynamo=True, training=False, **convert_kwargs):

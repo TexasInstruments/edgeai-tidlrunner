@@ -79,6 +79,7 @@ class QuantAwareDistillation(distill.DistillModel):
         session_kwargs = self.settings[self.session_prefix]
         runtime_options = session_kwargs['runtime_options']
         calibration_iterations = runtime_options['advanced_options:calibration_iterations']
+        calibration_batch_size = runtime_options['advanced_options:calibration_batch_size']
         distill_kwargs = common_kwargs.get('distill', {})
         torch_device = common_kwargs['torch_device']
 
@@ -100,6 +101,9 @@ class QuantAwareDistillation(distill.DistillModel):
                         value = value.to(torch_device)
                         setattr(m, key, value)
                 
+        # change batch_size 
+        teacher_model = convert.ConvertModel._change_batch_size(teacher_model, self.example_inputs_on_device, batch_size=calibration_batch_size)
+         
         # export teacher model - optional
         os.makedirs(self.teacher_folder, exist_ok=True)
         teacher_model_path = os.path.join(self.teacher_folder, os.path.basename(self.model_path))
@@ -138,8 +142,10 @@ class QuantAwareDistillation(distill.DistillModel):
         # export to pt2 - optional
         student_model_path_pt2 = os.path.splitext(student_model_path)[0] + ".pt2"
         convert.ConvertModel._run_func(student_model, student_model_path_pt2, self.example_inputs_on_device)
+
         # export to onnx
-        convert.ConvertModel._run_func(student_model, student_model_path, self.example_inputs_on_device, onnx_ir_version=onnx_ir_version)
+        convert.ConvertModel._run_func(student_model, student_model_path, self.example_inputs_on_device, onnx_ir_version=onnx_ir_version, batch_size=1)
+
         # copy to model folder
         pipeline_type = common_kwargs['pipeline_type']
         final_model_path_wo_ext, final_model_ext = os.path.splitext(self.model_path)

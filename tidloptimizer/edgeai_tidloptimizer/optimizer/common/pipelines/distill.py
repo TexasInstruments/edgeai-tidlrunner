@@ -52,6 +52,7 @@ class DistillModel(compile.CompileModel):
         super().__init__(**kwargs)
         self.calibration_data_cache = {}
         self.parametrization_types = parametrization_types
+        self.loss_type = ('sigmoid', None) #None
 
     def info():
         print(f'INFO: Model distill - {__file__}')
@@ -72,6 +73,7 @@ class DistillModel(compile.CompileModel):
         runtime_options = session_kwargs['runtime_options']
         distill_kwargs = common_kwargs.get('distill', {})
         torch_device = common_kwargs['torch_device']
+        calibration_batch_size = runtime_options['advanced_options:calibration_batch_size']
         
         self.input_normalizer = common_kwargs.get('input_normalizer', None)
         if not self.input_normalizer:
@@ -79,7 +81,7 @@ class DistillModel(compile.CompileModel):
         #
         self.example_inputs = common_kwargs.get('example_inputs', None)
         if not self.example_inputs:
-            self.example_inputs, info_dict = self._get_input_from_dataloader(0)
+            self.example_inputs, info_dict = self._get_input_from_dataloader(0, batch_size=calibration_batch_size)
         #
         self.example_inputs_on_device = tuple([tensor.to(torch_device) for tensor in self.example_inputs])
 
@@ -125,7 +127,7 @@ class DistillModel(compile.CompileModel):
 
         calibration_iterations = runtime_options['advanced_options:calibration_iterations']
         calibration_iterations = min(calibration_iterations, len(self.dataloader)) if calibration_iterations else len(self.dataloader)
-        self.distiller_model = DistillerModule(student_model, teacher_model, epochs=calibration_iterations, **distill_kwargs)
+        self.distiller_model = DistillerModule(student_model, teacher_model, epochs=calibration_iterations, loss_type=self.loss_type, **distill_kwargs)
 
         # distill loop here
         tqdm_epoch = tqdm.tqdm(range(calibration_iterations), desc='DistillEpoch', leave=False)
