@@ -57,10 +57,12 @@ class TeeLogWriter:
         self.streams = streams
 
     def write(self, data):
+        len = 0
         for stream in self.streams:
             print(f"DEBUG: Writing to stream: {stream.__class__.__name__}", file=sys.__stderr__)
-            stream.write(data)
+            len = stream.write(data)
             stream.flush()
+        return len
 
     def flush(self):
         for stream in self.streams:

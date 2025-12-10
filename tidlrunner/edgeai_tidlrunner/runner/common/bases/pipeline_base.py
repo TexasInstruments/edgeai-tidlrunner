@@ -270,18 +270,17 @@ class PipelineBase():
             #
             os.makedirs(os.path.dirname(log_file), exist_ok=True)       
             with open(log_file, 'a') as log_fp:
-                with wurlitzer.pipes(stdout=log_fp, stderr=log_fp):
+                if capture_log == settings_base.CaptureLogModes.CAPTURE_LOG_MODE_TEE:
+                    tee_stdout = utils.TeeLogWriter([sys.stdout, log_fp])
+                    tee_stderr = utils.TeeLogWriter([sys.stderr, log_fp])  
+                else:
+                    tee_stdout = log_fp
+                    tee_stderr = log_fp
+                #
+                with wurlitzer.pipes(stdout=tee_stdout, stderr=tee_stderr):
                     return self._prepare()
                 #
             #
-        # elif log_file and hasattr(self, 'run_dir') and self.run_dir:
-        #     with open(log_file, 'a') as log_fp:
-        #         tee_stdout = utils.TeeLogWriter([sys.stdout, log_fp])
-        #         tee_stderr = utils.TeeLogWriter([sys.stderr, log_fp])                
-        #         with wurlitzer.pipes(stdout=tee_stdout, stderr=tee_stderr):
-        #             return self._prepare()
-        #         #
-        #     #
         else:
             return self._prepare()
         
@@ -294,18 +293,17 @@ class PipelineBase():
             #        
             os.makedirs(os.path.dirname(log_file), exist_ok=True)
             with open(log_file, 'a') as log_fp:
-                with wurlitzer.pipes(stdout=log_fp, stderr=log_fp):
+                if capture_log == settings_base.CaptureLogModes.CAPTURE_LOG_MODE_TEE:
+                    tee_stdout = utils.TeeLogWriter([sys.stdout, log_fp])
+                    tee_stderr = utils.TeeLogWriter([sys.stderr, log_fp])  
+                else:
+                    tee_stdout = log_fp
+                    tee_stderr = log_fp
+                #
+                with wurlitzer.pipes(stdout=tee_stdout, stderr=tee_stderr):
                     return self._run()
                 #
-            #
-        # elif log_file and hasattr(self, 'run_dir') and self.run_dir:
-        #     with open(log_file, 'a') as log_fp:
-        #         tee_stdout = utils.TeeLogWriter([sys.stdout, log_fp])
-        #         tee_stderr = utils.TeeLogWriter([sys.stderr, log_fp])                
-        #         with wurlitzer.pipes(stdout=tee_stdout, stderr=tee_stderr):
-        #             return self._run()
-        #         #
-        #     #            
+            #        
         else:
             return self._run()
         

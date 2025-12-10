@@ -29,15 +29,17 @@
 
 from ....rtwrapper.core import presets
 
+
 class CaptureLogModes:
     CAPTURE_LOG_MODE_OFF = False  # only to screen
     CAPTURE_LOG_MODE_ON = True    # only to file
     CAPTURE_LOG_MODE_TEE = 'tee'  # to screen and to file
+    CAPTURE_LOG_MODE_ADAPTIVE = 'adaptive'  # True if there are multiple models in parallel, otherwise tee
 
 
 class SettingsBaseDefaults:
     NUM_PARALLEL_PROCESSES = 8
-    CAPTURE_LOG_MODE = CaptureLogModes.CAPTURE_LOG_MODE_OFF
+    CAPTURE_LOG_MODE = CaptureLogModes.CAPTURE_LOG_MODE_ADAPTIVE
     CAPTURE_LOG_FILE = 'run.log'
 
 

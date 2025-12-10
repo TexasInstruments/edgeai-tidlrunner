@@ -32,6 +32,7 @@ import sys
 import shutil
 import copy
 import ast
+import math
 import tqdm
 
 from edgeai_tidlrunner.rtwrapper.core import presets
@@ -184,7 +185,8 @@ class InferModel(CompileModelBase):
         num_frames = min(len(self.dataloader), common_kwargs['num_frames'])
         print(f'INFO: inference starting for {num_frames} frames')
         input_index = 0
-        display_step = common_kwargs.display_step
+        display_step = common_kwargs['display_step']
+        display_step = math.ceil(display_step * num_frames) if isinstance(display_step, float) else display_step
         tqdm_obj = tqdm.tqdm(range(num_frames))
         for input_index in range(num_frames):
             run_dict = self._run_frame(input_index)

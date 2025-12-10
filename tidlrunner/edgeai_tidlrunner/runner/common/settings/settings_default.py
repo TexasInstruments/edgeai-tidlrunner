@@ -96,7 +96,7 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | SETTINGS_DEFAULT['surg
     # common options
     'task_type':                {'dest': 'common.task_type', 'default': None, 'type': str, 'metavar': 'value', 'help': 'type of AI task (classification, detection, segmentation etc.)'},
     'num_frames':               {'dest': 'common.num_frames', 'default': 10, 'type': int, 'metavar': 'value', 'help': 'number of frames to process'},
-    'display_step':             {'dest': 'common.display_step', 'default': 100, 'type': str, 'metavar': 'value', 'help': 'interval for displaying progress information'},
+    'display_step':             {'dest': 'common.display_step', 'default': 0.1, 'type': str, 'metavar': 'value', 'help': 'interval for displaying progress information'},
     'upgrade_config':           {'dest': 'common.upgrade_config', 'default': True, 'type': str, 'metavar': 'value', 'help': 'upgrade edgeai-benchmark config to work with tidlrunner'},
     'session_type_dict':        {'dest': 'common.session_type_dict', 'default': None, 'type': str, 'metavar': 'value', 'help': 'mapping of model extensions to session names'},
     'model_selection':          {'dest': 'common.model_selection', 'default': None, 'type': str, 'metavar': 'value', 'help': 'select a subset of models to run - path of the model is compared using this model_selection regex to select a particular model or not'},
