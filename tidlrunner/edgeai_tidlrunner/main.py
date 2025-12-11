@@ -59,7 +59,7 @@ def _main(**kwargs):
 
 
 def main(**kwargs):
-    _main(_package_name='edgeai_tidlrunner.runner', **kwargs)
+    _main(_package_name='edgeai_tidlrunner.runner',  _package_short_name='tidlrunner', **kwargs)
 
 
 if __name__ == "__main__":

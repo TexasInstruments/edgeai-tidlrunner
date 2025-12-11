@@ -47,7 +47,7 @@ def _main(_package_name='edgeai_tidloptimizer.optimizer', **kwargs):
 
 
 def main(**kwargs):
-    _main(_package_name='edgeai_tidloptimizer.optimizer', **kwargs)
+    _main(_package_name='edgeai_tidloptimizer.optimizer', _package_short_name='tidloptimizer', **kwargs)
 
 
 if __name__ == "__main__":
