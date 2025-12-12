@@ -30,7 +30,8 @@ dependencies = [
     "munkres",
     "json_tricks",
     "wurlitzer",
-    "xlsxwriter"
+    "xlsxwriter",
+    "tabulate"
 ]
 
 [project.urls]
