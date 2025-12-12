@@ -153,7 +153,7 @@ def pretty_object(d, depth=10, precision=6):
     return d_out
 
 
-def str_to_dict(v):
+def yamlstr_to_object(v):
     if v is None:
         return None
     #
@@ -162,6 +162,22 @@ def str_to_dict(v):
     #
     d = yaml.safe_load(v)
     return d
+
+
+def aststr_to_object(v):
+    import ast
+    if v in (None, ''):
+        return None
+    #
+    if isinstance(v, list):
+        v = ' '.join(v)
+    #
+    d = ast.literal_eval(v)
+    return d
+
+
+def str_to_dict(v):
+    return yamlstr_to_object
 
 
 def str_to_int(v):

@@ -37,6 +37,8 @@ from edgeai_tidlrunner.rtwrapper.core import presets
 
 from ...common import bases
 from ...common import utils
+from ...common.utils import onnx_utils
+
 from .. import blocks
 from ..settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
 from .common_.compile_base import CompileModelBase
@@ -55,7 +57,25 @@ class CompileModel(CompileModelBase):
         common_kwargs = self.settings[self.common_prefix]
         surgery_kwargs = common_kwargs['surgery']
         surgery.ModelSurgery._run_func(self.settings, self.model_path, self.model_path, **surgery_kwargs)
-        
+    
+    def _prepare_runtime_settings(self):
+        session_kwargs = self.settings[self.session_prefix]
+        runtime_options = session_kwargs['runtime_options']
+
+        if runtime_options['deny_list:layer_type']:
+            deny_list_node_str = ', '.join(runtime_options['deny_list:layer_type'])
+            runtime_options['deny_list:layer_type'] = deny_list_node_str
+
+        if not runtime_options['deny_list:layer_name']:
+            runtime_options['deny_list:layer_name'] = []
+
+        if session_kwargs['deny_list_start_end_dict']:
+            deny_list_node_names = onnx_utils.get_all_node_names(self.model_path, session_kwargs['deny_list_start_end_dict'])
+            runtime_options['deny_list:layer_name'] += deny_list_node_names
+
+        if runtime_options['deny_list:layer_name']:
+            runtime_options['deny_list:layer_name'] = ', '.join(runtime_options['deny_list:layer_name'])
+
     def _prepare(self):
         super()._prepare()
         common_kwargs = self.settings[self.common_prefix]
@@ -91,7 +111,8 @@ class CompileModel(CompileModelBase):
         #
 
         self._prepare_model()
-        
+        self._prepare_runtime_settings()
+
         # session
         if self.kwargs['common.pipeline_type'] == 'compile' and not self.session and \
             not self.pipeline_config and session_kwargs.get('name',None):
