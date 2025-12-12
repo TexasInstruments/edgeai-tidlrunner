@@ -69,50 +69,38 @@ def onnx_update_model_dims(model, input_dims, output_dims):
     return model
 
 
-def find_out_layers (curr_layer) -> List[Any]:
+def _find_out_layers (curr_layer) -> List[Any]:
     """
     Return all input nodes to a given node
     """
-    out_layers = list()
-    for outp in curr_layer.outputs:
-        out_layers.extend(outp.outputs)
+    out_layers = list(curr_layer.outputs)
     return out_layers
 
 
-def is_end_node(node) -> bool:
+def _is_end_node(node) -> bool:
     """
     Return True if a node is an output node of the model
     """
-    if len(find_out_layers(node)) == 0:
+    if len(_find_out_layers(node)) == 0:
         return True
     return False
 
 
-def _get_all_nodes(node, end_nodes, searched_nodes):
+def _get_all_child_nodes(node, end_nodes, searched_nodes, searched_node_names):
     # recursive function to find all the deny list nodes
-    searched_node_names = [node.name for node in searched_nodes]
-    if node.name in end_nodes:
-        add_in_list = True
-        if node.name not in searched_node_names:
-            searched_nodes.append(node)
-            logging.debug(f"Adding {node.name} to node list.")
-        return add_in_list, searched_nodes
+    if node.name not in searched_node_names:
+        searched_nodes.append(node)
+        searched_node_names.append(node.name)
+        logging.debug(f"Adding {node.name} to node list.")
 
-    elif is_end_node(node):
-        add_in_list = False
-        return add_in_list, searched_nodes
+    if node.name in end_nodes or _is_end_node(node):
+        return searched_nodes, searched_node_names
 
-    node_outputs = find_out_layers(node)
-    add_in_list = False
-    for n_id in node_outputs:
-        add_in_list_here, searched_nodes = _get_all_nodes(n_id, end_nodes, searched_nodes)
-        # to add the intermediate nodes if one node has a branch which need not be included in deny list
-        add_in_list = add_in_list or add_in_list_here
-        if add_in_list and add_in_list_here and (n_id.name not in searched_node_names):
-            searched_nodes.append(n_id)
-            logging.debug(f"Adding {n_id.name} to node list.")
+    for n_id in node.outputs:
+        if n_id.name not in searched_node_names:
+            searched_nodes, searched_node_names = _get_all_child_nodes(n_id, end_nodes, searched_nodes, searched_node_names)
 
-    return add_in_list, searched_nodes
+    return searched_nodes, searched_node_names
 
 
 def get_all_node_names(model_path, start_end_layers={}, verbose=False, graph=None, **kwargs):
@@ -144,16 +132,26 @@ def get_all_node_names(model_path, start_end_layers={}, verbose=False, graph=Non
         graph = gs.import_onnx(model)
 
     model_outputs = [node.inputs[0].name for node in graph.outputs]
+    name_to_node_dict = {node.name: node for node in graph.nodes}
 
     searched_nodes = []
-    for node in graph.nodes:
-        if node.name in start_end_layers.keys():
-            end_layers = start_end_layers[node.name]
-            if end_layers is None:
-                end_layers = model_outputs
-            _, searched_nodes = _get_all_nodes(node, end_layers, searched_nodes)
-            searched_nodes.append(node)
-            logging.debug(f"Adding {node.name} to node list.")
+    searched_node_names = []
+    for start_name, end_name in start_end_layers.items():
+        if start_name not in name_to_node_dict:
+            print(f'WARNING: start_name given is not a valid onnx node name: {start_name} - {__file__}')
+            continue
+        if end_name is None:
+            end_name = model_outputs
+        elif end_name not in name_to_node_dict:
+            print(f'WARNING: end_name given is not a valid onnx node name: {end_name} - {__file__}')
+            continue
+        elif not isinstance(end_name, (list,tuple)):
+            end_name = [end_name]
+        #
+        start_node = name_to_node_dict[start_name]
+        searched_nodes, searched_node_names = _get_all_child_nodes(start_node, end_name, searched_nodes, searched_node_names)
+        # searched_nodes.append(start_node)
+        logging.debug(f"Adding {start_name} to node list.")
 
     result_list = []
     for node in searched_nodes:
