@@ -42,15 +42,17 @@ Example:
 This script installs the CUDA based tidl-tools and nvidia-hpc-sdk. The user has to make sure the system has CUDA gpus appropriate nvidia graphics drivers. 
 
 ### Changing the tidl-tools version
-Version of tidl-tools can be specified during the setup process.
+Version of tidl-tools can be specified in setup_runner_pc.sh - open this file and change the line that specifies TIDL_TOOLS_VERSION on top. OR it can be specified from commandline
 
 ```
-TIDL_TOOLS_VERSION="11.1" ./setup_runner_pc_gpu.sh
+TIDL_TOOLS_VERSION="11.2" ./setup_runner_pc.sh
 ```
 
+OR for gpu based tidl-tools:
 ```
-TIDL_TOOLS_VERSION="11.0" ./setup_runner_pc_gpu.sh
+TIDL_TOOLS_VERSION="11.2" ./setup_runner_pc_gpu.sh
 ```
+
 
 **Important Note**: The version of tidl-tools that is installed will be used for model compilation. The version of tidl-tools used for compiling a generating model artifacts has to match with the version on the EVM/device. Other the model artifacts will not run on the device.
 

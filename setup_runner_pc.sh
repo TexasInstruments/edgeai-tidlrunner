@@ -30,6 +30,15 @@
 
 
 ######################################################################
+# change the default here if needed - supported options: 11.2 11.1 11.0 10.1
+TIDL_TOOLS_VERSION=${TIDL_TOOLS_VERSION-"11.2"}
+
+# change the default here if needed - supported options: cpu gpu
+# if you are invoking the script setup_runner_pc_gpu.sh, 
+# then you would need to change this in that script and not here.
+TIDL_TOOLS_TYPE=${TIDL_TOOLS_TYPE-"cpu"}
+
+######################################################################
 CURRENT_WORK_DIR=$(pwd)
 
 
@@ -67,19 +76,19 @@ done
 
 
 #######################################################################
-pip3 install -e ./tools --verbose
+pip3 install -e ./tools
 
 
 ######################################################################
 # tidlrunner-tools-download is a script that defined in and installed via tools/pyproject.toml
 # download and install tidl-tools - this invokes: python3 tools/tidl_tools_package/download.py
 echo "Running: tidlrunner-tools-download..."
-tidlrunner-tools-download
+TIDL_TOOLS_TYPE=${TIDL_TOOLS_TYPE} TIDL_TOOLS_VERSION=${TIDL_TOOLS_VERSION} tidlrunner-tools-download
 
 
 ######################################################################
 echo "Installing edgeai_tidirunner package..."
-pip3 install -e ./tidlrunner[pc] --verbose
+pip3 install -e ./tidlrunner[pc]
 
 
 ######################################################################

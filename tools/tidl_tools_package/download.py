@@ -43,7 +43,7 @@ import gzip
 
 
 ###############################################################################
-TIDL_TOOLS_TYPE_DEFAULT = ""
+TIDL_TOOLS_TYPE_DEFAULT = "cpu"
 TIDL_TOOLS_VERSION_DEFAULT = "11.2"
 
 
@@ -617,6 +617,7 @@ def download():
     install_path = os.path.dirname(os.path.realpath(__file__))
     tools_version = os.environ.get("TIDL_TOOLS_VERSION", TIDL_TOOLS_VERSION_DEFAULT)
     tools_type = os.environ.get("TIDL_TOOLS_TYPE", TIDL_TOOLS_TYPE_DEFAULT)
+    print(f"INFO: running setup with TIDL_TOOLS_VERSION={tools_version} TIDL_TOOLS_TYPE={tools_type}")
     setup_tidl_tools(install_path, tools_version, tools_type)
 
 
