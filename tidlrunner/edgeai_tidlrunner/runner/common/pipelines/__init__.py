@@ -30,7 +30,7 @@
 from .infer import InferModel
 from .compile import CompileModel
 from .accuracy import InferAccuracy
-from .analyze import CompileAnalyzeNoTIDL, InferAnalyzeNoTIDL, CompileAnalyzeTIDL, InferAnalyzeTIDL, InferAnalyzeFinal
+from .analyze import CompileAnalyzeNoTIDL, InferAnalyzeNoTIDL, CompileAnalyzeTIDL32, InferAnalyzeTIDL32, CompileAnalyzeTIDL, InferAnalyzeTIDL, InferAnalyzeFinal
 from .report import GenReport 
 from .surgery import ModelSurgery
 from .extract import ExtractNodes
@@ -45,7 +45,7 @@ def get_command_pipelines(**kwargs):
         'accuracy': ['InferAccuracy'],
         'compile+infer': ['CompileModel', 'InferModel'],
         'compile+accuracy': ['CompileModel', 'InferAccuracy'],
-        'analyze': ['CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL', 'InferAnalyzeTIDL', 'InferAnalyzeFinal'],    
+        'analyze': ['CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL32', 'InferAnalyzeTIDL32', 'CompileAnalyzeTIDL', 'InferAnalyzeTIDL', 'InferAnalyzeFinal'],    
         'report': ['GenReport'],   
         'package': ['PackageArtifacts'], 
         # other
