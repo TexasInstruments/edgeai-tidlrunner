@@ -64,19 +64,36 @@ class CompileAnalyzeNoTIDL(compile.CompileModel):
         super().__init__(**kargs_copy)
 
     def _prepare_model(self):
+
         super()._prepare_model()
         if self.kwargs['common.analyze_level'] >= 2:
-            model_path = self.model_path
             # Load the original ONNX model and add intermediate outputs
+            model_path = self.model_path
             onnx_model = onnx.load(model_path)
-            intermediate_layer_value_info = onnx.helper.ValueInfoProto()
-            intermediate_layer_value_info.name = ''
-            for i in range(len(onnx_model.graph.node)):
-                for j in range(len(onnx_model.graph.node[i].output)):
-                    intermediate_layer_value_info.name = onnx_model.graph.node[i].output[j]
-                    onnx_model.graph.output.append(intermediate_layer_value_info)
-                #
-            #
+
+            # using native onnx
+            # intermediate_layer_value_info = onnx.helper.ValueInfoProto()
+            # intermediate_layer_value_info.name = ''
+            # for i in range(len(onnx_model.graph.node)):
+            #     for j in range(len(onnx_model.graph.node[i].output)):
+            #         intermediate_layer_value_info.name = onnx_model.graph.node[i].output[j]
+            #         onnx_model.graph.output.append(intermediate_layer_value_info)
+            #     #
+            # #
+
+            # using onnx graph surgeon
+            import onnx_graphsurgeon as gs
+            graph = gs.import_onnx(onnx_model)
+            for node in list(graph.nodes):
+                if node.op == 'DequantizeLinear' and isinstance(node.inputs[0], gs.Constant):
+                    # weights need not be output
+                    # there is an issue in QDQ models if this is done.
+                    continue
+                for out in node.outputs:
+                    if out not in graph.outputs:
+                        graph.outputs.append(out)
+            
+            onnx_model = gs.export_onnx(graph)
             onnx.save(onnx_model, model_path)
 
     def _prepare(self):     

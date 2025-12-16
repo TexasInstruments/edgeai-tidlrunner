@@ -139,8 +139,30 @@ def start():
     StartRunner.main()
 
 
+def start_with_proper_environment(**kwargs):
+    print(f'INFO: running - {sys.argv}')
+    if os.environ.get('TIDL_TOOLS_PATH', None) is None or \
+       os.environ.get('LD_LIBRARY_PATH', None) is None:
+        print("INFO: TIDL_TOOLS_PATH or LD_LIBRARY_PATH is not set, restarting with proper environment...")
+        command_args, rest_args = StartRunner.get_arg_parser().parse_known_args()  
+        command_kwargs = vars(command_args)
+        start_kwargs = kwargs.copy()
+        cmd_keys_mapping = {
+            'session.target_device': 'target_device',
+            'session.target_machine': 'target_machine',
+        }
+        for cmd_key in cmd_keys_mapping:
+            if cmd_key in command_kwargs:
+                kwarg_key = cmd_keys_mapping[cmd_key]
+                start_kwargs[kwarg_key] = command_kwargs[cmd_key]
+            #
+        #
+        rtwrapper.restart_with_proper_environment(**start_kwargs)
+    else:
+        StartRunner.main(**kwargs)
+
+
 if __name__ == "__main__":
     print(f'INFO: running {__file__} __main__')
-    print(f'INFO: This doesn not setup environment variables. Make sure TIDL_TOOLS_PATH and LD_LIBRARY_PATH are set properly.')
     print(f'INFO: OR run tidlrunner-cli which is setup to call main:main() in pyproject.toml')    
-    start()
+    start_with_proper_environment()

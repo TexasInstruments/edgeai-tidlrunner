@@ -32,9 +32,10 @@ import sys
 import shutil
 import copy
 
-from edgeai_tidlrunner.runner.common import utils
-from edgeai_tidlrunner.runner.common import bases
+import torch
+
 from ..settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
+from ..utils import model_utils
 
 from . import convert
 from . import distill
@@ -46,9 +47,11 @@ class QuantAwareDistillation(distill.DistillModel):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs) #parametrization_types=('clip_const',),
-        from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule, QConfigType, QuantizerTypes
+        from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule, QConfigType, QuantizerTypes, QuantizerAnnotationPatterns
+
         self.qconfig_type = QConfigType.WF_AFCLIP #WF_AFCLIP #DEFAULT 
         self.quantizer_type = QuantizerTypes.TIDLRT_ADVANCED
+        self.annotation_patterns = QuantizerAnnotationPatterns.DEFAULT
         self.with_convert = True #False
 
     def info():
@@ -70,10 +73,13 @@ class QuantAwareDistillation(distill.DistillModel):
         student_model_path = os.path.join(self.student_folder, os.path.basename(self.model_path))
 
     def _run(self):
+        from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule, QConfigType, QuantizerTypes, QuantizerAnnotationPatterns
+
         common_kwargs = self.settings[self.common_prefix]
         session_kwargs = self.settings[self.session_prefix]
         runtime_options = session_kwargs['runtime_options']
         calibration_iterations = runtime_options['advanced_options:calibration_iterations']
+        calibration_batch_size = runtime_options['advanced_options:calibration_batch_size']
         distill_kwargs = common_kwargs.get('distill', {})
         torch_device = common_kwargs['torch_device']
 
@@ -82,40 +88,45 @@ class QuantAwareDistillation(distill.DistillModel):
 
         # get pytorch model
         teacher_model = convert.ConvertModel._get_torch_model(teacher_model_path, example_inputs=self.example_inputs)
-        teacher_model.to(torch_device)
         # it is important to freeze the teacher model's BN and Dropouts
         teacher_model.eval()
 
+        # model to device
+        if torch_device != 'cpu':
+            teacher_model.to(torch_device)
+            for m in teacher_model.modules():
+                for key in dir(m):
+                    value = getattr(m, key)
+                    if isinstance(value, torch.Tensor):
+                        value = value.to(torch_device)
+                        setattr(m, key, value)
+                
+        # change batch_size 
+        teacher_model = convert.ConvertModel._change_batch_size(teacher_model, self.example_inputs_on_device, batch_size=calibration_batch_size)
+         
         # export teacher model - optional
         os.makedirs(self.teacher_folder, exist_ok=True)
         teacher_model_path = os.path.join(self.teacher_folder, os.path.basename(self.model_path))
         teacher_model_path_pt2 = os.path.splitext(teacher_model_path)[0] + ".pt2"
-        convert.ConvertModel._run_func(teacher_model, teacher_model_path_pt2, self.example_inputs)
+        convert.ConvertModel._run_func(teacher_model, teacher_model_path_pt2, self.example_inputs_on_device)
         
         #################################################################################
         # prepare the student model
-        import torch
+        student_model = QATPT2EModule(teacher_model, example_inputs=self.example_inputs_on_device, 
+                                      qconfig_type=self.qconfig_type, quantizer_type=self.quantizer_type, num_batch_norm_update_epochs=0,
+                                      total_epochs=calibration_iterations, annotation_patterns=self.annotation_patterns)
 
-        # create student model
-        student_model = torch.export.export(teacher_model, self.example_inputs).module()
 
-        # from torch.ao.quantization.pt2e import allow_exported_model_train_eval
-        # allow_exported_model_train_eval(student_model)
-
-        # create student model
-        from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule, QConfigType
-        from edgeai_torchmodelopt.xmodelopt.quantization.v3.fake_quantize_types import ADAPTIVE_ACTIVATION_FAKE_QUANT_TYPES
-        # ['linear', 'linear_relu', 'conv', 'conv_relu', 'conv_transpose_relu', 'conv_bn', 'conv_bn_relu', 'conv_transpose_bn', 'conv_transpose_bn_relu', 'gru_io_only', 'adaptive_avg_pool2d', 'add_relu', 'add', 'mul_relu', 'mul', 'cat']
-        # ['linear', 'linear_relu', 'conv', 'conv_relu', 'conv_bn', 'conv_bn_relu', 'conv_transpose_relu', 'conv_transpose_bn', 'conv_transpose_bn_relu']
-        annotation_patterns = ['linear', 'linear_relu', 'conv', 'conv_relu', 'conv_bn', 'conv_bn_relu', 'conv_transpose_relu', 'conv_transpose_bn', 'conv_transpose_bn_relu']
-        student_model = QATPT2EModule(teacher_model, example_inputs=self.example_inputs, 
-                                      qconfig_type=self.qconfig_type, quantizer_type=self.quantizer_type,
-                                      total_epochs=calibration_iterations, annotation_patterns=annotation_patterns)
+        #################################################################################
+        # prepare the teacher with placeholder observers and fq - this is for use in distillation
+        teacher_model = QATPT2EModule(teacher_model, example_inputs=self.example_inputs_on_device, 
+                                      qconfig_type=QConfigType.PLACEHOLDER, quantizer_type=self.quantizer_type, num_batch_norm_update_epochs=0,
+                                      total_epochs=calibration_iterations, annotation_patterns=self.annotation_patterns)
 
         #################################################################################
         # run the distillation
         common_kwargs['teacher_model_path'] = teacher_model
-        common_kwargs['example_inputs'] = self.example_inputs
+        common_kwargs['example_inputs'] = self.example_inputs_on_device
         common_kwargs['output_model_path'] = student_model
 
         super()._run()
@@ -130,8 +141,18 @@ class QuantAwareDistillation(distill.DistillModel):
         # save student model
         # export to pt2 - optional
         student_model_path_pt2 = os.path.splitext(student_model_path)[0] + ".pt2"
-        convert.ConvertModel._run_func(student_model, student_model_path_pt2, self.example_inputs)
+        convert.ConvertModel._run_func(student_model, student_model_path_pt2, self.example_inputs_on_device)
+
         # export to onnx
-        convert.ConvertModel._run_func(student_model, student_model_path, self.example_inputs, onnx_ir_version=onnx_ir_version)
-        # copy to model_path
-        shutil.copyfile(student_model_path, self.model_path)
+        convert.ConvertModel._run_func(student_model, student_model_path, self.example_inputs_on_device, onnx_ir_version=onnx_ir_version, batch_size=1)
+
+        # copy to model folder
+        pipeline_type = common_kwargs['pipeline_type']
+        final_model_path_wo_ext, final_model_ext = os.path.splitext(self.model_path)
+        final_model_path = final_model_path_wo_ext + f'_{pipeline_type}' + final_model_ext
+        shutil.copyfile(student_model_path, final_model_path)
+        # create symlink to model_path
+        cur_dir = os.getcwd()
+        os.chdir(os.path.dirname(self.model_path))
+        os.symlink(os.path.basename(final_model_path), os.path.basename(self.model_path))
+        os.chdir(cur_dir)

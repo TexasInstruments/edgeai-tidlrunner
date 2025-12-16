@@ -27,17 +27,36 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from .config_utils import *
-from .download_utils import *
-from .parse_utils import *
-from .file_utils import *
-from .metric_utils import *
-from .string_utils import *
-from .process_with_queue import *
-from .parallel_runner import *
-from .sequential_runner import *
-from .artifacts_id import *
-from .import_utils import *
-from .collections_utils import *
-from .print_utils import *
-from .onnx_utils import *
+def _move_node_kwargs_to_device(model, device):
+    import torch
+    for node in model.graph.nodes:
+        if "device" in node.kwargs and node.kwargs['device'] != torch.device(device):
+            with model.graph.inserting_before(node):
+                new_kwargs = dict(node.kwargs)
+                new_kwargs['device'] = torch.device(device)
+                new_node = model.graph.create_node(op=node.op, target=node.target, args=node.args, kwargs=new_kwargs)
+                node.replace_all_uses_with(new_node)
+                model.graph.erase_node(node)
+    model.graph.lint()
+    model.recompile()
+    return model
+
+
+def move_model_to_device(model, example_inputs, example_kwargs=None, device=None):
+    import torch
+    example_kwargs = example_kwargs or {}
+    if device:
+        return
+    
+    if isinstance(example_inputs, (list, tuple)):
+        for i, inp in enumerate(example_inputs):
+            example_inputs[i].to(device=device)
+    else:
+        example_inputs = [example_inputs.to(device=device)]
+    for key, value in example_kwargs.items():
+        if isinstance(value, torch.Tensor):
+            example_kwargs[key] = value.to(device=device)
+
+    model = model.to(device=device)
+    _move_node_kwargs_to_device(model, device)
+

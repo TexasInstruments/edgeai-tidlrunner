@@ -37,14 +37,14 @@ from . import qdistill
 
 
 class QuantizeModel(qdistill.QuantAwareDistillation):
-    ARGS_DICT=SETTINGS_DEFAULT['qdistill']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['qdistill']
+    ARGS_DICT=SETTINGS_DEFAULT['quantize']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['quantize']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
         from edgeai_torchmodelopt.xmodelopt.quantization.v3 import QATPT2EModule, QConfigType
-        self.qconfig_type = QConfigType.DEFAULT
+        self.qconfig_type = dict(activation=dict(range_shrink=True)) #QConfigType.DEFAULT #MSA_WC8SYM_AT8SYM #DEFAULT
         self.with_convert = True
 
     def info(self):

@@ -37,25 +37,15 @@ import functools
 import subprocess
 
 from edgeai_tidlrunner import rtwrapper, runner
-from edgeai_tidlrunner.start import StartRunner
-
-
-def main_with_proper_environment(**kwargs):
-    print(f'INFO: running - {sys.argv}')
-    if os.environ.get('TIDL_TOOLS_PATH', None) is None or \
-       os.environ.get('LD_LIBRARY_PATH', None) is None:
-        print("INFO: TIDL_TOOLS_PATH or LD_LIBRARY_PATH is not set, restarting with proper environment...")
-        rtwrapper.restart_with_proper_environment()
-    else:
-        StartRunner.main(**kwargs)
+from edgeai_tidlrunner.start import StartRunner, start_with_proper_environment
 
 
 # def main_pc():
-#     main_with_proper_environment(target_machine='pc')
+#     start_with_proper_environment(target_machine='pc')
 
 
 # def main_evm():
-#     main_with_proper_environment(target_machine='evm')
+#     start_with_proper_environment(target_machine='evm')
 
 
 def _main(**kwargs):
@@ -65,13 +55,13 @@ def _main(**kwargs):
     print(f"INFO: machine architecture found: {arch}")   
     target_machine = 'pc' if 'x86' in arch or 'amd64' in arch else 'evm'
     print(f"INFO: setting target_machine to: {target_machine}")
-    main_with_proper_environment(target_machine=target_machine, **kwargs)
+    start_with_proper_environment(target_machine=target_machine, **kwargs)
 
 
 def main(**kwargs):
-    _main(package_name='edgeai_tidlrunner.runner', **kwargs)
+    _main(_package_name='edgeai_tidlrunner.runner',  _package_short_name='tidlrunner', **kwargs)
 
 
 if __name__ == "__main__":
     print(f'INFO: running {__file__} __main__')  
-    _main(package_name='edgeai_tidlrunner.runner')
+    _main(_package_name='edgeai_tidlrunner.runner', _package_short_name='tidlrunner')

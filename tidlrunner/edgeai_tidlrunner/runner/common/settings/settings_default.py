@@ -96,7 +96,7 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | SETTINGS_DEFAULT['surg
     # common options
     'task_type':                {'dest': 'common.task_type', 'default': None, 'type': str, 'metavar': 'value', 'help': 'type of AI task (classification, detection, segmentation etc.)'},
     'num_frames':               {'dest': 'common.num_frames', 'default': 10, 'type': int, 'metavar': 'value', 'help': 'number of frames to process'},
-    'display_step':             {'dest': 'common.display_step', 'default': 100, 'type': str, 'metavar': 'value', 'help': 'interval for displaying progress information'},
+    'display_step':             {'dest': 'common.display_step', 'default': 0.1, 'type': str, 'metavar': 'value', 'help': 'interval for displaying progress information'},
     'upgrade_config':           {'dest': 'common.upgrade_config', 'default': True, 'type': str, 'metavar': 'value', 'help': 'upgrade edgeai-benchmark config to work with tidlrunner'},
     'session_type_dict':        {'dest': 'common.session_type_dict', 'default': None, 'type': str, 'metavar': 'value', 'help': 'mapping of model extensions to session names'},
     'model_selection':          {'dest': 'common.model_selection', 'default': None, 'type': str, 'metavar': 'value', 'help': 'select a subset of models to run - path of the model is compared using this model_selection regex to select a particular model or not'},
@@ -121,14 +121,15 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | SETTINGS_DEFAULT['surg
     'tensor_bits':              {'dest': 'session.runtime_options.tensor_bits', 'default': 8, 'type': int, 'metavar': 'value', 'help': 'quantization bit-width for tensors (8 or 16)'},
     'accuracy_level':           {'dest': 'session.runtime_options.accuracy_level', 'default': 1, 'type': int, 'metavar': 'value', 'help': 'accuracy level for TIDL offload (0, 1, 2)'},
     'debug_level':              {'dest': 'session.runtime_options.debug_level', 'default': 0, 'type': int, 'metavar': 'value', 'help': 'debug level for compile and infer'},
-    'deny_list_layer_type':     {'dest': 'session.runtime_options.deny_list:layer_type', 'default': '', 'type': str, 'metavar': 'value', 'help': 'comma separated layer types to exclude from TIDL offload'},
-    'deny_list_layer_name':     {'dest': 'session.runtime_options.deny_list:layer_name', 'default': '', 'type': str, 'metavar': 'value', 'help': 'comma separated layer names to exclude from TIDL offload'},
+    'deny_list_layer_type':     {'dest': 'session.runtime_options.deny_list:layer_type', 'default': '', 'type': str, 'nargs':'*', 'metavar': 'value', 'help': 'comma separated layer types to exclude from TIDL offload'},
+    'deny_list_layer_name':     {'dest': 'session.runtime_options.deny_list:layer_name', 'default': '', 'type': str, 'nargs':'*', 'metavar': 'value', 'help': 'comma separated layer names to exclude from TIDL offload'},
+    'deny_list_start_end_dict':     {'dest': 'session.deny_list_start_end_dict', 'default': '', 'type': utils.aststr_to_object, 'metavar': 'value', 'help': 'a dict contaning start and end nodes - it will be used to generate deny_list:layer_name. example: {"/decoder/Concat_3":None, "/aux/Relu_5":None}'},
     'quantization_scale_type':  {'dest': 'session.runtime_options.advanced_options:quantization_scale_type', 'default': None, 'type': int, 'metavar': 'value', 'help': 'type of quantization scale to use'},
     'calibration_frames':       {'dest': 'session.runtime_options.advanced_options:calibration_frames', 'default': 12, 'type': int, 'metavar': 'value', 'help': 'number of frames for quantization calibration'},
     'calibration_iterations':   {'dest': 'session.runtime_options.advanced_options:calibration_iterations', 'default': 12, 'type': int, 'metavar': 'value', 'help': 'number of calibration iterations'},
     'prequantized_model':   {'dest': 'session.runtime_options.advanced_options:prequantized_model', 'default': argparse.SUPPRESS, 'type': utils.int_or_none, 'metavar': 'value', 'help': 'whether prequantized model'},
     'quant_params_file_path':   {'dest': 'session.runtime_options.advanced_options:quant_params_proto_path', 'default': argparse.SUPPRESS, 'type': utils.str_or_none_or_bool, 'metavar': 'value', 'help': 'path to quantization parameters file'},
-    'max_num_subgraph_nodes':   {'dest': 'session.runtime_options.advanced_options:max_num_subgraph_nodes', 'default': 1536, 'type': int, 'metavar': 'value', 'help': 'maximum number of nodes in a subgraph'},    
+    'max_num_subgraph_nodes':   {'dest': 'session.runtime_options.advanced_options:max_num_subgraph_nodes', 'default': 3000, 'type': int, 'metavar': 'value', 'help': 'maximum number of nodes in a subgraph'},    
     'output_feature_16bit_names_list':   {'dest': 'session.runtime_options.advanced_options:output_feature_16bit_names_list', 'default': argparse.SUPPRESS, 'type': str, 'metavar': 'value', 'help': 'list of output layers to keep in 16-bit precision'},
     'add_data_convert_ops':    {'dest': 'session.runtime_options.advanced_options:add_data_convert_ops', 'default': presets.DataConvertOps.DATA_CONVERT_OPS_INPUT_OUTPUT, 'type': int, 'metavar': 'value', 'help': 'data convert in DSP (0: disable, 1: input, 2: output, 3: input and output) - otherwise it will happen in ARM'},        
     # runtime_settings.runtime_options.object_detection
@@ -148,11 +149,18 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | SETTINGS_DEFAULT['surg
     # postprocess
     'postprocess_enable':       {'dest': 'common.postprocess_enable', 'default': False, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable postprocessing after inference'},
     'postprocess_name':         {'dest': 'postprocess.name', 'default': None, 'type': str, 'metavar': 'value', 'help': 'name of the postprocessing pipeline'},
+    # not needed - defined in session fields above. The copy fields will take care of copying to postprocess
+    #'postprocess_detection_threshold':    {'dest':'postprocess.detection_threshold', 'default':None, 'type':utils.float_or_none, 'metavar':'value', 'help': 'detection confidence threshold for postprocessing'},
+    #'postprocess_detection_top_k':        {'dest':'postprocess.detection_top_k', 'default':None, 'type':utils.int_or_none, 'metavar':'value', 'help': 'top-k detections to keep in postprocessing'},
+    #'postprocess_detection_keep_top_k':   {'dest':'postprocess.detection_keep_top_k', 'default':None, 'type':utils.float_or_none, 'metavar':'value', 'help': 'number of detections to keep after NMS in postprocessing'},
 }
 
 COPY_SETTINGS_DEFAULT['compile'] = COPY_SETTINGS_DEFAULT['basic'] | COPY_SETTINGS_DEFAULT['surgery'] | {
     'session.data_layout': 'preprocess.data_layout', 
-    'postprocess.data_layout': 'preprocess.data_layout'     
+    'postprocess.data_layout': 'preprocess.data_layout',
+    'postprocess.detection_threshold': 'session.runtime_options.object_detection:confidence_threshold',
+    # 'postprocess.detection_keep_top_k': 'session.runtime_options.object_detection:keep_top_k',
+    # 'postprocess.detection_top_k': 'session.runtime_options.object_detection:top_k'    
 }
 
 ##########################################################################
@@ -179,18 +187,12 @@ SETTINGS_DEFAULT['accuracy'] = SETTINGS_DEFAULT['compile'] | {
     'postprocess_reshape_list':           {'dest':'postprocess.reshape_list', 'default':None, 'type':utils.str_to_list_of_tuples, 'metavar':'value', 'help': 'list of reshape operations for output tensors'},
     'postprocess_ignore_index':           {'dest':'postprocess.ignore_index', 'default':None, 'type':str, 'metavar':'value', 'help': 'index to ignore during accuracy calculation'},
     'postprocess_logits_bbox_to_bbox_ls': {'dest':'postprocess.logits_bbox_to_bbox_ls', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', 'help': 'convert logits bounding box format to bounding box list'},
-    #'postprocess_detection_threshold':    {'dest':'postprocess.detection_threshold', 'default':None, 'type':utils.float_or_none, 'metavar':'value', 'help': 'detection confidence threshold for postprocessing'},
-    #'postprocess_detection_top_k':        {'dest':'postprocess.detection_top_k', 'default':None, 'type':utils.int_or_none, 'metavar':'value', 'help': 'top-k detections to keep in postprocessing'},
-    #'postprocess_detection_keep_top_k':   {'dest':'postprocess.detection_keep_top_k', 'default':None, 'type':utils.float_or_none, 'metavar':'value', 'help': 'number of detections to keep after NMS in postprocessing'},
     'postprocess_keypoint':               {'dest':'postprocess.keypoint', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', 'help': 'enable keypoint postprocessing'},
-    'postprocess_save_output':            {'dest':'postprocess.save_output', 'default':False, 'type':bool, 'metavar':'value', 'help': 'save postprocessed output to files'},
-    'postprocess_save_output_frames':     {'dest':'postprocess.save_output_frames', 'default':1, 'type':int, 'metavar':'value', 'help': 'number of output frames to save'},
+    'postprocess_save_output':            {'dest':'postprocess.save_output', 'default':True, 'type':bool, 'metavar':'value', 'help': 'save postprocessed output to files'},
+    'postprocess_save_output_frames':     {'dest':'postprocess.save_output_frames', 'default':10, 'type':int, 'metavar':'value', 'help': 'number of output frames to save'},
 }
 
-COPY_SETTINGS_DEFAULT['accuracy'] = COPY_SETTINGS_DEFAULT['compile'] | {
-    'postprocess.detection_threshold': 'session.runtime_options.object_detection:confidence_threshold',
-    # 'postprocess.detection_keep_top_k': 'session.runtime_options.object_detection:keep_top_k',
-    # 'postprocess.detection_top_k': 'session.runtime_options.object_detection:top_k'       
+COPY_SETTINGS_DEFAULT['accuracy'] = COPY_SETTINGS_DEFAULT['compile'] | {   
 }
 
 ##########################################################################

@@ -102,7 +102,8 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
 
         transforms_list = []
         if logits_bbox_to_bbox_ls:
-            transforms_list += [LogitsToLabelScore()]
+            logits_bbox_to_bbox_kwargs = logits_bbox_to_bbox_ls if isinstance(logits_bbox_to_bbox_ls, dict) else {}
+            transforms_list += [LogitsToLabelScore(**logits_bbox_to_bbox_kwargs)]
         #
         transforms_list += [ReshapeList(reshape_list=reshape_list),
                                  ShuffleList(indices=shuffle_indices),
@@ -139,7 +140,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         if object6dpose:
             transforms_list += [BboxObject6dPoseReformat()]
 
-        if save_output:
+        if save_output and save_output_frames:
             if keypoint:
                 transforms_list += [HumanPoseImageSave(save_output_frames)]
             elif object6dpose:

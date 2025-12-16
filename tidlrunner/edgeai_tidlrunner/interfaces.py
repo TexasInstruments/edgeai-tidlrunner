@@ -47,9 +47,9 @@ def get_package_names():
     return ['edgeai_tidlrunner.runner']
 
 
-def get_command_pipelines(package_name=None, **kwargs):
+def get_command_pipelines(_package_name=None, **kwargs):
     command_pipelines = {}
-    package_names = get_package_names() if package_name is None else [package_name]
+    package_names = get_package_names() if _package_name is None else [_package_name]
     for package_module_name in package_names:
         package_module_name_splits = package_module_name.split('.')
         package_import = importlib.import_module(package_module_name_splits[0])
@@ -64,8 +64,8 @@ def get_command_pipelines(package_name=None, **kwargs):
     return command_pipelines
 
 
-def matching_command_name(command_name, package_name=None):
-    command_pipelines = get_command_pipelines(package_name=package_name)
+def matching_command_name(command_name, _package_name=None):
+    command_pipelines = get_command_pipelines(_package_name=_package_name)
     command_names = list(command_pipelines.keys())
     if command_name not in command_pipelines.keys():
         command_name_matches = difflib.get_close_matches(command_name, command_names)
@@ -84,8 +84,8 @@ def matching_command_name(command_name, package_name=None):
 
 
 def get_target_module(command_name, **kwargs):
-    package_name = kwargs.get('common.package_name', None)
-    command_name = matching_command_name(command_name, package_name=package_name)
+    _package_name = kwargs.get('common._package_name', None)
+    command_name = matching_command_name(command_name, _package_name=_package_name)
     command_name_split = command_name.split('.')
     assert len(command_name_split) == 4, f'ERROR: invalid command_name: {command_name}'
     package_import = importlib.import_module(command_name_split[0])
@@ -115,16 +115,18 @@ def _run_command(task_index, command_name, pipeline_name, command_kwargs, captur
 
 def _model_selection(model_selection, *args):
     if model_selection is None:
-        is_selected = True
-    else:
-        model_selection = utils.formatted_nargs(model_selection)
-        is_selected = False
-        for m in model_selection:
-            for arg in args:
-                if isinstance(arg, str):
-                    is_selected = is_selected or (re.search(m, arg) is not None)
-                #
+        return True
+    
+    model_selection = utils.formatted_nargs(model_selection)
+    is_selected = False
+    for m in model_selection:
+        for arg in args:
+            if isinstance(arg, str):
+                selected_parts = all([re.search(m_part, arg) is not None for m_part in m.split('+')])
+            else:
+                selected_parts = True
             #
+            is_selected = is_selected or selected_parts
         #
     #
     return is_selected
@@ -140,6 +142,7 @@ def _model_shortlist(model_shortlist, model_shortlist_for_model):
 
 
 def _get_configs(config_path, **kwargs):
+    is_aggregate_config_file = False
     if isinstance(config_path, str):
         if config_path.endswith('.yaml'):
             with open(config_path) as fp:
@@ -148,9 +151,16 @@ def _get_configs(config_path, **kwargs):
             kwargs_config.pop('command', None)
             if 'configs' in kwargs_config:
                 configs = kwargs_config.get('configs')
+                is_aggregate_config_file = True
             else:
                 model_id = kwargs_config.get('session',{}).get('model_id', None) or kwargs.get('session.model_id', None)
                 configs = {model_id:config_path}
+            #
+            if 'session.target_device' in kwargs_config:
+                assert kwargs['target_device'] == kwargs_config['session.target_device'], f"WARNING: config file {config_path} contains session.target_device: {kwargs_config['session.target_device']} - not recommended. To override the default, provide through commandline argument."
+            #
+            if 'session.target_machine' in kwargs_config:
+                assert kwargs['target_machine'] != kwargs_config['session.target_machine'], f"WARNING: config file {config_path} contains session.target_machine: {kwargs_config['session.target_machine']} - not recommended. To override the default, provide through commandline argument."
             #
         elif os.path.exists(config_path) and os.path.isdir(config_path):
             print(f"INFO: config_path is a configs module from edgeai-benchmark: {config_path}")
@@ -221,7 +231,7 @@ def _get_configs(config_path, **kwargs):
     else:
         raise RuntimeError(f'ERROR: invalid config_path: {config_path}')
     #
-    return configs
+    return configs, is_aggregate_config_file
 
 
 def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs):
@@ -246,7 +256,7 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
         model_path = kwargs_combined.get('session.model_path', None)
         pipeline_type = kwargs_cmd.get('common.pipeline_type', None)
         if config_path:
-            configs = _get_configs(config_path, **kwargs_combined)
+            configs, is_aggregate_config_file = _get_configs(config_path, **kwargs_combined)
         else:
             if model_id is None:
                 print('WARNING: model_id is not given, generating randomly')
@@ -260,7 +270,7 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
             pipeline_config = config_entry.pop('common.pipeline_config', None) if isinstance(config_entry, dict) else None
 
             if isinstance(config_entry, str):
-                if not (config_entry.startswith('/') or config_entry.startswith('.')):
+                if is_aggregate_config_file and not (config_entry.startswith('/') or config_entry.startswith('.')):
                     print('INFO: config_entry is not an absolute path, resolving relative to config_path')
                     config_base_path = os.path.dirname(config_path)
                     config_entry = os.path.join(config_base_path, config_entry)
@@ -359,7 +369,14 @@ def _run(model_command_dict):
             command_key, pipeline_name, command_kwargs = model_command_entry
             # while running multiple configs, it is better to use parallel processing
             parallel_processes = command_kwargs['common.parallel_processes']
-            capture_log = bases.settings_base.CaptureLogModes.CAPTURE_LOG_MODE_ON if parallel_processes and multiple_models else command_kwargs['common.capture_log']
+            
+            if command_kwargs['common.capture_log'] == bases.settings_base.CaptureLogModes.CAPTURE_LOG_MODE_ADAPTIVE:
+                capture_log = bases.settings_base.CaptureLogModes.CAPTURE_LOG_MODE_ON \
+                    if parallel_processes and multiple_models else bases.settings_base.CaptureLogModes.CAPTURE_LOG_MODE_OFF #CAPTURE_LOG_MODE_ADAPTIVE
+            else:
+                capture_log = command_kwargs['common.capture_log']
+            #
+
             task_func = functools.partial(_run_command, task_index, command_key, pipeline_name, command_kwargs, capture_log)
             model_key = model_key or 'model'
             proc_name = f'{model_key}:{command_key}:{pipeline_name}'

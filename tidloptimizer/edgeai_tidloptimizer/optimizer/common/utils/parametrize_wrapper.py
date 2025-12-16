@@ -44,15 +44,15 @@ class ParametrizationBaseModule(torch.nn.Module):
 def _register_parametrizations(module, parametrization_class=None, param_names=None):
     import torch.nn.utils.parametrize as parametrize
     try: 
-        from torch.ao.quantization.pt2e import ObserverBase as TorchObserverBase
-        from torch.ao.quantization.pt2e import FakeQuantizeBase as TorchFakeQuantizeBase
+        from torch.ao.quantization import ObserverBase as TorchObserverBase
+        from torch.ao.quantization import FakeQuantizeBase as TorchFakeQuantizeBase
     except:
         TorchObserverBase = type(None)
         TorchFakeQuantizeBase = type(None)
     #
     try: 
-        from torchao.quantization.pt2e import ObserverBase as TorchaoObserverBase
-        from torchao.quantization.pt2e import FakeQuantizeBase as TorchaoFakeQuantizeBase
+        from torchao.quantization import ObserverBase as TorchaoObserverBase
+        from torchao.quantization import FakeQuantizeBase as TorchaoFakeQuantizeBase
     except:
         TorchaoObserverBase = type(None)
         TorchaoFakeQuantizeBase = type(None)
@@ -62,11 +62,13 @@ def _register_parametrizations(module, parametrization_class=None, param_names=N
     #
     if not isinstance(module, (ParametrizationBaseModule, TorchObserverBase, TorchFakeQuantizeBase, TorchaoObserverBase, TorchaoFakeQuantizeBase)):
         for name_p, param in list(module.named_parameters(recurse=False)):
-            if param is not None and (param_names is None or name_p in param_names):
+            name_p = name_p.split('_')[-1] # in pt2e exported models, the parameter names are like 'module_module_weight'
+            if param is not None and param.requires_grad and (param_names is None  or name_p in param_names):
                 parametrize.register_parametrization(module, name_p, parametrization_class(param))
             #
         #
         for name_p, param in list(module.named_buffers(recurse=False)):
+            name_p = name_p.split('_')[-1] # in pt2e exported models, the parameter names are like 'module_module_weight'
             if param is not None and (param_names is None or name_p in param_names):
                 parametrize.register_parametrization(module, name_p, parametrization_class(param))
             #
@@ -99,7 +101,7 @@ class WeightClipDeltaParametrization(ParametrizationBaseModule):
     '''
     Clip the weights of a layer within a certain delta range.
     '''
-    def __init__(self, orig_value, delta_factor = 0.01):
+    def __init__(self, orig_value, delta_factor = 0.02):
         super().__init__()
         self.delta_factor = delta_factor
         self.with_parametrization = (orig_value.dtype in [torch.float16, torch.bfloat16, torch.float32, torch.float64]) and \

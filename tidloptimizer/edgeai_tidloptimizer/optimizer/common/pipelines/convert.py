@@ -37,8 +37,8 @@ import numpy as np
 from typing import Tuple, Any
 import onnx
 
-from edgeai_tidlrunner.runner.common import utils
-from edgeai_tidlrunner.runner.common import bases
+import torch
+from typing import List, Optional
 
 from edgeai_tidlrunner.runner.common.settings import constants
 from edgeai_tidlrunner.runner.common.pipelines.common_ import common_base
@@ -86,12 +86,15 @@ class ConvertModel(common_base.CommonPipelineBase):
 
         config_path = os.path.dirname(common_kwargs['config_path']) if common_kwargs['config_path'] else None
         self.download_file(self.model_source, model_folder=self.model_folder, source_dir=config_path)
-
-        output_model = self._run_func(input_model_path, output_model_path, **convert_kwargs)
+        try:
+            output_model = self._run_func(input_model_path, output_model_path, **convert_kwargs)
+        except Exception as e:
+            print(f'ERROR: convert failed for: {input_model_path} \nERROR: {e}')
+            raise e
         return output_model
 
     @classmethod
-    def _run_func(cls, input_model_path, output_model_path=None, example_inputs=None, opset_version=constants.ONNX_OPSET_VERSION_DEFAULT, dynamo=True, **convert_kwargs):
+    def _run_func(cls, input_model_path, output_model_path=None, example_inputs=None, opset_version=constants.ONNX_OPSET_VERSION_DEFAULT, dynamo=True, batch_size=1, **convert_kwargs):
         import torch
         if isinstance(input_model_path, str) and input_model_path.endswith('.onnx'):
             output_model = cls._onnx2torchfile(input_model_path, output_model_path, example_inputs, **convert_kwargs)
@@ -100,17 +103,38 @@ class ConvertModel(common_base.CommonPipelineBase):
         elif isinstance(input_model_path, str) and input_model_path.endswith('.pt2'):
             output_model = cls._torch2onnxfile(input_model_path, output_model_path, example_inputs, opset_version=opset_version, dynamo=dynamo, **convert_kwargs)
         elif isinstance(input_model_path, torch.nn.Module) and output_model_path.endswith('.onnx'):
+            input_model_path = cls._change_batch_size(input_model_path, example_inputs, batch_size)
             output_model = cls._torch2onnxfile(input_model_path, output_model_path, example_inputs, opset_version=opset_version, dynamo=dynamo, **convert_kwargs)
         elif isinstance(input_model_path, torch.nn.Module) and output_model_path.endswith('.pt'):
+            input_model_path = cls._change_batch_size(input_model_path, example_inputs, batch_size)
             exported_model = torch.jit.export(input_model_path, example_inputs)
             torch.jit.save(exported_model, output_model_path)
         elif isinstance(input_model_path, torch.nn.Module) and output_model_path.endswith('.pt2'):
+            input_model_path = cls._change_batch_size(input_model_path, example_inputs, batch_size)
             exported_program = torch.export.export(input_model_path, example_inputs)
             torch.export.save(exported_program, output_model_path)
         else:
             raise ValueError(f'ERROR: unsupported model format: {input_model_path}')
         #
         return output_model_path
+
+    @classmethod
+    def _change_batch_size(cls, torch_model, example_inputs, batch_size):
+        assert isinstance(example_inputs, tuple), f"example_inputs must he a tuple. got {type(example_inputs)}"
+        example_inputs_b1 = []
+        for inp in example_inputs:
+            if batch_size < inp.shape[0]:
+                inp = inp[:1]
+            elif batch_size > inp.shape[0]:
+                new_shape = list(copy.deepcopy(inp.shape))
+                new_shape[0] = batch_size
+                inp = torch.expand_copy(inp[:1], new_shape)
+            #
+            example_inputs_b1.append(inp)
+        #
+        example_inputs_b1 = tuple(example_inputs_b1)
+        exported_model = torch.export.export(torch_model, example_inputs_b1).module()
+        return exported_model
 
     @classmethod
     def _get_torch_model(cls, input_model_path, output_model_path=None, example_inputs=None, opset_version=constants.ONNX_OPSET_VERSION_DEFAULT, dynamo=True, training=False, **convert_kwargs):
@@ -208,7 +232,7 @@ class ConvertModel(common_base.CommonPipelineBase):
         #
         if dynamo:
             print('INFO: dynamo based onnx export ...')
-            custom_translation_table = cls._register_quantized_symbolics(opset_version=opset_version)
+            custom_translation_table = cls._get_custom_onnx_translation_table(opset_version=opset_version)
             artifacts_dir = os.path.dirname(onnx_model_path)
             onnx_program = torch.onnx.export(torch_model, example_inputs, opset_version=opset_version, dynamo=True, report=True, 
                                              training=torch.onnx.TrainingMode.PRESERVE, artifacts_dir=artifacts_dir, custom_translation_table=custom_translation_table)
@@ -236,69 +260,7 @@ class ConvertModel(common_base.CommonPipelineBase):
         #
 
     @classmethod
-    def _register_quantized_symbolics(cls, opset_version):
-        import torch
-        from typing import List
-        # import onnxscript.onnx_opset as op
-        from onnxscript import ir
-        from onnxscript.onnx_opset import opset18 as op
-        from onnxscript.onnx_types import TensorType, FLOAT
-        from onnxscript.function_libs.torch_lib.tensor_typing import TTensor, FLOAT
-        from onnxscript.function_libs.torch_lib.ops import common
-        from collections.abc import Sequence
-        
-        def custom_dequantize_per_tensor(
-            input: TensorType,
-            scale: float,
-            zero_point: float,
-            quant_min: int,
-            quant_max: int,
-            dtype: int,
-            out_dtype: int = -1,
-        ) -> TensorType:
-            # TODO: Use dtype when we use opset 21
-            zero_point = float(zero_point)
-            dequantized = op.DequantizeLinear(input, scale, zero_point)
-            if out_dtype in (-1, None):
-                # out_dtype can be None as well
-                return dequantized
-            assert out_dtype > 0, f"out_dtype must be -1 or > 0 not {out_dtype}"
-            return op.Cast(dequantized, to=out_dtype)
-
-        def custom_dequantize_per_channel(
-            input: TTensor,
-            scale: List[float],
-            zero_point: List[float],
-            axis: int,
-            quant_min: int,
-            quant_max: int,
-            dtype: int,
-            out_dtype: int = -1,
-        ) -> TTensor:
-            # TODO: Use dtype when we use opset 21
-            # scale = op.Constant(value_floats=scale)
-            # zero_point = op.Constant(value_ints=zero_point)
-            dequantized = op.DequantizeLinear(input, scale, zero_point, axis=axis)
-            if out_dtype in (-1, None):
-                # out_dtype can be None as well
-                return dequantized
-            assert out_dtype > 0, f"out_dtype must be -1 or > 0 not {out_dtype}"
-            return op.Cast(dequantized, to=out_dtype)
-
-        def custom_adaptive_avg_pool2d(input: TTensor, output_size: Sequence[int]):
-            if len(output_size) >= 2 and output_size[-1] == 1 and output_size[-2] == 1:
-                avg_pool = op.GlobalAveragePool(input)
-                return avg_pool
-            else:
-                kernel_shape= (input.shape[-1] // output_size[-1], input.shape[-2] // output_size[-2])
-                strides= (input.shape[-1] // output_size[-1], input.shape[-2] // output_size[-2])
-                avg_pool = op.AveragePool(input, kernel_shape=kernel_shape, strides=strides)
-                return avg_pool
-    
-        custom_translation_table = {
-            torch.ops.aten.adaptive_avg_pool2d.default: custom_adaptive_avg_pool2d,
-            torch.ops.quantized_decomposed.dequantize_per_tensor.default: custom_dequantize_per_tensor,
-            torch.ops.quantized_decomposed.dequantize_per_channel.default: custom_dequantize_per_channel
-        }
-
+    def _get_custom_onnx_translation_table(cls, opset_version):
+        from ..utils.onnxscript_utils import get_custom_onnx_translation_table
+        custom_translation_table = get_custom_onnx_translation_table(opset_version=opset_version)
         return custom_translation_table

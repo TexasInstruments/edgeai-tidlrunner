@@ -27,16 +27,19 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+from ....rtwrapper.core import presets
+
 
 class CaptureLogModes:
     CAPTURE_LOG_MODE_OFF = False  # only to screen
     CAPTURE_LOG_MODE_ON = True    # only to file
     CAPTURE_LOG_MODE_TEE = 'tee'  # to screen and to file
+    CAPTURE_LOG_MODE_ADAPTIVE = 'adaptive'  # True if there are multiple models in parallel, otherwise tee
 
 
 class SettingsBaseDefaults:
     NUM_PARALLEL_PROCESSES = 8
-    CAPTURE_LOG_MODE = CaptureLogModes.CAPTURE_LOG_MODE_OFF
+    CAPTURE_LOG_MODE = CaptureLogModes.CAPTURE_LOG_MODE_ADAPTIVE
     CAPTURE_LOG_FILE = 'run.log'
 
 
@@ -47,7 +50,9 @@ SETTING_PIPELINE_RUNNER_ARGS_DICT = {
     'capture_log':              {'dest': 'common.capture_log', 'default': SettingsBaseDefaults.CAPTURE_LOG_MODE, 'type': str, 'metavar': 'value'},
     'parallel_processes':       {'dest': 'common.parallel_processes', 'default': SettingsBaseDefaults.NUM_PARALLEL_PROCESSES, 'type': int, 'metavar': 'value'},
     'parallel_devices':         {'dest': 'common.parallel_devices', 'default': None, 'type': int, 'metavar': 'value', 'help': 'number of parallel gpu devices to use for compilation (used only if gpu based tidl-tools is installed)'},
-    'target_machine':           {'dest': 'session.target_machine', 'default': 'pc', 'type': str, 'metavar': 'value', 'help': 'target machine for running the inference (pc, evm)'},
-    'package_name':           {'dest': 'common.package_name', 'default': None, 'type': str, 'metavar': 'value', 'help': 'internal argument to select package_name (runner, optimizer etc) - no need to specify explicitly'},
+    'target_machine':           {'dest': 'session.target_machine', 'default': presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION, 'type': str, 'metavar': 'value', 'help': 'target machine for running the inference (pc, evm)'},
+    'target_device':            {'dest': 'session.target_device', 'default': presets.TargetDeviceType.TARGET_DEVICE_AM68A, 'type': str, 'metavar': 'value', 'help': 'target device for inference (AM68A, AM69A, etc.)'},
+    '_package_name':             {'dest': 'common._package_name', 'default': None, 'type': str, 'metavar': 'value', 'help': 'internal argument to select _package_name (runner, optimizer etc) - no need to specify explicitly'},
+    '_package_short_name':       {'dest': 'common._package_short_name', 'default': None, 'type': str, 'metavar': 'value', 'help': 'internal argument to select _package_short_name (runner, optimizer etc) - no need to specify explicitly'},
 }
 

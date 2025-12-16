@@ -92,6 +92,11 @@ def softmax(tensor,axis=-1):
     ax_sum = np.expand_dims(np.sum(tensor, axis = axis), axis)
     return tensor / ax_sum
 
+def sigmoid(tensor):
+    out = 1.0 / (1.0 +  np.exp(-tensor))
+    return out
+
+
 ##############################################################################
 class SqueezeAxis():
     def __init__(self, axis=0):
@@ -499,17 +504,19 @@ class DetectionFilter():
 
 
 class LogitsToLabelScore():
-    def __init__(self, scores_index=0, bbox_index=1, background_class_id=-1):
+    def __init__(self, scores_index=0, bbox_index=1, background_class_id=None, score_fn='softmax'):
         self.scores_index = scores_index
         self.bbox_index = bbox_index
         self.background_class_id = background_class_id
+        self.score_fn = softmax if score_fn == 'softmax' else (sigmoid if score_fn == 'sigmoid' else None)
 
     def __call__(self, tensor_list, info_dict):
         tensor_list_softmax=[]
         if self.bbox_index is not None:
             tensor_list_softmax.append(tensor_list[self.bbox_index].reshape(-1,4))
         #
-        softmax_score = softmax(tensor_list[self.scores_index])
+        score_tensor = tensor_list[self.scores_index]
+        softmax_score = self.score_fn(score_tensor) if self.score_fn else score_tensor
         if self.background_class_id == -1:  
             softmax_score = softmax_score[...,:self.background_class_id]
         elif self.background_class_id is not None:
@@ -519,8 +526,6 @@ class LogitsToLabelScore():
         tensor_list_softmax.append(np.max(softmax_score,axis=-1).reshape(-1,1))
         return tensor_list_softmax, info_dict  
     
-
-
 
 class DetectionImageSave():
     def __init__(self, num_output_frames=None):

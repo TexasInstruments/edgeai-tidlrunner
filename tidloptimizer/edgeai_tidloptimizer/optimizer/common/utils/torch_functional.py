@@ -27,17 +27,14 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from .config_utils import *
-from .download_utils import *
-from .parse_utils import *
-from .file_utils import *
-from .metric_utils import *
-from .string_utils import *
-from .process_with_queue import *
-from .parallel_runner import *
-from .sequential_runner import *
-from .artifacts_id import *
-from .import_utils import *
-from .collections_utils import *
-from .print_utils import *
-from .onnx_utils import *
+import random
+import torch
+from torch.nn import functional as F
+
+
+def softargmax1d(input, dim=-1):
+    n = input.shape[dim]
+    series = torch.tensor(random.randint(0, n-1), device=input.device)
+    prob = F.softmax(input, dim=dim)
+    out = torch.sum(series * prob, dim=dim)
+    return out

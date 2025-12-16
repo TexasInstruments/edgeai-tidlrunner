@@ -52,6 +52,7 @@ class DistillModel(compile.CompileModel):
         super().__init__(**kwargs)
         self.calibration_data_cache = {}
         self.parametrization_types = parametrization_types
+        self.loss_type = ('sigmoid', None) #None
 
     def info():
         print(f'INFO: Model distill - {__file__}')
@@ -72,6 +73,7 @@ class DistillModel(compile.CompileModel):
         runtime_options = session_kwargs['runtime_options']
         distill_kwargs = common_kwargs.get('distill', {})
         torch_device = common_kwargs['torch_device']
+        calibration_batch_size = runtime_options['advanced_options:calibration_batch_size']
         
         self.input_normalizer = common_kwargs.get('input_normalizer', None)
         if not self.input_normalizer:
@@ -79,9 +81,9 @@ class DistillModel(compile.CompileModel):
         #
         self.example_inputs = common_kwargs.get('example_inputs', None)
         if not self.example_inputs:
-            self.example_inputs, info_dict = self._get_input_from_dataloader(0)
+            self.example_inputs, info_dict = self._get_input_from_dataloader(0, batch_size=calibration_batch_size)
         #
-        self.example_inputs= tuple([tensor.to(torch_device) for tensor in self.example_inputs])
+        self.example_inputs_on_device = tuple([tensor.to(torch_device) for tensor in self.example_inputs])
 
     def _run(self):
         # make deterministic random for distill
@@ -103,7 +105,8 @@ class DistillModel(compile.CompileModel):
 
         ###################################################################3
         # prepare model
-        from ..utils.distill_wrapper import DistillWrapperBaseModule, DistillWrapperModule
+        # from ..utils.distiller_wrapper import DistillerBaseModule as DistillerModule
+        from ..utils.distiller_wrapper import DistillerModule
 
         teacher_model_path = common_kwargs.get('teacher_model_path', None)
         student_model_path = common_kwargs.get('output_model_path', None)
@@ -112,29 +115,25 @@ class DistillModel(compile.CompileModel):
 
         teacher_model = teacher_model_path
         if isinstance(teacher_model_path, str):
-            teacher_model = convert.ConvertModel._get_torch_model(teacher_model_path)
+            teacher_model = convert.ConvertModel._get_torch_model(teacher_model_path, example_inputs=self.example_inputs)
             teacher_model.to(torch_device)
         #
 
         student_model = student_model_path
         if isinstance(student_model_path, str):
-            student_model = convert.ConvertModel._get_torch_model(student_model_path)
+            student_model = convert.ConvertModel._get_torch_model(student_model_path, example_inputs=self.example_inputs)
             student_model.to(torch_device)
         #
 
-        # teacher_model.eval()
-        # student_model.eval() #.train()
-
         calibration_iterations = runtime_options['advanced_options:calibration_iterations']
         calibration_iterations = min(calibration_iterations, len(self.dataloader)) if calibration_iterations else len(self.dataloader)
-        self.distill_model = DistillWrapperBaseModule(student_model, teacher_model, epochs=calibration_iterations, **distill_kwargs)
-        ###################################################################3
+        self.distiller_model = DistillerModule(student_model, teacher_model, epochs=calibration_iterations, loss_type=self.loss_type, **distill_kwargs)
 
         # distill loop here
         tqdm_epoch = tqdm.tqdm(range(calibration_iterations), desc='DistillEpoch', leave=False)
         for calib_index in tqdm_epoch:
             # print(f'INFO: running model quantize iteration: {calib_index}')
-            self.distill_model.train()
+            self.distiller_model.train()
 
             tqdm_batch = tqdm.tqdm(range(calibration_frames), desc='DistillBatch', leave=False)
             for input_index in tqdm_batch:
@@ -144,30 +143,27 @@ class DistillModel(compile.CompileModel):
                 
                 input_data = tuple([tensor.to(torch_device) for tensor in input_data])
                 
-                distill_outputs = self.distill_model(*input_data)
-                distil_metrics = self.distill_model.step_iter(*distill_outputs)
+                distill_outputs = self.distiller_model(*input_data)
+                distil_metrics = self.distiller_model.step_iter(*distill_outputs)
                 
                 tqdm_batch.set_postfix(refresh=True, epoch=calib_index, batch=input_index, **distil_metrics)
             #
 
-            self.distill_model.eval()
+            self.distiller_model.eval()
 
             tqdm_epoch.set_postfix(refresh=True, epoch=calib_index, num_batches=calibration_frames, **distil_metrics)
-            self.distill_model.step_epoch()
+            self.distiller_model.step_epoch()
         #
 
-        self.distill_model.cleanup()
-
-        # teacher_model.eval()
-        # student_model.eval()
+        self.distiller_model.cleanup()
 
         if isinstance(student_model_path, str):
-            convert.ConvertModel._run_func(self.distill_model.student_model, student_model_path, self.example_inputs, onnx_ir_version=onnx_ir_version)
+            convert.ConvertModel._run_func(self.distiller_model.student_model, student_model_path, self.example_inputs, onnx_ir_version=onnx_ir_version)
             common_kwargs['output_model_path'] = student_model_path
         else:
-            common_kwargs['output_model_path'] = self.distill_model.student_model
+            common_kwargs['output_model_path'] = self.distiller_model.student_model
         #
-        return self.distill_model.student_model
+        return self.distiller_model.student_model
     
     def _get_input_from_dataloader(self, index, calibration_frames=None, batch_size=1, random_shuffle=False, use_cache=False):
         import torch
