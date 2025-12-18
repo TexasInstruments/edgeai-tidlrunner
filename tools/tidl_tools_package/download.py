@@ -69,8 +69,13 @@ def get_target_device(soc: str) -> str:
 
 def _create_symlink(src, dest):
     try:
-        os.remove(dest)
-    except OSError:
+        os.unlink(dest)
+    except:
+        pass
+    #
+    try:
+        shutil.rmtree(dest, ignore_errors=True)
+    except:
         pass
     #
     try:
