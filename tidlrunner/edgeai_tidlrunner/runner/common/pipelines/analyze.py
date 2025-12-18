@@ -32,7 +32,6 @@ import sys
 import shutil
 import copy
 import numpy as np
-import onnx
 import glob
 import math
 import xlsxwriter
@@ -64,7 +63,7 @@ class CompileAnalyzeNoTIDL(compile.CompileModel):
         super().__init__(**kargs_copy)
 
     def _prepare_model(self):
-
+        import onnx
         super()._prepare_model()
         if self.kwargs['common.analyze_level'] >= 2:
             # Load the original ONNX model and add intermediate outputs

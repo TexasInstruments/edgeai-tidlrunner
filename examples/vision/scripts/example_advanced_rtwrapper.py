@@ -33,7 +33,6 @@ import shutil
 import PIL
 import PIL.Image
 import numpy as np
-import onnx
 import glob
 
 import edgeai_tidlrunner
@@ -160,13 +159,15 @@ def main(args):
 
     model_folder = os.path.join(run_dir, 'model')
     model_path = os.path.join(model_folder, os.path.basename(args.model_path))
-    os.makedirs(model_folder, exist_ok=True)
-    shutil.copy2(args.model_path, model_path)
-    onnx.shape_inference.infer_shapes_path(model_path, model_path)
-    print(f'INFO: model_path - {model_path}')
-
     artifacts_folder = os.path.join(run_dir, 'artifacts')
-    os.makedirs(artifacts_folder, exist_ok=True)
+    if args.command == "compile":
+        os.makedirs(model_folder, exist_ok=True)
+        shutil.copy2(args.model_path, model_path)
+        import onnx
+        onnx.shape_inference.infer_shapes_path(model_path, model_path)
+        os.makedirs(artifacts_folder, exist_ok=True)
+    #
+    print(f'INFO: model_path - {model_path}')
     print(f'INFO: artifacts_folder - {artifacts_folder}')
 
     #########################################################################

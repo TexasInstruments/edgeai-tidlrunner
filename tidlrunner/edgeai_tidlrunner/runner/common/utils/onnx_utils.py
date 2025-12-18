@@ -38,7 +38,6 @@ import os
 import sys
 import logging
 from typing import List, Any
-import onnx
 
 
 def update_dim(tensor=None, new_dim_value=None, dim_idx=None):
@@ -105,6 +104,7 @@ def _get_all_child_nodes(node, end_nodes, searched_nodes, searched_node_names):
 
 def get_all_node_names(model_path, start_end_layers={}, verbose=False, graph=None, **kwargs):
     import onnx_graphsurgeon as gs
+    import onnx
     """
     Main function
     ---------------------------------------------------------

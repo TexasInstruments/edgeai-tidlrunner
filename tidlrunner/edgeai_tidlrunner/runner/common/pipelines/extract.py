@@ -31,7 +31,6 @@ import os
 import sys
 import shutil
 import warnings
-import onnx.shape_inference
 import os
 from ...common import utils
 from ...common import bases
@@ -39,9 +38,6 @@ from ..settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
 from .common_.common_base import CommonPipelineBase
 
 #################################################################
-import onnx
-import os
-
 
 try:
     import onnx_graphsurgeon as gs
@@ -92,6 +88,8 @@ class ExtractNodes(CommonPipelineBase):
 
     def _run(self):
         print(f'INFO: starting extract model')
+        import onnx
+        import onnx.shape_inference
         onnx.shape_inference.infer_shapes_path(self.model_path)
         output_path = os.path.join(self.run_dir, 'extract')
         os.makedirs(output_path, exist_ok=True)
@@ -117,6 +115,7 @@ class ExtractNodes(CommonPipelineBase):
         return [node for node in graph.nodes if node.name.startswith(prefix)]
 
     def _export_submodule_start_with(self, onnx_path:str,prefix:str,export_path:str=None):
+        import onnx
         '''
         onnx export the submodule of the onnx model to a new onnx file
         ( here submodule means the nodes whose name starts with the prefix)
@@ -172,6 +171,7 @@ class ExtractNodes(CommonPipelineBase):
 
 
     def _export_all_top_level_submodules(self, onnx_path:str, output_path:str=None):
+        import onnx
         '''
         onnx exports all top level submodules of the onnx model to new onnx files
         it discards stand alone nodes  which are not part of any submodule
@@ -196,6 +196,7 @@ class ExtractNodes(CommonPipelineBase):
 
 
     def _export_unique_submodules(self, onnx_path:str, output_path:str, max_depth = 3):
+        import onnx
         model = onnx.load(onnx_path)
         graph = gs.import_onnx(model)
         directory = output_path
@@ -288,6 +289,7 @@ class ExtractNodes(CommonPipelineBase):
                 stack.extend(reversed(node.children))
 
     def extract_from_start_to_end(self, model_path:str, output_path:str, start_nodes:str=None, end_nodes:str=None):
+        import onnx
         _, file = os.path.split(model_path)
         model = onnx.load(model_path)
         graph = gs.import_onnx(model)
@@ -324,6 +326,7 @@ class ExtractNodes(CommonPipelineBase):
         onnx.save(final_model, os.path.join(output_path,'extracted_'+file))
     
     def extract_all_opearators(self, model_path:str, output_path:str):
+        import onnx
         model = onnx.load(model_path)
         graph = gs.import_onnx(model)
         unique_operators = sorted(set([node.op for node in graph.nodes]))
