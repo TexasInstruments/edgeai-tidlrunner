@@ -47,7 +47,6 @@ try:
     import onnx_graphsurgeon as gs
 except ImportError:
     gs = None
-    warnings.warn("onnx-graphsurgeon is not installed. Please install it via pip")
 
 
 class ONNXNode:
@@ -69,6 +68,9 @@ class ExtractNodes(CommonPipelineBase):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        if gs is None:
+            warnings.warn("onnx-graphsurgeon is not installed. Please install it via pip")
+        #
 
     def _prepare(self):
         super()._prepare()
