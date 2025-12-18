@@ -58,12 +58,37 @@ TARGET_DEVICE_MAP = {
 }
 
 
+###############################################################################
 def get_target_device(soc: str) -> str:
     soc = soc.strip().upper()
     for key,val in TARGET_DEVICE_MAP.items():
         if soc in val:
             return key.strip().upper()
     return ''
+
+
+def _create_symlink(src, dest):
+    try:
+        os.remove(dest)
+    except OSError:
+        pass
+    #
+    try:
+        os.symlink(src, dest)
+    except:
+        print(f'WARNING: symlink {src} ->  {dest} - failed')
+
+
+def _make_target_device_symlinks(tidl_tools_package_folder, target_device_map):
+    cur_dir = os.getcwd()
+    os.chdir(tidl_tools_package_folder)
+    for k, vlist in target_device_map.items():
+        for v in vlist:
+            if k != v:
+                if os.path.exists(k):
+                    _create_symlink(k, v)
+
+    os.chdir(cur_dir)
 
 
 ###############################################################################
@@ -321,30 +346,6 @@ def download_cgt_c7x(tidl_tools_package_path, c7x_compiler_version):
         # Run the installer
         subprocess.run([installer_path, '--mode', 'unattended', '--prefix', tidl_tools_package_path], check=True)
     #
-
-
-def _create_symlink(src, dest):
-    try:
-        os.remove(dest)
-    except OSError:
-        pass
-    #
-    try:
-        os.symlink(src, dest)
-    except:
-        print(f'WARNING: symlink {src} ->  {dest} - failed')
-
-
-def _make_target_device_symlinks(tidl_tools_package_folder, target_device_map):
-    cur_dir = os.getcwd()
-    os.chdir(tidl_tools_package_folder)
-    for k, vlist in target_device_map.items():
-        for v in vlist:
-            if k != v:
-                if os.path.exists(k):
-                    _create_symlink(k, v)
-
-    os.chdir(cur_dir)
 
 
 def download_tidl_tools(download_url, download_path, **tidl_version_dict):

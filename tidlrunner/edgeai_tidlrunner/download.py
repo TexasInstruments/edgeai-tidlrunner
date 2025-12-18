@@ -47,7 +47,7 @@ def install_package(*install_args):
         print(f"INFO: Installing {_package_name}")
         install_options = [str(arg) for arg in install_args]
         install_cmd_list = ["python3", "-m", "pip", "install", "--no-input"] + install_options
-        print("INFO: installing {_package_name} using:", " ".join(install_cmd_list))
+        print(f"INFO: installing {_package_name} using:", " ".join(install_cmd_list))
         result = subprocess.run(install_cmd_list, check=True, capture_output=True, text=True)
         
         print(f"SUCCESS: {_package_name} installed successfully")
