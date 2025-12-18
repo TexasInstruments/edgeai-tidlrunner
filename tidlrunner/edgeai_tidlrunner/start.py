@@ -141,8 +141,10 @@ def start():
 
 def start_with_proper_environment(**kwargs):
     print(f'INFO: running - {sys.argv}')
-    if os.environ.get('TIDL_TOOLS_PATH', None) is None or \
-       os.environ.get('LD_LIBRARY_PATH', None) is None:
+    target_machine = kwargs['target_machine']
+    is_tidl_tools_path_defined = (os.environ.get('TIDL_TOOLS_PATH', None) is not None and os.environ.get('LD_LIBRARY_PATH', None) is not None)
+
+    if target_machine == rtwrapper.core.presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION and (not is_tidl_tools_path_defined):
         print("INFO: TIDL_TOOLS_PATH or LD_LIBRARY_PATH is not set, restarting with proper environment...")
         command_args, rest_args = StartRunner.get_arg_parser().parse_known_args()  
         command_kwargs = vars(command_args)
@@ -159,6 +161,8 @@ def start_with_proper_environment(**kwargs):
         #
         rtwrapper.restart_with_proper_environment(**start_kwargs)
     else:
+        # TIDL_TOOLS_PATH is not needed in EVM, but just set it to empty to pass through checks for it
+        os.environ['TIDL_TOOLS_PATH'] = os.environ.get('TIDL_TOOLS_PATH', '')
         StartRunner.main(**kwargs)
 
 

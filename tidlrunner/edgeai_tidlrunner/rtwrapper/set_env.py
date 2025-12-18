@@ -33,7 +33,9 @@ import os
 import sys
 import subprocess
 import glob
+from colorama import Fore, Back, Style
 
+from .core import presets
 
 def set_env(**kwargs):
   import tidl_tools_package
@@ -165,10 +167,11 @@ def restart_with_proper_environment(**kwargs):
 
     # Prepare the new environment
     new_env = os.environ.copy()
-    
+    target_machine = kwargs.get('target_machine')
     _package_short_name = kwargs.get('_package_short_name')
-    if _package_short_name not in os.path.abspath(sys.executable):
-        print(f'WARNING: recommended to use a Python virtual environment with {_package_short_name} in its name. This is to avoid using the wrong Python enviroment.')
+    # this is now not a requirement, but only a recommendation - and only in PC
+    if (_package_short_name not in os.path.abspath(sys.executable)) and (target_machine == presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION):
+        print(f'{Back.WHITE}{Fore.YELLOW}WARNING: recommended to use a Python virtual environment with {_package_short_name} in its name. This is to avoid using a wrong Python enviroment.{Style.RESET_ALL}')
 
     # Restart the current script with the new environment
     print("INFO: Restarting script with updated environment...")

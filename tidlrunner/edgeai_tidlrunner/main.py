@@ -52,8 +52,9 @@ def _main(**kwargs):
     print(f"INFO: checking machine architecture...")
     result = subprocess.run(['uname', '-m'], capture_output=True, text=True)
     arch = result.stdout.strip()
-    print(f"INFO: machine architecture found: {arch}")   
-    target_machine = 'pc' if 'x86' in arch or 'amd64' in arch else 'evm'
+    print(f"INFO: machine architecture found: {arch}")
+    target_machine = rtwrapper.core.presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION \
+        if 'x86' in arch or 'amd64' in arch else rtwrapper.core.presets.TargetMachineType.TARGET_MACHINE_EVM
     print(f"INFO: setting target_machine to: {target_machine}")
     start_with_proper_environment(target_machine=target_machine, **kwargs)
 

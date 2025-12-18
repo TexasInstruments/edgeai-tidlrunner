@@ -36,11 +36,12 @@ import yaml
 import functools
 import subprocess
 
+from edgeai_tidlrunner.start import StartRunner
+
 
 def _main(_package_name='edgeai_tidloptimizer.optimizer', **kwargs):
-    from edgeai_tidlrunner.start import StartRunner
-    # tidloptimizer does not need TIDL_TOOLS_PATH, but just set it to empty to pass through checks for it
-    os.environ['TIDL_TOOLS_PATH'] = ''
+    # TIDL_TOOLS_PATH is not needed in tidloptimizer, but just set it to empty to pass through checks for it
+    os.environ['TIDL_TOOLS_PATH'] = os.environ.get('TIDL_TOOLS_PATH', '')
     # start
     StartRunner.main(_package_name=_package_name, **kwargs)
 
