@@ -35,7 +35,7 @@ import importlib.util
 
 ###############################################################################
 # this function is the entrypoint for download_tidlrunner_tools as specified in pyproject.toml
-def install_package(*install_args):
+def install_package(*install_args, install_cmd="install"):
     """Install osrt_model_tools package."""
     
     _package_name = install_args[0].split('@')[0].split('==')[0]
@@ -46,7 +46,7 @@ def install_package(*install_args):
     try:
         print(f"INFO: Installing {_package_name}")
         install_options = [str(arg) for arg in install_args]
-        install_cmd_list = ["python3", "-m", "pip", "install", "--no-input"] + install_options
+        install_cmd_list = ["python3", "-m", "pip", install_cmd, "--no-input"] + install_options
         print(f"INFO: installing {_package_name} using:", " ".join(install_cmd_list))
         result = subprocess.run(install_cmd_list, check=True, capture_output=True, text=True)
         
@@ -65,6 +65,10 @@ def install_package(*install_args):
     except Exception as e:
         print(f"ERROR: Unexpected error during installation: {e}")
         return False
+
+
+def uninstall_package(*install_args, install_cmd="uninstall"):
+    install_package(*install_args, install_cmd=install_cmd)
 
 
 def main():

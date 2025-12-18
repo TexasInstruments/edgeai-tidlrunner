@@ -43,7 +43,7 @@ CURRENT_WORK_DIR=$(pwd)
 
 
 #######################################################################
-echo 'Installing system dependencies...'
+echo 'INFO: installing system dependencies...'
 
 # Function to check if a package is installed using dpkg
 is_package_installed() {
@@ -59,9 +59,9 @@ is_package_installed() {
 install_if_missing() {
     local package_name="$1"
     if is_package_installed "$package_name"; then
-        echo "✓ Package $package_name is already installed"
+        echo "INFO: ✓ Package $package_name is already installed"
     else
-        echo "Installing $package_name..."
+        echo "INFO: installing $package_name..."
         sudo apt-get install -y "$package_name"
     fi
 }
@@ -80,14 +80,18 @@ pip3 install -e ./tools
 
 
 ######################################################################
+# unsintall onnxruntime and install onnxruntime-tild along with tidl-tools
+# pip3 uninstall -y onnxruntime onnxruntime-tidl
+
+
 # tidlrunner-tools-download is a script that defined in and installed via tools/pyproject.toml
-# download and install tidl-tools - this invokes: python3 tools/tidl_tools_package/download.py
-echo "Running: tidlrunner-tools-download..."
+# tidlrunner-tools-download - this invokes: python3 tools/tidl_tools_package/download.py
+echo "INFO: running: tidlrunner-tools-download..."
 TIDL_TOOLS_TYPE=${TIDL_TOOLS_TYPE} TIDL_TOOLS_VERSION=${TIDL_TOOLS_VERSION} tidlrunner-tools-download
 
 
 ######################################################################
-echo "Installing edgeai_tidirunner package..."
+echo "INFO: installing edgeai_tidirunner package..."
 pip3 install -e ./tidlrunner[pc]
 
 
