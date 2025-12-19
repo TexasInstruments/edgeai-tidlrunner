@@ -57,7 +57,7 @@ TIDL_TOOLS_VERSION="11.2" ./setup_runner_pc_gpu.sh
 **Important Note**: The version of tidl-tools that is installed will be used for model compilation. The version of tidl-tools used for compiling a generating model artifacts has to match with the version on the EVM/device. Other the model artifacts will not run on the device.
 
 ### Environment variables (for information only)
-* tidl-tools require TIDL_TOOLS_PATH and LD_LIBRARY_PATH to be set to appropriate folder.  For example: tools/tidl_tools_package/<target_device>/tidl_tools. 
+* tidl-tools require TIDL_TOOLS_PATH and LD_LIBRARY_PATH to be set to appropriate folder.  For example: tools/tidl_tools_package/bin/<target_device>/tidl_tools. 
 * This is automatically taken care [restart_with_proper_environment in rtwrapper here](edgeai_tidlrunner/rtwrapper/set_env.py). See how it is used in [main.py](edgeai_tidlrunner/main.py)
 
 
