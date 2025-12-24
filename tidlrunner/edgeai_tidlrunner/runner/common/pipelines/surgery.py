@@ -118,6 +118,14 @@ class ModelSurgery(common_base.CommonPipelineBase):
                 from osrt_model_tools.onnx_tools import tidl_onnx_model_optimizer
                 tidl_onnx_model_optimizer.optimize(model_path, model_path, **kwargs)
             #
+            # check onnx model IR version
+            import onnx
+            onnx_model = onnx.load(model_path)
+            if onnx_model.ir_version >= 10:
+                print(f'WARNING: IR version of model: {onnx_model.ir_version} - not supported in TIDL - updating ONNX IR version to 9')
+                onnx_model.ir_version = 9
+                onnx.save(onnx_model, model_path)
+            #
         elif model_ext == '.tflite':
             if input_optimization:
                 input_mean = settings['session'].get('input_mean', None)

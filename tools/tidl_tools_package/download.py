@@ -662,9 +662,11 @@ def uninstall_package(*install_args, install_cmd="uninstall"):
 # this function is the entrypoint for download_tidl_tools as specified in pyproject.toml
 def download():
     """Download and set up TIDL tools."""
+    uninstall_package("onnxruntime-tidl")
     uninstall_package("onnxruntime")
     uninstall_package("onnx")
     uninstall_package("protobuf")
+    uninstall_package("osrt-model-tools")
 
     install_path = os.path.dirname(os.path.realpath(__file__))
     tools_version = os.environ.get("TIDL_TOOLS_VERSION", TIDL_TOOLS_VERSION_DEFAULT)
