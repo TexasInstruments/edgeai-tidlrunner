@@ -1,7 +1,10 @@
 task_type: detection
-dataset_category: coco
-calibration_dataset: coco
-input_dataset: coco
+#dataset_category: coco
+#calibration_dataset: coco
+#input_dataset: coco
+dataloader:
+  name: coco_detection_dataloader
+  path: ./data/datasets/vision/coco
 preprocess:
   resize:
   - 800

@@ -1,7 +1,10 @@
 task_type: classification
-dataset_category: imagenet
-calibration_dataset: imagenet
-input_dataset: imagenet
+#dataset_category: imagenet
+#calibration_dataset: imagenet
+#input_dataset: imagenet
+dataloader:
+  name: image_classification_dataloader
+  path: ./data/datasets/vision/imagenetv2c/val
 postprocess: {}
 preprocess:
   resize: 256
