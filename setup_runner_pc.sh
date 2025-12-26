@@ -43,6 +43,9 @@ CURRENT_WORK_DIR=$(pwd)
 
 
 #######################################################################
+echo "INFO: setting up TIDL runner environment in PC with TIDL_TOOLS_VERSION=${TIDL_TOOLS_VERSION} and TIDL_TOOLS_TYPE=${TIDL_TOOLS_TYPE}"
+sleep 5
+
 echo 'INFO: installing system dependencies...'
 
 # Function to check if a package is installed using dpkg
