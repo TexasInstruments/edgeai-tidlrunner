@@ -24,11 +24,15 @@ This command will:
 - Use random inputs for quantization calibration
 - Save the compiled artifacts to the default output directory
 
-For a complete list of available command line arguments, see [command_line_arguments.md](./command_line_arguments.md).
+Because this uses random inputs by default, it may not produce good outputs while inference. To be able to generate correct outputs, we have to use actual data by specifying dataloader arguments - eg: data_name, data_path.
+
+More details are here: [commandline_interface.md](./commandline_interface.md)
+
+For complete list of available command line arguments, see [command_line_arguments.md](./command_line_arguments.md).
 
 ### 2. Config File Based Usage
 
-For more control and reproducible workflows, you can use configuration files. This approach allows you to specify all parameters including datasets, preprocessing options, target devices, and more.
+For more control and reproducible workflows, you can use configuration files. This approach allows you to specify all parameters including datasets, preprocessing options, target devices, and much more.
 
 **Example:**
 ```bash
@@ -41,55 +45,29 @@ This approach provides:
 - Reproducible configurations
 - Support for complex preprocessing pipelines
 
+More details are here: [configfile_interface.md](./configfile_interface.md)
+
 The configuration file can contain any of the fields documented in [command_line_arguments.md](./command_line_arguments.md). The Config Field column in that document shows exactly which fields can be populated in the YAML configuration file.
 
-## Basic Documentation
 
-### List of commands supported
+## List of commands supported
+
 | Command          | Description                                                               |
 |------------------|---------------------------------------------------------------------------|
 | compile          | Compile the given model(s)                                                |
 | infer            | Run inference using using already compiled model artifacts                |
 | accuracy         | Analyze compiled artifacts, run inference and analyze layerwise deviations|
-| optimize         | Optimize - simplifier, layer optimizations, shape inference (included in compile)|
-| analyze          | Analyze layer outputs, compare them to onnxruntime and write statistics  |
-| report           | Generate overall csv report of infer or accuracy                          |
-| extract          | Extract layers or submodules from a model                                 |
 | compile+infer    | compile the model and run inference                                       |
 | compile+analyze  | Compile the model and analyze the outputs of different layers             |
 | compile+accuracy | Compile the model, run inference and compute accuracy                     |
+| analyze          | Analyze TIDL layer outputs, compare them to onnxruntime outputs and write statistics - can be used to identify layer level issues |
+| report           | Generate overall csv report of infer or accuracy                          |
+| surgery          | Perform model surgery - simplifier, layer optimizations, shape inference (included in compile)|
+| extract          | Extract layers or submodules from a model                                 |
 
 
 <hr>
 
-### Basic interface - tidlrunner-cli Commandline interface
-The commandline interface allows to provide the model and a few arguments directly in the commandline.
-[runner Commandline interface](./commandline_interface.md)
-
-The commandline options supported for each command are listed [here](./command_line_arguments.md)
-
-<hr>
-
-### Basic interface - tidlrunner-cli Configfile interface
-The configfile interface allows to parse all parameters from a yaml file. 
-[runner Commandline config file interface](./configfile_interface.md)
-
-<hr>
-
-### Report generation after model compilation
-
-A consolidated csv report will be generated with the report command.
-```
-tidlrunner-cli report
-```
-
-## Detailed Documentation
-
-For detailed information about each command and its parameters, refer to:
-
-- **[Command Line Arguments](./command_line_arguments.md)** - Complete reference for all available arguments and configuration fields
-- **[Command Line Interface](./commandline_interface.md)** - Detailed usage examples
-- **[Config File Interface](./configfile_interface.md)** - How to create and use YAML configuration files
 
 ## Getting Help
 
