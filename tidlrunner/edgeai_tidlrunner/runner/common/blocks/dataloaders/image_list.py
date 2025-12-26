@@ -77,6 +77,8 @@ class ImageListDataLoader(dataset_base.DatasetBase):
             files = []
             labels = []
             for folder in paths:
+                if not os.path.isdir(folder):
+                    continue
                 paths = os.listdir(folder)
                 paths = [os.path.join(folder,f) for f in paths]
                 image_files = [f for f in paths if os.path.isfile(f) and (not file_types or os.path.splitext(f)[-1].lower() in file_types)]

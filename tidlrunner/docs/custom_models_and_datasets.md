@@ -21,7 +21,6 @@ These are dataloaders for the dataset format used in [Edge AI Studio](dev.ti.com
 
 #### Coming soon: Generic dataloaders (In development)
 * Generic dataloaders using binary files such as pickle or numpy files.
-* It is also possible to provide a function for dataloader - this function when called should construct an object that supports __getitem__ and __len__ methods.
 * More information [Generic dataloader](./generic_dataloader.md)
 
 <hr>

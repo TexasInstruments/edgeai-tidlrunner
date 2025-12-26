@@ -32,7 +32,7 @@ import shutil
 import argparse
 
 import edgeai_tidlrunner
-from edgeai_tidlrunner.runner import utils
+from edgeai_tidlrunner.runner.common import utils
 
 
 def _get_root(path):

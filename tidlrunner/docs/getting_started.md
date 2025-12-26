@@ -43,33 +43,72 @@ This approach provides:
 
 The configuration file can contain any of the fields documented in [command_line_arguments.md](./command_line_arguments.md). The Config Field column in that document shows exactly which fields can be populated in the YAML configuration file.
 
-## Available Commands
+## Basic Documentation
 
-The repository supports several commands for different workflows:
+### List of commands supported
+| Command          | Description                                                               |
+|------------------|---------------------------------------------------------------------------|
+| compile          | Compile the given model(s)                                                |
+| infer            | Run inference using using already compiled model artifacts                |
+| accuracy         | Analyze compiled artifacts, run inference and analyze layerwise deviations|
+| optimize         | Optimize - simplifier, layer optimizations, shape inference (included in compile)|
+| analyze          | Analyze layer outputs, compare them to onnxruntime and write statistics  |
+| report           | Generate overall csv report of infer or accuracy                          |
+| extract          | Extract layers or submodules from a model                                 |
+| compile+infer    | compile the model and run inference                                       |
+| compile+analyze  | Compile the model and analyze the outputs of different layers             |
+| compile+accuracy | Compile the model, run inference and compute accuracy                     |
 
-- **compile** - Compile models for TI edge devices
-- **infer** - Run inference with compiled models
-- **accuracy** - Evaluate model accuracy against ground truth
-- **analyze** - Analyze model performance and layer outputs
-- **optimize** - Apply model optimization techniques
-- **extract** - Extract specific layers or submodules
-- **report** - Generate detailed compilation reports
 
-## Documentation
+<hr>
+
+### Basic interface - tidlrunner-cli Commandline interface
+The commandline interface allows to provide the model and a few arguments directly in the commandline.
+[runner Commandline interface](./commandline_interface.md)
+
+The commandline options supported for each command are listed [here](./command_line_arguments.md)
+
+<hr>
+
+### Basic interface - tidlrunner-cli Configfile interface
+The configfile interface allows to parse all parameters from a yaml file. 
+[runner Commandline config file interface](./configfile_interface.md)
+
+<hr>
+
+### Report generation after model compilation
+
+A consolidated csv report will be generated with the report command.
+```
+tidlrunner-cli report
+```
+
+## Detailed Documentation
 
 For detailed information about each command and its parameters, refer to:
 
 - **[Command Line Arguments](./command_line_arguments.md)** - Complete reference for all available arguments and configuration fields
 - **[Command Line Interface](./commandline_interface.md)** - Detailed usage examples
 - **[Config File Interface](./configfile_interface.md)** - How to create and use YAML configuration files
-- **[Usage](./usage.md)** - General usage patterns and workflows
 
 ## Getting Help
 
 For command-specific help, use:
 ```bash
 tidlrunner-cli --help
+```
+
+Detailed help is available for each command - for example:
+```
 tidlrunner-cli <command> --help
 ```
 
-This will show you all available options for each specific command.
+This will show all the available options for each specific command.
+
+For example:
+```
+tidlrunner-cli compile --help
+```
+```
+tidlrunner-cli infer --help
+```

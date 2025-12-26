@@ -5,19 +5,19 @@ Bring Your Edge AI Models For Compilation, Inference, Analysis or Benchmark (BYO
 
 ### Notice
 #### Purpose
-The basic functionality in this repository is similar to that of [edgeai-benchmark](https://github.com/TexasInstruments/edgeai-tensorlab/tree/main/edgeai-benchmark). edgeai-benchmark is primarily focused on compiling and benchmarking models in [edgeai-modelzoo](https://github.com/TexasInstruments/edgeai-tensorlab/blob/main/edgeai-modelzoo), but the focus here in this repository is a simpler user interface and support for compiling user's models and datasets. 
+The basic functionality in this repository is similar to that of [edgeai-benchmark](https://github.com/TexasInstruments/edgeai-tensorlab/tree/main/edgeai-benchmark). edgeai-benchmark is primarily focused on compiling and benchmarking models in [edgeai-modelzoo](https://github.com/TexasInstruments/edgeai-modelzoo), but the focus of the tool in this repository is a simpler user interface and support for compiling user's models and datasets. This makes it easy to compile and benchmark custom models.
 
 #### Current status and limitations
 This is a work in progress with the following status and limitations 
-* onnx models and tflite models are supported. onnx models will use onnxruntime with TIDL by default and tflite models will use tidlruntime with TIDL by default. Other model types are not supported. 
+* onnx models and tflite models are supported. onnx models will use onnxruntime with TIDL by default and tflite models will use tidlruntime with TIDL by default. 
 * Other runtimes are not yet supported, but there is a work in progress to support tvm runtime for better offloading capability to DSP(C7x/MMA)
-* Work in progress to support most of the [models in edgeai-modelzoo/models/configs.yaml](https://github.com/TexasInstruments/edgeai-tensorlab/blob/main/edgeai-modelzoo/models/configs.yaml). As of now task types such as image classification, detection and segmentation are supported out-of-the-box. 
+* Work in progress to support most of the [models in edgeai-modelzoo/models/configs.yaml](https://github.com/TexasInstruments/edgeai-modelzoo/blob/main/models/configs.yaml). As of now task types such as image classification, detection and segmentation are supported out-of-the-box. 
 * The main purpose of this tool is to enable compilation and benchmarking of user's models - this requires support for generic user defined datasets - this is also a work in progress.
 
 
 ## Introduction
 
-This package provides a wrapper over the core [tidl-tools model compilation and runtimes](https://github.com/TexasInstruments/edgeai-tidl-tools) to make  model compilation and inference interface easy to use.
+This package provides a wrapper over the core [edgeai-tidl-tools runtimes and model compilation](https://github.com/TexasInstruments/edgeai-tidl-tools) to make  model compilation, inference and benchmark easy to use.
 
 ### Steps in TIDL model compilation and inference
 This package provides all the resources to enables all these steps. This will be installed as **edgeai_tidlrunner** Python package.
@@ -44,10 +44,8 @@ This package provides all the resources to enables all these steps. This will be
 
 ## Detailed Documentation
 
-[Usage documentation](docs/usage_basic.md): Basic usage 
-
 [Custom models and datasets](./custom_models_and_datasets.md): You have tried the off-the-shelf examples provided in this repository and is ready to compile own models and datasets - then look as this section on custom datasets & models
 
-[Advanced usage documentation](docs/usage_advanced.md): Advanced usage (for experts)
+[Advanced usage documentation](docs/usage_advanced.md): Advanced usage (for experts only)
 
 <hr>
