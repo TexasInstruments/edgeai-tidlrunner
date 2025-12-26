@@ -34,6 +34,7 @@ import copy
 import numpy as np
 import glob
 import math
+import yaml
 import xlsxwriter
 
 from ...common import utils
@@ -305,6 +306,16 @@ class InferAnalyzeFinal(compile_base.CompileModelBase):
                     #
                 #
                 self._analyze_model_layers(k, v, tidl_onnx_trace_mapping_dict, analyze_xlsx)
+
+                tidl_onnx_trace_mapping_obj = dict()
+                for frame_idx in range(num_traces):
+                        tidl_onnx_trace_mapping = tidl_onnx_trace_mapping_dict[frame_idx]
+                        tidl_onnx_trace_mapping_obj[frame_idx] = {lk:[lventry for lventry in lv if not isinstance(lventry, np.ndarray)] for lk, lv in tidl_onnx_trace_mapping.items()}
+
+                analyze_layer_mapping_file = os.path.join(self.run_dir, f'layer_output_mapping_{k}_{v}.yaml')
+                with open(analyze_layer_mapping_file, 'w') as fp:
+                    yaml.safe_dump(tidl_onnx_trace_mapping_obj, fp)
+                #
             #
         #
 
