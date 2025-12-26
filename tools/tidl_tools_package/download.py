@@ -658,6 +658,13 @@ def uninstall_package(*install_args, install_cmd="uninstall"):
     install_package(*install_args, install_cmd=install_cmd)
 
 
+def cleanup_tidl_tools_old(install_path, target_device_map):
+    for k, target_device_list in target_device_map.items():
+        for target_device in target_device_list:
+            target_device_path_old = os.path.join(install_path, target_device)
+            shutil.rmtree(target_device_path_old, ignore_errors=True)
+
+
 ###############################################################################
 # this function is the entrypoint for download_tidl_tools as specified in pyproject.toml
 def download():
@@ -671,7 +678,12 @@ def download():
     install_path = os.path.dirname(os.path.realpath(__file__))
     tools_version = os.environ.get("TIDL_TOOLS_VERSION", TIDL_TOOLS_VERSION_DEFAULT)
     tools_type = os.environ.get("TIDL_TOOLS_TYPE", TIDL_TOOLS_TYPE_DEFAULT)
+
+    print(f"INFO: cleaning up any old TIDL tools installation at {install_path}...")
+    cleanup_tidl_tools_old(install_path, TARGET_DEVICE_MAP)
+
     print(f"INFO: running setup with TIDL_TOOLS_VERSION={tools_version} TIDL_TOOLS_TYPE={tools_type}")
+    print(f"INFO: tidl-tools will be installed in {os.path.join(install_path, 'bin')}")
     setup_tidl_tools(install_path, tools_version, tools_type)
 
 
