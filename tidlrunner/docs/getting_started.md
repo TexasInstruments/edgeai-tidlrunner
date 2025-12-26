@@ -30,6 +30,7 @@ More details are here: [commandline_interface.md](./commandline_interface.md)
 
 For complete list of available command line arguments, see [command_line_arguments.md](./command_line_arguments.md).
 
+
 ### 2. Config File Based Usage
 
 For more control and reproducible workflows, you can use configuration files. This approach allows you to specify all parameters including datasets, preprocessing options, target devices, and much more.
@@ -66,7 +67,18 @@ The configuration file can contain any of the fields documented in [command_line
 | extract          | Extract layers or submodules from a model                                 |
 
 
-<hr>
+## Compiling models for a specific device
+It is important to use the correct target device while compiling the model. By default, this tool assumes AM68A, but that may not be the device/EVM that you have. 
+
+List of devices supported by TIDL are listed in the page [Supported Devices & SDKs](https://github.com/TexasInstruments/edgeai/blob/main/edgeai-mpu/readme_sdk.md).
+
+All those devices are supported by this tool. A specific device can be specified using the option target_device. For example:
+
+```bash
+tidlrunner-cli compile --config_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml --target_device TDA4VH
+```
+
+If you need more details, please refer to [this script that downloads tidl_tools](../../tools/tidl_tools_package/download.py)
 
 
 ## Getting Help
