@@ -287,7 +287,7 @@ class PipelineBase():
     def run(self):
         capture_log = self.settings['common']['capture_log']
         log_file = self.settings['common']['log_file']
-        if capture_log and log_file and hasattr(self, 'run_dir') and self.run_dir:
+        if capture_log != settings_base.CaptureLogModes.CAPTURE_LOG_MODE_OFF and log_file and hasattr(self, 'run_dir') and self.run_dir:
             if not log_file.startswith('/') and not log_file.startswith('.'):
                 log_file =  os.path.join(self.run_dir, log_file)
             #        

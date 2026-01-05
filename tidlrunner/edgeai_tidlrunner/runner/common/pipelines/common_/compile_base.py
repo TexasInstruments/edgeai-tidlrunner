@@ -201,9 +201,9 @@ class CompileModelBase(CommonPipelineBase):
                     if kwargs_out.get('dataloader.path', None) is None:
                         kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
                     #                  
-                else:
-                    print(f'WARNING: {input_dataset} dataset is not supported - please use a supported dataset OR specify both dataloader.name and dataloader.path')  
-                #  
+                # else:
+                #     print(f'WARNING: {input_dataset} dataset is not supported - please use a supported dataset OR specify both dataloader.name and dataloader.path')  
+                # #  
             #
     
             ###################################################################################

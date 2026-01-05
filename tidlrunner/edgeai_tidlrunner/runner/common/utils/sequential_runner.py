@@ -42,6 +42,6 @@ from .logger_utils import log_color
 from .parallel_runner import ParallelRunner
 
 class SequentialRunner(ParallelRunner):
-    def __init__(self, *args, parallel_processes=0, **kwargs):
-        super().__init__(*args, parallel_processes=parallel_processes, **kwargs)
+    def __init__(self, *args, parallel_processes=0, with_progressbar=False, **kwargs):
+        super().__init__(*args, parallel_processes=parallel_processes, with_progressbar=with_progressbar, **kwargs)
 

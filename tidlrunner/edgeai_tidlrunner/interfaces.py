@@ -372,7 +372,7 @@ def _run(model_command_dict):
             
             if command_kwargs['common.capture_log'] == bases.settings_base.CaptureLogModes.CAPTURE_LOG_MODE_ADAPTIVE:
                 capture_log = bases.settings_base.CaptureLogModes.CAPTURE_LOG_MODE_ON \
-                    if parallel_processes and multiple_models else bases.settings_base.CaptureLogModes.CAPTURE_LOG_MODE_OFF #CAPTURE_LOG_MODE_ADAPTIVE
+                    if parallel_processes and multiple_models else bases.settings_base.CaptureLogModes.CAPTURE_LOG_MODE_OFF #CAPTURE_LOG_MODE_TEE
             else:
                 capture_log = command_kwargs['common.capture_log']
             #
@@ -389,7 +389,7 @@ def _run(model_command_dict):
 
     # if there is more than one model or command or parallel_processes is set, we need to launch in ParallelRunner
     # or else we can directly run it
-    if parallel_processes and (multiple_models or multiple_commands):
+    if (parallel_processes and multiple_models) or (multiple_models or multiple_commands):
         # there are multiple commands given to be run back to back - running them on the same process can be problematic
         # so we will run them using multiprocessing - using separate process for each sub-command
         # this is useful for cases like 'compile,accuracy' or 'import,infer'
@@ -406,7 +406,11 @@ def _run(model_command_dict):
                 task_entry['proc_func'] = functools.partial(command_proc, proc_name, proc_func)
             #
         #
-        return utils.ParallelRunner(parallel_processes=parallel_processes).run(task_entries)
+        if (parallel_processes and multiple_models):
+            return utils.ParallelRunner(parallel_processes=parallel_processes).run(task_entries)
+        else:
+            return utils.SequentialRunner(parallel_processes=parallel_processes, with_progressbar=multiple_models).run(task_entries)
+        #
     else:
         return utils.SequentialRunner().run(task_entries)
 
