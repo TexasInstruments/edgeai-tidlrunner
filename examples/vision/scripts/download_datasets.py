@@ -155,9 +155,6 @@ def main():
     args = parser.parse_args()
 
 
-    # Create base data path if it doesn't exist
-    os.makedirs(args.dataset_path, exist_ok=True)
-
     if args.dataset_name == 'imagenetv2c' or args.dataset_name == 'all':
         if '{dataset_name}' in args.dataset_path:
             dataset_path = args.dataset_path.replace('{dataset_name}', 'imagenetv2c')
