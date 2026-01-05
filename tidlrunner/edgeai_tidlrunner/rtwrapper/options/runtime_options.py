@@ -81,7 +81,7 @@ class RuntimeOptions(attr_dict.AttrDict):
 
         runtime_options['advanced_options:calibration_iterations'] = \
                 max(int(self._get_calibration_iterations(is_qat, runtime_options['advanced_options:calibration_iterations']) *
-                calibration_iterations_factor), 1)
+                calibration_iterations_factor), 0)
 
         # this takes care of overrides given as ext_options keyword argument
         if ext_options is not None:
