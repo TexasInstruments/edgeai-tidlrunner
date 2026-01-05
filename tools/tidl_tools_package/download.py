@@ -662,7 +662,10 @@ def cleanup_tidl_tools_old(install_path, target_device_map):
     for k, target_device_list in target_device_map.items():
         for target_device in target_device_list:
             target_device_path_old = os.path.join(install_path, target_device)
-            shutil.rmtree(target_device_path_old, ignore_errors=True)
+            if os.path.islink(target_device_path_old):
+                os.unlink(target_device_path_old)
+            else:
+                shutil.rmtree(target_device_path_old, ignore_errors=True)
 
 
 ###############################################################################

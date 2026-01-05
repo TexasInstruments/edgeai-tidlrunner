@@ -30,47 +30,47 @@
 
 
 ##################################################################
-# set target device
-export TARGET_DEVICE="AM68A"
+# for convenience, setting TARGET_DEVICE env variable to be used below - this is not needed.
+TARGET_DEVICE="AM68A"
 
 ##################################################################
 # Example 1: compile by directly using a model path
 # if data_path is not specified, this will use random inputs and it may not be good for accuracy.
 # also there are several paameters for which defaults are assumed - it may not be perfect
-# to understand the options that can be specified, use: tidlrunnercli-pc compile --help 
+# to understand the options that can be specified, use: tidlrunner-cli-pc compile --help 
 #----------------------------------------------------------------
 # Example 1.1 - compile
-tidlrunnercli compile --model_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx
+tidlrunner-cli compile --model_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx --target_device ${TARGET_DEVICE}
 
 ##################################################################
 # Example 1.2 - infer
-# tidlrunnercli infer --model_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx
+# tidlrunner-cli infer --model_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx --target_device ${TARGET_DEVICE}
 
 ##################################################################
 # Example 1.3 - compile+infer in a single command
-# tidlrunnercli compile+infer --model_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx
+# tidlrunner-cli compile+infer --model_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx --target_device ${TARGET_DEVICE}
 
 
 ##################################################################
 # Exampe 2: compile+infer using a config file
 #----------------------------------------------------------------
-# tidlrunnercli compile+infer --config_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml
+# tidlrunner-cli compile+infer --config_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml --target_device ${TARGET_DEVICE}
 
 
 ##################################################################
 # Example 3: compile+infer using a wrapper configs file that aggregates other config files
 #----------------------------------------------------------------
-# tidlrunnercli compile+infer --config_path ./data/models/configs.yaml
+# tidlrunner-cli compile+infer --config_path ./data/models/configs.yaml --target_device ${TARGET_DEVICE}
 
 
 ##################################################################
 # Example 4: compile and evaluate accuracy using aggregate configs file
 #----------------------------------------------------------------
-# tidlrunnercli compile+accuracy --config_path ./data/models/configs.yaml
+# tidlrunner-cli compile+accuracy --config_path ./data/models/configs.yaml --target_device ${TARGET_DEVICE}
 
 
 ##################################################################
 # Example 5: analyze a model using a config file
 #----------------------------------------------------------------
-# tidlrunnercli analyze --config_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml
+# tidlrunner-cli analyze --config_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml --target_device ${TARGET_DEVICE}
 
