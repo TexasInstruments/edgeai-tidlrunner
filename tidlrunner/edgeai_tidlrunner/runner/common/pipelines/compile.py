@@ -82,6 +82,11 @@ class CompileModel(CompileModelBase):
     def _prepare(self):
         super()._prepare()
         common_kwargs = self.settings[self.common_prefix]
+        session_kwargs = self.settings[self.session_prefix]
+        
+        if session_kwargs['target_machine'] != presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION:
+            raise RuntimeError(f'ERROR: CompileModel pipeline can only be run on {presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION}')
+
         self.param_yaml = os.path.join(self.run_dir,'param.yaml')
         
         if common_kwargs['incremental']:
@@ -91,7 +96,6 @@ class CompileModel(CompileModelBase):
         #
 
         dataloader_kwargs = self.settings[self.dataloader_prefix]
-        session_kwargs = self.settings[self.session_prefix]
         preprocess_kwargs = self.settings[self.preprocess_prefix]
         postprocess_kwargs = self.settings[self.postprocess_prefix]
         runtime_options = session_kwargs['runtime_options']
