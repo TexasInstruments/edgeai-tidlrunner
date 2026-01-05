@@ -41,7 +41,7 @@ from .logger_utils import log_color
 
 class ParallelRunner:
     def __init__(self, parallel_processes, desc='TASKS', mininterval=0.15, maxinterval=5.0, tqdm_obj=None,
-            overall_timeout=None, instance_timeout=None, check_errors=False, verbose=False):
+            overall_timeout=None, instance_timeout=None, check_errors=False, verbose=False, with_progressbar=True):
         self.parallel_processes = parallel_processes
         self.desc = desc
         self.queued_tasks = dict()
@@ -58,6 +58,7 @@ class ParallelRunner:
         self.terminate_all_flag = False
         self.result_entries = None
         self.check_errors = check_errors
+        self.with_progressbar = with_progressbar
         self.last_update_time = time.time()
         if verbose:
             warnings.warn('''
@@ -75,7 +76,7 @@ class ParallelRunner:
 
         self.start_time = time.time()
         desc = self.desc + f' TOTAL={self.num_queued_tasks}, NUM_RUNNING={0}'
-        if self.tqdm_obj is None:
+        if self.with_progressbar and self.tqdm_obj is None:
             self.tqdm_obj = tqdm.tqdm(total=self.num_queued_tasks, position=0, desc=desc)
         #
         num_completed, num_running = self._wait_in_loop(self.parallel_processes)
@@ -248,7 +249,7 @@ class ParallelRunner:
 
         udate_interval = time.time() - self.last_update_time
         update_interval_elapsed = (udate_interval > self.maxinterval)
-        if update_interval_elapsed or num_processes == 0:
+        if self.with_progressbar and (update_interval_elapsed or num_processes == 0):
             self.last_update_time = time.time()
             self.tqdm_obj.update(num_completed - self.tqdm_obj.n)
             desc = self.desc + f' TOTAL={self.num_queued_tasks}, NUM_RUNNING={num_running}'
