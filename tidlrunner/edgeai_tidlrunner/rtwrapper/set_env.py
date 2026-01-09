@@ -124,7 +124,11 @@ def update_tvm_artifacts(**kwargs):
 
     for artifact_folder in artifacts_folders:
       print('INFO: Entering: ${artifact_folder}')
-      os.chdir(f'{artifact_folder}/artifacts')
+      try:
+        os.chdir(f'{artifact_folder}/artifacts')
+      except:
+         continue
+      
       for artifact_file in os.listdir('.'):
         # Check if the artifact file matches the expected names
         if artifact_file not in artifact_files:

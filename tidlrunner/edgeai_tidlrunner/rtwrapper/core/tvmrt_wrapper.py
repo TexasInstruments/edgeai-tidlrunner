@@ -166,7 +166,6 @@ class TVMRuntimeWrapper(BaseRuntimeWrapper):
 
         model_path = self.kwargs['model_path']
         model_path0 = model_path[0] if isinstance(model_path, (list,tuple)) else model_path
-        model_type = self.kwargs['model_type'] or os.path.splitext(model_path0)[1][1:]
 
         input_details = self.kwargs['input_details']
         input_shape = {inp_d['name']:inp_d['shape'] for inp_d in input_details}
@@ -244,15 +243,6 @@ class TVMRuntimeWrapper(BaseRuntimeWrapper):
         return input_data
 
     def _set_default_options(self, kwargs):
-        # tvm need advanced settings as a dict
-        # convert the entries starting with advanced_options: to a dict
-        runtime_options = kwargs['runtime_options']
-        advanced_options_prefix = 'advanced_options:'
-        advanced_options = {k.replace(advanced_options_prefix,''):v for k,v in runtime_options.items() \
-                            if k.startswith(advanced_options_prefix)}
-        runtime_options = {k:v for k,v in runtime_options.items() if not k.startswith(advanced_options_prefix)}
-        runtime_options.update(dict(advanced_options=advanced_options))
-        kwargs['runtime_options'] = runtime_options
         return kwargs
 
     def set_runtime_option(self, option, value):

@@ -263,7 +263,7 @@ class CompileModelBase(CommonPipelineBase):
         #
         # override session.name based on model_ext and session_type_dict
         if (kwargs_out.get('session.name', None) is None) and model_path and (kwargs_out.get('common.session_type_dict', None) is not None):
-            model_ext = os.path.splitext(model_path)[1][1:] if model_path else None
+            model_ext = os.path.splitext(model_path)[1][1:]
             session_type_dict = kwargs_out.get('common.session_type_dict', None)
             session_type_dict = utils.str_to_literal(session_type_dict)
             session_type_dict = session_type_dict or constants.SESSION_TYPE_DICT_DEFAULT
