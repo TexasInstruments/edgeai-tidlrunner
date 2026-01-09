@@ -103,9 +103,9 @@ def set_env(**kwargs):
   return kwargs
 
 def update_tvm_artifacts(**kwargs):
-    # tvmdlr artifacts are different for pc and evm device
+    # tvmrt artifacts are different for pc and evm device
     # point to the right artifact before this script executes
-    print("INFO: settings the correct symlinks in tvmdlr compiled artifacts")
+    print("INFO: settings the correct symlinks in tvmrt compiled artifacts")
 
     target_device = kwargs['target_device']
 
@@ -117,7 +117,7 @@ def update_tvm_artifacts(**kwargs):
     print(f"INFO: ARTIFACTS_BASE_PATH is set to: {os.environ['ARTIFACTS_BASE_PATH']}")
     ARTIFACTS_BASE_PATH = os.environ['ARTIFACTS_BASE_PATH']
 
-    artifacts_folders = glob.glob(f'{ARTIFACTS_BASE_PATH}/*_tvmdlr_*')
+    artifacts_folders = glob.glob(f'{ARTIFACTS_BASE_PATH}/*_tvmrt_*')
     cur_dir=os.getcwd()
 
     artifact_files = ["deploy_lib.so", "deploy_graph.json", "deploy_params.params"]

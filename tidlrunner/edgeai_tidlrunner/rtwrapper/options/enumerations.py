@@ -119,8 +119,7 @@ class ModelType:
 class RuntimeType:
     RUNTIME_TYPE_ONNXRT = 'onnxrt'
     RUNTIME_TYPE_TFLITERT = 'tflitert'
-    RUNTIME_TYPE_TVMDLR = 'tvmdlr'
-    RUNTIME_TYPE_TVMRT = 'tvmrt'  # TODO - not supported yet
+    RUNTIME_TYPE_TVMRT = 'tvmrt'
 
 
 class CalibrationIterationsFactor:

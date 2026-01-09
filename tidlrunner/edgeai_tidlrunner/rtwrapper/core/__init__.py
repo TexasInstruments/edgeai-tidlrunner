@@ -29,5 +29,5 @@
 
 from .onnxrt_wrapper import *
 from .tflitert_wrapper import *
-from .tvmdlr_wrapper import *
+from .tvmrt_wrapper import *
 from .tidlrt_wrapper import *

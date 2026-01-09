@@ -19,4 +19,6 @@ dist/
 /dependencies
 
 /tools/tidl_tools_package/bin/
+/tools/tidl_tools_package/arm-*
+/tools/tidl_tools_package/ti-cgt-*
 

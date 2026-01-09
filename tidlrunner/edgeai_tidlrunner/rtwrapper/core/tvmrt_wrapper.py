@@ -34,11 +34,39 @@ from ..options import presets
 from .basert_wrapper import BaseRuntimeWrapper
 
 
-class TVMDLRRuntimeWrapper(BaseRuntimeWrapper):
+class TVMRuntimeWrapper(BaseRuntimeWrapper):
     def __init__(self, tidl_offload=True, **kwargs):
         super().__init__(tidl_offload=tidl_offload, **kwargs)
         self._num_run_import = 0
         self._input_list = []
+        self.supported_machines = (
+            presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION,
+            presets.TargetMachineType.TARGET_MACHINE_EVM
+        )
+
+        self.platform_mapping_dict = {
+            'AM62'   : 'AM62',
+            'AM62X'   : 'AM62',
+            'AM62A'  : 'AM62A',
+            'AM62AX'  : 'AM62A',
+            'J722S'  : 'AM67A',
+            'AM67A'  : 'AM67A',
+            'TDA4AEN' : 'AM67A',
+            'J721E'  : 'AM68PA',
+            'AM68PA'  : 'AM68PA',
+            'TDA4VM'  : 'AM68PA',
+            'J721S2' : 'AM68A',
+            'AM68A' : 'AM68A',
+            'TDA4VL' : 'AM68A',
+            'TDA4AL' : 'AM68A',
+            'J742S2' : 'AM69A', # to be corrected?
+            'TDA4VP' : 'AM69A', # to be corrected?
+            'TDA4AP' : 'AM69A', # to be corrected?
+            'J784S4' : 'AM69A',
+            'AM69A' : 'AM69A',
+            'TDA4VH' : 'AM69A',
+            'TDA4AH' : 'AM69A',
+        }
 
     def start_import(self):
         if self._start_import_done:
@@ -82,12 +110,20 @@ class TVMDLRRuntimeWrapper(BaseRuntimeWrapper):
         self.kwargs['input_details'] = self._get_input_details(None, self.kwargs.get('input_details', None))
         self.kwargs['output_details'] = self._get_output_details(None, self.kwargs.get('output_details', None))
         # moved the import inside the function, so that dlr needs to be installed only if someone wants to use it
-        from dlr import DLRModel
+        import tvm
+        from tvm.contrib import graph_executor as runtime
         artifacts_folder = self.kwargs['artifacts_folder']
         if not os.path.exists(artifacts_folder):
             return False
-        #
-        self.interpreter = DLRModel(artifacts_folder, 'cpu')
+        
+        loaded_json = open(artifacts_folder + "/deploy_graph.json").read()
+        loaded_lib = tvm.runtime.load_module(artifacts_folder + "/deploy_lib.so","so")
+        loaded_params = bytearray(open(artifacts_folder + "/deploy_param.params", "rb").read())
+        # create a runtime executor module
+        sess = runtime.create(loaded_json, loaded_lib, tvm.cpu())
+        sess.load_params(loaded_params)
+        self.interpreter = sess
+
         self._start_inference_done = True
         return self.interpreter
 
@@ -106,7 +142,14 @@ class TVMDLRRuntimeWrapper(BaseRuntimeWrapper):
         if self.kwargs.get('extra_inputs'):
             input_data.update(self.kwargs['extra_inputs'])
         #
-        outputs = self.interpreter.run(input_data)
+        # feed input data
+        for key, value in input_data.items():
+            self.interpreter.set_input(key, value)
+        self.interpreter.run()
+        outputs = []
+        for i in range(self.interpreter.get_num_outputs()):
+            outputs.append(self.interpreter.get_output(i).asnumpy())
+
         output_keys = output_keys or [d_info['name'] for d_info in self.kwargs['output_details']]
         output_dict = {output_key:output for output_key, output in zip(output_keys, outputs)}
         return output_dict
@@ -117,6 +160,10 @@ class TVMDLRRuntimeWrapper(BaseRuntimeWrapper):
         from tvm import relay
         from tvm.relay.backend.contrib import tidl
 
+        target_machine = self.kwargs['target_machine']
+        target_device = self.kwargs['target_device']
+        platform_name = self.platform_mapping_dict[target_device]
+
         model_path = self.kwargs['model_path']
         model_path0 = model_path[0] if isinstance(model_path, (list,tuple)) else model_path
         model_type = self.kwargs['model_type'] or os.path.splitext(model_path0)[1][1:]
@@ -125,72 +172,56 @@ class TVMDLRRuntimeWrapper(BaseRuntimeWrapper):
         input_shape = {inp_d['name']:inp_d['shape'] for inp_d in input_details}
         input_keys = list(input_shape.keys())
 
-        if model_type == 'onnx':
-            import onnx
-            onnx_model = onnx.load_model(model_path0)
-            tvm_model, params = relay.frontend.from_onnx(onnx_model, shape=input_shape)
-        elif model_type == 'tflite':
-            import tflite
-            with open(model_path0, 'rb') as fp:
-                tflite_model = tflite.Model.GetRootAsModel(fp.read(), 0)
-            #
-            tvm_model, params = relay.frontend.from_tflite(tflite_model, shape_dict=input_shape,
-                                                   dtype_dict={k:'float32' for k in input_shape})
-        elif model_type == 'mxnet':
-            model_json, arg_params, aux_params = self._load_mxnet_model(model_path0)
-            tvm_model, params = relay.frontend.from_mxnet(model_json, input_shape, arg_params=arg_params, aux_params=aux_params)
-        else:
-            assert False, f'unrecognized model type {model_type}'
-        #
-
-       # Create the TIDL compiler with appropriate parameters
-        compiler = tidl.TIDLCompiler(c7x_codegen=0, **self.kwargs['runtime_options'])
-
         artifacts_folder = self.kwargs['artifacts_folder']
         os.makedirs(artifacts_folder, exist_ok=True)
 
-        # partition the graph into TIDL operations and TVM operations
-        tvm_model, status = compiler.enable(tvm_model, params, calib_list)
+        from tvm.contrib import tidl
 
         # the artifact files that are generated
         deploy_lib = 'deploy_lib.so'
         deploy_graph = 'deploy_graph.json'
-        deploy_params = 'deploy_params.params'
+        deploy_params = 'deploy_param.params'
 
         for target_machine in self.supported_machines:
-            if target_machine == presets.TARGET_MACHINE_EVM:
-                build_target = 'llvm -device=arm_cpu -mtriple=aarch64-linux-gnu'
-                cross_cc_args = {'cc' : os.path.join(os.environ['ARM64_GCC_PATH'], 'bin', 'aarch64-none-linux-gnu-gcc')}
-            elif target_machine == presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION:
-                build_target = 'llvm'
-                cross_cc_args = {}
-            else:
-                assert False, f'unsupported target device {target_machine}'
-            #
+            if target_machine == presets.TargetMachineType.TARGET_MACHINE_EVM:
+                if(os.path.exists(os.path.join(artifacts_folder, f'{deploy_lib}.pc'))):
+                    print("INFO: Reusing TIDL artifacts from x86 compilation for target compilation")
+                    os.environ["REUSE_TIDL_ARTIFACTS"] = '1'
 
-            # build the relay module into deployables
-            with tidl.build_config(tidl_compiler=compiler):
-                graph, lib, params = relay.build_module.build(tvm_model, target=build_target, params=params)
-
-            # remove nodes / params not needed for inference
-            tidl.remove_tidl_params(params)
-
+            print(f"INFO: Compiling for target device -- {target_machine}")
+            status = tidl.compile_model(
+                                        platform = platform_name.lower(),
+                                        compile_for_device = (True if (target_machine == presets.TargetMachineType.TARGET_MACHINE_EVM) else False),
+                                        enable_tidl_offload = self.kwargs.get('tidl_offload', True),
+                                        delegate_options = self.kwargs['runtime_options'],
+                                        calibration_input_list = calib_list,
+                                        model_path = model_path0,
+                                        input_shape_dict = input_shape
+                                        ### Optional arguments: This API does model to Relay conversion internally, however it can be overridden using already converted IR module and params 
+                                        # mod = mod,   # Input Relay IR module.
+                                        # params = params   # The parameter dict used by Relay.
+                                        )
+            assert(status)
+            os.listdir(artifacts_folder)
+            
             # save the deployables
-            path_lib = os.path.join(artifacts_folder, f'{deploy_lib}.{target_machine}')
-            path_graph = os.path.join(artifacts_folder, f'{deploy_graph}.{target_machine}')
-            path_params = os.path.join(artifacts_folder, f'{deploy_params}.{target_machine}')
+            path_lib_orig = os.path.join(artifacts_folder, f'{deploy_lib}')
+            path_graph_orig = os.path.join(artifacts_folder, f'{deploy_graph}')
+            path_params_orig = os.path.join(artifacts_folder, f'{deploy_params}')
 
-            lib.export_library(path_lib, **cross_cc_args)
-            with open(path_graph, "w") as fo:
-                fo.write(graph)
-            #
-            with open(path_params, "wb") as fo:
-                fo.write(relay.save_param_dict(params))
-            #
-        #
+            path_lib_target_machine = os.path.join(artifacts_folder, f'{deploy_lib}.{target_machine}')
+            path_graph_target_machine = os.path.join(artifacts_folder, f'{deploy_graph}.{target_machine}')
+            path_params_target_machine = os.path.join(artifacts_folder, f'{deploy_params}.{target_machine}')
+
+            os.rename(path_lib_orig, path_lib_target_machine)
+            os.rename(path_graph_orig, path_graph_target_machine)
+            os.rename(path_params_orig, path_params_target_machine)
+
+            os.environ.pop("REUSE_TIDL_ARTIFACTS", None) # Clean up this env variable for next run
+
         # create a symbolic link to the deploy_lib specified in target_machine
         artifacts_folder = self.kwargs['artifacts_folder']
-        target_machine = self.kwargs['target_machine']
+
         cwd = os.getcwd()
         os.chdir(artifacts_folder)
         artifact_files = [deploy_lib, deploy_graph, deploy_params]
