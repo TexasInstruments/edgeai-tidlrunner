@@ -254,15 +254,15 @@ class CompileModelBase(CommonPipelineBase):
             #
         #
 
-        if kwargs_out.get('session.session_name', None) is not None:
-            if kwargs_out.get('session.name', None) is None:
-                kwargs_out['session.name'] = kwargs_out['session.session_name']
+        if kwargs_out.get('session.name', None) is None:
+            if kwargs_out.get('session.session_name', None) is not None:
+                    kwargs_out['session.name'] = kwargs_out['session.session_name']
+                #
             #
+            kwargs_out.pop('session.session_name', None)
         #
-        kwargs_out.pop('session.session_name', None)
-
         # override session.name based on model_ext and session_type_dict
-        if model_path and 'common.session_type_dict' in kwargs_out:
+        if (kwargs_out.get('session.name', None) is None) and model_path and (kwargs_out.get('common.session_type_dict', None) is not None):
             model_ext = os.path.splitext(model_path)[1][1:] if model_path else None
             session_type_dict = kwargs_out.get('common.session_type_dict', None)
             session_type_dict = utils.str_to_literal(session_type_dict)
@@ -273,7 +273,7 @@ class CompileModelBase(CommonPipelineBase):
                 raise RuntimeError(f'ERROR: model extension {model_ext} is not supported - must be one of {list(session_type_dict.keys())}')
             #
         #
-       
+
         # override calibration parameters with preset_selection
         preset_selection = kwargs_out.get('common.preset_selection', None)
         if preset_selection is not None:

@@ -98,7 +98,6 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | SETTINGS_DEFAULT['surg
     'num_frames':               {'dest': 'common.num_frames', 'default': 10, 'type': int, 'metavar': 'value', 'help': 'number of frames to process'},
     'display_step':             {'dest': 'common.display_step', 'default': 0.1, 'type': str, 'metavar': 'value', 'help': 'interval for displaying progress information'},
     'upgrade_config':           {'dest': 'common.upgrade_config', 'default': True, 'type': str, 'metavar': 'value', 'help': 'upgrade edgeai-benchmark config to work with tidlrunner'},
-    'session_type_dict':        {'dest': 'common.session_type_dict', 'default': None, 'type': str, 'metavar': 'value', 'help': 'mapping of model extensions to session names'},
     'model_selection':          {'dest': 'common.model_selection', 'default': None, 'type': str, 'metavar': 'value', 'help': 'select a subset of models to run - path of the model is compared using this model_selection regex to select a particular model or not'},
     'model_shortlist':          {'dest': 'common.model_shortlist', 'default': None, 'type': str, 'metavar': 'value', 'help': 'select a subset of models to run - models configs with model_shortlist value <= this specified value will be used'},
     'preset_selection':         {'dest': 'common.preset_selection', 'default': None, 'type': utils.str_or_none, 'metavar': 'value', 'help': 'select a preset for speed accuracy trade-off: None, SPEED, ACCURACY, BALANCED'},
@@ -110,7 +109,8 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | SETTINGS_DEFAULT['surg
     'model_id':                 {'dest': 'session.model_id', 'default': None, 'type': str, 'metavar': 'value', 'help': 'unique id of a model - optional'},
     'artifacts_folder':         {'dest': 'session.artifacts_folder', 'default': None, 'type': str, 'metavar': 'value', 'help': 'folder to store compilation artifacts'},
     ## runtime
-    'runtime_name':             {'dest': 'session.name', 'default': None, 'type': str, 'metavar': 'value', 'help': 'name of the runtime session'},
+    'runtime_name':             {'dest': 'session.name', 'default': None, 'type': str, 'group': 'runtime_name', 'metavar': 'value', 'help': 'name of the runtime session'},
+    'session_type_dict':        {'dest': 'common.session_type_dict', 'default': None, 'type': str, 'group': 'runtime_name', 'metavar': 'value', 'help': 'mapping of model extensions to session names'},
     # input_data
     'data_name':                {'dest': 'dataloader.name', 'default': None, 'type': str, 'metavar': 'value', 'help': 'name of the input dataset'},
     'data_path':                {'dest': 'dataloader.path', 'default': None, 'type': str, 'metavar': 'path', 'help': 'path to the input data directory'},
