@@ -73,7 +73,7 @@ SETTINGS_DEFAULT['surgery'] = SETTINGS_DEFAULT['basic'] | {
     'run_dir':                      {'dest': 'session.run_dir', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'run_dir'},
     'pipeline_type':                    {'dest': 'common.pipeline_type', 'default': 'optimize', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},    
     'model_surgery':                   {'dest': 'common.surgery.model_surgery', 'default': True, 'type': utils.str_to_bool_or_none_or_dict, 'metavar': 'value', 'help': 'enable model surgery optimizations'},
-    'simplify_model':                   {'dest': 'common.surgery.simplify_mode', 'default': 'pre', 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable model simplification optimizations'},
+    'simplify_model':                   {'dest': 'common.surgery.simplify_mode', 'default': 'pre', 'type': utils.str_or_none_or_bool, 'metavar': 'value', 'help': 'enable model simplification optimizations'},
     'shape_inference':                  {'dest': 'common.surgery.shape_inference_mode', 'default': 'all', 'type': utils.str_or_none_or_bool, 'metavar': 'value', 'help': 'enable shape inference during surgery optimization'},
     'input_optimization':               {'dest': 'session.input_optimization', 'default': False, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32'},
     'input_mean':                       {'dest': 'session.input_mean', 'default': (123.675, 116.28, 103.53), 'type': float, 'nargs': '*', 'metavar': 'value', 'help': 'mean values for input normalization (RGB channels)'},
