@@ -75,7 +75,7 @@ class CompileModel(CompileModelBase):
             runtime_options['deny_list:layer_name'] += ', '.join(deny_list_node_names)
 
         if session_kwargs['output_16bit_names_start_end_dict']:
-            output_16bit_names = onnx_utils.get_all_node_names(self.model_path, session_kwargs['output_16bit_names_start_end_dict'])
+            output_16bit_names = onnx_utils.get_all_output_names(self.model_path, session_kwargs['output_16bit_names_start_end_dict'])
             runtime_options['advanced_options:output_feature_16bit_names_list'] += ('' if runtime_options['advanced_options:output_feature_16bit_names_list'] == '' else ', ')
             runtime_options['advanced_options:output_feature_16bit_names_list'] += ', '.join(output_16bit_names)
 
