@@ -102,7 +102,7 @@ def _get_all_child_nodes(node, end_nodes, searched_nodes, searched_node_names):
     return searched_nodes, searched_node_names
 
 
-def get_all_node_names(model_path, start_end_layers={}, verbose=False, graph=None, **kwargs):
+def get_all_nodes(model_path, start_end_layers={}, verbose=False, graph=None, **kwargs):
     import onnx_graphsurgeon as gs
     import onnx
     """
@@ -153,14 +153,10 @@ def get_all_node_names(model_path, start_end_layers={}, verbose=False, graph=Non
         # searched_nodes.append(start_node)
         logging.debug(f"Adding {start_name} to node list.")
 
-    result_list = []
-    for node in searched_nodes:
-        result_list.append(node.name)
-
-    return result_list
+    return searched_nodes
 
 
-def get_all_output_names(model_path, start_end_layers={}, verbose=False, **kwargs):
+def get_all_output_names(model_path, start_end_layers={}, match_node_names=True, match_output_names=True, verbose=False, **kwargs):
     import onnx_graphsurgeon as gs
     """
     Main function
@@ -195,17 +191,18 @@ def get_all_output_names(model_path, start_end_layers={}, verbose=False, **kwarg
         start_node = end_node = None
         for node in graph.nodes:
             for out in node.outputs:
-                if k == out.name:
+                if match_node_names and k == node.name:
                     start_node = node.name
-                elif v == out.name:
+                elif match_output_names and k == out.name:
+                    start_node = node.name
+                if match_node_names and v == node.name:
+                    end_node = node.name
+                elif match_output_names and v == out.name:
                     end_node = node.name
         start_end_node_names.update({start_node: end_node})
 
-    selected_nodes = get_all_node_names(model, start_end_node_names, verbose, graph=graph)
+    selected_nodes = get_all_nodes(model, start_end_node_names, verbose, graph=graph)
 
     output_names = [out.name for node in selected_nodes for out in node.outputs]
-    comma_separated_output_names = ', '.join(output_names)
-    logging.info(f"get_all_output_names with start:end={start_end_layers} returned {len(output_names)} nodes:")
-    logging.info(f"{comma_separated_output_names} ")
-
-    return comma_separated_output_names
+    logging.info(f"get_all_output_names with start:end={start_end_layers} returned {len(output_names)} nodes: {output_names}")
+    return output_names
