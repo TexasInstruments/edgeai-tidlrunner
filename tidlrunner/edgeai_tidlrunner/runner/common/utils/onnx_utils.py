@@ -85,21 +85,21 @@ def _is_end_node(node) -> bool:
     return False
 
 
-def _get_all_child_nodes(node, end_nodes, searched_nodes, searched_node_names):
+def _get_all_child_nodes(node, end_nodes, searched_nodes):
     # recursive function to find all the deny list nodes
-    if node.name not in searched_node_names:
+    if node not in searched_nodes:
         searched_nodes.append(node)
-        searched_node_names.append(node.name)
         logging.debug(f"Adding {node.name} to node list.")
 
     if node.name in end_nodes or _is_end_node(node):
-        return searched_nodes, searched_node_names
+        return searched_nodes
 
-    for n_id in node.outputs:
-        if n_id.name not in searched_node_names:
-            searched_nodes, searched_node_names = _get_all_child_nodes(n_id, end_nodes, searched_nodes, searched_node_names)
+    for out in node.outputs:
+        for n_id in out.outputs:
+            if n_id not in searched_nodes:
+                searched_nodes = _get_all_child_nodes(n_id, end_nodes, searched_nodes)
 
-    return searched_nodes, searched_node_names
+    return searched_nodes
 
 
 def get_all_nodes(model_path, start_end_layers={}, verbose=False, graph=None, **kwargs):
@@ -149,11 +149,65 @@ def get_all_nodes(model_path, start_end_layers={}, verbose=False, graph=None, **
             end_name = [end_name]
         #
         start_node = name_to_node_dict[start_name]
-        searched_nodes, searched_node_names = _get_all_child_nodes(start_node, end_name, searched_nodes, searched_node_names)
+        searched_nodes = _get_all_child_nodes(start_node, end_name, searched_nodes)
         # searched_nodes.append(start_node)
         logging.debug(f"Adding {start_name} to node list.")
 
     return searched_nodes
+
+
+
+def get_all_node_names(model_path, start_end_layers={}, match_node_names=True, match_output_names=True, verbose=False, **kwargs):
+    import onnx_graphsurgeon as gs
+    """
+    Main function
+    ---------------------------------------------------------
+    Inputs
+    ---------------------------------------------------------
+    model_path:             path to input ONNX model
+    start_end_layers:       dictionary of the start and end layers, between which (including start
+                            and end node) needs to be added to deny list
+                            if "None" is passed in the end node (values of dict), then the model output nodes
+                            are assumed as the end nodes
+     ---------------------------------------------------------------
+    Output
+    ---------------------------------------------------------------
+    nodes:                  comma separated string of all the nodes that need to be added in the deny list
+    """
+    logging.getLogger().setLevel(logging.DEBUG if verbose else logging.INFO)
+
+    import onnx
+    import onnx_graphsurgeon as gs
+
+    # check for valid path
+    if not os.path.isfile(model_path):
+        logging.error(f"File {model_path} not found")
+        sys.exit(-1)
+
+    model = onnx.load(model_path)
+    graph = gs.import_onnx(model)
+
+    start_end_node_names = {}
+    for k, v in start_end_layers.items():
+        start_node = end_node = None
+        for node in graph.nodes:
+            for out in node.outputs:
+                if match_node_names and k == node.name:
+                    start_node = node.name
+                elif match_output_names and k == out.name:
+                    start_node = node.name
+                if match_node_names and v == node.name:
+                    end_node = node.name
+                elif match_output_names and v == out.name:
+                    end_node = node.name
+        start_end_node_names.update({start_node: end_node})
+
+    selected_nodes = get_all_nodes(model, start_end_node_names, verbose, graph=graph)
+
+    node_names = [node.name for node in selected_nodes]
+    logging.info(f"get_all_output_names with start:end={start_end_layers} returned {len(node_names)} nodes: {node_names}")
+    return node_names
+
 
 
 def get_all_output_names(model_path, start_end_layers={}, match_node_names=True, match_output_names=True, verbose=False, **kwargs):
