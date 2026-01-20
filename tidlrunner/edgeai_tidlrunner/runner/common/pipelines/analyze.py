@@ -215,7 +215,7 @@ class CompileAnalyzeTIDL(compile.CompileModel):
 
     def __init__(self, **kwargs):
         kargs_copy = copy.deepcopy(kwargs)
-        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'tidl')
+        # kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'tidl')
         kargs_copy['common.postprocess_enable'] = False            
         super().__init__(**kargs_copy)
 
@@ -229,7 +229,7 @@ class InferAnalyzeTIDL(infer.InferModel):
 
     def __init__(self, **kwargs):
         kargs_copy = copy.deepcopy(kwargs)
-        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'tidl')
+        # kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'tidl')
         kargs_copy['session.runtime_options.debug_level'] = 0 if kargs_copy['common.analyze_level'] == 0 else 4
         kargs_copy['common.postprocess_enable'] = False            
         super().__init__(**kargs_copy)
@@ -244,6 +244,11 @@ class InferAnalyzeTIDL(infer.InferModel):
         #
         print('INFO: TIDL outputs generated')
         print('INFO: TIDL traces generated')
+        print('INFO: Creating symlink')
+        cwd = os.getcwd()
+        os.chdir(self.run_dir)
+        os.symlink(f"../{os.path.basename(self.run_dir)}", 'tidl')
+        os.chdir(cwd)
 
     def _run_frame(self, input_index, *args, **kwargs):
         if self.kwargs['common.analyze_level'] >= 2:
@@ -377,7 +382,6 @@ class InferAnalyzeFinal(compile_base.CompileModelBase):
                 #
             #
             layers_diff_median = {key: np.median(np.array(vs)) for key, vs in layers_diff_transposed.items()}
-            
         #
 
         # add percentage values as well

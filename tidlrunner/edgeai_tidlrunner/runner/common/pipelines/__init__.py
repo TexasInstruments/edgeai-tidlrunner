@@ -45,7 +45,7 @@ def get_command_pipelines(**kwargs):
         'accuracy': ['InferAccuracy'],
         'compile+infer': ['CompileModel', 'InferModel'],
         'compile+accuracy': ['CompileModel', 'InferAccuracy'],
-        'analyze': ['CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL32', 'InferAnalyzeTIDL32', 'CompileAnalyzeTIDL', 'InferAnalyzeTIDL', 'InferAnalyzeFinal'],    
+        'analyze': ['CompileAnalyzeTIDL', 'InferAnalyzeTIDL', 'CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL32', 'InferAnalyzeTIDL32', 'InferAnalyzeFinal'],    
         'report': ['GenReport'],   
         'package': ['PackageArtifacts'], 
         # other
