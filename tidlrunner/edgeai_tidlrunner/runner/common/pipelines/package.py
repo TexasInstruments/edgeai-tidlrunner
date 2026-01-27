@@ -175,17 +175,19 @@ class PackageArtifacts(CommonPipelineBase):
             r'_tidl_io_\d*.bin$',
             r'allowedNode.txt$',
             r'_netLog.txt$',
-            r'.svg$',
             r'deploy_graph.json$',
             r'deploy_graph.json.*',
             r'deploy_lib.so$',
             r'deploy_lib.so.*',
             r'deploy_params.params$',
             r'deploy_params.params.*',
+            r'deploy_param.params$',
+            r'deploy_param.params.*',
             # extra files - for information only
             r'netLog.txt$',
             r'layer_info.txt$',
             r'.svg$',
+            r'.html$',
             r'onnxrtMetaData.txt',
             r'dataset.yaml'
         ]

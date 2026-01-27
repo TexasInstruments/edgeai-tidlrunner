@@ -85,19 +85,47 @@ def _is_end_node(node) -> bool:
     return False
 
 
-def _get_all_child_nodes(node, end_nodes, searched_nodes):
-    # recursive function to find all the deny list nodes
-    if node not in searched_nodes:
-        searched_nodes.append(node)
-        logging.debug(f"Adding {node.name} to node list.")
+def _get_all_child_nodes(graph_nodes_tree_dict, node, end_nodes, searched_nodes):
+    if not isinstance(end_nodes, (list,tuple)):
+        end_nodes = [end_nodes]
+    #
 
     if node.name in end_nodes or _is_end_node(node):
+        searched_nodes.append(node)
         return searched_nodes
+    elif node.name in graph_nodes_tree_dict:
+        node_list = graph_nodes_tree_dict[node.name]
+        searched_nodes.append(node_list)
+        return searched_nodes
+    else:
+        searched_nodes.append(node)
 
     for out in node.outputs:
         for n_id in out.outputs:
-            if n_id not in searched_nodes:
-                searched_nodes = _get_all_child_nodes(n_id, end_nodes, searched_nodes)
+            searched_nodes = _get_all_child_nodes(graph_nodes_tree_dict, n_id, end_nodes, searched_nodes)
+
+    return searched_nodes
+
+
+def _get_all_child_nodes_flat(graph_nodes_tree_dict, node, searched_nodes, visited=None):
+    if visited is None:
+        visited = dict()
+    #
+
+    if visited.get(id(node), False):
+        return searched_nodes
+    
+    visited[id(node)] = True
+
+    if isinstance(node, (list,tuple)):
+        for n_id in node:
+            _get_all_child_nodes_flat(graph_nodes_tree_dict, n_id, searched_nodes, visited=visited)
+        #
+    else:
+        if node not in searched_nodes and node.name in graph_nodes_tree_dict:
+            logging.debug(f"_get_all_child_nodes_flat - Adding {node.name} to node list.")
+            searched_nodes.append(node)
+            _get_all_child_nodes_flat(graph_nodes_tree_dict, graph_nodes_tree_dict[node.name], searched_nodes, visited=visited)
 
     return searched_nodes
 
@@ -134,24 +162,45 @@ def get_all_nodes(model_path, start_end_layers={}, verbose=False, graph=None, **
     model_outputs = [node.inputs[0].name for node in graph.outputs]
     name_to_node_dict = {node.name: node for node in graph.nodes}
 
+    graph_nodes_tree_dict = {}
+    graph_nodes_rev = list(reversed(list(graph.nodes)))
+    for node in graph_nodes_rev:
+        nodes_list = []
+        nodes_list = _get_all_child_nodes(graph_nodes_tree_dict, node, None, nodes_list)
+        graph_nodes_tree_dict[node.name] = nodes_list
+        logging.debug(f'_get_all_child_nodes - completed: {node.name}')
+
     searched_nodes = []
-    searched_node_names = []
     for start_name, end_name in start_end_layers.items():
         if start_name not in name_to_node_dict:
-            print(f'WARNING: start_name given is not a valid onnx node name: {start_name} - {__file__}')
+            print(f'WARNING: get_all_nodes - start_name given is not a valid onnx node name: {start_name} - {__file__}')
             continue
+        else:
+            start_node = name_to_node_dict[start_name]
+
         if end_name is None:
             end_name = model_outputs
         elif end_name not in name_to_node_dict:
-            print(f'WARNING: end_name given is not a valid onnx node name: {end_name} - {__file__}')
+            print(f'WARNING: get_all_nodes - end_name given is not a valid onnx node name: {end_name} - {__file__}')
             continue
-        elif not isinstance(end_name, (list,tuple)):
+        
+        if not isinstance(end_name, (list,tuple)):
             end_name = [end_name]
         #
-        start_node = name_to_node_dict[start_name]
-        searched_nodes = _get_all_child_nodes(start_node, end_name, searched_nodes)
+
+        nodes_list_flat = []
+        _get_all_child_nodes_flat(graph_nodes_tree_dict, start_node, nodes_list_flat)
+        nodes_list_flat_names = [node.name for node in nodes_list_flat]
+
+        nodes_found = True
+        for end_name_i in end_name:
+            nodes_found = nodes_found and (end_name_i is None or end_name_i in nodes_list_flat_names)
+
+        if nodes_found:
+            searched_nodes.extend(nodes_list_flat)
+
         # searched_nodes.append(start_node)
-        logging.debug(f"Adding {start_name} to node list.")
+        logging.debug(f"get_all_nodes - Adding {start_name} to node list.")
 
     return searched_nodes
 
@@ -205,7 +254,7 @@ def get_all_node_names(model_path, start_end_layers={}, match_node_names=True, m
     selected_nodes = get_all_nodes(model, start_end_node_names, verbose, graph=graph)
 
     node_names = [node.name for node in selected_nodes]
-    logging.info(f"get_all_output_names with start:end={start_end_layers} returned {len(node_names)} nodes: {node_names}")
+    logging.debug(f"get_all_output_names with start:end={start_end_layers} returned {len(node_names)} nodes: {node_names}")
     return node_names
 
 
@@ -242,7 +291,10 @@ def get_all_output_names(model_path, start_end_layers={}, match_node_names=True,
 
     start_end_node_names = {}
     for k, v in start_end_layers.items():
-        start_node = end_node = None
+        start_node = k
+        end_node = v
+
+        # if output names are given, convet to node names
         for node in graph.nodes:
             for out in node.outputs:
                 if match_node_names and k == node.name:
@@ -253,10 +305,12 @@ def get_all_output_names(model_path, start_end_layers={}, match_node_names=True,
                     end_node = node.name
                 elif match_output_names and v == out.name:
                     end_node = node.name
+
         start_end_node_names.update({start_node: end_node})
 
     selected_nodes = get_all_nodes(model, start_end_node_names, verbose, graph=graph)
 
+    # convert to output names
     output_names = [out.name for node in selected_nodes for out in node.outputs]
-    logging.info(f"get_all_output_names with start:end={start_end_layers} returned {len(output_names)} nodes: {output_names}")
+    logging.debug(f"get_all_output_names with start:end={start_end_layers} returned {len(output_names)} nodes: {output_names}")
     return output_names
