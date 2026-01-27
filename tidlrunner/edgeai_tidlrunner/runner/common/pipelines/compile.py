@@ -239,7 +239,7 @@ class CompileModel(CompileModelBase):
         self.run_data = run_data
 
         # TODO - cleanup the parameters and write param.yaml
-        self._write_params(self.settings, self.param_yaml)
+        self._write_params(self.settings, self.param_yaml, cleanup_paths=True)
         return run_data
     
     def _run_frame(self, input_index):

@@ -297,12 +297,16 @@ class CompileModelBase(CommonPipelineBase):
                 session_runtime_options['advanced_options:quantization_scale_type']
         #
 
-    def _write_params(self, settings, filename, param_template=None):
+    def _write_params(self, settings, filename, param_template=None, cleanup_paths=False):
         # adjustments for backward compatibility with 
         # params.yaml and result.yaml written by edgeai-benchmark
         settings = copy.deepcopy(settings)
         if 'session' in settings:
             settings['session']['session_name'] = settings['session']['name']
+            if cleanup_paths:
+                settings['session']['model_path'] = os.path.join(*os.path.normpath(settings['session']['model_path']).split(os.sep)[-2:])    
+                settings['session']['artifacts_folder'] = os.path.normpath(settings['session']['artifacts_folder']).split(os.sep)[-1]  
+            #   
         #
         super()._write_params(settings, filename, param_template=param_template)
 

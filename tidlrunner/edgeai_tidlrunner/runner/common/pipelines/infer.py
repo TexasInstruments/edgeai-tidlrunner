@@ -202,7 +202,7 @@ class InferModel(CompileModelBase):
         # TODO: populate the result entry
         result = self.session.get_stats()   
         self.settings['result'] = result     
-        self._write_params(self.settings, self.result_yaml)
+        self._write_params(self.settings, self.result_yaml, cleanup_paths=True)
         return run_data
 
     def _run_frame(self, input_index):
