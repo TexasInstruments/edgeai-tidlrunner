@@ -28,12 +28,13 @@
 
 
 from ....rtwrapper.core import presets
+from .. import utils
 
 
 class CaptureLogModes:
-    CAPTURE_LOG_MODE_OFF = '0'  # only to screen
-    CAPTURE_LOG_MODE_ON = '1'    # only to file
-    CAPTURE_LOG_MODE_TEE = 'tee'  # to screen and to file
+    CAPTURE_LOG_MODE_OFF = False  # only to screen
+    CAPTURE_LOG_MODE_ON = True    # only to file
+    CAPTURE_LOG_MODE_TEE = 'tee'  # to screen and to file - not working
     CAPTURE_LOG_MODE_ADAPTIVE = 'adaptive'  # True if there are multiple models in parallel, otherwise tee
 
 
@@ -47,7 +48,7 @@ class SettingsBaseDefaults:
 SETTING_PIPELINE_RUNNER_ARGS_DICT = {
     # model
     'log_file':                 {'dest': 'common.log_file', 'default': SettingsBaseDefaults.CAPTURE_LOG_FILE, 'type': str, 'metavar': 'value'},
-    'capture_log':              {'dest': 'common.capture_log', 'default': SettingsBaseDefaults.CAPTURE_LOG_MODE, 'type': str, 'metavar': 'value'},
+    'capture_log':              {'dest': 'common.capture_log', 'default': SettingsBaseDefaults.CAPTURE_LOG_MODE, 'type': utils.str_or_none_or_bool, 'metavar': 'value'},
     'parallel_processes':       {'dest': 'common.parallel_processes', 'default': SettingsBaseDefaults.NUM_PARALLEL_PROCESSES, 'type': int, 'metavar': 'value'},
     'parallel_devices':         {'dest': 'common.parallel_devices', 'default': None, 'type': int, 'metavar': 'value', 'help': 'number of parallel gpu devices to use for compilation (used only if gpu based tidl-tools is installed)'},
     'target_machine':           {'dest': 'session.target_machine', 'default': presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION, 'type': str, 'metavar': 'value', 'help': 'target machine for running the inference (pc, evm)'},
