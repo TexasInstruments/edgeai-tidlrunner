@@ -107,6 +107,14 @@ def str_or_none(v):
     return str(v)
 
 
+def str_or_empty(v):
+    if v is None:
+        return ''
+    elif isinstance(v, str):
+        return v
+    #
+    return str(v)
+
 def str_or_none_or_bool(v):
     if v is None:
         return None

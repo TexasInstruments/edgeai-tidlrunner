@@ -69,13 +69,13 @@ class CompileModel(CompileModelBase):
         if not runtime_options['deny_list:layer_name']:
             runtime_options['deny_list:layer_name'] = []
 
-        if session_kwargs['deny_list_start_end_dict']:
-            deny_list_node_names = onnx_utils.get_all_node_names(self.model_path, session_kwargs['deny_list_start_end_dict'])
+        if session_kwargs['deny_list_layer_name_search']:
+            deny_list_node_names = onnx_utils.get_all_node_names(self.model_path, session_kwargs['deny_list_layer_name_search'])
             runtime_options['deny_list:layer_name'] += ('' if runtime_options['deny_list:layer_name'] == '' else ', ')
             runtime_options['deny_list:layer_name'] += ', '.join(deny_list_node_names)
 
-        if session_kwargs['output_16bit_names_start_end_dict']:
-            output_16bit_names = onnx_utils.get_all_output_names(self.model_path, session_kwargs['output_16bit_names_start_end_dict'])
+        if session_kwargs['output_feature_16bit_names_search']:
+            output_16bit_names = onnx_utils.get_all_output_names(self.model_path, session_kwargs['output_feature_16bit_names_search'])
             runtime_options['advanced_options:output_feature_16bit_names_list'] += ('' if runtime_options['advanced_options:output_feature_16bit_names_list'] == '' else ', ')
             runtime_options['advanced_options:output_feature_16bit_names_list'] += ', '.join(output_16bit_names)
 

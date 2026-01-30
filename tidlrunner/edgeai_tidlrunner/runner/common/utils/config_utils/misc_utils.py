@@ -169,9 +169,9 @@ def aststr_to_object(v):
     if v in (None, ''):
         return None
     #
-    if isinstance(v, list):
-        v = ' '.join(v)
-    #
+    # if isinstance(v, list):
+    #     v = ' '.join(v)
+    # #
     d = ast.literal_eval(v)
     return d
 
