@@ -59,7 +59,7 @@ RUNTIME_OPTIONS_DEFAULT = {
     # 0 - basic calibration,
     # 1 - higher accuracy (advanced bias calibration),
     # 9 - user defined
-    'accuracy_level': presets.AccurcyLevel.ACCURACY_LEVEL_ADVANCED,
+    'accuracy_level': presets.AccurcyLevel.ACCURACY_LEVEL_ADVANCED1,
 
     # This options enables increasing levels of debug prints and TIDL layer traces
     # 0 - no debug,

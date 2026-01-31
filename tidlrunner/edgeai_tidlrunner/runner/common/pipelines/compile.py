@@ -100,7 +100,7 @@ class CompileModel(CompileModelBase):
         postprocess_kwargs = self.settings[self.postprocess_prefix]
         runtime_options = session_kwargs['runtime_options']
 
-        if os.path.exists(self.run_dir):
+        if os.path.exists(self.run_dir) and common_kwargs['clear_run_dir']:
             print(f'INFO: clearing run_dir folder before compile: {self.run_dir}')
             shutil.rmtree(self.run_dir, ignore_errors=True)
         #

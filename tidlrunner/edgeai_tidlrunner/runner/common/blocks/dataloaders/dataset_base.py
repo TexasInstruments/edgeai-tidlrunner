@@ -127,5 +127,7 @@ class DatasetBaseWithUtils(DatasetBase):
             #
         #
         color_map = utils.get_color_palette(num_classes)
+        color_map_mid_len = len(color_map)//2
+        color_map = color_map[color_map_mid_len:] + color_map[:color_map_mid_len]
         return color_map
     

@@ -64,7 +64,8 @@ class TensorBits:
 
 class AccurcyLevel:
     ACCURACY_LEVEL_BASIC = 0
-    ACCURACY_LEVEL_ADVANCED = 1
+    ACCURACY_LEVEL_ADVANCED1 = 1
+    ACCURACY_LEVEL_ADVANCED2 = 1
 
 
 class DataConvertOps:

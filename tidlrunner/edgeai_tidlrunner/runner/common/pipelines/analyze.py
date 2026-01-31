@@ -61,6 +61,7 @@ class CompileAnalyzeNoTIDL(compile.CompileModel):
         kargs_copy['tidl_offload'] = False
         kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'notidl')
         kargs_copy['common.postprocess_enable'] = False        
+        kargs_copy['common.clear_run_dir'] = False     
         super().__init__(**kargs_copy)
 
     def _prepare_model(self):
@@ -97,11 +98,11 @@ class CompileAnalyzeNoTIDL(compile.CompileModel):
             onnx.save(onnx_model, model_path)
 
     def _prepare(self):     
-        if os.path.exists(self.run_dir):
-            base_dir = os.path.dirname(self.run_dir)
-            print(f'INFO: clearing run_dir folder before analyze: {base_dir}')
-            shutil.rmtree(base_dir, ignore_errors=True)
-        #    
+        # if os.path.exists(self.run_dir):
+        #     base_dir = os.path.dirname(self.run_dir)
+        #     print(f'INFO: clearing run_dir folder before analyze: {base_dir}')
+        #     shutil.rmtree(base_dir, ignore_errors=True)
+        # #    
         super()._prepare()   
         
     def _run(self):    
@@ -152,7 +153,8 @@ class CompileAnalyzeTIDL32(compile.CompileModel):
         kargs_copy['common.work_path'] = work_path
         kargs_copy['session.run_dir'] = run_dir
         kargs_copy['session.runtime_options.tensor_bits'] = 32
-        kargs_copy['common.postprocess_enable'] = False            
+        kargs_copy['common.postprocess_enable'] = False      
+        kargs_copy['common.clear_run_dir'] = False           
         super().__init__(**kargs_copy)
 
     def _run(self):

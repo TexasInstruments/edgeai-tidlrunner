@@ -104,6 +104,7 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | SETTINGS_DEFAULT['surg
     'preset_selection':         {'dest': 'common.preset_selection', 'default': None, 'type': utils.str_or_none, 'metavar': 'value', 'help': 'select a preset for speed accuracy trade-off: None, SPEED, ACCURACY, BALANCED'},
     'config_template':          {'dest': 'common.config_template', 'default':'data/templates/configs/param_template_config.yaml', 'type':str, 'metavar':'value', 'help':'param template path'},
     'incremental':              {'dest': 'common.incremental', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', 'help':'param template path'},
+    'clear_run_dir':              {'dest': 'common.clear_run_dir', 'default':True, 'type':utils.str_to_bool, 'metavar':'value', 'help':'clear_run_dir'},
     # compile/infer session
     ## model
     'model_id':                 {'dest': 'session.model_id', 'default': None, 'type': str, 'metavar': 'value', 'help': 'unique id of a model - optional'},
@@ -126,6 +127,7 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | SETTINGS_DEFAULT['surg
     'deny_list_layer_name_search':     {'dest': 'session.deny_list_layer_name_search', 'default': '', 'type': utils.aststr_to_object, 'metavar': 'value', 'help': 'a list contaning tuples of start and end nodes - it will be used to generate deny_list:layer_name. example: [("/decoder/Concat_3",None), ("/aux/Relu_5",None)]'},
     'output_feature_16bit_names_search':     {'dest': 'session.output_feature_16bit_names_search', 'default': '', 'type': utils.aststr_to_object, 'metavar': 'value', 'help': 'a list contaning tuples of start and end nodes - it will be used to generate advanced_options:output_feature_16bit_names_list. example: [("/decoder/Concat_3",None), ("/aux/Relu_5",None)]'},
     # runtume_options
+    'accuracy_level':  {'dest': 'session.runtime_options.accuracy_level', 'default': presets.AccurcyLevel.ACCURACY_LEVEL_ADVANCED1, 'type': int, 'metavar': 'value', 'help': 'calibration method to use: 0 - frame minmax with running avg, 1 - frame histogram with running avg across frames and bias calibration, 2 - global histogram and bias calibration'},
     'quantization_scale_type':  {'dest': 'session.runtime_options.advanced_options:quantization_scale_type', 'default': None, 'type': int, 'metavar': 'value', 'help': 'type of quantization scale to use'},
     'calibration_frames':       {'dest': 'session.runtime_options.advanced_options:calibration_frames', 'default': 12, 'type': int, 'metavar': 'value', 'help': 'number of frames for quantization calibration'},
     'calibration_iterations':   {'dest': 'session.runtime_options.advanced_options:calibration_iterations', 'default': 12, 'type': int, 'metavar': 'value', 'help': 'number of calibration iterations'},
