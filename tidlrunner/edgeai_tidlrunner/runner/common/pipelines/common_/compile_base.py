@@ -32,8 +32,8 @@ import sys
 import shutil
 import copy
 import ast
-
 import yaml
+import numpy as np
 
 from edgeai_tidlrunner.rtwrapper.options import runtime_options
 
@@ -61,7 +61,8 @@ class CompileModelBase(CommonPipelineBase):
         else:
             self.artifacts_folder = None
         #
-
+        self._run_counter = 0  # Counter for unique NPZ filenames
+        
     def _prepare(self):
         super()._prepare()
 
@@ -328,3 +329,37 @@ class CompileModelBase(CommonPipelineBase):
                      'label_offset_pred': label_offset_pred,
                      }
         return info_dict
+    
+
+    def _save_input_to_npz(self, input_data):
+        """Dump input data to NPZ file for debugging/analysis purposes."""
+        try:
+            # Create output directory if it doesn't exist
+            dump_dir = self.kwargs.get('input_save_dir', os.path.join(self.artifacts_folder, 'inputs'))
+            os.makedirs(dump_dir, exist_ok=True)
+            
+            # Create filename with counter for uniqueness
+            phase = "import" if self.is_import else "inference"
+            filename = f"onnx_inputs_{phase}_{self._run_counter:04d}.npz"
+            filepath = os.path.join(dump_dir, filename)
+            
+            # Convert input_data to numpy arrays if they aren't already
+            npz_data = {}
+            for key, value in input_data.items():
+                if hasattr(value, 'numpy'):  # Handle torch tensors
+                    npz_data[key] = value.numpy()
+                elif isinstance(value, np.ndarray):
+                    npz_data[key] = value
+                else:
+                    npz_data[key] = np.array(value)
+            
+            # Save to NPZ file
+            np.savez(filepath, **npz_data)
+            
+            # Increment counter for next run
+            self._run_counter += 1
+            
+            print(f"Dumped ONNX inputs to: {filepath}")
+            
+        except Exception as e:
+            print(f"Warning: Failed to dump inputs to NPZ file: {e}")

@@ -104,6 +104,7 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | SETTINGS_DEFAULT['surg
     'config_template':          {'dest': 'common.config_template', 'default':'data/templates/configs/param_template_config.yaml', 'type':str, 'metavar':'value', 'help':'param template path'},
     'incremental':              {'dest': 'common.incremental', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', 'help':'param template path'},
     'clear_run_dir':              {'dest': 'common.clear_run_dir', 'default':True, 'type':utils.str_to_bool, 'metavar':'value', 'help':'clear_run_dir'},
+    'save_input':              {'dest': 'common.save_input', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', 'help':'save inputs to the model after preprocessing'},
     # compile/infer session
     ## model
     'model_id':                 {'dest': 'session.model_id', 'default': None, 'type': str, 'metavar': 'value', 'help': 'unique id of a model - optional'},

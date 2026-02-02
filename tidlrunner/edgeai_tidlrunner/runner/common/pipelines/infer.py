@@ -206,10 +206,17 @@ class InferModel(CompileModelBase):
         return run_data
 
     def _run_frame(self, input_index):
+        common_kwargs = self.settings[self.common_prefix]
         info_dict = self.get_info_dict(input_index)
         input_data, info_dict = self.dataloader(input_index, info_dict)
         input_data, info_dict = self.preprocess(input_data, info_dict=info_dict) if self.preprocess else (input_data, info_dict)
+
+        # Dump inputs to NPZ file if enabled
+        if common_kwargs.get('save_input', True):
+            self._save_input_to_npz(input_data)
+
         output_dict = self.session.run_inference(input_data)
+
         if self.postprocess:
             outputs = list(output_dict.values())
             outputs, info_dict = self.postprocess(outputs, info_dict=info_dict) 
