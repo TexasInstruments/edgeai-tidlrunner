@@ -168,17 +168,37 @@ def float_or_tuple(v):
     return v
 
 
-def str_to_list_of_tuples(v):
-    if isinstance(v, str):
-        v = ast.literal_eval(v)
-    #
-    assert isinstance(v, list), f'ERROR: invalid parsing output: {v}'
-    return v
-
-
 def str_to_literal(v):
     if isinstance(v, str):
         v = ast.literal_eval(v)
     #
     return v
+
+
+def str_to_list_of_tuples(v):
+    if v is None or v == '':
+        return ''
+    
+    words = v.split(',')
+    words = [word.strip() for word in words]
+    lstup = [word.split(':') for word in words]
+    for tup_id, tup in enumerate(lstup):
+        for entry_id, entry in enumerate(tup):
+            tup[entry_id] = str_or_none(tup[entry_id])
+        #
+        lstup[tup_id] = tuple(tup)
+    #
+    return lstup
+
+
+def aststr_to_object(v):
+    import ast
+    if v in (None, ''):
+        return None
+    #
+    # if isinstance(v, list):
+    #     v = ' '.join(v)
+    # #
+    d = ast.literal_eval(v)
+    return d
 

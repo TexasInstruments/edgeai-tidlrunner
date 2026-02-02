@@ -164,18 +164,6 @@ def yamlstr_to_object(v):
     return d
 
 
-def aststr_to_object(v):
-    import ast
-    if v in (None, ''):
-        return None
-    #
-    # if isinstance(v, list):
-    #     v = ' '.join(v)
-    # #
-    d = ast.literal_eval(v)
-    return d
-
-
 def str_to_dict(v):
     return yamlstr_to_object
 
