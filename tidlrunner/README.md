@@ -31,6 +31,8 @@ This package provides all the resources to enables all these steps. This will be
 
 [Setup instructions](docs/setup.md)
 
+Note: The environment variable **TIDL_TOOLS_VERSION** defined in [setup_runner_pc.sh](../setup_runner_pc.sh) determines the version of tidl_tools downloaded and installed - when doing the setup using [setup_runner_pc.sh](../setup_runner_pc.sh) or [setup_runner_pc_gpu.sh](../setup_runner_pc_gpu.sh). Change the value of this valiable (if needed) and run setup to download and install the required version of tidl_tools.
+
 
 ## Preparation
 
