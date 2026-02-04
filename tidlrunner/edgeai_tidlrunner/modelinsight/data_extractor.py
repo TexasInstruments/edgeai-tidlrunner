@@ -2346,8 +2346,9 @@ def main(work_dirs_path, output_json_path):
         print("=" * 70)
         sys.exit(1)
 
-    model_dir_path = sys.argv[1]
-    output_json_path = sys.argv[2]
+    # Use the function parameters (passed when called programmatically)
+    model_dir_path = work_dirs_path
+    # output_json_path already set from parameter
 
     if not os.path.exists(model_dir_path):
         print(f"ERROR: Model directory not found: {model_dir_path}")
