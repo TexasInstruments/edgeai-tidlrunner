@@ -31,7 +31,7 @@
 
 ######################################################################
 # change the default here if needed - supported options: 11.2 11.1 11.0 10.1
-TIDL_TOOLS_VERSION=${TIDL_TOOLS_VERSION-"11.1"}
+TIDL_TOOLS_VERSION=${TIDL_TOOLS_VERSION-"11.2"}
 
 # change the default here if needed - supported options: cpu gpu
 # if you are invoking the script setup_runner_pc_gpu.sh, 
@@ -44,6 +44,8 @@ CURRENT_WORK_DIR=$(pwd)
 
 #######################################################################
 echo "INFO: setting up TIDL runner environment in PC with TIDL_TOOLS_VERSION=${TIDL_TOOLS_VERSION} and TIDL_TOOLS_TYPE=${TIDL_TOOLS_TYPE}"
+echo "INFO: TIDL_TOOLS_VERSION can be changed in setup_runner_pc.sh if needed."
+
 sleep 5
 
 echo 'INFO: installing system dependencies...'
