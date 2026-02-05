@@ -31,7 +31,8 @@ dependencies = [
     "json_tricks",
     "wurlitzer",
     "xlsxwriter",
-    "tabulate"
+    "tabulate",
+    "bs4"
 ]
 
 [project.urls]

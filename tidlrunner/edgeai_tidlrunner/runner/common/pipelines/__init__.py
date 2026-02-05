@@ -35,6 +35,7 @@ from .report import GenReport
 from .surgery import ModelSurgery
 from .extract import ExtractNodes
 from .package import PackageArtifacts
+from .modelinsight import GenerateModelInsightJSON, GenerateModelInsightHTML
 
 
 def get_command_pipelines(**kwargs):
@@ -46,6 +47,7 @@ def get_command_pipelines(**kwargs):
         'compile+infer': ['CompileModel', 'InferModel'],
         'compile+accuracy': ['CompileModel', 'InferAccuracy'],
         'analyze': ['CompileAnalyzeTIDL', 'InferAnalyzeTIDL', 'CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL32', 'InferAnalyzeTIDL32', 'InferAnalyzeFinal'],    
+        'insight': ['GenerateModelInsightJSON', 'GenerateModelInsightHTML'],
         'report': ['GenReport'],   
         'package': ['PackageArtifacts'], 
         # other
