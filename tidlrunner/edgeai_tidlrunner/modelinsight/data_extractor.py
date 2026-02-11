@@ -3,24 +3,20 @@
 # All Rights Reserved.
 
 """
-Data Extractor V6 - Extract TIDL artifact data to JSON
+Data Extractor - Extract TIDL artifact data to JSON
 
 This script discovers and parses all TIDL compilation artifacts from work_dirs/
 and outputs a single compressed JSON file containing all extracted data.
 
 Usage:
-    python data_extractor_v6.py <work_dirs/> <output.json>
+    python data_extractor.py <work_dirs/> <output.json>
 
 Example:
-    python data_extractor_v6.py work_dirs/ model_data.json
+    python data_extractor.py work_dirs/ model_data.json
 
 Output:
     - Single JSON file with all parsed data (model, subgraphs, TIDL, activation, metrics, config, performance)
 """
-
-# ====================================================================
-# PARSER CLASSES (merged from parsers_v6.py)
-# ====================================================================
 
 import onnx
 import json
@@ -31,9 +27,15 @@ import gzip
 import numpy as np
 from pathlib import Path
 from typing import Dict, List, Any, Tuple, Optional
+
+# Python 3.10+ compatibility: collections.Callable moved to collections.abc.Callable
+import collections
+import collections.abc
+if not hasattr(collections, 'Callable'):
+    collections.Callable = collections.abc.Callable
+
 from bs4 import BeautifulSoup
 
-# Try to import onnx_graphsurgeon, fallback to raw ONNX if not available
 try:
     import onnx_graphsurgeon as gs
     HAS_GRAPHSURGEON = True
@@ -49,20 +51,19 @@ class ActivationDataParser:
     Uses layer_info.txt files directly to build activation mappings
     """
 
-    def __init__(self, work_dir: str, frame_idx: int = 0):
+    def __init__(self, model_dir: str, frame_idx: int = 0):
         """
         Initialize activation data parser using layer_info.txt files
 
         Args:
-            work_dir: Work directory containing analyze results (e.g., work_dirs/)
+            model_dir: Direct path to model directory (e.g., work_dirs/compile/AM69A/cl_onnx_model/)
             frame_idx: Frame index to use for activation data (default: 0)
         """
-        self.work_dir = Path(work_dir)
+        self.model_dir = Path(model_dir)
         self.frame_idx = frame_idx
-        self.mapping = {}  # Format: {subgraph_id: {tidl_layer_id: {'notidl': path, 'tidl': path, 'onnx_name': name}}}
+        self.mapping = {}
         self.data_cache = {}
 
-        # Build mapping from layer_info.txt files
         self._load_from_layer_info()
 
     def _load_from_layer_info(self):
@@ -71,9 +72,8 @@ class ActivationDataParser:
 
         print(f"Building activation mapping from layer_info.txt files...")
 
-        # Find layer_info.txt files in tidl artifacts
-        layer_info_pattern = os.path.join(self.work_dir, 'analyze/**/tidl/artifacts/tempDir/subgraph_*_tidl_net.bin.layer_info.txt')
-        layer_info_files = glob.glob(layer_info_pattern, recursive=True)
+        layer_info_pattern = os.path.join(self.model_dir, 'tidl/artifacts/tempDir/subgraph_*_tidl_net.bin.layer_info.txt')
+        layer_info_files = glob.glob(layer_info_pattern, recursive=False)
 
         if not layer_info_files:
             print(f"  WARNING: No layer_info.txt files found in {layer_info_pattern}")
@@ -81,7 +81,6 @@ class ActivationDataParser:
 
         print(f"  Found {len(layer_info_files)} layer_info.txt files")
 
-        # Find corresponding trace directories
         notidl_outputs_dir = self._find_notidl_outputs()
         tidl_traces_dir = self._find_tidl_traces()
 
@@ -92,9 +91,7 @@ class ActivationDataParser:
         total_layers = 0
         total_mapped = 0
 
-        # Parse each layer_info.txt file
         for layer_info_path in sorted(layer_info_files):
-            # Extract subgraph index from filename: subgraph_0_tidl_net.bin.layer_info.txt
             match = re.search(r'subgraph_(\d+)_tidl_net\.bin\.layer_info\.txt', layer_info_path)
             if not match:
                 continue
@@ -104,7 +101,6 @@ class ActivationDataParser:
             if subgraph_id not in self.mapping:
                 self.mapping[subgraph_id] = {}
 
-            # Parse layer_info.txt
             with open(layer_info_path, 'r') as f:
                 for line in f:
                     parts = line.strip().split()
@@ -115,18 +111,15 @@ class ActivationDataParser:
                     tidl_id_col1 = parts[1]
                     onnx_layer_name = parts[2]
 
-                    # Only process when both columns match (skip mismatched entries)
                     if tidl_id_col0 != tidl_id_col1:
                         continue
 
                     tidl_layer_id = tidl_id_col0
                     total_layers += 1
 
-                    # Build file paths
                     notidl_path = self._build_notidl_path(notidl_outputs_dir, onnx_layer_name)
                     tidl_path = self._build_tidl_path(tidl_traces_dir, subgraph_id, tidl_layer_id)
 
-                    # Only add to mapping if both files exist
                     if notidl_path and tidl_path and os.path.exists(notidl_path) and os.path.exists(tidl_path):
                         self.mapping[subgraph_id][tidl_layer_id] = {
                             'notidl': notidl_path,
@@ -144,29 +137,25 @@ class ActivationDataParser:
     def _find_notidl_outputs(self) -> Optional[str]:
         """Find NotIDL outputs directory"""
         import glob
-        pattern = os.path.join(self.work_dir, f'analyze/**/notidl/outputs_/{self.frame_idx}')
-        matches = glob.glob(pattern, recursive=True)
+        pattern = os.path.join(self.model_dir, f'notidl/outputs_/{self.frame_idx}')
+        matches = glob.glob(pattern, recursive=False)
         return matches[0] if matches else None
 
     def _find_tidl_traces(self) -> Optional[str]:
         """Find TIDL traces directory"""
         import glob
-        pattern = os.path.join(self.work_dir, f'analyze/**/tidl/traces_/{self.frame_idx}')
-        matches = glob.glob(pattern, recursive=True)
+        pattern = os.path.join(self.model_dir, f'tidl/traces_/{self.frame_idx}')
+        matches = glob.glob(pattern, recursive=False)
         return matches[0] if matches else None
 
     def _build_notidl_path(self, notidl_dir: str, onnx_layer_name: str) -> Optional[str]:
         """Build path to NotIDL output file"""
-        # Convert ONNX layer name: "/" -> "_"
         onnx_layer_id = onnx_layer_name.replace("/", "_")
-
-        # Try to find matching file
         notidl_path = os.path.join(notidl_dir, f"{onnx_layer_id}.bin")
 
         if os.path.exists(notidl_path):
             return notidl_path
 
-        # Fallback: search for file containing the layer name
         for filename in os.listdir(notidl_dir):
             if onnx_layer_id in filename and filename.endswith('.bin'):
                 return os.path.join(notidl_dir, filename)
@@ -177,10 +166,7 @@ class ActivationDataParser:
         """Build path to TIDL trace file"""
         import glob
 
-        # Pad TIDL ID to 4 digits
         tidl_id_padded = tidl_layer_id.zfill(4)
-
-        # Pattern: tidl_trace_subgraph_0_0000_*_float.bin
         pattern = os.path.join(tidl_dir, f"tidl_trace_subgraph_{subgraph_id}_{tidl_id_padded}_*_float.bin")
         matches = glob.glob(pattern)
 
@@ -196,12 +182,8 @@ class ActivationDataParser:
                 print(f"    Warning: File not found: {bin_path}")
                 return None
 
-            # Load as float32
             data = np.fromfile(bin_path, dtype=float)
-
-            # Cache for reuse
             self.data_cache[bin_path] = data
-
             return data
 
         except Exception as e:
@@ -213,7 +195,6 @@ class ActivationDataParser:
         if len(data) <= max_samples:
             return data
 
-        # Random sampling with fixed seed for reproducibility
         np.random.seed(42)
         indices = np.random.choice(len(data), max_samples, replace=False)
         return data[indices]
@@ -234,13 +215,11 @@ class ActivationDataParser:
             rmse = float(np.sqrt(np.mean(diff ** 2)))
             max_error = float(np.max(np.abs(diff)))
 
-            # Correlation (can be NaN if data has no variance)
             try:
                 correlation = float(np.corrcoef(notidl_f64, tidl_f64)[0, 1])
             except:
                 correlation = None
 
-            # Range info
             notidl_min = float(np.min(notidl_data))
             notidl_max = float(np.max(notidl_data))
             notidl_mean = float(np.mean(notidl_data))
@@ -283,15 +262,12 @@ class ActivationDataParser:
             notidl_counts, notidl_edges = np.histogram(notidl_data, bins=100)
             tidl_counts, tidl_edges = np.histogram(tidl_data, bins=100)
 
-            # Calculate bin centers
             notidl_centers = (notidl_edges[:-1] + notidl_edges[1:]) / 2
             tidl_centers = (tidl_edges[:-1] + tidl_edges[1:]) / 2
 
-            # Round for smaller JSON size
             notidl_centers = np.round(notidl_centers, 4)
             tidl_centers = np.round(tidl_centers, 4)
 
-            # Convert to Python lists
             notidl_centers_list = notidl_centers.tolist()
             notidl_counts_list = notidl_counts.tolist()
             tidl_centers_list = tidl_centers.tolist()
@@ -448,7 +424,6 @@ class ActivationDataParser:
 
         layer_data = self.mapping[subgraph_id][tidl_layer_id]
 
-        # Load binary files
         notidl_path = layer_data['notidl']
         tidl_path = layer_data['tidl']
 
@@ -497,7 +472,6 @@ class ActivationDataParser:
 
         print("\nProcessing activation data...")
 
-        # Count total layers
         total_layers = sum(len(layers) for layers in self.mapping.values())
         print(f"  Found {total_layers} TIDL layers with activation files")
 
@@ -506,25 +480,20 @@ class ActivationDataParser:
         total_failed = 0
         subgraph_stats = {}
 
-        # Iterate over nested mapping structure
         for subgraph_id in sorted(self.mapping.keys()):
             layer_count = len(self.mapping[subgraph_id])
             print(f"\n  Subgraph {subgraph_id}: Processing {layer_count} layers")
 
             for tidl_layer_id in sorted(self.mapping[subgraph_id].keys()):
-                # Process layer
                 result = self.process_layer(subgraph_id, tidl_layer_id)
 
                 if result:
-                    # Build output key: subgraphId_tidlLayerId
                     key = f"{subgraph_id}_{tidl_layer_id}"
                     activation_data[key] = result
                     total_processed += 1
 
-                    # Track per-subgraph stats
                     subgraph_stats[subgraph_id] = subgraph_stats.get(subgraph_id, 0) + 1
 
-                    # Print progress
                     if total_processed <= 10 or total_processed % 10 == 0:
                         layer_info = self.mapping[subgraph_id][tidl_layer_id]
                         onnx_name = layer_info.get('onnx_name', 'unknown')
@@ -573,23 +542,18 @@ class MetricsParser:
         try:
             wb = openpyxl.load_workbook(self.xlsx_path, read_only=True)
 
-            # Process sheets for each subgraph (diff_notidl_tidl_0, diff_notidl_tidl_1, etc.)
             for sheet_name in wb.sheetnames:
                 if sheet_name.startswith('diff_notidl_tidl_'):
-                    # Extract subgraph number from sheet name
                     subgraph_id = sheet_name.split('_')[-1]
-
                     sheet = wb[sheet_name]
 
-                    # Get headers (row 1)
                     headers = [cell.value for cell in sheet[1]]
 
-                    # Parse data rows
                     subgraph_metrics = []
                     for row_idx in range(2, sheet.max_row + 1):
                         row = [cell.value for cell in sheet[row_idx]]
 
-                        if len(row) >= 12 and row[1] is not None:  # Ensure valid data
+                        if len(row) >= 12 and row[1] is not None:
                             metric_entry = {
                                 'subgraph': row[0],
                                 'serial_num': row[1],
@@ -636,37 +600,31 @@ class TIDLNetLogParser:
             with open(self.filepath, 'r', encoding='utf-8') as f:
                 lines = f.readlines()
 
-            # Find the table section
             in_table = False
 
             for line in lines:
                 line_stripped = line.strip()
 
-                # Detect table start (dashes line after header)
                 if '----' in line_stripped and len(line_stripped) > 50:
                     in_table = True
                     continue
 
-                # Detect table end
                 if in_table and '----' in line_stripped and len(line_stripped) > 50:
                     in_table = False
                     continue
 
-                # Parse table rows
                 if in_table and line_stripped and not line_stripped.startswith('Num|'):
-                    # Split by '|' and clean up
                     parts = [p.strip() for p in line.split('|')]
 
-                    if len(parts) >= 11:  # Ensure we have enough columns
+                    if len(parts) >= 11:
                         try:
                             layer_num = int(parts[0])
                             layer_name = parts[1]
-                            output_name = parts[2]  # Output tensor name
-                            macs_str = parts[-1]  # Last column is MACS
+                            output_name = parts[2]
+                            macs_str = parts[-1]
 
-                            # Parse MACS value
                             macs = int(macs_str) if macs_str.isdigit() else 0
-                            gmacs = macs / 1_000_000_000.0  # Convert to GMACS
+                            gmacs = macs / 1_000_000_000.0
 
                             layer_macs[layer_num] = {
                                 'layer_name': layer_name,
@@ -678,7 +636,6 @@ class TIDLNetLogParser:
                         except (ValueError, IndexError) as e:
                             continue
 
-                # Extract total GMACS
                 if 'Total Giga Macs' in line:
                     match = re.search(r'Total Giga Macs\s*:\s*([\d.]+)', line)
                     if match:
@@ -742,7 +699,6 @@ class TIDLSubgraphParser:
                 subgraph_idx = int(match.group(1))
                 html_filepath = os.path.join(self.base_dir, filename)
 
-                # Look for corresponding netLog file
                 netlog_filename = f'subgraph_{subgraph_idx}_tidl_net.bin_netLog.txt'
                 netlog_filepath = os.path.join(self.base_dir, netlog_filename)
 
@@ -751,7 +707,6 @@ class TIDLSubgraphParser:
 
                 files.append((subgraph_idx, html_filepath, netlog_filepath))
 
-        # Sort by subgraph index
         files.sort(key=lambda x: x[0])
         return files
 
@@ -760,12 +715,10 @@ class TIDLSubgraphParser:
         if not text or not text.strip():
             return
 
-        # Parse key=value pairs (including keys with /)
         for param_match in re.finditer(r'(\w+(?:/\w+)?)=([^\s]+)', text):
             param_key = param_match.group(1)
             param_val = param_match.group(2)
 
-            # Handle numeric values
             if param_val.isdigit():
                 output_dict[param_key] = int(param_val)
             elif param_val.replace('.', '', 1).replace('-', '', 1).isdigit():
@@ -773,19 +726,15 @@ class TIDLSubgraphParser:
             else:
                 output_dict[param_key] = param_val
 
-        # Parse arrays like dims=[1,1,1,1,1,1280]
         for array_match in re.finditer(r'(\w+(?:/\w+)?)=\[([^\]]+)\]', text):
             array_key = array_match.group(1)
             array_val = array_match.group(2)
 
-            # Try to parse all numeric arrays as lists of integers
             try:
                 output_dict[array_key] = [int(x.strip()) for x in array_val.split(',')]
             except ValueError:
-                # If parsing fails, keep as string
                 output_dict[array_key] = array_val
 
-        # Parse special formats like min/maxValue=(0,0)
         for paren_match in re.finditer(r'(\w+(?:/\w+)?)\(([^)]+)\)', text):
             paren_key = paren_match.group(1)
             paren_val = paren_match.group(2)
@@ -805,7 +754,6 @@ class TIDLSubgraphParser:
         if not lines:
             return layer_info
 
-        # Parse first line: Layer X: TIDL_LayerType "name"
         first_line = lines[0].strip()
         layer_match = re.match(r'Layer\s+(\d+):\s+(\w+)\s+"([^"]+)"', first_line)
         if layer_match:
@@ -813,7 +761,6 @@ class TIDLSubgraphParser:
             layer_info['layer_type'] = layer_match.group(2)
             layer_info['layer_name'] = layer_match.group(3)
 
-        # Parse parameters from subsequent lines
         current_section = None
         current_output = None
 
@@ -822,14 +769,11 @@ class TIDLSubgraphParser:
             if not line:
                 continue
 
-            # Detect sections
             if line.startswith('actParams:'):
                 current_section = 'actParams'
                 layer_info['parameters']['actParams'] = {}
-                # Check if there's a parameter on the same line
                 remainder = line[len('actParams:'):].strip()
                 if remainder:
-                    # Parse inline actParams parameter
                     for param_match in re.finditer(r'(\w+(?:/\w+)?)[:=]([^\s]+)', remainder):
                         param_key = param_match.group(1)
                         param_val = param_match.group(2)
@@ -840,37 +784,30 @@ class TIDLSubgraphParser:
                 if 'outputs' not in layer_info['parameters']:
                     layer_info['parameters']['outputs'] = []
 
-                # Parse the Outputs: line itself
                 remainder = line[len('Outputs:'):].strip()
                 if remainder:
-                    # Check for output index [X]
                     output_match = re.match(r'\[(\d+)\]', remainder)
                     if output_match:
                         current_output = {'index': int(output_match.group(1))}
                         layer_info['parameters']['outputs'].append(current_output)
                         remainder = remainder[output_match.end():].strip()
                     elif not layer_info['parameters']['outputs']:
-                        # First output without explicit index
                         current_output = {'index': 0}
                         layer_info['parameters']['outputs'].append(current_output)
                     else:
                         current_output = layer_info['parameters']['outputs'][-1]
 
-                    # Parse remaining parameters on this line
                     if remainder:
                         self._parse_output_params(remainder, current_output)
                 continue
 
-            # Parse parameters based on current section
             if current_section == 'actParams':
-                # Parse actParams sub-parameters
                 for param_match in re.finditer(r'(\w+(?:/\w+)?)[:=]([^\s]+)', line):
                     param_key = param_match.group(1)
                     param_val = param_match.group(2)
                     layer_info['parameters']['actParams'][param_key] = param_val
 
             elif current_section == 'outputs':
-                # Parse output parameters
                 if current_output is None:
                     if not layer_info['parameters']['outputs']:
                         current_output = {'index': 0}
@@ -878,7 +815,6 @@ class TIDLSubgraphParser:
                     else:
                         current_output = layer_info['parameters']['outputs'][-1]
 
-                # Check for new output [X]
                 output_match = re.match(r'\[(\d+)\]', line)
                 if output_match:
                     current_output = {'index': int(output_match.group(1))}
@@ -887,7 +823,6 @@ class TIDLSubgraphParser:
                     if remainder:
                         self._parse_output_params(remainder, current_output)
                 else:
-                    # Continue parsing for current output
                     self._parse_output_params(line, current_output)
 
             else:
@@ -897,23 +832,18 @@ class TIDLSubgraphParser:
         if 'kernelH/W' in params:
             layer_info['kernelShape'] = params['kernelH/W']
 
-        # Extract strides from strideH/W
         if 'strideH/W' in params:
             layer_info['strides'] = params['strideH/W']
 
-        # Extract padding from padH/W
         if 'padH/W' in params:
             layer_info['pads'] = params['padH/W']
 
-        # Extract dilations from dilationH/W
         if 'dilationH/W' in params:
             layer_info['dilations'] = params['dilationH/W']
 
-        # Extract groups from numGroups
         if 'numGroups' in params:
             layer_info['groups'] = params['numGroups']
 
-        # Extract channel information
         if 'numInChannels' in params:
             layer_info['numInChannels'] = params['numInChannels']
         if 'numOutChannels' in params:
@@ -922,15 +852,7 @@ class TIDLSubgraphParser:
         return layer_info
 
     def _extract_graph_structure(self, soup, layers) -> Tuple[List[Dict], List[Dict]]:
-        """Extract graph structure (nodes + edges) from SVG for visualization
-
-        Args:
-            soup: BeautifulSoup object of the HTML
-            layers: Parsed layer information
-
-        Returns:
-            Tuple of (graph_nodes, graph_edges)
-        """
+        """Extract graph structure (nodes + edges) from SVG for visualization"""
         graph_nodes = []
         graph_edges = []
 
@@ -943,7 +865,6 @@ class TIDLSubgraphParser:
             if not title or not title.string:
                 continue
 
-            # Extract layer index from title (first line: "Layer X: ...")
             first_line = title.string.strip().split('\n')[0]
             layer_match = re.match(r'Layer\s+(\d+):', first_line)
             if not layer_match:
@@ -955,7 +876,6 @@ class TIDLSubgraphParser:
             if not layer_info:
                 continue
 
-            # Extract output shapes from layer parameters
             output_dims = []
             if 'parameters' in layer_info and 'outputs' in layer_info['parameters']:
                 for output in layer_info['parameters']['outputs']:
@@ -971,34 +891,28 @@ class TIDLSubgraphParser:
             if 'kernelShape' in layer_info and layer_info['kernelShape']:
                 kernel_shape_str = str(layer_info['kernelShape'])
 
-            # Format strides
             strides_str = 'N/A'
             if 'strides' in layer_info and layer_info['strides']:
                 strides_str = str(layer_info['strides'])
 
-            # Format dilations
             dilations_str = 'N/A'
             if 'dilations' in layer_info and layer_info['dilations']:
                 dilations_str = str(layer_info['dilations'])
 
-            # Format pads
             pads_str = 'N/A'
             if 'pads' in layer_info and layer_info['pads']:
                 pads_str = str(layer_info['pads'])
 
-            # Get groups
             groups_str = 'N/A'
             if 'groups' in layer_info:
                 groups_str = str(layer_info['groups'])
 
-            # Get activation type from actParams
             activation_str = 'N/A'
             if 'parameters' in layer_info and 'actParams' in layer_info['parameters']:
                 act_type = layer_info['parameters']['actParams'].get('actType')
                 if act_type:
                     activation_str = act_type
 
-            # Format input shape from channel info
             input_shape_str = 'N/A'
             if 'numInChannels' in layer_info:
                 input_shape_str = f"Channels: {layer_info['numInChannels']}"
@@ -1048,23 +962,18 @@ class TIDLSubgraphParser:
             if not title or not title.string:
                 continue
 
-            # Parse edge title to extract source and target
-            # Format: "Layer X: ... -> Layer Y: ..."
             edge_text = title.string
 
-            # Find the arrow separator
             arrow_idx = edge_text.find('->')
             if arrow_idx == -1:
                 continue
 
-            # Extract source layer number (before arrow)
             source_part = edge_text[:arrow_idx]
             source_match = re.search(r'Layer\s+(\d+):', source_part)
             if not source_match:
                 continue
             source_idx = int(source_match.group(1))
 
-            # Extract target layer number (after arrow)
             target_part = edge_text[arrow_idx+2:]
             target_match = re.search(r'Layer\s+(\d+):', target_part)
             if not target_match:
@@ -1091,10 +1000,8 @@ class TIDLSubgraphParser:
 
         soup = BeautifulSoup(content, 'html.parser')
 
-        # Find all SVG nodes with TIDL layer information
         layers = []
 
-        # Find all <g> elements with class="node"
         svg_nodes = soup.find_all('g', class_='node')
 
         for node in svg_nodes:
@@ -1104,25 +1011,21 @@ class TIDLSubgraphParser:
                 if layer_info['layer_index'] is not None:
                     layers.append(layer_info)
 
-        # Sort by layer index
         layers.sort(key=lambda x: x['layer_index'])
 
         print(f"    Found {len(layers)} TIDL layers")
 
-        # Parse netLog file if available
         macs_data = {'layer_macs': {}, 'total_gmacs': 0.0}
         if netlog_filepath and os.path.exists(netlog_filepath):
             netlog_parser = TIDLNetLogParser(netlog_filepath)
             macs_data = netlog_parser.parse()
 
-            # Merge MACS data and ONNX node mapping into layers
             for layer in layers:
                 layer_idx = layer['layer_index']
                 if layer_idx in macs_data['layer_macs']:
                     layer['macs'] = macs_data['layer_macs'][layer_idx]['macs']
                     layer['gmacs'] = macs_data['layer_macs'][layer_idx]['gmacs']
 
-                    # Map TIDL layer to ONNX node index for activation plotting
                     tidl_output_name = macs_data['layer_macs'][layer_idx].get('output_name', '')
                     onnx_node_idx = self._map_tidl_to_onnx_node(tidl_output_name)
                     if onnx_node_idx is not None:
@@ -1186,7 +1089,6 @@ class GraphVizParser:
                 if not line:
                     continue
 
-                # Parse line: node_id node_name node_type ... diagInfo <info>
                 parts = line.split(maxsplit=3)
                 if len(parts) < 4:
                     continue
@@ -1196,11 +1098,9 @@ class GraphVizParser:
                     node_name = parts[1]
                     node_type = parts[2]
 
-                    # Extract diagInfo
                     diag_match = re.search(r'diagInfo\s+(.+)$', line)
                     diag_info = diag_match.group(1) if diag_match else ''
 
-                    # Check if supported
                     is_supported = 'SUPPORTED' in diag_info and 'UNSUPPORTED' not in diag_info
 
                     node_support[node_id] = {
@@ -1291,7 +1191,6 @@ def calculate_node_depths_and_positions(nodes, edges, width=1200, height=800):
         Updated nodes dict with x, y, depth, horizontal_position
     """
 
-    # Build adjacency lists
     node_list = list(nodes.keys())
     node_to_idx = {name: idx for idx, name in enumerate(node_list)}
 
@@ -1306,16 +1205,12 @@ def calculate_node_depths_and_positions(nodes, edges, width=1200, height=800):
             children[src_name].append(tgt_name)
             parents[tgt_name].append(src_name)
 
-    # Find root nodes (no parents)
     roots = [name for name in node_list if len(parents[name]) == 0]
     if not roots:
-        roots = [node_list[0]]  # Fallback
+        roots = [node_list[0]]
 
     print(f"  Found {len(roots)} root nodes")
 
-    # ========================================
-    # STEP 1: Calculate depth (longest path) - IMPROVED
-    # ========================================
     depths = {}
 
     def assign_depth(node_name, depth):
@@ -1325,12 +1220,10 @@ def calculate_node_depths_and_positions(nodes, edges, width=1200, height=800):
             for child_name in children[node_name]:
                 assign_depth(child_name, depth + 1)
 
-    # First pass: Assign depths from actual roots (non-constants)
     actual_roots = []
     constant_nodes = []
 
     for name in roots:
-        # Check if this is a constant/initializer node
         node_data = nodes.get(name, {})
         node_type = node_data.get('type', '')
 
@@ -1339,29 +1232,23 @@ def calculate_node_depths_and_positions(nodes, edges, width=1200, height=800):
         else:
             actual_roots.append(name)
 
-    # If no actual roots found, use all roots
     if not actual_roots:
         actual_roots = roots
 
     print(f"  Actual roots: {len(actual_roots)}")
     print(f"  Constant nodes: {len(constant_nodes)}")
 
-    # Assign depths from actual roots first
     for root in actual_roots:
         assign_depth(root, 0)
 
-    # Second pass: Constants get depth based on first usage
     for const_name in constant_nodes:
         if const_name not in depths:
-            # Find the minimum depth of nodes that use this constant
             child_depths = [depths.get(child, 0) for child in children[const_name]]
             if child_depths:
-                # Place constant one level before its first use
                 depths[const_name] = max(0, min(child_depths) - 1)
             else:
                 depths[const_name] = 0
 
-    # Ensure all nodes have depth
     for name in node_list:
         if name not in depths:
             depths[name] = 0
@@ -1369,29 +1256,21 @@ def calculate_node_depths_and_positions(nodes, edges, width=1200, height=800):
     max_depth = max(depths.values()) if depths else 0
     print(f"  Max depth: {max_depth}")
 
-    # ========================================
-    # STEP 2: Group by depth
-    # ========================================
     depth_groups = {}
     for name, depth in depths.items():
         if depth not in depth_groups:
             depth_groups[depth] = []
         depth_groups[depth].append(name)
 
-    # ========================================
-    # STEP 3: Horizontal positioning (parent-aware)
-    # ========================================
     horizontal_positions = {}
 
     for depth in sorted(depth_groups.keys()):
         nodes_at_depth = depth_groups[depth]
 
         if depth == 0:
-            # Root nodes: simple left-to-right
             for i, name in enumerate(sorted(nodes_at_depth)):
                 horizontal_positions[name] = i
         else:
-            # Sort by average parent position
             node_scores = []
             for name in nodes_at_depth:
                 parent_positions = [
@@ -1410,9 +1289,6 @@ def calculate_node_depths_and_positions(nodes, edges, width=1200, height=800):
     max_width = max(len(nodes) for nodes in depth_groups.values()) if depth_groups else 1
     print(f"  Max width: {max_width}")
 
-    # ========================================
-    # STEP 4: Calculate actual x,y coordinates
-    # ========================================
     VERTICAL_SPACING = 150
     HORIZONTAL_SPACING = 200
     PADDING = 100
@@ -1421,7 +1297,6 @@ def calculate_node_depths_and_positions(nodes, edges, width=1200, height=800):
         depth = depths.get(name, 0)
         h_pos = horizontal_positions.get(name, 0)
 
-        # Calculate layer width for centering
         layer_width = len(depth_groups.get(depth, [])) * HORIZONTAL_SPACING
         start_x = (width - layer_width) / 2 + HORIZONTAL_SPACING / 2
 
@@ -1441,8 +1316,8 @@ class ONNXParser:
     def __init__(self, model_path: str):
         self.model_path = model_path
         self.model = None
-        self.gs_graph = None  # GraphSurgeon graph
-        self.use_gs = HAS_GRAPHSURGEON  # Use GraphSurgeon if available
+        self.gs_graph = None
+        self.use_gs = HAS_GRAPHSURGEON
 
     def load_model(self):
         """Load ONNX model using GraphSurgeon or raw ONNX"""
@@ -1451,11 +1326,9 @@ class ONNXParser:
         onnx.checker.check_model(self.model)
 
         if self.use_gs:
-            # Use GraphSurgeon for cleaner API
             self.gs_graph = gs.import_onnx(self.model)
             print(f"Model loaded with GraphSurgeon (nodes: {len(self.gs_graph.nodes)}, tensors: {len(self.gs_graph.tensors())})")
         else:
-            # Fallback to raw ONNX
             print("Model loaded with raw ONNX API")
 
     def get_tensor_shape(self, tensor) -> List:
@@ -1491,7 +1364,7 @@ class ONNXParser:
             return shape
 
     def format_shapes(self, shapes: List[List]) -> str:
-        """Format shapes for display - e.g., [1,3,224,224]"""
+        """Format shapes for display"""
         if not shapes:
             return 'N/A'
 
@@ -1505,15 +1378,35 @@ class ONNXParser:
 
         return ', '.join(formatted) if formatted else 'N/A'
 
+    def get_tensor_dtype(self, tensor) -> str:
+        """Get data type of a tensor"""
+        try:
+            if hasattr(tensor, 'type') and tensor.type:
+                if tensor.type.HasField('tensor_type'):
+                    elem_type = tensor.type.tensor_type.elem_type
+                    dtype_map = {
+                        1: 'float32', 2: 'uint8', 3: 'int8', 4: 'uint16',
+                        5: 'int16', 6: 'int32', 7: 'int64', 8: 'string',
+                        9: 'bool', 10: 'float16', 11: 'float64', 12: 'uint32',
+                        13: 'uint64', 14: 'complex64', 15: 'complex128',
+                        16: 'bfloat16'
+                    }
+                    return dtype_map.get(elem_type, f'unknown({elem_type})')
+            elif hasattr(tensor, 'data_type'):
+                dtype_map = {
+                    1: 'float32', 2: 'uint8', 3: 'int8', 4: 'uint16',
+                    5: 'int16', 6: 'int32', 7: 'int64', 8: 'string',
+                    9: 'bool', 10: 'float16', 11: 'float64', 12: 'uint32',
+                    13: 'uint64', 14: 'complex64', 15: 'complex128',
+                    16: 'bfloat16'
+                }
+                return dtype_map.get(tensor.data_type, f'unknown({tensor.data_type})')
+        except:
+            pass
+        return 'unknown'
+
     def extract_node_attributes(self, node) -> Dict[str, Any]:
-        """Extract attributes from GraphSurgeon node or ONNX node
-
-        Args:
-            node: gs.Node or onnx NodeProto
-
-        Returns:
-            Dictionary of attributes
-        """
+        """Extract attributes from GraphSurgeon node or ONNX node"""
         if self.use_gs and isinstance(node, gs.Node):
             attrs = {}
             for key, val in node.attrs.items():
@@ -1568,28 +1461,86 @@ class ONNXParser:
 
         print(f"Total parameters: {total_params:,}")
 
-        shape_lookup = {}
+        tensor_metadata = {}
         tensor_dict = graph.tensors()
+        constant_names = set()
+
+        for tensor_name, tensor in tensor_dict.items():
+            if isinstance(tensor, gs.Constant):
+                constant_names.add(tensor_name)
+                shape = self.get_tensor_shape(tensor)
+                dtype = 'unknown'
+                if tensor.values is not None and hasattr(tensor.values, 'dtype'):
+                    dtype_map = {
+                        'float32': 'float32', 'uint8': 'uint8', 'int8': 'int8',
+                        'int16': 'int16', 'int32': 'int32', 'int64': 'int64',
+                        'float16': 'float16', 'float64': 'float64', 'bool': 'bool'
+                    }
+                    dtype = dtype_map.get(str(tensor.values.dtype), str(tensor.values.dtype))
+
+                tensor_metadata[tensor_name] = {
+                    'shape': shape,
+                    'dtype': dtype,
+                    'is_constant': True
+                }
 
         for inp in graph.inputs:
-            shape = self.get_tensor_shape(inp)
-            shape_lookup[inp.name] = shape
-            print(f"Input: {inp.name} -> {shape}")
+            if inp.name not in constant_names:
+                shape = self.get_tensor_shape(inp)
+                dtype = 'unknown'
+                if hasattr(inp, 'dtype') and inp.dtype is not None:
+                    dtype_map = {
+                        1: 'float32', 2: 'uint8', 3: 'int8', 6: 'int32', 7: 'int64',
+                        10: 'float16', 11: 'float64', 9: 'bool'
+                    }
+                    dtype = dtype_map.get(inp.dtype, f'type_{inp.dtype}')
+
+                tensor_metadata[inp.name] = {
+                    'shape': shape,
+                    'dtype': dtype,
+                    'is_constant': False
+                }
+                print(f"Input: {inp.name} -> {shape} ({dtype})")
 
         for out in graph.outputs:
             shape = self.get_tensor_shape(out)
-            shape_lookup[out.name] = shape
-            print(f"Output: {out.name} -> {shape}")
+            dtype = 'unknown'
+            if hasattr(out, 'dtype') and out.dtype is not None:
+                dtype_map = {
+                    1: 'float32', 2: 'uint8', 3: 'int8', 6: 'int32', 7: 'int64',
+                    10: 'float16', 11: 'float64', 9: 'bool'
+                }
+                dtype = dtype_map.get(out.dtype, f'type_{out.dtype}')
+
+            if out.name not in tensor_metadata:
+                tensor_metadata[out.name] = {
+                    'shape': shape,
+                    'dtype': dtype,
+                    'is_constant': False
+                }
+            print(f"Output: {out.name} -> {shape} ({dtype})")
 
         for tensor_name, tensor in tensor_dict.items():
-            if tensor_name not in shape_lookup:
+            if tensor_name not in tensor_metadata and not isinstance(tensor, gs.Constant):
                 shape = self.get_tensor_shape(tensor)
-                if shape:
-                    shape_lookup[tensor_name] = shape
+                dtype = 'unknown'
+                if hasattr(tensor, 'dtype') and tensor.dtype is not None:
+                    dtype_map = {
+                        1: 'float32', 2: 'uint8', 3: 'int8', 6: 'int32', 7: 'int64',
+                        10: 'float16', 11: 'float64', 9: 'bool'
+                    }
+                    dtype = dtype_map.get(tensor.dtype, f'type_{tensor.dtype}')
 
-        print(f"Total tensors tracked: {len(shape_lookup)}")
+                tensor_metadata[tensor_name] = {
+                    'shape': shape,
+                    'dtype': dtype,
+                    'is_constant': False
+                }
 
-        # Extract model details
+        print(f"Total tensors tracked: {len(tensor_metadata)} (constants: {len(constant_names)})")
+
+        shape_lookup = {name: meta['shape'] for name, meta in tensor_metadata.items()}
+
         model_details = {
             'name': model_name,
             'weights': total_params,
@@ -1637,11 +1588,33 @@ class ONNXParser:
                 if shape:
                     output_shapes.append(shape)
 
+            input_metadata = []
+            for inp_name in input_names:
+                meta = tensor_metadata.get(inp_name, {})
+                input_metadata.append({
+                    'name': inp_name,
+                    'shape': meta.get('shape', []),
+                    'dtype': meta.get('dtype', 'unknown'),
+                    'is_constant': meta.get('is_constant', False)
+                })
+
+            output_metadata = []
+            for out_name in output_names:
+                meta = tensor_metadata.get(out_name, {})
+                output_metadata.append({
+                    'name': out_name,
+                    'shape': meta.get('shape', []),
+                    'dtype': meta.get('dtype', 'unknown'),
+                    'is_constant': False
+                })
+
             layer_details[node_name] = {
                 'layer_name': node_name,
-                'type': node.op,  # GraphSurgeon uses 'op'
+                'type': node.op,
                 'input': input_names,
                 'output': output_names,
+                'input_metadata': input_metadata,
+                'output_metadata': output_metadata,
                 'x': 0,
                 'y': 0,
                 'depth': 0,
@@ -1703,10 +1676,9 @@ class ONNXParser:
         }
 
     def _parse_with_onnx(self, model_name: str) -> Dict[str, Any]:
-        """Fallback: Parse using raw ONNX API (for compatibility when GraphSurgeon not available)"""
+        """Fallback: Parse using raw ONNX API"""
         graph = self.model.graph
 
-        # Calculate total parameters
         total_params = 0
         for initializer in graph.initializer:
             dims = list(initializer.dims)
@@ -1718,30 +1690,51 @@ class ONNXParser:
 
         print(f"Total parameters: {total_params:,}")
 
-        # Build shape lookup map
-        shape_lookup = {}
-
-        for inp in graph.input:
-            shape = self.get_tensor_shape(inp)
-            shape_lookup[inp.name] = shape
-            print(f"Input: {inp.name} -> {shape}")
-
-        for out in graph.output:
-            shape = self.get_tensor_shape(out)
-            shape_lookup[out.name] = shape
-            print(f"Output: {out.name} -> {shape}")
-
-        for vi in graph.value_info:
-            shape = self.get_tensor_shape(vi)
-            shape_lookup[vi.name] = shape
+        tensor_metadata = {}
+        initializer_names = set()
 
         for init in graph.initializer:
             numeric_dims = [int(d) for d in init.dims]
-            shape_lookup[init.name] = numeric_dims
+            initializer_names.add(init.name)
+            tensor_metadata[init.name] = {
+                'shape': numeric_dims,
+                'dtype': self.get_tensor_dtype(init),
+                'is_constant': True
+            }
 
-        print(f"Total tensors tracked: {len(shape_lookup)}")
+        for inp in graph.input:
+            if inp.name not in initializer_names:
+                shape = self.get_tensor_shape(inp)
+                tensor_metadata[inp.name] = {
+                    'shape': shape,
+                    'dtype': self.get_tensor_dtype(inp),
+                    'is_constant': False
+                }
+                print(f"Input: {inp.name} -> {shape} ({self.get_tensor_dtype(inp)})")
 
-        # Extract model details
+        for out in graph.output:
+            shape = self.get_tensor_shape(out)
+            if out.name not in tensor_metadata:
+                tensor_metadata[out.name] = {
+                    'shape': shape,
+                    'dtype': self.get_tensor_dtype(out),
+                    'is_constant': False
+                }
+            print(f"Output: {out.name} -> {shape} ({self.get_tensor_dtype(out)})")
+
+        for vi in graph.value_info:
+            shape = self.get_tensor_shape(vi)
+            if vi.name not in tensor_metadata:
+                tensor_metadata[vi.name] = {
+                    'shape': shape,
+                    'dtype': self.get_tensor_dtype(vi),
+                    'is_constant': False
+                }
+
+        print(f"Total tensors tracked: {len(tensor_metadata)} (constants: {len(initializer_names)})")
+
+        shape_lookup = {name: meta['shape'] for name, meta in tensor_metadata.items()}
+
         model_details = {
             'name': model_name,
             'weights': total_params,
@@ -1760,13 +1753,11 @@ class ONNXParser:
             ]
         }
 
-        # Build output to node index mapping
         output_to_node = {}
         for idx, node in enumerate(graph.node):
             for output in node.output:
                 output_to_node[output] = idx
 
-        # Extract layer details
         layer_details = {}
         edges = []
 
@@ -1776,7 +1767,6 @@ class ONNXParser:
             node_name = node.name if node.name else f"{node.op_type}_{idx}"
             attrs = self.extract_node_attributes(node)
 
-            # Get input/output shapes
             input_shapes = []
             for inp in node.input:
                 shape = shape_lookup.get(inp, [])
@@ -1789,11 +1779,33 @@ class ONNXParser:
                 if shape:
                     output_shapes.append(shape)
 
+            input_metadata = []
+            for inp_name in node.input:
+                meta = tensor_metadata.get(inp_name, {})
+                input_metadata.append({
+                    'name': inp_name,
+                    'shape': meta.get('shape', []),
+                    'dtype': meta.get('dtype', 'unknown'),
+                    'is_constant': meta.get('is_constant', False)
+                })
+
+            output_metadata = []
+            for out_name in node.output:
+                meta = tensor_metadata.get(out_name, {})
+                output_metadata.append({
+                    'name': out_name,
+                    'shape': meta.get('shape', []),
+                    'dtype': meta.get('dtype', 'unknown'),
+                    'is_constant': False
+                })
+
             layer_details[node_name] = {
                 'layer_name': node_name,
                 'type': node.op_type,
                 'input': list(node.input),
                 'output': list(node.output),
+                'input_metadata': input_metadata,
+                'output_metadata': output_metadata,
                 'x': 0,
                 'y': 0,
                 'depth': 0,
@@ -1818,7 +1830,6 @@ class ONNXParser:
                 'attributes': attrs
             }
 
-            # Build edges
             for input_name in node.input:
                 source_idx = output_to_node.get(input_name)
                 if source_idx is not None and source_idx != idx:
@@ -1856,63 +1867,154 @@ class ONNXParser:
         }
 
 
-def discover_files_from_workdir(work_dirs_path: str) -> Dict[str, str]:
-    """Auto-discover all required files from work_dirs structure"""
+def build_hierarchical_tree(layer_details: Dict[str, Any], edges: List[Dict]) -> Dict[str, Any]:
+    """Build hierarchical tree structure from layer details based on node naming"""
+    print("\nBuilding hierarchical tree structure...")
+
+    node_topo_indices = {name: idx for idx, name in enumerate(layer_details.keys())}
+
+    tree_dict = {}
+
+    for node_name, node_data in layer_details.items():
+        node_path = []
+        for part in node_name.split('/'):
+            node_path.extend(part.split('.'))
+
+        if not node_path:
+            continue
+
+        node_info = {
+            "name": node_name,
+            "op": node_data.get('type', 'Unknown'),
+            "is_leaf": True,
+            "node_details": {
+                "name": node_name,
+                "op": node_data.get('type', 'Unknown'),
+                "inputs": node_data.get('input', []),
+                "outputs": node_data.get('output', []),
+                "input_metadata": node_data.get('input_metadata', []),
+                "output_metadata": node_data.get('output_metadata', []),
+                "attributs": node_data.get('attributes', {})
+            },
+            "topo_idx": node_topo_indices.get(node_name, 0)
+        }
+
+        current_level = tree_dict
+
+        for i, part in enumerate(node_path):
+            is_last = (i == len(node_path) - 1)
+
+            if part not in current_level:
+                if is_last:
+                    current_level[part] = node_info
+                else:
+                    current_level[part] = {
+                        "is_leaf": False,
+                        "children": {}
+                    }
+            elif not is_last:
+                current_level[part]["is_leaf"] = False
+
+            if not is_last:
+                if "children" not in current_level[part]:
+                    current_level[part]["children"] = {}
+                current_level = current_level[part]["children"]
+
+    print(f"  Built tree with {len(tree_dict)} top-level modules")
+
+    tree_dict = flatten_single_child_modules(tree_dict)
+
+    return tree_dict
+
+
+def flatten_single_child_modules(tree: Dict, parent_key: str = '') -> Dict:
+    """Recursively flatten modules with only one child module"""
+    flattened = {}
+
+    for key, value in tree.items():
+        if not value.get("is_leaf", False) and "children" in value:
+            value["children"] = flatten_single_child_modules(value["children"], key)
+            children = value["children"]
+
+            if len(children) == 1:
+                child_key = list(children.keys())[0]
+                child_value = children[child_key]
+
+                combined_key = f"{key}/{child_key}"
+
+                if not child_value.get("is_leaf", False) and "children" in child_value:
+                    flattened[combined_key] = child_value
+                else:
+                    flattened[combined_key] = child_value
+            else:
+                min_topo_idx = float('inf')
+
+                def find_min_topo_idx(node):
+                    nonlocal min_topo_idx
+                    if node.get("is_leaf", False):
+                        if "topo_idx" in node:
+                            min_topo_idx = min(min_topo_idx, node["topo_idx"])
+                    elif "children" in node:
+                        for child_node in node["children"].values():
+                            find_min_topo_idx(child_node)
+
+                find_min_topo_idx(value)
+                value["min_topo_idx"] = min_topo_idx if min_topo_idx != float('inf') else 0
+                flattened[key] = value
+        else:
+            flattened[key] = value
+
+    return flattened
+
+
+def discover_files_from_workdir(model_dir_path: str) -> Dict[str, str]:
+    """Auto-discover all required files from model directory structure"""
     discovered = {}
 
-    print(f"\nAuto-discovering files in: {work_dirs_path}")
+    print(f"\nAuto-discovering files in: {model_dir_path}")
     print("=" * 70)
 
     import glob
 
-    # 1. Find ONNX model: work_dirs/compile/**/model/*.onnx
-    onnx_files = glob.glob(os.path.join(work_dirs_path, 'analyze/**/model/*.onnx'), recursive=True)
+    onnx_files = glob.glob(os.path.join(model_dir_path, 'model/*.onnx'), recursive=False)
     if onnx_files:
         discovered['onnx'] = onnx_files[0]
         print(f"[FOUND] ONNX model: {os.path.relpath(discovered['onnx'])}")
     else:
         print("[NOT FOUND] ONNX model not found")
 
-    # 2. Find graphvizInfo.txt: work_dirs/compile/**/artifacts/tempDir/graphvizInfo.txt
-    graphviz_files = glob.glob(os.path.join(work_dirs_path, 'analyze/**/artifacts/tempDir/graphvizInfo.txt'), recursive=True)
+    graphviz_files = glob.glob(os.path.join(model_dir_path, 'artifacts/tempDir/graphvizInfo.txt'), recursive=False)
     if graphviz_files:
         discovered['graphviz'] = graphviz_files[0]
         print(f"[FOUND] graphvizInfo: {os.path.relpath(discovered['graphviz'])}")
     else:
         print("[NOT FOUND] graphvizInfo.txt not found")
 
-    # 3. Find allowedNode.txt: work_dirs/compile/**/artifacts/allowedNode.txt
-    allowednode_files = glob.glob(os.path.join(work_dirs_path, 'analyze/**/artifacts/allowedNode.txt'), recursive=True)
+    allowednode_files = glob.glob(os.path.join(model_dir_path, 'artifacts/allowedNode.txt'), recursive=False)
     if allowednode_files:
         discovered['allowednode'] = allowednode_files[0]
         print(f"[FOUND] allowedNode: {os.path.relpath(discovered['allowednode'])}")
     else:
         print("[NOT FOUND] allowedNode.txt not found")
 
-    # 4. Find subgraph HTML files: work_dirs/compile/**/artifacts/tempDir/subgraph_*_tidl_net.bin.html
     subgraph_dir = None
-    subgraph_html_files = glob.glob(os.path.join(work_dirs_path, 'analyze/**/artifacts/tempDir/subgraph_*_tidl_net.bin.html'), recursive=True)
+    subgraph_html_files = glob.glob(os.path.join(model_dir_path, 'artifacts/tempDir/subgraph_*_tidl_net.bin.html'), recursive=False)
     if subgraph_html_files:
-        # Get the directory containing subgraph files
         subgraph_dir = os.path.dirname(subgraph_html_files[0])
         discovered['subgraph_dir'] = subgraph_dir
         print(f"[FOUND] {len(subgraph_html_files)} subgraph HTML files in: {os.path.relpath(subgraph_dir)}")
     else:
         print("[NOT FOUND] Subgraph HTML files not found")
 
-    # 5. Find analyze.xlsx: work_dirs/analyze/**/analyze.xlsx
-    xlsx_files = glob.glob(os.path.join(work_dirs_path, 'analyze/**/analyze.xlsx'), recursive=True)
+    xlsx_files = glob.glob(os.path.join(model_dir_path, 'analyze.xlsx'), recursive=False)
     if xlsx_files:
         discovered['xlsx'] = xlsx_files[0]
         print(f"[FOUND] analyze.xlsx: {os.path.relpath(discovered['xlsx'])}")
     else:
         print("[NOT FOUND] analyze.xlsx not found")
 
-    # 6. Find layer_output_mapping YAML: work_dirs/analyze/**/layer_output_mapping*.yaml
-    # Priority: notidl_tidl.yaml > notidl_tidl32.yaml > tidl32_tidl.yaml
-    mapping_files = glob.glob(os.path.join(work_dirs_path, 'analyze/**/layer_output_mapping*.yaml'), recursive=True)
+    mapping_files = glob.glob(os.path.join(model_dir_path, 'layer_output_mapping*.yaml'), recursive=False)
     if mapping_files:
-        # Prioritize notidl_tidl.yaml (INT8 quantization comparison)
         notidl_tidl_files = [f for f in mapping_files if 'notidl_tidl.yaml' in f and 'tidl32' not in f]
         if notidl_tidl_files:
             discovered['activation_yaml'] = notidl_tidl_files[0]
@@ -1926,77 +2028,51 @@ def discover_files_from_workdir(work_dirs_path: str) -> Dict[str, str]:
     return discovered
 
 
-def load_config_data(base_dir: str) -> Dict[str, Any]:
-    """Load configuration data from work_dirs (config.yaml and result.yaml)"""
+def load_config_data(model_dir_path: str) -> Dict[str, Any]:
+    """Load configuration data from model directory (config.yaml and result.yaml)"""
     config_data = {}
 
-    # Check if base_dir IS work_dirs or contains work_dirs
-    if os.path.basename(base_dir) == 'work_dirs' or 'work_dirs' in base_dir:
-        # base_dir is already work_dirs or a path within it
-        work_dirs_path = base_dir if os.path.basename(base_dir) == 'work_dirs' else base_dir.split('work_dirs')[0] + 'work_dirs'
-    else:
-        # Search for work_dirs
-        work_dirs_path = os.path.join(base_dir, 'work_dirs')
-        if not os.path.exists(work_dirs_path):
-            # Try parent directory
-            work_dirs_path = os.path.join(os.path.dirname(base_dir), 'work_dirs')
-
-    if not os.path.exists(work_dirs_path):
-        print("\nWARNING: work_dirs not found, configuration data will not be available")
-        return config_data
-
-    # Find config.yaml and result.yaml in work_dirs/analyze
     import glob
-    config_files = glob.glob(os.path.join(work_dirs_path, '**/config.yaml'), recursive=True)
-    result_files = glob.glob(os.path.join(work_dirs_path, '**/result.yaml'), recursive=True)
+    config_files = glob.glob(os.path.join(model_dir_path, '**/config.yaml'), recursive=True)
+    result_files = glob.glob(os.path.join(model_dir_path, '**/result.yaml'), recursive=True)
 
-    # Prefer analyze/tidl directory over analyze/notidl over compile
     config_path = None
     result_path = None
 
-    # First priority: analyze + /tidl/ directory (not tidl32, not notidl)
     for path in config_files:
-        if 'analyze' in path and '/tidl/' in path:
+        if '/tidl/' not in path and '/tidl32/' not in path and '/notidl/' not in path:
             config_path = path
             break
-    # Second priority: analyze (any)
     if not config_path:
         for path in config_files:
-            if 'analyze' in path:
+            if '/tidl/' in path:
                 config_path = path
                 break
-    # Fallback: any config file
     if not config_path and config_files:
         config_path = config_files[0]
 
-    # First priority: analyze + /tidl/ directory (not tidl32, not notidl)
     for path in result_files:
-        if 'analyze' in path and '/tidl/' in path:
+        if '/tidl/' not in path and '/tidl32/' not in path and '/notidl/' not in path:
             result_path = path
             break
-    # Second priority: analyze (any)
     if not result_path:
         for path in result_files:
-            if 'analyze' in path:
+            if '/tidl/' in path:
                 result_path = path
                 break
-    # Fallback: any result file
     if not result_path and result_files:
         result_path = result_files[0]
 
-    # Load config.yaml
     if config_path and os.path.exists(config_path):
         try:
             import yaml
             with open(config_path, 'r') as f:
                 config = yaml.safe_load(f)
 
-            # Extract relevant fields
             config_data['target_device'] = config.get('session', {}).get('target_device', 'Unknown')
             config_data['task_type'] = config.get('common', {}).get('task_type', 'Unknown')
             config_data['tensor_bits'] = config.get('session', {}).get('runtime_options', {}).get('tensor_bits', 'Unknown')
 
-            # Extract accuracy from model_info
             metric_ref = config.get('model_info', {}).get('metric_reference', {})
             if 'accuracy_top1%' in metric_ref:
                 config_data['accuracy'] = f"{metric_ref['accuracy_top1%']}%"
@@ -2007,14 +2083,12 @@ def load_config_data(base_dir: str) -> Dict[str, Any]:
         except Exception as e:
             print(f"WARNING: Failed to load config.yaml: {e}")
 
-    # Load result.yaml
     if result_path and os.path.exists(result_path):
         try:
             import yaml
             with open(result_path, 'r') as f:
                 result = yaml.safe_load(f)
 
-            # Extract result fields
             result_data = result.get('result', {})
             config_data['num_frames'] = result_data.get('num_frames', 'N/A')
             config_data['num_subgraphs'] = result_data.get('num_subgraphs', 'N/A')
@@ -2034,42 +2108,25 @@ def load_config_data(base_dir: str) -> Dict[str, Any]:
     return config_data
 
 
-def load_proctime_data(base_dir: str) -> Dict[int, List[Dict[str, Any]]]:
+def load_proctime_data(model_dir_path: str) -> Dict[int, List[Dict[str, Any]]]:
     """Load proctime data from performance CSV files for each subgraph"""
     proctime_data = {}
 
-    # Check if base_dir IS work_dirs or contains work_dirs
-    if os.path.basename(base_dir) == 'work_dirs' or 'work_dirs' in base_dir:
-        # base_dir is already work_dirs or a path within it
-        work_dirs_path = base_dir if os.path.basename(base_dir) == 'work_dirs' else base_dir.split('work_dirs')[0] + 'work_dirs'
-    else:
-        # Search for work_dirs
-        work_dirs_path = os.path.join(base_dir, 'work_dirs')
-        if not os.path.exists(work_dirs_path):
-            work_dirs_path = os.path.join(os.path.dirname(base_dir), 'work_dirs')
-
-    if not os.path.exists(work_dirs_path):
-        print("\nWARNING: work_dirs not found, proctime data will not be available")
-        return proctime_data
-
-    # Find all performance CSV files (the long-named ones with procTime column)
-    # They follow pattern: tempDir_subgraph_X_tidl_net_*.csv
     import glob
-    csv_files = glob.glob(os.path.join(work_dirs_path, '**/tempDir/subgraph_*/tempDir_subgraph_*_tidl_net_*.csv'), recursive=True)
+    csv_files = glob.glob(os.path.join(model_dir_path, '**/tempDir/subgraph_*/tempDir_subgraph_*_tidl_net_*.csv'), recursive=True)
 
-    # Prefer analyze/tidl directory
     preferred_files = []
     for path in csv_files:
-        if 'analyze' in path and '/tidl/' in path:
+        if '/tidl/' in path:
             preferred_files.append(path)
 
     if not preferred_files:
         preferred_files = csv_files
 
-    # Extract subgraph number from each file and parse
+    processed_subgraphs = set()
+
     for csv_path in preferred_files:
         try:
-            # Extract subgraph number from path
             import re
             match = re.search(r'subgraph_(\d+)_tidl_net', csv_path)
             if not match:
@@ -2077,7 +2134,10 @@ def load_proctime_data(base_dir: str) -> Dict[int, List[Dict[str, Any]]]:
 
             subgraph_num = int(match.group(1))
 
-            # Read CSV file
+            # Skip if already processed this subgraph
+            if subgraph_num in processed_subgraphs:
+                continue
+
             import csv
             with open(csv_path, 'r') as f:
                 reader = csv.DictReader(f)
@@ -2085,12 +2145,10 @@ def load_proctime_data(base_dir: str) -> Dict[int, List[Dict[str, Any]]]:
 
                 for row in reader:
                     try:
-                        # Extract relevant fields
                         layer_num = int(row[' lyrNum '].strip())
                         layer_type = row[' LyrType'].strip()
                         proctime_str = row['procTime(us)'].strip()
 
-                        # Parse procTime (could be float)
                         proctime = float(proctime_str) if proctime_str else 0.0
 
                         layer_data.append({
@@ -2099,11 +2157,11 @@ def load_proctime_data(base_dir: str) -> Dict[int, List[Dict[str, Any]]]:
                             'proctime': proctime
                         })
                     except (ValueError, KeyError) as e:
-                        # Skip rows with parsing errors
                         continue
 
                 if layer_data:
                     proctime_data[subgraph_num] = layer_data
+                    processed_subgraphs.add(subgraph_num)
                     print(f"Loaded proctime data for subgraph {subgraph_num}: {len(layer_data)} layers")
 
         except Exception as e:
@@ -2112,42 +2170,25 @@ def load_proctime_data(base_dir: str) -> Dict[int, List[Dict[str, Any]]]:
     return proctime_data
 
 
-def load_cycles_data(base_dir: str) -> Dict[int, List[Dict[str, Any]]]:
+def load_cycles_data(model_dir_path: str) -> Dict[int, List[Dict[str, Any]]]:
     """Load kernel and core loop cycles data from performance CSV files for each subgraph"""
     cycles_data = {}
 
-    # Check if base_dir IS work_dirs or contains work_dirs
-    if os.path.basename(base_dir) == 'work_dirs' or 'work_dirs' in base_dir:
-        # base_dir is already work_dirs or a path within it
-        work_dirs_path = base_dir if os.path.basename(base_dir) == 'work_dirs' else base_dir.split('work_dirs')[0] + 'work_dirs'
-    else:
-        # Search for work_dirs
-        work_dirs_path = os.path.join(base_dir, 'work_dirs')
-        if not os.path.exists(work_dirs_path):
-            work_dirs_path = os.path.join(os.path.dirname(base_dir), 'work_dirs')
-
-    if not os.path.exists(work_dirs_path):
-        print("\nWARNING: work_dirs not found, cycles data will not be available")
-        return cycles_data
-
-    # Find all performance CSV files (the long-named ones with cycles columns)
-    # They follow pattern: tempDir_subgraph_X_tidl_net_*.csv
     import glob
-    csv_files = glob.glob(os.path.join(work_dirs_path, '**/tempDir/subgraph_*/tempDir_subgraph_*_tidl_net_*.csv'), recursive=True)
+    csv_files = glob.glob(os.path.join(model_dir_path, '**/tempDir/subgraph_*/tempDir_subgraph_*_tidl_net_*.csv'), recursive=True)
 
-    # Prefer analyze/tidl directory
     preferred_files = []
     for path in csv_files:
-        if 'analyze' in path and '/tidl/' in path:
+        if '/tidl/' in path:
             preferred_files.append(path)
 
     if not preferred_files:
         preferred_files = csv_files
 
-    # Extract subgraph number from each file and parse
+    processed_subgraphs = set()
+
     for csv_path in preferred_files:
         try:
-            # Extract subgraph number from path
             import re
             match = re.search(r'subgraph_(\d+)_tidl_net', csv_path)
             if not match:
@@ -2155,7 +2196,10 @@ def load_cycles_data(base_dir: str) -> Dict[int, List[Dict[str, Any]]]:
 
             subgraph_num = int(match.group(1))
 
-            # Read CSV file
+            # Skip if already processed this subgraph
+            if subgraph_num in processed_subgraphs:
+                continue
+
             import csv
             with open(csv_path, 'r') as f:
                 reader = csv.DictReader(f)
@@ -2163,13 +2207,11 @@ def load_cycles_data(base_dir: str) -> Dict[int, List[Dict[str, Any]]]:
 
                 for row in reader:
                     try:
-                        # Extract relevant fields
                         layer_num = int(row[' lyrNum '].strip())
                         layer_type = row[' LyrType'].strip()
                         kernel_only_cycles_str = row['kernelOnlyCycles'].strip()
                         core_loop_cycles_str = row['coreLoopCycles'].strip()
 
-                        # Parse cycles (could be float)
                         kernel_only_cycles = float(kernel_only_cycles_str) if kernel_only_cycles_str else 0.0
                         core_loop_cycles = float(core_loop_cycles_str) if core_loop_cycles_str else 0.0
 
@@ -2180,11 +2222,11 @@ def load_cycles_data(base_dir: str) -> Dict[int, List[Dict[str, Any]]]:
                             'coreLoopCycles': core_loop_cycles
                         })
                     except (ValueError, KeyError) as e:
-                        # Skip rows with parsing errors
                         continue
 
                 if layer_data:
                     cycles_data[subgraph_num] = layer_data
+                    processed_subgraphs.add(subgraph_num)
                     print(f"Loaded cycles data for subgraph {subgraph_num}: {len(layer_data)} layers")
 
         except Exception as e:
@@ -2193,41 +2235,25 @@ def load_cycles_data(base_dir: str) -> Dict[int, List[Dict[str, Any]]]:
     return cycles_data
 
 
-def load_memory_data(base_dir: str) -> Dict[int, List[Dict[str, Any]]]:
+def load_memory_data(model_dir_path: str) -> Dict[int, List[Dict[str, Any]]]:
     """Load memory usage data from performance CSV files for each subgraph"""
     memory_data = {}
 
-    # Check if base_dir IS work_dirs or contains work_dirs
-    if os.path.basename(base_dir) == 'work_dirs' or 'work_dirs' in base_dir:
-        # base_dir is already work_dirs or a path within it
-        work_dirs_path = base_dir if os.path.basename(base_dir) == 'work_dirs' else base_dir.split('work_dirs')[0] + 'work_dirs'
-    else:
-        # Search for work_dirs
-        work_dirs_path = os.path.join(base_dir, 'work_dirs')
-        if not os.path.exists(work_dirs_path):
-            work_dirs_path = os.path.join(os.path.dirname(base_dir), 'work_dirs')
-
-    if not os.path.exists(work_dirs_path):
-        print("\nWARNING: work_dirs not found, memory data will not be available")
-        return memory_data
-
-    # Find all performance CSV files
     import glob
-    csv_files = glob.glob(os.path.join(work_dirs_path, '**/tempDir/subgraph_*/tempDir_subgraph_*_tidl_net_*.csv'), recursive=True)
+    csv_files = glob.glob(os.path.join(model_dir_path, '**/tempDir/subgraph_*/tempDir_subgraph_*_tidl_net_*.csv'), recursive=True)
 
-    # Prefer analyze/tidl directory
     preferred_files = []
     for path in csv_files:
-        if 'analyze' in path and '/tidl/' in path:
+        if '/tidl/' in path:
             preferred_files.append(path)
 
     if not preferred_files:
         preferred_files = csv_files
 
-    # Extract subgraph number from each file and parse
+    processed_subgraphs = set()
+
     for csv_path in preferred_files:
         try:
-            # Extract subgraph number from path
             import re
             match = re.search(r'subgraph_(\d+)_tidl_net', csv_path)
             if not match:
@@ -2235,7 +2261,10 @@ def load_memory_data(base_dir: str) -> Dict[int, List[Dict[str, Any]]]:
 
             subgraph_num = int(match.group(1))
 
-            # Read CSV file
+            # Skip if already processed this subgraph
+            if subgraph_num in processed_subgraphs:
+                continue
+
             import csv
             with open(csv_path, 'r') as f:
                 reader = csv.DictReader(f)
@@ -2243,16 +2272,13 @@ def load_memory_data(base_dir: str) -> Dict[int, List[Dict[str, Any]]]:
 
                 for row in reader:
                     try:
-                        # Extract relevant fields
                         layer_num = int(row[' lyrNum '].strip())
                         layer_type = row[' LyrType'].strip()
 
-                        # Parse memory volumes (in KB)
                         in_vol = float(row['inVol(KB)'].strip()) if row['inVol(KB)'].strip() else 0.0
                         out_vol = float(row['outVol(KB)'].strip()) if row['outVol(KB)'].strip() else 0.0
                         wt_vol = float(row['wtVol(KB)'].strip()) if row['wtVol(KB)'].strip() else 0.0
 
-                        # Parse memory locations
                         src_mem_in = row[' srcMem-IN'].strip()
                         dst_mem_in = row[' dstMem-IN'].strip()
                         src_mem_out = row['srcMem-OUT'].strip()
@@ -2260,18 +2286,15 @@ def load_memory_data(base_dir: str) -> Dict[int, List[Dict[str, Any]]]:
                         src_mem_wt = row[' srcMem-WT'].strip()
                         dst_mem_wt = row[' dstMem-WT'].strip()
 
-                        # Calculate memory usage by type
-                        # This is a simplified calculation - adjust based on actual memory architecture
                         l2_usage = 0.0
                         msmc_usage = 0.0
                         ddr_usage = 0.0
 
-                        # Count volumes based on memory locations
                         for mem_loc, vol in [(src_mem_in, in_vol), (dst_mem_in, in_vol),
                                              (src_mem_out, out_vol), (dst_mem_out, out_vol),
                                              (src_mem_wt, wt_vol), (dst_mem_wt, wt_vol)]:
                             if 'L2' in mem_loc:
-                                l2_usage += vol / 2  # Divide by 2 to avoid double counting
+                                l2_usage += vol / 2
                             elif 'MSMC' in mem_loc or 'L3' in mem_loc:
                                 msmc_usage += vol / 2
                             elif 'DDR' in mem_loc:
@@ -2286,11 +2309,11 @@ def load_memory_data(base_dir: str) -> Dict[int, List[Dict[str, Any]]]:
                             'total_usage': l2_usage + msmc_usage + ddr_usage
                         })
                     except (ValueError, KeyError) as e:
-                        # Skip rows with parsing errors
                         continue
 
                 if layer_data:
                     memory_data[subgraph_num] = layer_data
+                    processed_subgraphs.add(subgraph_num)
                     print(f"Loaded memory data for subgraph {subgraph_num}: {len(layer_data)} layers")
 
         except Exception as e:
@@ -2303,53 +2326,52 @@ def main(work_dirs_path, output_json_path):
     """Main function to extract all artifact data to JSON"""
     if len(sys.argv) < 3:
         print("=" * 70)
-        print("Data Extractor V6 - Extract TIDL Artifacts to JSON")
+        print("Data Extractor - Extract TIDL Artifacts to JSON")
         print("=" * 70)
-        print("\nUsage: python data_extractor_v6.py <work_dirs/> <output.json>")
+        print("\nUsage: python data_extractor.py <model_dir/> <output.json>")
         print("\nArguments:")
-        print("  work_dirs/   - Work directory containing all model files")
+        print("  model_dir/   - Direct path to model directory (e.g., work_dirs/compile/AM69A/cl_onnx_model_name/)")
         print("  output.json  - Output JSON file path (will be compressed)")
         print("\nExample:")
-        print("  python data_extractor_v6.py work_dirs/ model_data.json")
+        print("  python data_extractor.py work_dirs/compile/AM69A/cl-ort-resnet18/ model_data.json")
         print("\nThe script will automatically discover and parse:")
-        print("  - ONNX model from work_dirs/analyze/**/model/*.onnx")
-        print("  - GraphViz info from work_dirs/analyze/**/artifacts/tempDir/graphvizInfo.txt")
-        print("  - Allowed nodes from work_dirs/analyze/**/artifacts/allowedNode.txt")
-        print("  - Subgraph files from work_dirs/analyze/**/artifacts/tempDir/")
-        print("  - Metrics from work_dirs/analyze/**/analyze.xlsx")
+        print("  - ONNX model from <model_dir>/model/*.onnx")
+        print("  - GraphViz info from <model_dir>/artifacts/tempDir/graphvizInfo.txt")
+        print("  - Allowed nodes from <model_dir>/artifacts/allowedNode.txt")
+        print("  - Subgraph files from <model_dir>/artifacts/tempDir/")
+        print("  - Metrics from <model_dir>/analyze.xlsx")
         print("  - Activation data from layer_info.txt and binary files")
-        print("  - Config/Result from work_dirs/analyze/**/tidl/*.yaml")
-        print("  - Performance data from work_dirs/analyze/**/tidl/artifacts/tempDir/**/*.csv")
+        print("  - Config/Result from <model_dir>/tidl/*.yaml")
+        print("  - Performance data from <model_dir>/tidl/artifacts/tempDir/**/*.csv")
         print("=" * 70)
         sys.exit(1)
 
-    # Validate inputs
-    if not os.path.exists(work_dirs_path):
-        print(f"ERROR: Work directory not found: {work_dirs_path}")
+    model_dir_path = sys.argv[1]
+    output_json_path = sys.argv[2]
+
+    if not os.path.exists(model_dir_path):
+        print(f"ERROR: Model directory not found: {model_dir_path}")
         sys.exit(1)
 
-    if not os.path.isdir(work_dirs_path):
-        print(f"ERROR: {work_dirs_path} is not a directory")
+    if not os.path.isdir(model_dir_path):
+        print(f"ERROR: {model_dir_path} is not a directory")
         sys.exit(1)
 
-    # Auto-discover all files from work_dirs
-    discovered = discover_files_from_workdir(work_dirs_path)
+    discovered = discover_files_from_workdir(model_dir_path)
 
-    # Check required files
     required_keys = ['onnx', 'graphviz', 'allowednode', 'subgraph_dir']
     missing = [key for key in required_keys if key not in discovered]
     if missing:
         print(f"\nERROR: Required files not found: {', '.join(missing)}")
         sys.exit(1)
 
-    # Extract discovered paths
     onnx_path = discovered['onnx']
     graphviz_path = discovered['graphviz']
     allowednode_path = discovered['allowednode']
     subgraph_dir = discovered['subgraph_dir']
 
     print("\n" + "=" * 70)
-    print("Data Extractor V6 - Parsing Artifacts")
+    print("Data Extractor - Parsing Artifacts")
     print("=" * 70)
     print(f"ONNX Model:      {onnx_path}")
     print(f"GraphViz Info:   {graphviz_path}")
@@ -2359,12 +2381,16 @@ def main(work_dirs_path, output_json_path):
     print("=" * 70)
 
     try:
-        # Parse ONNX model
         print("\n[1/8] Parsing ONNX model...")
         onnx_parser = ONNXParser(onnx_path)
         model_data = onnx_parser.parse()
 
-        # Parse TIDL files
+        tree_structure = build_hierarchical_tree(
+            model_data['layer_details'],
+            model_data['edges']
+        )
+        model_data['tree_structure'] = tree_structure
+
         subgraph_data = {
             'subgraphs': [],
             'node_support': {}
@@ -2384,23 +2410,20 @@ def main(work_dirs_path, output_json_path):
         else:
             print(f"WARNING: {allowednode_path} not found")
 
-        # Parse TIDL subgraph HTML files and netLog files
         print("\n[4/8] Parsing TIDL subgraph HTML files...")
         tidl_parser = TIDLSubgraphParser(subgraph_dir, subgraph_data['node_support'])
         tidl_data = tidl_parser.parse_all_subgraphs()
 
-        # Parse activation data using layer_info.txt files
         print("\n[5/8] Parsing activation data...")
         activation_data = {}
         try:
-            activation_parser = ActivationDataParser(work_dirs_path, frame_idx=0)
+            activation_parser = ActivationDataParser(model_dir_path, frame_idx=0)
             activation_data = activation_parser.process_all_layers()
         except Exception as e:
             print(f"WARNING: Failed to parse activation data: {e}")
             import traceback
             traceback.print_exc()
 
-        # Parse metrics data if analyze.xlsx exists
         print("\n[6/8] Parsing metrics data...")
         metrics_data = {}
         metrics_xlsx_path = discovered.get('xlsx', None)
@@ -2410,32 +2433,151 @@ def main(work_dirs_path, output_json_path):
         else:
             print("WARNING: No analyze.xlsx file found")
 
-        # Load configuration data
         print("\n[7/8] Loading configuration and performance data...")
-        config_data = load_config_data(work_dirs_path)
-        proctime_data = load_proctime_data(work_dirs_path)
-        cycles_data = load_cycles_data(work_dirs_path)
-        memory_data = load_memory_data(work_dirs_path)
+        config_data = load_config_data(model_dir_path)
+        proctime_data = load_proctime_data(model_dir_path)
+        cycles_data = load_cycles_data(model_dir_path)
+        memory_data = load_memory_data(model_dir_path)
 
-        # Combine all data
         print("\n[8/8] Combining and saving data...")
-        combined_data = {
-            'model_data': model_data,
-            'subgraph_data': subgraph_data,
-            'tidl_data': tidl_data,
-            'activation_data': activation_data,
-            'metrics_data': metrics_data,
-            'config_data': config_data,
-            'proctime_data': proctime_data,
-            'cycles_data': cycles_data,
-            'memory_data': memory_data
+
+        performance_data = {}
+        all_subgraphs = set(proctime_data.keys()) | set(cycles_data.keys()) | set(memory_data.keys())
+
+        for subgraph_num in all_subgraphs:
+            proctime_lookup = {layer['layer_num']: layer for layer in proctime_data.get(subgraph_num, [])}
+            cycles_lookup = {layer['layer_num']: layer for layer in cycles_data.get(subgraph_num, [])}
+            memory_lookup = {layer['layer_num']: layer for layer in memory_data.get(subgraph_num, [])}
+
+            all_layer_nums = set(proctime_lookup.keys()) | set(cycles_lookup.keys()) | set(memory_lookup.keys())
+
+            merged_layers = []
+            for layer_num in sorted(all_layer_nums):
+                layer_entry = {'layer_num': layer_num}
+
+                if layer_num in proctime_lookup:
+                    layer_entry['layer_type'] = proctime_lookup[layer_num]['layer_type']
+                    layer_entry['proctime_us'] = proctime_lookup[layer_num]['proctime']
+
+                if layer_num in cycles_lookup:
+                    if 'layer_type' not in layer_entry:
+                        layer_entry['layer_type'] = cycles_lookup[layer_num]['layer_type']
+                    layer_entry['kernel_cycles'] = cycles_lookup[layer_num]['kernelOnlyCycles']
+                    layer_entry['core_loop_cycles'] = cycles_lookup[layer_num]['coreLoopCycles']
+
+                if layer_num in memory_lookup:
+                    if 'layer_type' not in layer_entry:
+                        layer_entry['layer_type'] = memory_lookup[layer_num]['layer_type']
+                    layer_entry['memory'] = {
+                        'l2_kb': memory_lookup[layer_num]['l2_usage'],
+                        'msmc_kb': memory_lookup[layer_num]['msmc_usage'],
+                        'ddr_kb': memory_lookup[layer_num]['ddr_usage'],
+                        'total_kb': memory_lookup[layer_num]['total_usage']
+                    }
+
+                merged_layers.append(layer_entry)
+
+            performance_data[subgraph_num] = merged_layers
+
+        enhanced_tidl_data = {}
+
+        onnx_nodes_by_subgraph = {}
+        for subgraph_info in subgraph_data.get('subgraphs', []):
+            sg_id = subgraph_info.get('id')
+            onnx_nodes_by_subgraph[sg_id] = subgraph_info.get('nodes', [])
+
+        for subgraph_id, tidl_info in tidl_data.items():
+            enhanced_layers = []
+
+            subgraph_metrics = metrics_data.get(str(subgraph_id), [])
+            metrics_lookup = {m['tidl_layer_id']: m for m in subgraph_metrics if m.get('tidl_layer_id')}
+
+            subgraph_perf = performance_data.get(subgraph_id, [])
+            perf_lookup = {p['layer_num']: p for p in subgraph_perf}
+
+            for layer in tidl_info.get('layers', []):
+                layer_idx = layer['layer_index']
+                tidl_layer_id = str(layer_idx)
+
+                enhanced_layer = {
+                    'index': layer_idx,
+                    'type': layer['layer_type'],
+                    'name': layer['layer_name'],
+                    'parameters': layer['parameters']
+                }
+
+                if 'macs' in layer:
+                    enhanced_layer['macs'] = layer['macs']
+                if 'gmacs' in layer:
+                    enhanced_layer['gmacs'] = layer['gmacs']
+
+                if 'onnx_node_index' in layer:
+                    enhanced_layer['onnx_node_index'] = layer['onnx_node_index']
+
+                if layer_idx in perf_lookup:
+                    enhanced_layer['performance'] = perf_lookup[layer_idx]
+
+                if tidl_layer_id in metrics_lookup:
+                    metric = metrics_lookup[tidl_layer_id]
+                    enhanced_layer['metrics'] = {
+                        'mae': metric['mean_abs_diff'],
+                        'mean_abs_rel_diff': metric['mean_abs_rel_diff'],
+                        'median_abs_diff': metric['median_abs_diff'],
+                        'max_abs_diff': metric['max_abs_diff']
+                    }
+
+                activation_key = f"{subgraph_id}_{tidl_layer_id}"
+                if activation_key in activation_data:
+                    enhanced_layer['activation'] = activation_data[activation_key]
+
+                enhanced_layers.append(enhanced_layer)
+
+            enhanced_tidl_data[subgraph_id] = {
+                'id': subgraph_id,
+                'onnx_nodes': onnx_nodes_by_subgraph.get(subgraph_id, []),
+                'layers': enhanced_layers,
+                'total_gmacs': tidl_info.get('total_gmacs', 0.0),
+                'graph': {
+                    'nodes': tidl_info.get('graph_nodes', []),
+                    'edges': tidl_info.get('graph_edges', [])
+                }
+            }
+
+        metadata = {
+            'target_device': config_data.get('target_device', 'Unknown'),
+            'task_type': config_data.get('task_type', 'Unknown'),
+            'tensor_bits': config_data.get('tensor_bits', 'Unknown'),
+            'model_accuracy': config_data.get('accuracy', 'N/A')
         }
 
-        # Save as compressed JSON
+        performance_summary = {
+            'num_frames': config_data.get('num_frames', 'N/A'),
+            'total_gmacs': config_data.get('perfsim_gmacs', 'N/A'),
+            'total_time_ms': config_data.get('perfsim_time_ms', 'N/A'),
+            'ddr_transfer_mb': config_data.get('perfsim_ddr_transfer_mb', 'N/A'),
+            'num_subgraphs': config_data.get('num_subgraphs', 'N/A')
+        }
+
+        combined_data = {
+            'metadata': metadata,
+            'model': {
+                'details': model_data.get('model_details', {}),
+                'layers': model_data.get('layer_details', {}),
+                'tree_structure': model_data.get('tree_structure', {}),
+                'graph': {
+                    'edges': model_data.get('edges', [])
+                }
+            },
+            'compilation': {
+                'node_support': subgraph_data.get('node_support', {}),
+                'tidl_subgraphs': enhanced_tidl_data
+            },
+            'performance': performance_summary
+        }
+
         print(f"Writing compressed JSON to: {output_json_path}")
         json_str = json.dumps(combined_data)
 
-        # Use .gz extension for compressed output
         if not output_json_path.endswith('.gz'):
             output_json_path = output_json_path + '.gz'
 
@@ -2449,14 +2591,31 @@ def main(work_dirs_path, output_json_path):
         print("SUCCESS! Data extraction complete.")
         print("=" * 70)
         print(f"\nExtracted data summary:")
-        print(f"  - ONNX layers: {len(model_data['layer_details'])}")
-        print(f"  - TIDL subgraphs: {len(tidl_data)}")
-        print(f"  - Activation data points: {len(activation_data)}")
-        if metrics_data:
-            total_metrics = sum(len(v) for v in metrics_data.values())
-            print(f"  - Metrics data points: {total_metrics}")
+        print(f"  - ONNX layers: {len(combined_data['model']['layers'])}")
+        print(f"  - TIDL subgraphs: {len(combined_data['compilation']['tidl_subgraphs'])}")
+
+        total_activation_layers = 0
+        for subgraph_id, subgraph in combined_data['compilation']['tidl_subgraphs'].items():
+            total_activation_layers += sum(1 for layer in subgraph['layers'] if 'activation' in layer)
+        print(f"  - Layers with activation data: {total_activation_layers}")
+
+        total_metrics_layers = 0
+        for subgraph_id, subgraph in combined_data['compilation']['tidl_subgraphs'].items():
+            total_metrics_layers += sum(1 for layer in subgraph['layers'] if 'metrics' in layer)
+        print(f"  - Layers with metrics: {total_metrics_layers}")
+
+        total_perf_layers = 0
+        for subgraph_id, subgraph in combined_data['compilation']['tidl_subgraphs'].items():
+            total_perf_layers += sum(1 for layer in subgraph['layers'] if 'performance' in layer)
+        print(f"  - Layers with performance data: {total_perf_layers}")
+
+        print(f"\nMetadata:")
+        print(f"  - Device: {combined_data['metadata']['target_device']}")
+        print(f"  - Precision: {combined_data['metadata']['tensor_bits']}")
+        print(f"  - Task: {combined_data['metadata']['task_type']}")
+
         print(f"\nNext step:")
-        print(f"  python html_generator_v6.py {output_json_path} template_v6.html output.html")
+        print(f"  python html_generator.py {output_json_path} template.html output.html")
 
     except Exception as e:
         print(f"\nERROR: {e}")
@@ -2467,4 +2626,3 @@ def main(work_dirs_path, output_json_path):
 
 if __name__ == "__main__":
     main(work_dirs_path = sys.argv[1], output_json_path = sys.argv[2])
-    

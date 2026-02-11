@@ -56,116 +56,6 @@
     --node-non-accelerated: #c53030;
 }
 
-/* ==================== DARK MODE ==================== */
-[data-theme="dark"] {
-    --ti-red: #ff4444;
-    --ti-red-light: #ff6666;
-    --ti-red-dark: #cc0000;
-    --ti-red-accent: rgba(255, 68, 68, 0.15);
-    --background-color: #1a1a1a;
-    --card-background: #2d2d2d;
-    --text-primary: #e0e0e0;
-    --text-secondary: #b0b0b0;
-    --text-muted: #808080;
-    --border-color: #404040;
-    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.5);
-    --node-supported: #718096;
-    --node-non-accelerated: #e53e3e;
-}
-
-[data-theme="dark"] .node-rect {
-    fill: #3a3a3a;
-    filter:
-        drop-shadow(-8px -8px 16px rgba(255, 255, 255, 0.02))
-        drop-shadow(8px 8px 16px rgba(0, 0, 0, 0.4));
-}
-
-[data-theme="dark"] .node-rect.non-accelerated {
-    fill: #2d2d2d;
-    stroke: #999999;
-}
-
-[data-theme="dark"] .graph-canvas {
-    background: #252525;
-}
-
-[data-theme="dark"] .canvas-wrapper {
-    background: #252525;
-}
-
-[data-theme="dark"] .node-tooltip {
-    background: rgba(50, 50, 50, 0.98);
-    border: 1px solid rgba(255, 68, 68, 0.3);
-}
-
-[data-theme="dark"] .layer-table thead {
-    background: var(--ti-red-dark);
-}
-
-[data-theme="dark"] .subgraph-selector,
-[data-theme="dark"] .graph-control-btn,
-[data-theme="dark"] .layer-index-toggle {
-    background: rgba(45, 45, 45, 0.95);
-    border-color: #505050;
-    color: #e0e0e0;
-}
-
-[data-theme="dark"] .non-accelerated-layers-dropdown,
-[data-theme="dark"] .accelerated-layers-dropdown {
-    background: rgba(45, 45, 45, 0.95);
-}
-
-[data-theme="dark"] #non-accelerated-layers-select,
-[data-theme="dark"] #accelerated-layers-select {
-    background: #2d2d2d;
-    color: #e0e0e0;
-}
-
-[data-theme="dark"] #non-accelerated-layers-select option:disabled:not(:first-child) {
-    background: #3a2222;
-}
-
-[data-theme="dark"] #accelerated-layers-select option:disabled:not(:first-child) {
-    background: #223a22;
-}
-
-[data-theme="dark"] .edge-label-bg {
-    fill: rgba(45, 45, 45, 0.95);
-    stroke: #505050;
-}
-
-[data-theme="dark"] .node-type-label,
-[data-theme="dark"] .node-index-label {
-    fill: #e0e0e0;
-}
-
-[data-theme="dark"] .node-type {
-    fill: #b0b0b0;
-}
-
-[data-theme="dark"] .search-input,
-[data-theme="dark"] .metric-dropdown {
-    background: #2d2d2d;
-    color: #e0e0e0;
-    border-color: #505050;
-}
-
-[data-theme="dark"] .search-dropdown {
-    background: #2d2d2d;
-    border-color: #505050;
-}
-
-[data-theme="dark"] .plot-box {
-    background: #2d2d2d;
-    border-color: #505050;
-}
-
-[data-theme="dark"] .scatter-canvas-wrapper {
-    background: #2d2d2d;
-}
-
 html {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
@@ -684,7 +574,7 @@ header.scrolled {
     letter-spacing: 0.3px;
 }
 .model-name {
-    font-size: 1rem;
+    font-size: 1.25rem;
     font-weight: 600;
     color: var(--ti-red);
     background-color: var(--ti-red-accent);
@@ -729,12 +619,6 @@ header.scrolled {
 }
 .btn-icon:active {
     transform: scale(0.95);
-}
-#darkModeToggle {
-    transition: transform 0.3s ease;
-}
-#darkModeToggle i {
-    transition: transform 0.3s ease;
 }
 /* ==================== NAVIGATION TABS ==================== */
 .main-tabs {
@@ -1419,7 +1303,10 @@ main {
     font-family: 'JetBrains Mono', monospace;
     flex: 1;
     contain: layout style paint;
-    will-change: scroll-position;
+    transition: transform 0.4s cubic-bezier(0.4, 0.0, 0.2, 1),
+                opacity 0.3s ease,
+                box-shadow 0.4s ease;
+    will-change: transform, opacity;
 }
 .graph-canvas::-webkit-scrollbar {
     width: 8px;
@@ -1433,8 +1320,79 @@ main {
     border-radius: 10px;
 }
 
-/* Fullscreen mode - No longer needed as graph opens in new window */
-/* Fullscreen CSS removed - functionality moved to new window implementation */
+/* ==================== FULLSCREEN MODE ==================== */
+/* Fullscreen overlay backdrop */
+.fullscreen-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 9998;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.fullscreen-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Initial state before animation */
+.graph-canvas.fullscreen-preparing {
+    transform: scale(0.95);
+    opacity: 0;
+}
+
+.graph-canvas.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 9999;
+    background: var(--card-background);
+    margin: 0;
+    border-radius: 0;
+    transform: scale(1);
+    opacity: 1;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+/* Ensure graph controls are visible in fullscreen */
+.graph-canvas.fullscreen .graph-controls {
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+}
+
+/* Ensure subgraph selector is visible in fullscreen */
+.graph-canvas.fullscreen .subgraph-selector-container {
+    top: 20px;
+    left: 20px;
+    z-index: 10000;
+}
+
+/* Ensure layer index is visible in fullscreen */
+.graph-canvas.fullscreen .layer-index-container {
+    bottom: 20px;
+    left: 20px;
+    z-index: 10000;
+}
+
+/* Ensure search container is visible in fullscreen */
+.graph-canvas.fullscreen .search-container {
+    z-index: 10000;
+}
+
+/* SVG sizing in fullscreen */
+.graph-canvas.fullscreen #graph-svg,
+.graph-canvas.fullscreen #tidl-graph-svg {
+    width: 100%;
+    height: 100%;
+}
 
 #graph-svg, #tidl-graph-svg {
     width: 100%;
@@ -1917,11 +1875,6 @@ main {
 .no-selection-message i {
     font-size: clamp(1.5rem, 2.5vw, 2.5rem);
     opacity: 0.5;
-    animation: bounce 2s ease-in-out infinite;
-}
-@keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
 }
 .no-selection-message p {
     font-size: clamp(0.8rem, 1vw, 1rem);
@@ -2372,6 +2325,300 @@ main {
         border-bottom: none;
     }
 }
+
+/* ==================== VIEW TABS STYLES ==================== */
+.view-tabs {
+    display: flex;
+    gap: 10px;
+}
+
+.view-tab-btn {
+    padding: 8px 20px;
+    border: 2px solid var(--border-color);
+    background: var(--background-color);
+    color: var(--text-primary);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.view-tab-btn i {
+    font-size: 16px;
+}
+
+.view-tab-btn:hover {
+    background: var(--ti-red-accent);
+    border-color: var(--ti-red);
+}
+
+.view-tab-btn.active {
+    background: var(--ti-red);
+    color: white;
+    border-color: var(--ti-red);
+}
+
+/* ==================== TREE VIEW STYLES ==================== */
+.tree-view-container {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background: var(--card-background);
+    padding: 20px;
+}
+
+.tree-view-content {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.tree-node {
+    cursor: pointer;
+    margin: 5px 0;
+    padding: 8px 12px;
+    border-radius: 4px;
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    display: block;
+    transition: background-color 0.2s ease;
+}
+
+.tree-node:hover {
+    background-color: var(--ti-red-accent);
+}
+
+.tree-node-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.tree-icon {
+    display: inline-block;
+    width: 16px;
+    margin-right: 8px;
+    text-align: center;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.tree-label {
+    font-weight: bold;
+    margin-right: 10px;
+    color: var(--text-primary);
+}
+
+.tree-node-details {
+    display: flex;
+    flex-direction: column;
+    font-size: 12px;
+    margin-left: 10px;
+    width: 100%;
+}
+
+.tree-details-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+
+.tree-detail-pill {
+    background-color: var(--background-color);
+    padding: 2px 6px;
+    margin-right: 8px;
+    margin-bottom: 4px;
+    border-radius: 12px;
+    font-size: 11px;
+    display: inline-flex;
+    align-items: center;
+    cursor: default;
+    white-space: normal;
+    word-break: break-word;
+    border: 1px solid var(--border-color);
+}
+
+.tree-op-pill {
+    background-color: #e0f7fa;
+    color: #00838f;
+    border: 1px solid #b2ebf2;
+}
+
+.tree-input-pill {
+    background-color: #f1f8e9;
+    color: #558b2f;
+    border: 1px solid #dcedc8;
+}
+
+.tree-output-pill {
+    background-color: #fff3e0;
+    color: #ef6c00;
+    border: 1px solid #ffe0b2;
+}
+
+.tree-attr-pill {
+    background-color: #e8eaf6;
+    color: #3949ab;
+    border: 1px solid #c5cae9;
+}
+
+.tree-children {
+    margin-left: 30px;
+    position: relative;
+    padding-left: 15px;
+    border-left: 1px solid var(--border-color);
+}
+
+.tree-collapsed {
+    display: none;
+}
+
+.tree-leaf {
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+}
+
+.tree-module-container {
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 4px;
+    background-color: var(--card-background);
+    border: 1px solid var(--border-color);
+}
+
+.tree-module-section {
+    margin: 10px 0;
+}
+
+.tree-section-title {
+    font-weight: bold;
+    padding: 5px 10px;
+    background-color: var(--background-color);
+    border-radius: 4px;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+}
+
+.tree-module-item {
+    padding: 8px;
+    margin: 5px 0;
+    border-radius: 4px;
+    border-left: 4px solid var(--ti-red);
+    background-color: var(--card-background);
+}
+
+.tree-submodules-section {
+    border-left: 3px solid #28a745;
+    padding-left: 10px;
+    margin-bottom: 10px;
+}
+
+.tree-leaf-modules-section {
+    border-left: 3px solid var(--ti-red);
+    padding-left: 10px;
+}
+
+.tree-detail-section {
+    width: 100%;
+    margin-top: 5px;
+    border-top: 1px dashed var(--border-color);
+    padding-top: 5px;
+}
+
+.tree-detail-section-title {
+    font-weight: bold;
+    margin-bottom: 4px;
+    color: var(--text-primary);
+}
+
+.tree-detail-item-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.tree-expandable-pill {
+    cursor: pointer;
+}
+
+.tree-expandable-pill:after {
+    content: " ▼";
+    font-size: 8px;
+}
+
+.tree-item-name {
+    white-space: normal;
+    word-break: break-all;
+}
+
+.tree-pill-label {
+    font-weight: bold;
+    margin-right: 4px;
+}
+
+/* Tensor info styling */
+.tree-tensor-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.tree-tensor-info {
+    padding: 8px;
+    background-color: var(--background-color);
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+.tree-tensor-name {
+    font-weight: bold;
+    margin-bottom: 6px;
+    color: var(--text-primary);
+    word-break: break-all;
+}
+
+.tree-tensor-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.tree-meta-badge {
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.tree-const-badge {
+    background-color: #ffebee;
+    color: #c62828;
+    border: 1px solid #ef9a9a;
+}
+
+.tree-var-badge {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+}
+
+.tree-dtype-badge {
+    background-color: #e3f2fd;
+    color: #1565c0;
+    border: 1px solid #90caf9;
+}
+
+.tree-shape-badge {
+    background-color: #fff3e0;
+    color: #e65100;
+    border: 1px solid #ffcc80;
+}
+
+
 </style>
 </head>
 <body>
@@ -2398,11 +2645,6 @@ main {
             <span class="model-name" id="target-device">Loading...</span>
             <span class="model-label" style="margin-left: 20px;">Compiler Version:</span>
             <span class="model-name">11.02</span>
-        </div>
-        <div class="header-actions">
-            <button class="btn-icon" id="darkModeToggle" title="Toggle Dark Mode">
-                <i class="fas fa-moon"></i>
-            </button>
         </div>
     </div>
 </header>
@@ -2433,45 +2675,7 @@ main {
                 </div>
                 <div class="card-body">
                     <div class="model-icon">
-                        <svg width="120" height="120" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-                            <!-- Neural Network Icon -->
-                            <circle cx="90" cy="90" r="50" fill="#ff3b57" opacity="0.9"/>
-                            <circle cx="256" cy="90" r="50" fill="#ff3b57" opacity="0.9"/>
-                            <circle cx="422" cy="90" r="50" fill="#ff3b57" opacity="0.9"/>
-
-                            <circle cx="90" cy="256" r="50" fill="#ff3b57" opacity="0.9"/>
-                            <circle cx="256" cy="256" r="50" fill="#ff3b57" opacity="0.9"/>
-                            <circle cx="422" cy="256" r="50" fill="#ff3b57" opacity="0.9"/>
-
-                            <circle cx="90" cy="422" r="50" fill="#ff3b57" opacity="0.9"/>
-                            <circle cx="256" cy="422" r="50" fill="#ff3b57" opacity="0.9"/>
-                            <circle cx="422" cy="422" r="50" fill="#ff3b57" opacity="0.9"/>
-
-                            <circle cx="256" cy="160" r="50" fill="#ff3b57" opacity="0.9"/>
-
-                            <!-- Connections -->
-                            <line x1="90" y1="140" x2="90" y2="206" stroke="#b8b9bd" stroke-width="12" opacity="0.7"/>
-                            <line x1="256" y1="140" x2="256" y2="206" stroke="#b8b9bd" stroke-width="12" opacity="0.7"/>
-                            <line x1="422" y1="140" x2="422" y2="206" stroke="#b8b9bd" stroke-width="12" opacity="0.7"/>
-
-                            <line x1="90" y1="306" x2="90" y2="372" stroke="#b8b9bd" stroke-width="12" opacity="0.7"/>
-                            <line x1="256" y1="306" x2="256" y2="372" stroke="#b8b9bd" stroke-width="12" opacity="0.7"/>
-                            <line x1="422" y1="306" x2="422" y2="372" stroke="#b8b9bd" stroke-width="12" opacity="0.7"/>
-
-                            <line x1="140" y1="90" x2="206" y2="90" stroke="#b8b9bd" stroke-width="12" opacity="0.7"/>
-                            <line x1="306" y1="90" x2="372" y2="90" stroke="#b8b9bd" stroke-width="12" opacity="0.7"/>
-
-                            <line x1="140" y1="256" x2="206" y2="256" stroke="#b8b9bd" stroke-width="12" opacity="0.7"/>
-                            <line x1="306" y1="256" x2="372" y2="256" stroke="#b8b9bd" stroke-width="12" opacity="0.7"/>
-
-                            <line x1="140" y1="422" x2="206" y2="422" stroke="#b8b9bd" stroke-width="12" opacity="0.7"/>
-                            <line x1="306" y1="422" x2="372" y2="422" stroke="#b8b9bd" stroke-width="12" opacity="0.7"/>
-
-                            <line x1="125" y1="115" x2="231" y2="231" stroke="#b8b9bd" stroke-width="12" opacity="0.7"/>
-                            <line x1="281" y1="231" x2="387" y2="115" stroke="#b8b9bd" stroke-width="12" opacity="0.7"/>
-                            <line x1="125" y1="281" x2="231" y2="397" stroke="#b8b9bd" stroke-width="12" opacity="0.7"/>
-                            <line x1="281" y1="397" x2="387" y2="281" stroke="#b8b9bd" stroke-width="12" opacity="0.7"/>
-                        </svg>
+                        <img src="https://img.icons8.com/?size=100&id=62903&format=png&color=FA5252" width="100" height="100" alt="Neural Network Icon">
                     </div>
                     <div class="model-stats">
                         <div class="stat-row">
@@ -2515,13 +2719,21 @@ main {
             </div>
             <!-- Runtime Graph Card -->
             <div class="card" style="margin-top: 2rem;">
-                <div class="card-header">
-                    <h2><i class="fas fa-project-diagram"></i> Runtime Model Graph</h2>
+                <div class="card-header" style="display: flex; align-items: center; justify-content: space-between;">
+                    <h2><i class="fas fa-project-diagram"></i> Model Visualization</h2>
+                    <div class="view-tabs">
+                        <button class="view-tab-btn active" id="graph-view-tab" data-view="graph">
+                            <i class="fas fa-project-diagram"></i> Graph View
+                        </button>
+                        <button class="view-tab-btn" id="tree-view-tab" data-view="tree">
+                            <i class="fas fa-sitemap"></i> Tree View
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body" style="padding: 0;">
                     <div class="visualization-container" style="height: 700px;">
                         <div class="canvas-wrapper">
-                            <div class="graph-canvas" id="runtime-canvas">
+                            <div class="graph-canvas" id="runtime-canvas" style="display: block;">
                                 <svg id="graph-svg"></svg>
                                 <div class="graph-controls">
                                     <button class="graph-control-btn zoom-in" title="Zoom In">
@@ -2539,7 +2751,7 @@ main {
                                     <button class="graph-control-btn search-toggle" title="Search Layers">
                                         <i class="fas fa-search"></i>
                                     </button>
-                                    <button class="graph-control-btn fullscreen-toggle" title="Fullscreen" data-target="runtime-canvas">
+                                    <button class="graph-control-btn fullscreen-toggle" title="Fullscreen (F)" data-target="runtime-canvas">
                                         <i class="fas fa-expand-arrows-alt"></i>
                                     </button>
                                 </div>
@@ -2569,6 +2781,12 @@ main {
                                     </select>
                                 </div>
 
+                            </div>
+                            <!-- Tree View Container (initially hidden) -->
+                            <div class="tree-view-container" id="tree-view-container" style="display: none;">
+                                <div class="tree-view-content" id="tree-view-content">
+                                    <!-- Tree will be rendered here by JavaScript -->
+                                </div>
                             </div>
                         </div>
                         <!-- RESIZE HANDLE -->
@@ -2755,7 +2973,7 @@ main {
                     <button class="graph-control-btn tidl-search-toggle" title="Search Layers">
                         <i class="fas fa-search"></i>
                     </button>
-                    <button class="graph-control-btn tidl-fullscreen-toggle" title="Fullscreen" data-target="tidl-canvas">
+                    <button class="graph-control-btn tidl-fullscreen-toggle" title="Fullscreen (F)" data-target="tidl-canvas">
                         <i class="fas fa-expand-arrows-alt"></i>
                     </button>
                 </div>
@@ -2825,6 +3043,7 @@ const CONFIG_DATA = {{CONFIG_DATA}};
 const PROCTIME_DATA = {{PROCTIME_DATA}};
 const CYCLES_DATA = {{CYCLES_DATA}};
 const MEMORY_DATA = {{MEMORY_DATA}};
+const TREE_DATA = {{TREE_DATA}};
 
 // Debug: Log CONFIG_DATA
 console.log('=== CONFIG_DATA CHECK ===');
@@ -4753,7 +4972,7 @@ class Graph {
         this.content = document.getElementById(contentId);
         this.canvas = document.getElementById(canvasId);
         this.isTIDL = isTIDL;
-        this.activeTab = 'layer';
+        this.activeTab = isTIDL ? 'layer' : 'overview';
         this.selectedNode = null;
         this.allNodes = [];
         this.allEdges = [];
@@ -5295,7 +5514,8 @@ class Graph {
 
         tabs.forEach(t => t.classList.remove('active'));
         tabs[0].classList.add('active');
-        this.activeTab = 'layer';
+        // Set activeTab to match the first tab (overview for runtime, layer for TIDL)
+        this.activeTab = tabs[0].getAttribute('data-panel-tab') || 'overview';
 
         // Remove old event listeners by cloning
         const newTabs = [];
@@ -5327,8 +5547,146 @@ class Graph {
 
     updateDetailsContent(node) {
         let html = '';
-        
-        if (this.activeTab === 'layer') {
+
+        if (this.activeTab === 'overview') {
+            // Overview tab: Show summary information
+            const ld = node.layerdetails || {};
+
+            // Add subgraph info for runtime model
+            let subgraphInfo = '';
+            if (!this.isTIDL && node.subgraph_index >= 0) {
+                subgraphInfo = `
+                    <div class="detail-row">
+                        <span class="detail-label">Subgraph:</span>
+                        <span class="detail-value">
+                            <span style="display: inline-block; width: 12px; height: 12px; background: ${node.subgraph_color}; border-radius: 3px; margin-right: 5px;"></span>
+                            Subgraph ${node.subgraph_index + 1}
+                        </span>
+                    </div>
+                `;
+            }
+
+            // Add reason message for non-accelerated layers
+            let reasonHTML = '';
+            const diagInfo = node.tidl_diagInfo || node.layer_data?.diag_info || ld.diag_info;
+            if (!node.tidl_supported && diagInfo) {
+                let reason = diagInfo;
+                const match = diagInfo.match(/\[PARSER\]\s+(UNSUPPORTED:.+?)(?:\s+--\s+\[|$)/);
+                if (match) {
+                    reason = match[1];
+                }
+                reasonHTML = `
+                    <div class="detail-row" style="background: rgba(229, 62, 62, 0.1); padding: 12px; border-radius: 6px; margin-top: 8px; border-left: 4px solid #e53e3e;">
+                        <span class="detail-label" style="color: #c53030; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-exclamation-triangle"></i> Reason:
+                        </span>
+                        <span class="detail-value" style="margin-top: 6px; display: block; font-family: 'JetBrains Mono', monospace; font-size: 0.85em; line-height: 1.6; color: #555;">${reason}</span>
+                    </div>
+                `;
+            }
+
+            // Build input metadata tooltips
+            let inputShapesHTML = '';
+            const layerData = node.layer_data || {};
+            const inputMetadata = layerData.input_metadata || [];
+
+            if (inputMetadata.length > 0) {
+                inputShapesHTML = inputMetadata.map((meta, idx) => {
+                    const badge = meta.is_constant
+                        ? '<span class="tensor-badge constant" style="background: #e53e3e; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.75em; margin-left: 4px;">Constant</span>'
+                        : '<span class="tensor-badge variable" style="background: #38a169; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.75em; margin-left: 4px;">Variable</span>';
+
+                    const shapeStr = Array.isArray(meta.shape) ? `[${meta.shape.join(', ')}]` : (meta.shape || 'N/A');
+                    const dtype = meta.dtype || 'unknown';
+
+                    return `
+                        <div class="detail-row" style="position: relative; padding: 8px 0;">
+                            <span class="detail-label">Input [${idx}]:</span>
+                            <span class="detail-value" style="cursor: help;"
+                                  title="${meta.name}\nType: ${meta.is_constant ? 'Constant' : 'Variable'}\nDtype: ${dtype}\nShape: ${shapeStr}">
+                                <span style="font-family: 'JetBrains Mono', monospace;">${shapeStr}</span>
+                                ${badge}
+                                <span style="color: #666; font-size: 0.85em; margin-left: 6px;">${dtype}</span>
+                                <i class="fas fa-info-circle" style="margin-left: 6px; color: #4299e1; font-size: 0.9em;"></i>
+                            </span>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                // Fallback to simple input shape display
+                inputShapesHTML = `
+                    <div class="detail-row">
+                        <span class="detail-label">Input Shape:</span>
+                        <span class="detail-value">${ld.inputshape || 'N/A'}</span>
+                    </div>
+                `;
+            }
+
+            // Build output metadata
+            let outputShapesHTML = '';
+            const outputMetadata = layerData.output_metadata || [];
+
+            if (outputMetadata.length > 0) {
+                outputShapesHTML = outputMetadata.map((meta, idx) => {
+                    const shapeStr = Array.isArray(meta.shape) ? `[${meta.shape.join(', ')}]` : (meta.shape || 'N/A');
+                    const dtype = meta.dtype || 'unknown';
+
+                    return `
+                        <div class="detail-row" style="position: relative; padding: 8px 0;">
+                            <span class="detail-label">Output [${idx}]:</span>
+                            <span class="detail-value" style="cursor: help;"
+                                  title="${meta.name}\nType: Variable\nDtype: ${dtype}\nShape: ${shapeStr}">
+                                <span style="font-family: 'JetBrains Mono', monospace;">${shapeStr}</span>
+                                <span class="tensor-badge variable" style="background: #38a169; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.75em; margin-left: 4px;">Variable</span>
+                                <span style="color: #666; font-size: 0.85em; margin-left: 6px;">${dtype}</span>
+                                <i class="fas fa-info-circle" style="margin-left: 6px; color: #4299e1; font-size: 0.9em;"></i>
+                            </span>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                // Fallback to simple output shape display
+                outputShapesHTML = `
+                    <div class="detail-row">
+                        <span class="detail-label">Output Shape:</span>
+                        <span class="detail-value">${ld.outputshape || 'N/A'}</span>
+                    </div>
+                `;
+            }
+
+            html = `
+                <div class="detail-section">
+                    <h4><i class="fas fa-info-circle"></i> Overview</h4>
+                    <div class="detail-row">
+                        <span class="detail-label">Name:</span>
+                        <span class="detail-value">${node.full_name || ld.name || 'N/A'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Type:</span>
+                        <span class="detail-value">${node.type || ld.type || 'N/A'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Index:</span>
+                        <span class="detail-value">${node.index}</span>
+                    </div>
+                    ${subgraphInfo}
+                    <div class="detail-row">
+                        <span class="detail-label">Accelerator Support:</span>
+                        <span class="detail-value">
+                            <span class="support-badge ${node.tidl_supported ? 'supported' : 'non-accelerated'}">
+                                ${node.tidl_supported ? 'Accelerated' : 'Non-accelerated'}
+                            </span>
+                        </span>
+                    </div>
+                    ${reasonHTML}
+                </div>
+                <div class="detail-section">
+                    <h4><i class="fas fa-arrows-alt-h"></i> Tensor Shapes</h4>
+                    ${inputShapesHTML}
+                    ${outputShapesHTML}
+                </div>
+            `;
+        } else if (this.activeTab === 'layer') {
             // Merged Layer Details: Combine overview + layer information + TIDL details
             const ld = node.layerdetails || {};
             const inEdges = this.edges.filter(e => {
@@ -5554,7 +5912,7 @@ class Graph {
                     </div>
                     ${subgraphInfo}
                     <div class="detail-row">
-                        <span class="detail-label">TIDL Support:</span>
+                        <span class="detail-label">Accelerator Support:</span>
                         <span class="detail-value">
                             <span class="support-badge ${node.tidl_supported ? 'supported' : 'non-accelerated'}">
                                 ${node.tidl_supported ? 'Supported' : 'Non-accelerated'}
@@ -5704,31 +6062,58 @@ class Graph {
     }
 
     fitToView() {
-        if (!this.nodes || this.nodes.length === 0) return;
-        
+        if (!this.nodes || this.nodes.length === 0) {
+            console.log('[fitToView] No nodes to fit!');
+            return;
+        }
+
         const width = this.canvas.clientWidth;
         const height = this.canvas.clientHeight;
-        
+
+        console.log(`[fitToView] Canvas: ${width}x${height}, Nodes: ${this.nodes.length}`);
+
         let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-        
+
         this.nodes.forEach(node => {
             minX = Math.min(minX, node.x - 80);
             maxX = Math.max(maxX, node.x + 80);
             minY = Math.min(minY, node.y - 35);
             maxY = Math.max(maxY, node.y + 35);
         });
-        
+
         if (minX === Infinity) {
             minX = 0; maxX = width; minY = 0; maxY = height;
         }
-        
-        const scale = Math.min(width / (maxX - minX + 100), height / (maxY - minY + 100), 1);
-        const tx = (width - (maxX - minX) * scale) / 2 - minX * scale;
-        const ty = (height - (maxY - minY) * scale) / 2 - minY * scale;
-        
-        this.svg.transition()
-            .duration(750)
-            .call(this.zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+
+        console.log(`[fitToView] Bounds: X[${minX.toFixed(0)}, ${maxX.toFixed(0)}], Y[${minY.toFixed(0)}, ${maxY.toFixed(0)}]`);
+
+        // Calculate scale with a minimum of 0.3 (30%) to keep nodes visible
+        let scale = Math.min(width / (maxX - minX + 100), height / (maxY - minY + 100), 1);
+
+        // If scale is too small, use minimum scale and center on the top portion of the graph
+        if (scale < 0.3) {
+            console.log(`[fitToView] Scale too small (${scale.toFixed(3)}), using minimum 0.3 and showing top of graph`);
+            scale = 0.3;
+            // Center horizontally, show top of graph vertically
+            const tx = (width - (maxX - minX) * scale) / 2 - minX * scale;
+            const ty = -minY * scale + 50; // 50px padding from top
+
+            console.log(`[fitToView] Transform (adjusted): translate(${tx.toFixed(2)}, ${ty.toFixed(2)}) scale(${scale.toFixed(3)})`);
+
+            this.svg.transition()
+                .duration(750)
+                .call(this.zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+        } else {
+            // Normal fit-to-view
+            const tx = (width - (maxX - minX) * scale) / 2 - minX * scale;
+            const ty = (height - (maxY - minY) * scale) / 2 - minY * scale;
+
+            console.log(`[fitToView] Transform: translate(${tx.toFixed(2)}, ${ty.toFixed(2)}) scale(${scale.toFixed(3)})`);
+
+            this.svg.transition()
+                .duration(750)
+                .call(this.zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+        }
     }
 }
 // ==================== MEMORY USAGE VISUALIZATION ====================
@@ -7372,64 +7757,264 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Fullscreen overlay management
+    let fullscreenOverlay = null;
+
+    function createFullscreenOverlay() {
+        if (!fullscreenOverlay) {
+            fullscreenOverlay = document.createElement('div');
+            fullscreenOverlay.className = 'fullscreen-overlay';
+            document.body.appendChild(fullscreenOverlay);
+
+            // Close on overlay click
+            fullscreenOverlay.addEventListener('click', function(e) {
+                if (e.target === fullscreenOverlay) {
+                    const fullscreenCanvas = document.querySelector('.graph-canvas.fullscreen');
+                    if (fullscreenCanvas) {
+                        exitFullscreen(fullscreenCanvas);
+                    }
+                }
+            });
+        }
+        return fullscreenOverlay;
+    }
+
+    function enterFullscreen(canvas, button) {
+        // Overlay removed - it was blocking interaction with the graph
+        // const overlay = createFullscreenOverlay();
+
+        // Prepare animation
+        canvas.classList.add('fullscreen-preparing');
+
+        // Force reflow
+        canvas.offsetHeight;
+
+        // Apply fullscreen (overlay activation removed)
+        canvas.classList.add('fullscreen');
+        // overlay.classList.add('active');
+
+        // Complete animation
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                canvas.classList.remove('fullscreen-preparing');
+
+                // CRITICAL FIX: Wait for CSS transition to complete (400ms) + buffer
+                // Then update SVG dimensions and fit the graph
+                setTimeout(() => {
+                    // Get the SVG element directly
+                    const svg = canvas.querySelector('svg');
+
+                    if (svg) {
+                        // Force SVG to match new canvas dimensions
+                        const newWidth = canvas.clientWidth;
+                        const newHeight = canvas.clientHeight;
+
+                        console.log(`Entering fullscreen: Canvas ${newWidth}x${newHeight}`);
+
+                        // Set SVG size directly via DOM
+                        svg.setAttribute('width', newWidth);
+                        svg.setAttribute('height', newHeight);
+                        svg.setAttribute('viewBox', `0 0 ${newWidth} ${newHeight}`);
+
+                        // Get SVG using d3
+                        const svgD3 = d3.select(svg);
+
+                        // Reset zoom transform to identity first
+                        const g = svgD3.select('g');
+                        if (!g.empty()) {
+                            console.log('Resetting zoom transform...');
+                            g.attr('transform', 'translate(0,0) scale(1)');
+                        }
+
+                        // Try to use graph instance if available
+                        const isRuntimeCanvas = canvas.id === 'runtime-canvas';
+                        const graphInstance = isRuntimeCanvas ? window.runtimeGraph : window.tidlGraph;
+
+                        console.log(`Graph instance available: ${!!graphInstance}`);
+
+                        if (graphInstance) {
+                            // Update canvas reference in case it changed
+                            graphInstance.canvas = canvas;
+
+                            if (typeof graphInstance.fitToView === 'function') {
+                                console.log('Calling fitToView()...');
+                                graphInstance.fitToView();
+                            }
+                        } else {
+                            console.warn('Graph instance not available, trying button fallback...');
+                            // Fallback: trigger fit-view button
+                            const fitBtn = canvas.querySelector('.fit-view, .tidl-fit-view');
+                            if (fitBtn) {
+                                console.log('Clicking fit-view button...');
+                                fitBtn.click();
+                            } else {
+                                console.error('Fit-view button not found!');
+                            }
+                        }
+                    }
+
+                    // Dispatch resize event
+                    window.dispatchEvent(new Event('resize'));
+                }, 500); // Wait 500ms for 400ms transition + 100ms buffer
+            });
+        });
+
+        // Update button
+        if (button) {
+            const icon = button.querySelector('i');
+            if (icon) {
+                icon.className = 'fas fa-compress-arrows-alt';
+            }
+            button.title = 'Exit Fullscreen (ESC)';
+        }
+    }
+
+    function exitFullscreen(canvas, button) {
+        // Overlay removed - no longer needed
+        // const overlay = document.querySelector('.fullscreen-overlay');
+
+        // Start exit animation
+        canvas.classList.add('fullscreen-preparing');
+        // Overlay deactivation removed
+        // if (overlay) {
+        //     overlay.classList.remove('active');
+        // }
+
+        // Wait for animation to complete
+        setTimeout(() => {
+            canvas.classList.remove('fullscreen');
+            canvas.classList.remove('fullscreen-preparing');
+
+            // CRITICAL FIX: Wait for CSS transition to complete, then update dimensions
+            setTimeout(() => {
+                // Get the SVG element directly
+                const svg = canvas.querySelector('svg');
+
+                if (svg) {
+                    // Force SVG to match restored canvas dimensions
+                    const newWidth = canvas.clientWidth;
+                    const newHeight = canvas.clientHeight;
+
+                    console.log(`Exiting fullscreen: Canvas ${newWidth}x${newHeight}`);
+
+                    // Set SVG size directly via DOM
+                    svg.setAttribute('width', newWidth);
+                    svg.setAttribute('height', newHeight);
+                    svg.setAttribute('viewBox', `0 0 ${newWidth} ${newHeight}`);
+
+                    // Get SVG using d3
+                    const svgD3 = d3.select(svg);
+
+                    // Reset zoom transform to identity first
+                    const g = svgD3.select('g');
+                    if (!g.empty()) {
+                        console.log('Resetting zoom transform on exit...');
+                        g.attr('transform', 'translate(0,0) scale(1)');
+                    }
+
+                    // Try to use graph instance if available
+                    const isRuntimeCanvas = canvas.id === 'runtime-canvas';
+                    const graphInstance = isRuntimeCanvas ? window.runtimeGraph : window.tidlGraph;
+
+                    console.log(`Exit - Graph instance available: ${!!graphInstance}`);
+
+                    if (graphInstance) {
+                        // Update canvas reference
+                        graphInstance.canvas = canvas;
+
+                        if (typeof graphInstance.fitToView === 'function') {
+                            console.log('Exit - Calling fitToView()...');
+                            graphInstance.fitToView();
+                        }
+                    } else {
+                        console.warn('Exit - Graph instance not available, trying button fallback...');
+                        // Fallback: trigger fit-view button
+                        const fitBtn = canvas.querySelector('.fit-view, .tidl-fit-view');
+                        if (fitBtn) {
+                            console.log('Exit - Clicking fit-view button...');
+                            fitBtn.click();
+                        }
+                    }
+                }
+
+                // Dispatch resize event
+                window.dispatchEvent(new Event('resize'));
+            }, 500); // Wait 500ms for transition + buffer
+        }, 300);
+
+        // Update button
+        if (button) {
+            const icon = button.querySelector('i');
+            if (icon) {
+                icon.className = 'fas fa-expand-arrows-alt';
+            }
+            button.title = 'Fullscreen (F)';
+        }
+    }
+
     // Fullscreen toggle functionality
     const fullscreenToggleBtn = document.querySelector('.fullscreen-toggle');
     const tidlFullscreenToggleBtn = document.querySelector('.tidl-fullscreen-toggle');
 
     if (fullscreenToggleBtn) {
         fullscreenToggleBtn.addEventListener('click', function() {
-            const targetId = this.getAttribute('data-target');
-            const canvas = document.getElementById(targetId);
-
-            if (canvas) {
-                if (canvas.classList.contains('fullscreen')) {
-                    // Exit fullscreen
-                    canvas.classList.remove('fullscreen');
-                    this.querySelector('i').className = 'fas fa-expand-arrows-alt';
-                    this.title = 'Fullscreen';
-                } else {
-                    // Enter fullscreen
-                    canvas.classList.add('fullscreen');
-                    this.querySelector('i').className = 'fas fa-compress-arrows-alt';
-                    this.title = 'Exit Fullscreen';
-                }
+            const canvas = document.getElementById('runtime-canvas');
+            if (canvas.classList.contains('fullscreen')) {
+                exitFullscreen(canvas, fullscreenToggleBtn);
+            } else {
+                enterFullscreen(canvas, fullscreenToggleBtn);
             }
         });
     }
 
     if (tidlFullscreenToggleBtn) {
         tidlFullscreenToggleBtn.addEventListener('click', function() {
-            const targetId = this.getAttribute('data-target');
-            const canvas = document.getElementById(targetId);
-
-            if (canvas) {
-                if (canvas.classList.contains('fullscreen')) {
-                    // Exit fullscreen
-                    canvas.classList.remove('fullscreen');
-                    this.querySelector('i').className = 'fas fa-expand-arrows-alt';
-                    this.title = 'Fullscreen';
-                } else {
-                    // Enter fullscreen
-                    canvas.classList.add('fullscreen');
-                    this.querySelector('i').className = 'fas fa-compress-arrows-alt';
-                    this.title = 'Exit Fullscreen';
-                }
+            const canvas = document.getElementById('tidl-canvas');
+            if (canvas.classList.contains('fullscreen')) {
+                exitFullscreen(canvas, tidlFullscreenToggleBtn);
+            } else {
+                enterFullscreen(canvas, tidlFullscreenToggleBtn);
             }
         });
     }
 
-    // ESC key to exit fullscreen
+    // Keyboard shortcuts for fullscreen (F key to toggle, ESC to exit)
     document.addEventListener('keydown', function(e) {
+        // Ignore if user is typing in an input field
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+            return;
+        }
+
+        // ESC key to exit fullscreen
         if (e.key === 'Escape') {
             const fullscreenCanvas = document.querySelector('.graph-canvas.fullscreen');
             if (fullscreenCanvas) {
-                fullscreenCanvas.classList.remove('fullscreen');
-                const fullscreenBtn = fullscreenCanvas.querySelector('.fullscreen-toggle, .tidl-fullscreen-toggle');
-                if (fullscreenBtn) {
-                    fullscreenBtn.querySelector('i').className = 'fas fa-expand-arrows-alt';
-                    fullscreenBtn.title = 'Fullscreen';
+                const button = fullscreenCanvas.id === 'runtime-canvas' ? fullscreenToggleBtn : tidlFullscreenToggleBtn;
+                exitFullscreen(fullscreenCanvas, button);
+            }
+        }
+
+        // F key to toggle fullscreen for the currently visible graph
+        if (e.key === 'f' || e.key === 'F') {
+            const runtimeCanvas = document.getElementById('runtime-canvas');
+            const tidlCanvas = document.getElementById('tidl-canvas');
+            const runtimeVisible = runtimeCanvas && window.getComputedStyle(runtimeCanvas.parentElement).display !== 'none';
+            const tidlVisible = tidlCanvas && window.getComputedStyle(tidlCanvas.parentElement).display !== 'none';
+
+            if (runtimeVisible) {
+                if (runtimeCanvas.classList.contains('fullscreen')) {
+                    exitFullscreen(runtimeCanvas, fullscreenToggleBtn);
+                } else {
+                    enterFullscreen(runtimeCanvas, fullscreenToggleBtn);
+                }
+            } else if (tidlVisible) {
+                if (tidlCanvas.classList.contains('fullscreen')) {
+                    exitFullscreen(tidlCanvas, tidlFullscreenToggleBtn);
+                } else {
+                    enterFullscreen(tidlCanvas, tidlFullscreenToggleBtn);
                 }
             }
+            e.preventDefault();
         }
     });
 });
@@ -7714,52 +8299,331 @@ function init() {
     }, 500);
 }
 
-// ==================== DARK MODE TOGGLE ====================
-// Check for saved theme preference or default to light mode
-const currentTheme = localStorage.getItem('theme') || 'light';
-document.documentElement.setAttribute('data-theme', currentTheme);
+// ==================== TREE VIEW FUNCTIONALITY ====================
 
-// Update icon based on current theme
-function updateDarkModeIcon() {
-    const darkModeToggle = document.getElementById('darkModeToggle');
-    if (darkModeToggle) {
-        const icon = darkModeToggle.querySelector('i');
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        if (currentTheme === 'dark') {
-            icon.className = 'fas fa-sun';
-            darkModeToggle.title = 'Switch to Light Mode';
-        } else {
-            icon.className = 'fas fa-moon';
-            darkModeToggle.title = 'Switch to Dark Mode';
-        }
+// Render tree structure
+function renderTree() {
+    console.log('Rendering tree view...');
+    const treeContainer = document.getElementById('tree-view-content');
+
+    if (!treeContainer) {
+        console.error('Tree container not found');
+        return;
     }
+
+    if (!TREE_DATA || Object.keys(TREE_DATA).length === 0) {
+        treeContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);">No tree structure available</div>';
+        return;
+    }
+
+    treeContainer.innerHTML = '';
+
+    // Render each top-level module
+    Object.keys(TREE_DATA).forEach(moduleName => {
+        const moduleData = TREE_DATA[moduleName];
+        const moduleDiv = renderModule(moduleName, moduleData, 0);
+        treeContainer.appendChild(moduleDiv);
+    });
+
+    console.log('Tree rendered successfully');
 }
 
-// Initialize icon on page load
-document.addEventListener('DOMContentLoaded', function() {
-    updateDarkModeIcon();
+function renderModule(moduleName, moduleData, depth) {
+    const container = document.createElement('div');
+    container.className = 'tree-module-container';
+    container.style.marginLeft = `${depth * 20}px`;
 
-    const darkModeToggle = document.getElementById('darkModeToggle');
-    if (darkModeToggle) {
-        darkModeToggle.addEventListener('click', function() {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    // Check if this is a leaf node
+    if (moduleData.is_leaf) {
+        // Render as a leaf node
+        const leafNode = document.createElement('div');
+        leafNode.className = 'tree-node tree-leaf';
+        leafNode.innerHTML = `
+            <div class="tree-node-header">
+                <span class="tree-label">${moduleName}</span>
+                <span class="tree-op-pill tree-detail-pill">${moduleData.op || 'Unknown'}</span>
+            </div>
+        `;
 
-            // Update theme
-            document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
+        // Add node details if available
+        if (moduleData.node_details) {
+            const details = moduleData.node_details;
+            const detailsDiv = document.createElement('div');
+            detailsDiv.className = 'tree-node-details';
+            detailsDiv.style.display = 'none';
 
-            // Update icon
-            updateDarkModeIcon();
+            // Inputs with metadata
+            if (details.input_metadata && details.input_metadata.length > 0) {
+                const inputsHtml = details.input_metadata.map(inp => {
+                    const shapeStr = inp.shape && inp.shape.length > 0 ? `[${inp.shape.join(',')}]` : '[]';
+                    const typeLabel = inp.is_constant ? 'constant' : 'variable';
+                    const typeClass = inp.is_constant ? 'tree-const-badge' : 'tree-var-badge';
+                    return `
+                        <div class="tree-tensor-info">
+                            <div class="tree-tensor-name">${inp.name}</div>
+                            <div class="tree-tensor-meta">
+                                <span class="tree-meta-badge ${typeClass}">${typeLabel}</span>
+                                <span class="tree-meta-badge tree-dtype-badge">${inp.dtype}</span>
+                                <span class="tree-meta-badge tree-shape-badge">${shapeStr}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                detailsDiv.innerHTML += `
+                    <div class="tree-detail-section">
+                        <div class="tree-detail-section-title">Inputs (${details.input_metadata.length}):</div>
+                        <div class="tree-tensor-list">${inputsHtml}</div>
+                    </div>
+                `;
+            }
 
-            // Add subtle animation
-            this.style.transform = 'rotate(360deg)';
-            setTimeout(() => {
-                this.style.transform = '';
-            }, 300);
+            // Outputs with metadata
+            if (details.output_metadata && details.output_metadata.length > 0) {
+                const outputsHtml = details.output_metadata.map(out => {
+                    const shapeStr = out.shape && out.shape.length > 0 ? `[${out.shape.join(',')}]` : '[]';
+                    return `
+                        <div class="tree-tensor-info">
+                            <div class="tree-tensor-name">${out.name}</div>
+                            <div class="tree-tensor-meta">
+                                <span class="tree-meta-badge tree-var-badge">variable</span>
+                                <span class="tree-meta-badge tree-dtype-badge">${out.dtype}</span>
+                                <span class="tree-meta-badge tree-shape-badge">${shapeStr}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                detailsDiv.innerHTML += `
+                    <div class="tree-detail-section">
+                        <div class="tree-detail-section-title">Outputs (${details.output_metadata.length}):</div>
+                        <div class="tree-tensor-list">${outputsHtml}</div>
+                    </div>
+                `;
+            }
+
+            // Attributes
+            if (details.attributs && Object.keys(details.attributs).length > 0) {
+                const attrsHtml = Object.entries(details.attributs).map(([key, val]) =>
+                    `<span class="tree-attr-pill tree-detail-pill">${key}: ${JSON.stringify(val)}</span>`
+                ).join('');
+                detailsDiv.innerHTML += `
+                    <div class="tree-detail-section">
+                        <div class="tree-detail-section-title">Attributes (${Object.keys(details.attributs).length}):</div>
+                        <div class="tree-details-row">${attrsHtml}</div>
+                    </div>
+                `;
+            }
+
+            leafNode.appendChild(detailsDiv);
+
+            // Toggle details on click AND update Runtime Graph panel
+            leafNode.addEventListener('click', (e) => {
+                e.stopPropagation();
+
+                // Toggle inline details
+                detailsDiv.style.display = detailsDiv.style.display === 'none' ? 'block' : 'none';
+
+                // Update Runtime Graph panel with node details
+                // Use the actual graph node to ensure all fields match (including TIDL support, indices, etc.)
+                if (window.runtimeGraph && window.runtimeGraph.allNodes) {
+                    // Find the actual node from the graph by matching full_name
+                    const actualNode = window.runtimeGraph.allNodes.find(n => n.full_name === moduleName);
+                    if (actualNode) {
+                        // Use the actual node which has all the correct fields
+                        window.runtimeGraph.showDetails(actualNode);
+                    } else {
+                        console.warn(`Tree view: Could not find graph node for ${moduleName}`);
+                    }
+                }
+            });
+        } else {
+            // Leaf node without details - still allow clicking to show basic info
+            leafNode.addEventListener('click', (e) => {
+                e.stopPropagation();
+
+                // Update Runtime Graph panel with node details
+                // Use the actual graph node to ensure all fields match (including TIDL support, indices, etc.)
+                if (window.runtimeGraph && window.runtimeGraph.allNodes) {
+                    // Find the actual node from the graph by matching full_name
+                    const actualNode = window.runtimeGraph.allNodes.find(n => n.full_name === moduleName);
+                    if (actualNode) {
+                        // Use the actual node which has all the correct fields
+                        window.runtimeGraph.showDetails(actualNode);
+                    } else {
+                        console.warn(`Tree view: Could not find graph node for ${moduleName}`);
+                    }
+                }
+            });
+        }
+
+        container.appendChild(leafNode);
+    } else {
+        // Render as a module with children
+        const moduleHeader = document.createElement('div');
+        moduleHeader.className = 'tree-node';
+        moduleHeader.innerHTML = `
+            <div class="tree-node-header">
+                <span class="tree-icon">+</span>
+                <span class="tree-label">${moduleName}</span>
+            </div>
+        `;
+
+        const childrenContainer = document.createElement('div');
+        childrenContainer.className = 'tree-children tree-collapsed';
+
+        if (moduleData.children) {
+            // Separate submodules and leaf modules
+            const submodules = [];
+            const leafModules = [];
+
+            Object.keys(moduleData.children).forEach(childName => {
+                const childData = moduleData.children[childName];
+                if (childData.is_leaf) {
+                    leafModules.push({name: childName, data: childData});
+                } else {
+                    submodules.push({name: childName, data: childData});
+                }
+            });
+
+            // Sort submodules by min_topo_idx
+            submodules.sort((a, b) => {
+                const aIdx = a.data.min_topo_idx !== undefined ? a.data.min_topo_idx : Infinity;
+                const bIdx = b.data.min_topo_idx !== undefined ? b.data.min_topo_idx : Infinity;
+                return aIdx - bIdx;
+            });
+
+            // Sort leaf modules by topo_idx
+            leafModules.sort((a, b) => {
+                const aIdx = a.data.topo_idx !== undefined ? a.data.topo_idx : Infinity;
+                const bIdx = b.data.topo_idx !== undefined ? b.data.topo_idx : Infinity;
+                return aIdx - bIdx;
+            });
+
+            // Render submodules section
+            if (submodules.length > 0) {
+                const submodulesSection = document.createElement('div');
+                submodulesSection.className = 'tree-module-section tree-submodules-section';
+                submodulesSection.innerHTML = '<div class="tree-section-title">Submodules</div>';
+
+                submodules.forEach(({name, data}) => {
+                    const childModule = renderModule(name, data, 0);
+                    submodulesSection.appendChild(childModule);
+                });
+
+                childrenContainer.appendChild(submodulesSection);
+            }
+
+            // Render leaf modules section
+            if (leafModules.length > 0) {
+                const leafSection = document.createElement('div');
+                leafSection.className = 'tree-module-section tree-leaf-modules-section';
+                leafSection.innerHTML = '<div class="tree-section-title">Leaf Modules</div>';
+
+                leafModules.forEach(({name, data}) => {
+                    const childModule = renderModule(name, data, 0);
+                    leafSection.appendChild(childModule);
+                });
+
+                childrenContainer.appendChild(leafSection);
+            }
+        }
+
+        // Toggle children on click
+        moduleHeader.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const icon = moduleHeader.querySelector('.tree-icon');
+            if (childrenContainer.classList.contains('tree-collapsed')) {
+                childrenContainer.classList.remove('tree-collapsed');
+                icon.textContent = '−';
+            } else {
+                childrenContainer.classList.add('tree-collapsed');
+                icon.textContent = '+';
+            }
         });
+
+        container.appendChild(moduleHeader);
+        container.appendChild(childrenContainer);
     }
-});
+
+    return container;
+}
+
+// Switch between graph view and tree view using tabs
+function initializeViewTabs() {
+    const graphTab = document.getElementById('graph-view-tab');
+    const treeTab = document.getElementById('tree-view-tab');
+    const graphCanvas = document.getElementById('runtime-canvas');
+    const treeContainer = document.getElementById('tree-view-container');
+    const searchContainer = document.querySelector('.graph-search-container');
+    const acceleratedDropdown = document.querySelector('.accelerated-layers-dropdown');
+    const nonAcceleratedDropdown = document.querySelector('.non-accelerated-layers-dropdown');
+    const detailsPanel = document.getElementById('runtime-details-panel');
+
+    if (!graphTab || !treeTab || !graphCanvas || !treeContainer) {
+        console.error('View tab elements not found');
+        return;
+    }
+
+    // Function to switch views
+    function switchToView(viewType) {
+        if (viewType === 'graph') {
+            // Show graph view
+            graphCanvas.style.display = 'block';
+            treeContainer.style.display = 'none';
+
+            // Update tab states
+            graphTab.classList.add('active');
+            treeTab.classList.remove('active');
+
+            // Show graph-specific controls
+            if (acceleratedDropdown) acceleratedDropdown.style.display = 'block';
+            if (nonAcceleratedDropdown) nonAcceleratedDropdown.style.display = 'block';
+
+            // Keep details panel visible (don't hide it)
+            // Details panel remains accessible in both views
+        } else if (viewType === 'tree') {
+            // Show tree view
+            graphCanvas.style.display = 'none';
+            treeContainer.style.display = 'block';
+
+            // Update tab states
+            graphTab.classList.remove('active');
+            treeTab.classList.add('active');
+
+            // Hide graph-specific controls
+            if (searchContainer) searchContainer.style.display = 'none';
+            if (acceleratedDropdown) acceleratedDropdown.style.display = 'none';
+            if (nonAcceleratedDropdown) nonAcceleratedDropdown.style.display = 'none';
+
+            // Keep details panel visible (don't hide it)
+            // Details panel remains accessible in both views
+
+            // Render tree if not already rendered
+            if (!treeContainer.hasAttribute('data-rendered')) {
+                renderTree();
+                treeContainer.setAttribute('data-rendered', 'true');
+            }
+        }
+    }
+
+    // Add click handlers to tabs
+    graphTab.addEventListener('click', () => switchToView('graph'));
+    treeTab.addEventListener('click', () => switchToView('tree'));
+
+    console.log('View tabs initialized');
+}
+
+// Initialize tree view functionality
+function initTreeView() {
+    console.log('Initializing tree view...');
+    initializeViewTabs();
+}
+
+// Add tree view initialization to the main init function
+const originalInit = window.init || function() {};
+window.init = function() {
+    originalInit();
+    initTreeView();
+};
 
 // Initialize on page load
 window.addEventListener('load', init);

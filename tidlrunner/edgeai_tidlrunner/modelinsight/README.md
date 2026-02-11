@@ -1,4 +1,4 @@
-# TIDL Profiler HTML Generator - V6
+# TIDL Profiler HTML Generator
 
 Modular architecture separating data extraction from HTML generation for improved maintainability and faster iteration.
 
