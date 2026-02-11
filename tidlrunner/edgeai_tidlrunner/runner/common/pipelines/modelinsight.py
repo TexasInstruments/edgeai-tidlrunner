@@ -88,9 +88,9 @@ class GenerateModelInsightHTML(CompileModelBase):
     def _run(self):
         print(f'INFO: Model Insight - HTML generation')
         modelinsight_base_path = os.path.join(self.run_dir, 'modelinsight')
-        output_json_path = os.path.join(modelinsight_base_path, 'modelinsight.json')
+        output_json_path = os.path.join(modelinsight_base_path, 'modelinsight.json.gz')
         output_html_path = os.path.join(modelinsight_base_path, 'modelinsight.html')
         os.makedirs(modelinsight_base_path, exist_ok=True)
-        template_path = os.path.dirname(modelinsight.__file__)
-        gen_html(output_json_path, template_path, output_html_path)
+        template_file = os.path.join(os.path.dirname(modelinsight.__file__), 'template.html')
+        gen_html(output_json_path, template_file, output_html_path)
  
