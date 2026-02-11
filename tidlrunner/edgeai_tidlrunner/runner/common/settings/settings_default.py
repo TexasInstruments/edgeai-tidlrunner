@@ -212,6 +212,13 @@ COPY_SETTINGS_DEFAULT['analyze'] = COPY_SETTINGS_DEFAULT['infer'] | {
 
 
 ##########################################################################
+SETTINGS_DEFAULT['insight'] = SETTINGS_DEFAULT['analyze'] | { 
+}
+
+COPY_SETTINGS_DEFAULT['insight'] = COPY_SETTINGS_DEFAULT['analyze'] | {
+}
+
+##########################################################################
 SETTINGS_DEFAULT['extract'] = SETTINGS_DEFAULT['basic'] | {
     'model_path':             {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
     'config_path':            {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'},

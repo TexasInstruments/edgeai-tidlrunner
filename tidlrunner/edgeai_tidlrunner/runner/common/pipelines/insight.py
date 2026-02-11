@@ -62,7 +62,7 @@ class GenerateModelInsightJSON(CompileModelBase):
 
     def _run(self):
         print(f'INFO: Model Insight - JSON generation')
-        modelinsight_base_path = os.path.join(self.run_dir, 'modelinsight')
+        modelinsight_base_path = os.path.join(self.run_dir, 'insight')
         output_json_path = os.path.join(modelinsight_base_path, 'modelinsight.json')
         os.makedirs(modelinsight_base_path, exist_ok=True)
         gen_json(self.run_dir, output_json_path)
@@ -87,7 +87,7 @@ class GenerateModelInsightHTML(CompileModelBase):
 
     def _run(self):
         print(f'INFO: Model Insight - HTML generation')
-        modelinsight_base_path = os.path.join(self.run_dir, 'modelinsight')
+        modelinsight_base_path = os.path.join(self.run_dir, 'insight')
         output_json_path = os.path.join(modelinsight_base_path, 'modelinsight.json.gz')
         output_html_path = os.path.join(modelinsight_base_path, 'modelinsight.html')
         os.makedirs(modelinsight_base_path, exist_ok=True)
