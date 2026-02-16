@@ -93,12 +93,69 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
     with open(template_path, 'r', encoding='utf-8') as f:
         template = f.read()
 
-    # Handle both new and old data structure formats
-    if 'model_data' in json_data:
+    # Detect format: new (3-object) vs old (4-object with metadata/compilation)
+    if 'subgraphs' in json_data and isinstance(json_data['subgraphs'], list):
+        # NEW FORMAT: model, subgraphs[], performance
+        print("  Detected: NEW 3-object structure")
+        is_new_format = True
+
+        model_obj = json_data.get('model', {})
+        subgraphs = json_data.get('subgraphs', [])
+        performance = json_data.get('performance', {})
+
+        # Transform to template format
+        model_data = {
+            'model_details': {
+                'name': model_obj.get('name', ''),
+                'weights': model_obj.get('stats', {}).get('total_params', 0),
+                'no_of_layers': model_obj.get('stats', {}).get('total_layers', 0),
+                'input_shape': model_obj.get('inputs', []),
+                'output_shape': model_obj.get('outputs', [])
+            },
+            'layer_details': model_obj.get('layers', {}),
+            'edges': [
+                {
+                    'source_node_id': i,
+                    'target_node_id': i+1,
+                    'source_node_name': edge.get('from', ''),
+                    'target_node_name': edge.get('to', ''),
+                    'connection_info': {
+                        'tensor': edge.get('tensor', ''),
+                        'shape': edge.get('shape', [])
+                    }
+                }
+                for i, edge in enumerate(model_obj.get('graph', {}).get('edges', []))
+            ]
+        }
+
+        # Build subgraph_data for template
+        node_support = {}
+        for sg in subgraphs:
+            for node_name, support_info in sg.get('support', {}).items():
+                node_support[node_name] = {
+                    'supported': support_info.get('accelerated', False),
+                    'subgraph': sg['id'],
+                    'reason': support_info.get('reason', '')
+                }
+
+        subgraph_data = {
+            'subgraphs': [{'id': sg['id'], 'nodes': sg.get('onnx_nodes', [])} for sg in subgraphs],
+            'node_support': node_support
+        }
+
+        tree_structure = model_obj.get('hierarchy', {})
+
+    elif 'model_data' in json_data:
+        # LEGACY FORMAT (very old)
+        print("  Detected: LEGACY format")
+        is_new_format = False
         model_data = json_data['model_data']
         subgraph_data = json_data.get('subgraph_data', {})
         tree_structure = model_data.get('tree_structure', {})
     else:
+        # OLD FORMAT: metadata, model, compilation, performance
+        print("  Detected: OLD 4-object structure")
+        is_new_format = False
         model_data = {
             'model_details': json_data.get('model', {}).get('details', {}),
             'layer_details': json_data.get('model', {}).get('layers', {}),
@@ -111,15 +168,40 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
         tree_structure = json_data.get('model', {}).get('tree_structure', {})
 
     # Extract TIDL subgraph data
-    if 'tidl_data' in json_data:
+    if is_new_format:
+        # NEW FORMAT: Convert from subgraphs[] to tidl_data dict
+        tidl_data = {}
+        for sg in subgraphs:
+            sg_id = str(sg['id'])
+            layers = []
+            for layer in sg.get('layers', []):
+                layer_obj = {
+                    'layer_index': layer.get('id', 0),
+                    'layer_type': layer.get('type', ''),
+                    'layer_name': layer.get('name', ''),
+                    'parameters': layer.get('params', {}),
+                    'macs': layer.get('ops', {}).get('macs', 0),
+                    'gmacs': layer.get('ops', {}).get('gmacs', 0.0)
+                }
+                if 'onnx_index' in layer:
+                    layer_obj['onnx_node_index'] = layer['onnx_index']
+                layers.append(layer_obj)
+
+            tidl_data[sg_id] = {
+                'layers': layers,
+                'total_gmacs': sg.get('summary', {}).get('total_gmacs', 0.0),
+                'graph_nodes': sg.get('graph', {}).get('nodes', []),
+                'graph_edges': sg.get('graph', {}).get('edges', [])
+            }
+
+    elif 'tidl_data' in json_data:
         tidl_data = json_data['tidl_data']
         tidl_subgraphs_new = tidl_data
     else:
         tidl_subgraphs_new = json_data.get('compilation', {}).get('tidl_subgraphs', {})
         tidl_data = {}
 
-    # Transform old structure to template format if needed
-    if not ('tidl_data' in json_data):
+        # Transform old structure to template format if needed
         for subgraph_id, subgraph_info in tidl_subgraphs_new.items():
             layers = []
             for layer in subgraph_info.get('layers', []):
@@ -143,7 +225,104 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
             }
 
     # Extract performance and analysis data
-    if 'activation_data' in json_data:
+    if is_new_format:
+        # NEW FORMAT: Extract from subgraphs[] array
+        activation_data = {}
+        metrics_data = {}
+        proctime_data = {}
+        cycles_data = {}
+        memory_data = {}
+
+        for sg in subgraphs:
+            sg_id = str(sg['id'])
+            metrics_list = []
+            proctime_list = []
+            cycles_list = []
+            memory_list = []
+
+            for layer in sg.get('layers', []):
+                layer_id = layer.get('id', 0)
+
+                # Activation data
+                if 'activation' in layer:
+                    activation_key = f"{sg_id}_{layer_id}"
+                    activation_data[activation_key] = layer['activation']
+
+                # Metrics/Accuracy data
+                if 'accuracy' in layer:
+                    acc = layer['accuracy']
+                    metrics_list.append({
+                        'subgraph': sg_id,
+                        'tidl_layer_id': layer_id,
+                        'onnx_layer': layer.get('name', ''),
+                        'mean_abs_diff': acc.get('mae', 0),
+                        'mean_abs_rel_diff': acc.get('mae_relative', 0),
+                        'median_abs_diff': acc.get('median_error', 0),
+                        'max_abs_diff': acc.get('max_error', 0)
+                    })
+
+                # Performance data
+                if 'perf' in layer:
+                    perf = layer['perf']
+                    layer_type = layer.get('type', '')
+
+                    if 'time_us' in perf:
+                        proctime_list.append({
+                            'layer_num': layer_id,
+                            'layer_type': layer_type,
+                            'proctime': perf['time_us']
+                        })
+
+                    if 'cycles' in perf:
+                        cycles_list.append({
+                            'layer_num': layer_id,
+                            'layer_type': layer_type,
+                            'kernelOnlyCycles': perf['cycles'].get('kernel', 0),
+                            'coreLoopCycles': perf['cycles'].get('core_loop', 0)
+                        })
+
+                    if 'memory_kb' in perf:
+                        mem = perf['memory_kb']
+                        memory_list.append({
+                            'layer_num': layer_id,
+                            'layer_type': layer_type,
+                            'l2_usage': mem.get('l2', 0),
+                            'msmc_usage': mem.get('msmc', 0),
+                            'ddr_usage': mem.get('ddr', 0),
+                            'total_usage': mem.get('total', 0)
+                        })
+
+            if metrics_list:
+                metrics_data[sg_id] = metrics_list
+            if proctime_list:
+                proctime_data[sg_id] = proctime_list
+            if cycles_list:
+                cycles_data[sg_id] = cycles_list
+            if memory_list:
+                memory_data[sg_id] = memory_list
+
+        # Config data from performance object
+        perf_config = performance.get('config', {})
+        perf_summary = performance.get('summary', {})
+        perf_accuracy = performance.get('accuracy', {})
+
+        accuracy_str = f"{perf_accuracy.get('value', 0)}{perf_accuracy.get('unit', '')}"
+        if not perf_accuracy.get('value'):
+            accuracy_str = 'N/A'
+
+        config_data = {
+            'target_device': perf_config.get('device', 'Unknown'),
+            'task_type': perf_config.get('task', 'Unknown'),
+            'tensor_bits': perf_config.get('precision', 'Unknown'),
+            'accuracy': accuracy_str,
+            'num_frames': perf_summary.get('num_frames', 'N/A'),
+            'num_subgraphs': perf_summary.get('num_subgraphs', 'N/A'),
+            'perfsim_ddr_transfer_mb': perf_summary.get('ddr_transfer_mb', 'N/A'),
+            'perfsim_gmacs': perf_summary.get('total_gmacs', 'N/A'),
+            'perfsim_time_ms': perf_summary.get('total_time_ms', 'N/A')
+        }
+
+    elif 'activation_data' in json_data:
         activation_data = json_data.get('activation_data', {})
         metrics_data = json_data.get('metrics_data', {})
         config_data = json_data.get('config_data', {})
@@ -152,6 +331,7 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
         memory_data = json_data.get('memory_data', {})
     else:
         activation_data = {}
+        tidl_subgraphs_new = json_data.get('compilation', {}).get('tidl_subgraphs', {})
         for subgraph_id, subgraph_info in tidl_subgraphs_new.items():
             for layer in subgraph_info.get('layers', []):
                 if 'activation' in layer:

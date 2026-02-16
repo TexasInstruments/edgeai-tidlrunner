@@ -284,13 +284,13 @@ class ActivationDataParser:
                 'type': 'bar',
                 'x': notidl_centers_list,
                 'y': notidl_counts_list,
-                'name': 'NotIDL (FP32)',
+                'name': 'No-TIDL (FP32)',
                 'marker': {
-                    'color': 'rgba(33, 150, 243, 0.75)',
-                    'line': {'color': 'rgba(33, 150, 243, 1)', 'width': 0.5}
+                    'color': 'rgba(255, 127, 0, 0.75)',
+                    'line': {'color': 'rgba(255, 127, 0, 1)', 'width': 0.5}
                 },
                 'opacity': 0.75,
-                'hovertemplate': '<b>NotIDL</b><br>Value: %{x:.4f}<br>Count: %{y:,}<extra></extra>'
+                'hovertemplate': '<b>No-TIDL</b><br>Value: %{x:.4f}<br>Count: %{y:,}<extra></extra>'
             },
             {
                 'type': 'bar',
@@ -339,7 +339,7 @@ class ActivationDataParser:
             'annotations': [
                 {
                     'text': f"MAE: {stats.get('mae') or 0:.4f} | " +
-                            f"NotIDL: [{stats.get('notidl_min') or 0:.2f}, {stats.get('notidl_max') or 0:.2f}] | " +
+                            f"No-TIDL: [{stats.get('notidl_min') or 0:.2f}, {stats.get('notidl_max') or 0:.2f}] | " +
                             f"TIDL: [{stats.get('tidl_min') or 0:.2f}, {stats.get('tidl_max') or 0:.2f}]",
                     'xref': 'paper',
                     'yref': 'paper',
@@ -1335,13 +1335,21 @@ class ONNXParser:
         """Extract shape from GraphSurgeon tensor or ONNX ValueInfo
 
         Args:
-            tensor: gs.Variable or onnx ValueInfoProto
+            tensor: gs.Variable, gs.Constant, or onnx ValueInfoProto
 
         Returns:
             List of dimensions (ints or 'var' for dynamic)
         """
-        if self.use_gs and isinstance(tensor, gs.Variable):
+        if self.use_gs and (isinstance(tensor, gs.Variable) or isinstance(tensor, gs.Constant)):
             if tensor.shape is None:
+                # Try to infer shape from values for Constants
+                if isinstance(tensor, gs.Constant) and tensor.values is not None:
+                    try:
+                        import numpy as np
+                        values = np.asarray(tensor.values)
+                        return list(values.shape)
+                    except:
+                        pass
                 return []
             shape = []
             for dim in tensor.shape:
@@ -1695,6 +1703,25 @@ class ONNXParser:
 
         for init in graph.initializer:
             numeric_dims = [int(d) for d in init.dims]
+            # If dims is empty, try to infer shape from data size
+            if not numeric_dims:
+                # Check various data fields to infer shape
+                data_length = 0
+                if init.float_data:
+                    data_length = len(init.float_data)
+                elif init.int32_data:
+                    data_length = len(init.int32_data)
+                elif init.int64_data:
+                    data_length = len(init.int64_data)
+                elif init.raw_data:
+                    # Calculate based on data type size
+                    type_sizes = {1: 4, 2: 1, 3: 1, 6: 4, 7: 8, 10: 2, 11: 8}  # float32, uint8, int8, int32, int64, float16, float64
+                    if init.data_type in type_sizes:
+                        data_length = len(init.raw_data) // type_sizes[init.data_type]
+
+                if data_length > 0:
+                    numeric_dims = [data_length]
+
             initializer_names.add(init.name)
             tensor_metadata[init.name] = {
                 'shape': numeric_dims,
@@ -2346,9 +2373,8 @@ def main(work_dirs_path, output_json_path):
         print("=" * 70)
         sys.exit(1)
 
-    # Use the function parameters (passed when called programmatically)
-    model_dir_path = work_dirs_path
-    # output_json_path already set from parameter
+    model_dir_path = sys.argv[1]
+    output_json_path = sys.argv[2]
 
     if not os.path.exists(model_dir_path):
         print(f"ERROR: Model directory not found: {model_dir_path}")
