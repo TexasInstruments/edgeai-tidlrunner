@@ -79,6 +79,11 @@ class CompileModel(CompileModelBase):
             runtime_options['advanced_options:output_feature_16bit_names_list'] += ('' if runtime_options['advanced_options:output_feature_16bit_names_list'] == '' else ', ')
             runtime_options['advanced_options:output_feature_16bit_names_list'] += ', '.join(output_16bit_names)
 
+        if session_kwargs['runtime_options_dict']:
+            runtime_options_dict = session_kwargs['runtime_options_dict']
+            # runtime_options_dict = utils.str_to_literal(runtime_options_dict)
+            runtime_options.update(runtime_options_dict)
+            
     def _prepare(self):
         super()._prepare()
         common_kwargs = self.settings[self.common_prefix]

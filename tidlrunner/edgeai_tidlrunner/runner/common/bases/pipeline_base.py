@@ -137,7 +137,7 @@ class PipelineBase():
         # put the '' entry last
         prefixes = [k for k in prefixes if k != '']
         for prefix in prefixes:
-            prefix_keys = [k for k in keys if k.startswith(prefix) and k != prefix]
+            prefix_keys = [k for k in keys if k.startswith(prefix+'.')]
             prefix_dict = cls._parse_dict_fields(prefix_keys, kwargs)
             kwargs[prefix] = prefix_dict
         #
