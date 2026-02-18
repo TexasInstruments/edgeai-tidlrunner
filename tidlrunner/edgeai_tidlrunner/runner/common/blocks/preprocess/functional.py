@@ -184,19 +184,22 @@ def normalize_mean_scale(tensor, mean, scale, data_layout, inplace):
         Tensor: Normalized Tensor image.
     """
 
+    channel_idx = 1 if data_layout == 'NCHW' else (-1 if data_layout == 'NHWC' else None)
+    
+    # Auto-repeat mean/scale if needed
+    if channel_idx is not None:
+        num_channels = tensor.shape[channel_idx]
+        mean = list(mean) if not isinstance(mean, numbers.Number) else [mean]
+        scale = list(scale) if not isinstance(scale, numbers.Number) else [scale]
+        
+        # Repeat to match tensor channels
+        if len(mean) < num_channels and len(mean) > 1:
+            repeats = (num_channels + len(mean) - 1) // len(mean)  # Ceiling division
+            mean = (mean * repeats)[:num_channels]
+            scale = (scale * repeats)[:num_channels]
+    
+    # Normalize
     mean, scale = _normalize_pre(tensor, mean, scale, data_layout, inplace)
-    
-    if data_layout == 'NCHW':
-        channel_index = 1
-    elif data_layout == 'NHWC':
-        channel_index = 3
-    else:
-        channel_index = None
-
-    if channel_index:
-        if tensor.shape[channel_index] != mean.shape[channel_index] or tensor.shape[channel_index] != scale.shape[channel_index]:
-            raise ValueError(f'ERROR: normalize_mean_scale mismatch: tensor shape {tensor.shape} mean.shape={mean.shape} scale.shape={scale.shape}')
-    
     tensor = (tensor - mean) * scale
     return tensor
 
@@ -205,24 +208,32 @@ def _normalize_pre(tensor, mean, s, data_layout, inplace=False):
     assert data_layout in ('NCHW', 'NHWC'), f'invalid data_layout {data_layout}'
     if not inplace:
         tensor = copy.deepcopy(tensor)
-    #
+    
     mean = [mean] if isinstance(mean, numbers.Number) else mean
     s = [s] if isinstance(s, numbers.Number) else s
     mean = np.array(mean, dtype=np.float32)
     s = np.array(s, dtype=np.float32)
+    
+    # Calculate how many spatial dimensions we need
     if data_layout == 'NCHW':
-        mean = mean[:, None, None] if mean.ndim == 1 else mean
-        s = s[:, None, None] if s.ndim == 1 else s
+        channel_axis = 1
+        num_spatial_dims = tensor.ndim - 2  # All dims except N and C
     else:
-        mean = mean[None, None, :] if mean.ndim == 1 else mean
-        s = s[None, None, :] if s.ndim == 1 else s
-    #
-    if mean.ndim < tensor.ndim:
-        mean = mean[None, ...]
-    #
-    if s.ndim < tensor.ndim:
-        s = s[None, ...]
-    #
+        channel_axis = -1
+        num_spatial_dims = tensor.ndim - 2  # All dims except N and C
+    
+    # Reshape mean and s to match tensor dimensions
+    if mean.ndim == 1:
+        if data_layout == 'NCHW':
+            # Shape: [C] -> [1, C, 1, 1, ...] with enough 1s for all spatial dims
+            new_shape = [1, len(mean)] + [1] * num_spatial_dims
+        else:
+            # Shape: [C] -> [1, 1, 1, ..., C] with enough 1s for all spatial dims
+            new_shape = [1] + [1] * num_spatial_dims + [len(mean)]
+        
+        mean = mean.reshape(new_shape)
+        s = s.reshape(new_shape)
+    
     return mean, s
 
 
