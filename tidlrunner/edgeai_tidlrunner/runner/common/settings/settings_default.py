@@ -203,9 +203,10 @@ COPY_SETTINGS_DEFAULT['accuracy'] = COPY_SETTINGS_DEFAULT['compile'] | {
 
 ##########################################################################
 SETTINGS_DEFAULT['analyze'] = SETTINGS_DEFAULT['infer'] | {
-    # 'pipeline_type':                      {'dest': 'common.pipeline_type', 'default': 'analyze', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},        
-    'analyze_level':                      {'dest': 'common.analyze_level', 'default': 2, 'type': int, 'metavar': 'value', 'help': 'analyze_level - 0: basic, 1: whole model stats, 2: whole model and per layer stats'},    
-    'num_frames': {'dest': 'common.num_frames', 'default': 1, 'type': int, 'metavar': 'value', 'help': 'number of frames to process for accuracy evaluation'},    
+    # 'pipeline_type':                      {'dest': 'common.pipeline_type', 'default': 'analyze', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},
+    'analyze_level':                      {'dest': 'common.analyze_level', 'default': 2, 'type': int, 'metavar': 'value', 'help': 'analyze_level - 0: basic, 1: whole model stats, 2: whole model and per layer stats'},
+    'num_frames': {'dest': 'common.num_frames', 'default': 1, 'type': int, 'metavar': 'value', 'help': 'number of frames to process for accuracy evaluation'},
+    'act_data':                           {'dest': 'common.act_data', 'default': False, 'type': utils.str_to_bool, 'nargs': '?', 'const': True, 'metavar': 'value', 'help': 'extract activation data for model insight visualization'},
 }
 
 COPY_SETTINGS_DEFAULT['analyze'] = COPY_SETTINGS_DEFAULT['infer'] | {

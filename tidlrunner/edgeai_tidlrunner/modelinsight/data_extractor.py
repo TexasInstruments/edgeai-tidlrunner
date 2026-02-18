@@ -51,20 +51,26 @@ class ActivationDataParser:
     Uses layer_info.txt files directly to build activation mappings
     """
 
-    def __init__(self, model_dir: str, frame_idx: int = 0):
+    def __init__(self, model_dir: str, frame_idx: int = 0, tidl_data: Optional[Dict] = None):
         """
         Initialize activation data parser using layer_info.txt files
 
         Args:
             model_dir: Direct path to model directory (e.g., work_dirs/compile/AM69A/cl_onnx_model/)
             frame_idx: Frame index to use for activation data (default: 0)
+            tidl_data: Optional TIDL parsed data containing layer_index to onnx_node_index mappings
         """
         self.model_dir = Path(model_dir)
         self.frame_idx = frame_idx
         self.mapping = {}
         self.data_cache = {}
+        self.layer_to_onnx_node = {}  # Maps (subgraph_id, layer_index) -> onnx_node_index
 
         self._load_from_layer_info()
+
+        # Build layer_index to onnx_node_index mapping (lightweight, just IDs)
+        if tidl_data:
+            self._build_layer_to_onnx_mapping(tidl_data)
 
     def _load_from_layer_info(self):
         """Build activation mapping from layer_info.txt files"""
@@ -133,6 +139,23 @@ class ActivationDataParser:
 
         for sg_id in sorted(self.mapping.keys()):
             print(f"    Subgraph {sg_id}: {len(self.mapping[sg_id])} layers")
+
+    def _build_layer_to_onnx_mapping(self, tidl_data: Dict):
+        """Build lightweight mapping from (subgraph_id, layer_index) to onnx_node_index"""
+        print("  Building layer_index to onnx_node_index mapping...")
+        for subgraph_id, subgraph_info in tidl_data.items():
+            if 'layers' not in subgraph_info:
+                continue
+
+            for layer in subgraph_info['layers']:
+                layer_index = layer.get('layer_index')
+                onnx_node_index = layer.get('onnx_node_index')
+
+                if layer_index is not None and onnx_node_index is not None:
+                    key = (subgraph_id, str(layer_index))
+                    self.layer_to_onnx_node[key] = onnx_node_index
+
+        print(f"    Mapped {len(self.layer_to_onnx_node)} layer indices to ONNX node indices")
 
     def _find_notidl_outputs(self) -> Optional[str]:
         """Find NotIDL outputs directory"""
@@ -206,20 +229,8 @@ class ActivationDataParser:
         return value
 
     def _calculate_statistics(self, notidl_data: np.ndarray, tidl_data: np.ndarray) -> Dict[str, float]:
-        """Calculate accuracy statistics on full data"""
+        """Calculate statistics needed for plot generation"""
         try:
-            notidl_f64 = notidl_data.astype(np.float64)
-            tidl_f64 = tidl_data.astype(np.float64)
-            diff = notidl_f64 - tidl_f64
-            mae = float(np.mean(np.abs(diff)))
-            rmse = float(np.sqrt(np.mean(diff ** 2)))
-            max_error = float(np.max(np.abs(diff)))
-
-            try:
-                correlation = float(np.corrcoef(notidl_f64, tidl_f64)[0, 1])
-            except:
-                correlation = None
-
             notidl_min = float(np.min(notidl_data))
             notidl_max = float(np.max(notidl_data))
             notidl_mean = float(np.mean(notidl_data))
@@ -231,11 +242,6 @@ class ActivationDataParser:
             tidl_std = float(np.std(tidl_data))
 
             return {
-                'mae': self._sanitize_float(mae),
-                'rmse': self._sanitize_float(rmse),
-                'max_error': self._sanitize_float(max_error),
-                'correlation': self._sanitize_float(correlation) if correlation is not None else None,
-                'r_squared': self._sanitize_float(correlation ** 2) if correlation is not None else None,
                 'total_points': len(notidl_data),
                 'notidl_min': self._sanitize_float(notidl_min),
                 'notidl_max': self._sanitize_float(notidl_max),
@@ -258,6 +264,15 @@ class ActivationDataParser:
         try:
             notidl_data = np.asarray(notidl_data).flatten()
             tidl_data = np.asarray(tidl_data).flatten()
+
+            # Filter out NaN and inf values to prevent histogram errors
+            notidl_data = notidl_data[np.isfinite(notidl_data)]
+            tidl_data = tidl_data[np.isfinite(tidl_data)]
+
+            # Check if we have valid data after filtering
+            if len(notidl_data) == 0 or len(tidl_data) == 0:
+                print(f"    Warning: No finite values available for histogram generation")
+                return {}
 
             notidl_counts, notidl_edges = np.histogram(notidl_data, bins=100)
             tidl_counts, tidl_edges = np.histogram(tidl_data, bins=100)
@@ -338,8 +353,7 @@ class ActivationDataParser:
             'margin': {'l': 50, 'r': 20, 't': 60, 'b': 50},
             'annotations': [
                 {
-                    'text': f"MAE: {stats.get('mae') or 0:.4f} | " +
-                            f"No-TIDL: [{stats.get('notidl_min') or 0:.2f}, {stats.get('notidl_max') or 0:.2f}] | " +
+                    'text': f"No-TIDL: [{stats.get('notidl_min') or 0:.2f}, {stats.get('notidl_max') or 0:.2f}] | " +
                             f"TIDL: [{stats.get('tidl_min') or 0:.2f}, {stats.get('tidl_max') or 0:.2f}]",
                     'xref': 'paper',
                     'yref': 'paper',
@@ -389,10 +403,6 @@ class ActivationDataParser:
                     'max': axis_max
                 },
                 'stats': {
-                    'r_squared': stats.get('r_squared'),
-                    'mae': stats.get('mae'),
-                    'rmse': stats.get('rmse'),
-                    'correlation': stats.get('correlation'),
                     'total_points': total_points
                 }
             }
@@ -488,7 +498,10 @@ class ActivationDataParser:
                 result = self.process_layer(subgraph_id, tidl_layer_id)
 
                 if result:
-                    key = f"{subgraph_id}_{tidl_layer_id}"
+                    # Use onnx_node_index as key if available, otherwise fall back to tidl_layer_id
+                    lookup_key = (subgraph_id, tidl_layer_id)
+                    onnx_node_idx = self.layer_to_onnx_node.get(lookup_key, tidl_layer_id)
+                    key = f"{subgraph_id}_{onnx_node_idx}"
                     activation_data[key] = result
                     total_processed += 1
 
@@ -497,8 +510,7 @@ class ActivationDataParser:
                     if total_processed <= 10 or total_processed % 10 == 0:
                         layer_info = self.mapping[subgraph_id][tidl_layer_id]
                         onnx_name = layer_info.get('onnx_name', 'unknown')
-                        mae = result.get('stats', {}).get('mae', 0)
-                        print(f"    Layer {tidl_layer_id} ({onnx_name}): MAE={mae:.6f}")
+                        print(f"    Layer {tidl_layer_id} ({onnx_name}): Processed")
                 else:
                     total_failed += 1
 
@@ -654,6 +666,7 @@ class TIDLNetLogParser:
                 'layer_macs': {},
                 'total_gmacs': 0.0
             }
+
 
 
 class TIDLSubgraphParser:
@@ -2349,32 +2362,35 @@ def load_memory_data(model_dir_path: str) -> Dict[int, List[Dict[str, Any]]]:
     return memory_data
 
 
-def main(work_dirs_path, output_json_path):
+def main(work_dirs_path, output_json_path, extract_activations=False):
     """Main function to extract all artifact data to JSON"""
     if len(sys.argv) < 3:
         print("=" * 70)
         print("Data Extractor - Extract TIDL Artifacts to JSON")
         print("=" * 70)
-        print("\nUsage: python data_extractor.py <model_dir/> <output.json>")
+        print("\nUsage: python data_extractor.py <model_dir/> <output.json> [--act_data]")
         print("\nArguments:")
         print("  model_dir/   - Direct path to model directory (e.g., work_dirs/compile/AM69A/cl_onnx_model_name/)")
         print("  output.json  - Output JSON file path (will be compressed)")
+        print("  --act_data   - Optional: Extract activations data to separate file (activations_data.json.gz)")
         print("\nExample:")
         print("  python data_extractor.py work_dirs/compile/AM69A/cl-ort-resnet18/ model_data.json")
+        print("  python data_extractor.py work_dirs/compile/AM69A/cl-ort-resnet18/ model_data.json --act_data")
         print("\nThe script will automatically discover and parse:")
         print("  - ONNX model from <model_dir>/model/*.onnx")
         print("  - GraphViz info from <model_dir>/artifacts/tempDir/graphvizInfo.txt")
         print("  - Allowed nodes from <model_dir>/artifacts/allowedNode.txt")
         print("  - Subgraph files from <model_dir>/artifacts/tempDir/")
         print("  - Metrics from <model_dir>/analyze.xlsx")
-        print("  - Activation data from layer_info.txt and binary files")
+        print("  - Activation data from layer_info.txt and binary files (with --act_data)")
         print("  - Config/Result from <model_dir>/tidl/*.yaml")
         print("  - Performance data from <model_dir>/tidl/artifacts/tempDir/**/*.csv")
         print("=" * 70)
         sys.exit(1)
 
-    model_dir_path = sys.argv[1]
-    output_json_path = sys.argv[2]
+    # Use the function parameters (passed when called programmatically)
+    model_dir_path = work_dirs_path
+    # output_json_path already set from parameter
 
     if not os.path.exists(model_dir_path):
         print(f"ERROR: Model directory not found: {model_dir_path}")
@@ -2443,13 +2459,16 @@ def main(work_dirs_path, output_json_path):
 
         print("\n[5/8] Parsing activation data...")
         activation_data = {}
-        try:
-            activation_parser = ActivationDataParser(model_dir_path, frame_idx=0)
-            activation_data = activation_parser.process_all_layers()
-        except Exception as e:
-            print(f"WARNING: Failed to parse activation data: {e}")
-            import traceback
-            traceback.print_exc()
+        if extract_activations:
+            try:
+                activation_parser = ActivationDataParser(model_dir_path, frame_idx=0, tidl_data=tidl_data)
+                activation_data = activation_parser.process_all_layers()
+            except Exception as e:
+                print(f"WARNING: Failed to parse activation data: {e}")
+                import traceback
+                traceback.print_exc()
+        else:
+            print("  Skipping activation data extraction (use --act_data flag to enable)")
 
         print("\n[6/8] Parsing metrics data...")
         metrics_data = {}
@@ -2553,9 +2572,8 @@ def main(work_dirs_path, output_json_path):
                         'max_abs_diff': metric['max_abs_diff']
                     }
 
-                activation_key = f"{subgraph_id}_{tidl_layer_id}"
-                if activation_key in activation_data:
-                    enhanced_layer['activation'] = activation_data[activation_key]
+                # Activation data is stored separately (not embedded in layers) to avoid JSON bloat
+                # Keys are formatted as: f"{subgraph_id}_{onnx_node_idx}"
 
                 enhanced_layers.append(enhanced_layer)
 
@@ -2603,16 +2621,47 @@ def main(work_dirs_path, output_json_path):
         }
 
         print(f"Writing compressed JSON to: {output_json_path}")
-        json_str = json.dumps(combined_data)
 
         if not output_json_path.endswith('.gz'):
             output_json_path = output_json_path + '.gz'
 
+        # Write main JSON (without activation data)
+        print("  Serializing main data...")
         with gzip.open(output_json_path, 'wt', encoding='utf-8') as f:
-            f.write(json_str)
+            json.dump(combined_data, f)
 
         file_size = os.path.getsize(output_json_path) / (1024 * 1024)
-        print(f"JSON data saved (compressed): {output_json_path} ({file_size:.2f} MB)")
+        print(f"Main JSON saved (compressed): {output_json_path} ({file_size:.2f} MB)")
+
+        # Write activation data to separate file if requested
+        if extract_activations and activation_data:
+            # Determine activation output path from main output path
+            activation_output_path = output_json_path.replace('.json.gz', '_activations.json.gz')
+            if activation_output_path == output_json_path:
+                # Fallback if pattern matching didn't work
+                activation_output_path = output_json_path.replace('.gz', '').replace('.json', '') + '_activations.json.gz'
+
+            print(f"\n  Writing activation data to: {activation_output_path}")
+            with gzip.open(activation_output_path, 'wt', encoding='utf-8') as f:
+                f.write('{')
+                print(f"  Writing {len(activation_data)} layers of activation data...")
+
+                first = True
+                for i, (key, value) in enumerate(activation_data.items()):
+                    if not first:
+                        f.write(',')
+                    f.write(f'"{key}":')
+                    f.write(json.dumps(value))
+                    first = False
+
+                    # Progress indicator
+                    if (i + 1) % 50 == 0:
+                        print(f"    Written {i + 1}/{len(activation_data)} layers...")
+
+                f.write('}')
+
+            activation_file_size = os.path.getsize(activation_output_path) / (1024 * 1024)
+            print(f"  Activation data saved: {activation_output_path} ({activation_file_size:.2f} MB)")
 
         print("\n" + "=" * 70)
         print("SUCCESS! Data extraction complete.")
@@ -2621,10 +2670,11 @@ def main(work_dirs_path, output_json_path):
         print(f"  - ONNX layers: {len(combined_data['model']['layers'])}")
         print(f"  - TIDL subgraphs: {len(combined_data['compilation']['tidl_subgraphs'])}")
 
-        total_activation_layers = 0
-        for subgraph_id, subgraph in combined_data['compilation']['tidl_subgraphs'].items():
-            total_activation_layers += sum(1 for layer in subgraph['layers'] if 'activation' in layer)
-        print(f"  - Layers with activation data: {total_activation_layers}")
+        if extract_activations:
+            total_activation_layers = len(activation_data)
+            print(f"  - Layers with activation data: {total_activation_layers}")
+        else:
+            print(f"  - Layers with activation data: 0 (use --act_data to extract)")
 
         total_metrics_layers = 0
         for subgraph_id, subgraph in combined_data['compilation']['tidl_subgraphs'].items():
@@ -2642,7 +2692,13 @@ def main(work_dirs_path, output_json_path):
         print(f"  - Task: {combined_data['metadata']['task_type']}")
 
         print(f"\nNext step:")
-        print(f"  python html_generator.py {output_json_path} template.html output.html")
+        if extract_activations:
+            activation_output_path = output_json_path.replace('.json.gz', '_activations.json.gz')
+            if activation_output_path == output_json_path:
+                activation_output_path = output_json_path.replace('.gz', '').replace('.json', '') + '_activations.json.gz'
+            print(f"  python html_generator.py {output_json_path} template.html output.html --activations {activation_output_path}")
+        else:
+            print(f"  python html_generator.py {output_json_path} template.html output.html")
 
     except Exception as e:
         print(f"\nERROR: {e}")
@@ -2652,4 +2708,13 @@ def main(work_dirs_path, output_json_path):
 
 
 if __name__ == "__main__":
-    main(work_dirs_path = sys.argv[1], output_json_path = sys.argv[2])
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Extract TIDL Artifacts to JSON')
+    parser.add_argument('work_dirs', help='Direct path to model directory')
+    parser.add_argument('output_json', help='Output JSON file path')
+    parser.add_argument('--act_data', action='store_true', help='Extract activation data to separate file')
+
+    args = parser.parse_args()
+
+    main(work_dirs_path=args.work_dirs, output_json_path=args.output_json, extract_activations=args.act_data)

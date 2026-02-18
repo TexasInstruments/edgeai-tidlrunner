@@ -4455,83 +4455,83 @@ function updateMemoryChart(subgraphNum, memoryType) {
     console.log(`Memory chart updated for subgraph ${subgraphNum} (${memoryLabel}) with ${data.length} layers`);
 }
 
-// V4: Decompress activation data with extensive debugging
-console.log('=== [V4] ACTIVATION DATA DECOMPRESSION START ===');
-let ACTIVATION_DATA = {};
+// V5: Per-layer compressed activation data (lazy loading - decompress on demand)
+console.log('=== [V5] LOADING ACTIVATION DATA (LAZY) ===');
+let ACTIVATION_DATA_COMPRESSED = {};
+let ACTIVATION_DATA_CACHE = {}; // Cache for decompressed layers
 
 try {
-    // Step 1: Get compressed base64 string
-    const compressedBase64 = {{ACTIVATION_DATA}};
-    console.log('[V4 Step 1] Received compressed data type:', typeof compressedBase64);
-    console.log('[V4 Step 1] Compressed data length:', compressedBase64 ? compressedBase64.length : 0);
-    console.log('[V4 Step 1] First 100 chars:', compressedBase64 ? compressedBase64.substring(0, 100) : 'EMPTY');
+    // Load the per-layer compressed data (each layer is a separate compressed string)
+    ACTIVATION_DATA_COMPRESSED = {{ACTIVATION_DATA}};
+    console.log('[V5] Loaded per-layer compressed activation data');
+    console.log('[V5] Total layers:', Object.keys(ACTIVATION_DATA_COMPRESSED).length);
+    console.log('[V5] First 5 layer keys:', Object.keys(ACTIVATION_DATA_COMPRESSED).slice(0, 5));
+    console.log('[V5] Data will be decompressed on-demand when layers are clicked');
+} catch (error) {
+    console.error('[V5] ERROR loading activation data:', error);
+    ACTIVATION_DATA_COMPRESSED = {};
+}
+console.log('=== [V5] ACTIVATION DATA LOADED ===\n');
 
-    if (!compressedBase64 || compressedBase64.length === 0) {
-        console.warn('[V4 Step 1] WARNING: Compressed data is empty!');
-        ACTIVATION_DATA = {};
-    } else {
-        // Step 2: Decode base64 to binary
-        console.log('[V4 Step 2] Decoding base64...');
+/**
+ * Decompress activation data for a specific layer (lazy/on-demand loading)
+ * @param {string} layerKey - Layer key in format "subgraphId_layerIndex"
+ * @returns {Object|null} Decompressed layer activation data or null
+ */
+function decompressLayerActivation(layerKey) {
+    // Check cache first
+    if (ACTIVATION_DATA_CACHE[layerKey]) {
+        console.log(`[V5] Using cached activation data for layer ${layerKey}`);
+        return ACTIVATION_DATA_CACHE[layerKey];
+    }
+
+    // Check if compressed data exists
+    const compressedBase64 = ACTIVATION_DATA_COMPRESSED[layerKey];
+    if (!compressedBase64) {
+        console.warn(`[V5] No activation data for layer ${layerKey}`);
+        return null;
+    }
+
+    try {
+        console.log(`[V5] Decompressing activation data for layer ${layerKey}...`);
+        const startTime = performance.now();
+
+        // Decode base64 to binary string
         const binaryString = atob(compressedBase64);
-        console.log('[V4 Step 2] Binary string length:', binaryString.length);
-        console.log('[V4 Step 2] Binary string first 20 bytes:',
-            Array.from(binaryString.substring(0, 20)).map(c => c.charCodeAt(0).toString(16).padStart(2, '0')).join(' '));
 
-        // Step 3: Convert to Uint8Array
-        console.log('[V4 Step 3] Converting to Uint8Array...');
+        // Convert to Uint8Array
         const compressedData = new Uint8Array(binaryString.length);
         for (let i = 0; i < binaryString.length; i++) {
             compressedData[i] = binaryString.charCodeAt(i);
         }
-        console.log('[V4 Step 3] Uint8Array length:', compressedData.length);
-        console.log('[V4 Step 3] First 20 bytes:', Array.from(compressedData.slice(0, 20)).map(b => b.toString(16).padStart(2, '0')).join(' '));
-        console.log('[V4 Step 3] Gzip magic number check (should be 1f 8b):',
-            compressedData[0].toString(16).padStart(2, '0'),
-            compressedData[1].toString(16).padStart(2, '0'));
 
-        // Step 4: Decompress with pako
-        console.log('[V4 Step 4] Decompressing with pako...');
+        // Decompress with pako
         if (typeof pako === 'undefined') {
             throw new Error('pako library not loaded!');
         }
-        console.log('[V4 Step 4] pako library version:', pako.version || 'unknown');
+        const decompressedArray = pako.inflate(compressedData);
 
-        const decompressed = pako.inflate(compressedData, { to: 'string' });
-        console.log('[V4 Step 4] Decompressed string length:', decompressed.length);
-        console.log('[V4 Step 4] Decompressed first 200 chars:', decompressed.substring(0, 200));
+        // Convert to string using TextDecoder
+        const decoder = new TextDecoder('utf-8');
+        const decompressed = decoder.decode(decompressedArray);
 
-        // Step 5: Parse JSON
-        console.log('[V4 Step 5] Parsing JSON...');
-        ACTIVATION_DATA = JSON.parse(decompressed);
-        console.log('[V4 Step 5] JSON parsed successfully!');
-        console.log('[V4 Step 5] Number of activation data keys:', Object.keys(ACTIVATION_DATA).length);
-        console.log('[V4 Step 5] First 5 keys:', Object.keys(ACTIVATION_DATA).slice(0, 5));
+        // Parse JSON
+        const layerData = JSON.parse(decompressed);
 
-        // Step 6: Validate structure
-        console.log('[V4 Step 6] Validating data structure...');
-        const firstKey = Object.keys(ACTIVATION_DATA)[0];
-        if (firstKey) {
-            const firstData = ACTIVATION_DATA[firstKey];
-            console.log('[V4 Step 6] First key:', firstKey);
-            console.log('[V4 Step 6] First data structure:', Object.keys(firstData));
-            console.log('[V4 Step 6] Has stats?', !!firstData.stats);
-            console.log('[V4 Step 6] Has histogram?', !!firstData.histogram);
-            console.log('[V4 Step 6] Has scatter?', !!firstData.scatter);
-        }
+        // Cache it for future use
+        ACTIVATION_DATA_CACHE[layerKey] = layerData;
 
-        console.log('[V4] Decompression successful!');
-        console.log('[V4] Total activation data size (estimated):',
-            JSON.stringify(ACTIVATION_DATA).length / (1024 * 1024), 'MB');
+        const endTime = performance.now();
+        console.log(`[V5] Layer ${layerKey} decompressed successfully in ${(endTime - startTime).toFixed(2)}ms`);
+
+        return layerData;
+
+    } catch (error) {
+        console.error(`[V5] ERROR decompressing layer ${layerKey}:`, error.name, error.message);
+        return null;
     }
-}  catch (error) {
-    console.error('[V4] DECOMPRESSION FAILED!');
-    console.error('[V4] Error name:', error.name);
-    console.error('[V4] Error message:', error.message);
-    console.error('[V4] Error stack:', error.stack);
-    console.error('[V4] Setting ACTIVATION_DATA to empty object');
-    ACTIVATION_DATA = {};
 }
-console.log('=== [V4] ACTIVATION DATA DECOMPRESSION END ===\n');
+
 
 // Global state
 let graphData = null;
@@ -7290,29 +7290,63 @@ let plotResizeObserver = null;
  * @param {number} subgraphId - Subgraph index
  */
 function renderActivationPlots(nodeIndex, subgraphId) {
-    console.log(`[V4 Plot] === Rendering plots for ONNX node ${nodeIndex}, subgraph ${subgraphId} ===`);
+    console.log(`[V5 Plot] === Rendering plots for ONNX node ${nodeIndex}, subgraph ${subgraphId} ===`);
 
-    // V4: Enhanced debugging
-    if (typeof ACTIVATION_DATA === 'undefined') {
-        console.error('[V4 Plot] ACTIVATION_DATA not defined!');
+    // V5: Check if compressed activation data exists
+    if (typeof ACTIVATION_DATA_COMPRESSED === 'undefined') {
+        console.error('[V5 Plot] ACTIVATION_DATA_COMPRESSED not defined!');
         return;
     }
 
-    console.log('[V4 Plot] ACTIVATION_DATA type:', typeof ACTIVATION_DATA);
-    console.log('[V4 Plot] ACTIVATION_DATA keys count:', Object.keys(ACTIVATION_DATA).length);
+    // Check if activation data is empty (not extracted)
+    const totalActivationLayers = Object.keys(ACTIVATION_DATA_COMPRESSED).length;
+    console.log('[V5 Plot] Total compressed layers:', totalActivationLayers);
+
+    if (totalActivationLayers === 0) {
+        console.warn('[V5 Plot] No activation data extracted - showing message');
+        const histId = `activation-histogram-${nodeIndex}`;
+        const scatterId = `activation-scatter-${nodeIndex}`;
+
+        const messageHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 40px; background: #F5F5F5; border-radius: 8px; border: 2px dashed #D1D1D1;">
+                <i class="fas fa-info-circle" style="font-size: 48px; color: #808080; margin-bottom: 16px;"></i>
+                <p style="font-size: 16px; font-weight: 600; color: #1A1A1A; margin-bottom: 8px; text-align: center;">Activation data not available</p>
+                <p style="font-size: 14px; color: #4A4A4A; text-align: center; max-width: 500px; line-height: 1.5;">
+                    To generate activation analysis data, please run <code style="background: #E8F5F0; padding: 2px 6px; border-radius: 4px; font-family: monospace;">data_extractor.py</code> with the <code style="background: #E8F5F0; padding: 2px 6px; border-radius: 4px; font-family: monospace;">--act_data</code> flag.
+                </p>
+                <p style="font-size: 13px; color: #808080; text-align: center; margin-top: 12px; font-family: monospace;">
+                    python data_extractor.py &lt;model_dir&gt; &lt;output.json&gt; --act_data
+                </p>
+            </div>
+        `;
+
+        const histContainer = document.getElementById(histId);
+        const scatterContainer = document.getElementById(scatterId);
+
+        if (histContainer) {
+            histContainer.innerHTML = messageHTML;
+        }
+        if (scatterContainer) {
+            scatterContainer.innerHTML = messageHTML;
+        }
+
+        return;
+    }
 
     const key = `${subgraphId}_${nodeIndex}`;
-    console.log('[V4 Plot] Looking for key:', key);
+    console.log('[V5 Plot] Looking for key:', key);
 
-    if (!ACTIVATION_DATA[key]) {
-        console.warn('[V4 Plot] No activation data for key:', key);
-        console.log('[V4 Plot] Available keys:', Object.keys(ACTIVATION_DATA).slice(0, 10));
+    // V5: Decompress layer data on-demand
+    const data = decompressLayerActivation(key);
+
+    if (!data) {
+        console.warn('[V5 Plot] No activation data for key:', key);
+        console.log('[V5 Plot] Available keys (first 10):', Object.keys(ACTIVATION_DATA_COMPRESSED).slice(0, 10));
         return;
     }
 
-    const data = ACTIVATION_DATA[key];
-    console.log('[V4 Plot] Found activation data for key:', key);
-    console.log('[V4 Plot] Data structure:', {
+    console.log('[V5 Plot] Successfully loaded activation data for key:', key);
+    console.log('[V5 Plot] Data structure:', {
         hasStats: !!data.stats,
         hasHistogram: !!data.histogram,
         hasScatter: !!data.scatter,
