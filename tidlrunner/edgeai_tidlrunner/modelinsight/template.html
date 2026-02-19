@@ -7,10 +7,7 @@
 <!-- V4: Added pako.js for decompressing activation data -->
 <!-- V3: Enhanced graph rendering with Dagre layout algorithm and curved edges -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!-- Professional Typography: SF Pro family (system fonts only) -->
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <!-- Chart.js for proctime stairs plot -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
@@ -29,31 +26,100 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Nunito', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
 }
+
 :root {
-    --ti-red: #cc0000;
-    --ti-red-light: #ff3333;
-    --ti-red-dark: #990000;
-    --ti-red-accent: rgba(204, 0, 0, 0.1);
-    --background-color: #f4f4f7;
-    --card-background: #ffffff;
-    --text-primary: #333333;
-    --text-secondary: #2e2c2c;
-    --text-muted: #696565;
-    --border-color: #e0e0e0;
-    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.15);
+    /* ===== TI BRAND COLORS ===== */
+    --ti-red: #E31E24;
+    --ti-red-90: #E63339;
+    --ti-red-10: #FEF5F5;
+
+    /* ===== STATUS COLORS ===== */
+    --success: #00A651;
+    --success-light: #E8F5F0;
+    --warning: #FF8C00;
+    --warning-light: #FFF4E6;
+    --error: #D32F2F;
+    --error-light: #FFEBEE;
+
+    /* ===== GRAYSCALE ===== */
+    --gray-900: #1A1A1A;
+    --gray-700: #4A4A4A;
+    --gray-500: #808080;
+    --gray-300: #D1D1D1;
+    --gray-100: #F5F5F5;
+    --gray-50: #FAFAFA;
+    --white: #FFFFFF;
+
+    /* ===== SEMANTIC COLORS ===== */
+    --background-color: var(--gray-50);
+    --card-background: var(--white);
+    --text-primary: var(--gray-900);
+    --text-secondary: var(--gray-700);
+    --text-muted: var(--gray-500);
+    --border-color: var(--gray-300);
+
+    /* ===== SHADOWS (strict 8px grid) ===== */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+    --shadow-red: 0 4px 12px rgba(227, 30, 36, 0.15);
+
+    /* ===== BORDER RADIUS ===== */
     --radius-sm: 4px;
-    --radius-md: 8px;
-    --transition-speed: 0.3s;
-    --header-height: 70px;
-    --base-spacing: clamp(0.8rem, 1vw, 1.5rem);
-    --card-padding: clamp(1rem, 1.5vw, 2rem);
-    --card-gap: clamp(1rem, 1.5vw, 2rem);
-    --node-supported: #4a5568;
-    --node-non-accelerated: #c53030;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 12px;
+
+    /* ===== SPACING (strict 8px grid) ===== */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-10: 40px;
+    --space-12: 48px;
+    --space-16: 64px;
+
+    /* ===== CARD & LAYOUT ===== */
+    --card-padding: 24px;
+    --card-gap: 24px;
+    --section-margin: 48px;
+
+    /* ===== TYPOGRAPHY ===== */
+    --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+    --font-mono: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', 'Courier New', monospace;
+    --font-size-xs: 12px;
+    --font-size-sm: 14px;
+    --font-size-base: 16px;
+    --font-size-lg: 18px;
+    --font-size-xl: 20px;
+    --font-size-2xl: 25px;
+    --font-size-3xl: 31px;
+    --line-height-tight: 1.25;
+    --line-height-normal: 1.5;
+    --line-height-relaxed: 1.75;
+
+    /* ===== TRANSITIONS ===== */
+    --transition-fast: 200ms cubic-bezier(0.4, 0.0, 0.2, 1);
+    --transition-base: 300ms cubic-bezier(0.4, 0.0, 0.2, 1);
+    --transition-slow: 600ms cubic-bezier(0.4, 0.0, 0.2, 1);
+
+    /* ===== HEADER ===== */
+    --header-height: 60px;
+
+    /* ===== LEGACY COMPATIBILITY (to avoid breaking existing styles) ===== */
+    --ti-red-light: var(--ti-red-90);
+    --ti-red-dark: var(--ti-red);
+    --ti-red-accent: var(--ti-red-10);
+    --base-spacing: var(--space-6);
+    --transition-speed: var(--transition-base);
+    --node-supported: var(--success);
+    --node-non-accelerated: var(--error);
 }
 
 html {
@@ -61,19 +127,49 @@ html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
+
 * {
     -webkit-tap-highlight-color: transparent;
 }
+
 body {
     background-color: var(--background-color);
     color: var(--text-primary);
-    line-height: 1.7;
-    font-size: clamp(15px, 1.1vw, 17px);
+    font-family: var(--font-sans);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-normal);
+    font-weight: 400;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     overflow-x: hidden;
-    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+/* Typography improvements */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    line-height: var(--line-height-tight);
+    color: var(--text-primary);
+}
+
+h1 { font-size: var(--font-size-3xl); }
+h2 { font-size: var(--font-size-2xl); }
+h3 { font-size: var(--font-size-xl); }
+h4 { font-size: var(--font-size-lg); }
+h5 { font-size: var(--font-size-base); }
+h6 { font-size: var(--font-size-sm); }
+
+/* Use monospace for technical values */
+.monospace,
+.layer-name,
+.metric-value,
+.stat-value,
+code,
+pre {
+    font-family: var(--font-mono);
 }
 /* Non-accelerated Layers Dropdown */
 
@@ -344,7 +440,7 @@ body {
     border: 2px solid var(--border-color);
     border-radius: 25px;
     font-size: 0.9rem;
-    font-family: 'Nunito', sans-serif;
+    font-family: var(--font-sans);
     transition: all 0.3s ease;
     background: var(--background-color);
 }
@@ -528,64 +624,99 @@ body {
     transform: translateY(-50%) scale(1.2);
 }
 
+/* ==================== THREE-TIER HEADER SYSTEM ==================== */
 header {
-    background-color: white;
+    background-color: var(--white);
     position: sticky;
     top: 0;
     z-index: 100;
-    height: var(--header-height);
     box-shadow: var(--shadow-sm);
-    transition: box-shadow 0.3s ease;
+    transition: box-shadow var(--transition-base);
+    border-bottom: 2px solid var(--border-color);
 }
+
 header.scrolled {
     box-shadow: var(--shadow-md);
 }
+
 .header-container {
     width: 100%;
     margin: 0 auto;
-    padding: var(--base-spacing);
+    padding: var(--space-4) var(--space-6);
     display: flex;
     align-items: center;
     justify-content: space-between;
+    min-height: var(--header-height);
 }
 .logo {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--space-3);
+    padding-right: var(--space-6);
+    border-right: 1px solid var(--border-color);
 }
+
 .logo h1 {
-    font-size: clamp(1.6rem, 2.2vw, 2rem);
+    font-size: var(--font-size-xl);
     font-weight: 600;
     color: var(--text-primary);
-    transition: color 0.3s ease;
-    font-family: 'Nunito', sans-serif;
-    letter-spacing: 0.5px;
+    font-family: var(--font-sans);
+    letter-spacing: -0.02em;
+    margin: 0;
+}
+
+.logo h1::after {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--ti-red);
+    border-radius: 50%;
+    margin-left: var(--space-2);
+    vertical-align: middle;
 }
 .model-info {
     display: flex;
     align-items: center;
-    gap: 8px;
-    animation: fadeIn 0.5s ease;
+    gap: var(--space-8);
+    padding-left: var(--space-6);
 }
+
+.model-info > * {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
 .model-label {
-    font-size: 1.2rem;
-    color: var(--text-primary);
-    font-weight: 600;
-    letter-spacing: 0.3px;
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
+
 .model-name {
-    font-size: 1.25rem;
+    font-size: var(--font-size-sm);
     font-weight: 600;
-    color: var(--ti-red);
-    background-color: var(--ti-red-accent);
-    padding: 6px 14px;
-    border-radius: 20px;
-    transition: all 0.3s ease;
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+    background-color: var(--gray-100);
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    transition: all var(--transition-fast);
     cursor: default;
     max-width: 200px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.model-name:hover {
+    border-color: var(--ti-red);
+    background-color: var(--ti-red-10);
+    color: var(--ti-red);
 }
 .header-actions {
     display: flex;
@@ -602,91 +733,86 @@ header.scrolled {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s ease;
+    transition: all var(--transition-fast);
     position: relative;
-    overflow: hidden;
 }
-.btn-icon::before {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background: var(--ti-red);
-    border-radius: 50%;
-    transform: scale(0);
-    transition: transform 0.3s ease;
-    z-index: -1;
+
+.btn-icon:hover {
+    color: var(--ti-red);
+    background-color: var(--ti-red-10);
 }
+
 .btn-icon:active {
     transform: scale(0.95);
+    background-color: var(--ti-red);
+    color: var(--white);
 }
-/* ==================== NAVIGATION TABS ==================== */
+
+/* Hide close buttons in details panels */
+.btn-close-panel,
+.btn-close-panel-tidl {
+    display: none !important;
+}
+/* ==================== NAVIGATION TABS (Tier 2) ==================== */
 .main-tabs {
-    background-color: var(--background-color);
+    background-color: var(--white);
     display: flex;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 2px solid var(--border-color);
     position: sticky;
-    top: var(--header-height);
+    top: 0;
     z-index: 99;
-    padding: 0 var(--base-spacing);
+    padding: 0 var(--space-6);
     width: 100%;
     margin: 0 auto;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    margin-top: -2px; /* Overlap header border */
 }
+
 .tab {
-    padding: var(--base-spacing) calc(var(--base-spacing) * 1.5);
+    padding: var(--space-4) var(--space-6);
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-2);
     cursor: pointer;
     border: none;
     background: none;
     color: var(--text-secondary);
-    font-size: clamp(1rem, 1.1vw, 1.1rem);
-    font-weight: 600;
-    transition: color var(--transition-speed) ease;
-    overflow: hidden;
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    transition: all var(--transition-fast);
     position: relative;
-    letter-spacing: 0.3px;
-    transform: translateZ(0);
-    backface-visibility: hidden;
+    letter-spacing: -0.01em;
+    border-bottom: 3px solid transparent;
 }
-.tab::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: var(--ti-red-accent);
-    transform: translateY(100%);
-    transition: transform var(--transition-speed) ease;
+
+.tab:hover {
+    color: var(--ti-red);
+    background-color: var(--ti-red-10);
 }
 .tab.active {
     color: var(--ti-red);
+    font-weight: 600;
+    border-bottom-color: var(--ti-red);
 }
-.tab i,
-.tab span {
-    position: relative;
-    z-index: 1;
-}
+
 .tab i {
-    font-size: 1rem;
-    transition: transform var(--transition-speed) ease;
+    font-size: var(--font-size-base);
 }
+
+/* Animated indicator bar (optional, can coexist with border-bottom) */
 .tab-indicator {
     position: absolute;
     bottom: 0;
     height: 3px;
     background-color: var(--ti-red);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 0 8px var(--ti-red);
+    transition: all var(--transition-base) cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-red);
+    display: none; /* Hidden since we're using border-bottom now */
 }
 /* ==================== MAIN CONTENT ==================== */
 main {
     flex: 1;
     width: 100%;
-    padding: var(--base-spacing);
+    padding: var(--space-8) var(--space-6);
     display: flex;
     flex-direction: column;
 }
@@ -787,25 +913,270 @@ main {
 .model-details-container {
     display: flex;
     flex-direction: column;
-    gap: var(--card-gap);
+    gap: var(--section-margin);
     height: 100%;
 }
+
+/* Hero Cards Grid (3 columns) */
+.hero-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--card-gap);
+}
+
+@media (max-width: 1024px) {
+    .hero-cards-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Hero Card Styling */
+.hero-card {
+    background: var(--card-background);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--card-padding);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    transition: all var(--transition-fast);
+}
+
+.hero-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--ti-red);
+    box-shadow: var(--shadow-md);
+}
+
+.hero-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.hero-card-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--ti-red-10);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-2xl);
+    color: var(--ti-red);
+}
+
+.hero-card-title {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.hero-card-value {
+    font-size: var(--font-size-3xl);
+    font-weight: 400;
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+    line-height: var(--line-height-tight);
+}
+
+.hero-card-label {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+/* Specification Cards Grid (2 columns) */
+.spec-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--card-gap);
+}
+
+@media (max-width: 768px) {
+    .spec-cards-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.spec-card {
+    background: var(--card-background);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--card-padding);
+    transition: all var(--transition-fast);
+}
+
+.spec-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--ti-red);
+    box-shadow: var(--shadow-md);
+}
+
+.spec-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.spec-card-icon {
+    font-size: var(--font-size-xl);
+    color: var(--ti-red);
+}
+
+.spec-card-title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.spec-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.spec-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-2) 0;
+}
+
+.spec-item-label {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.spec-item-value {
+    font-size: var(--font-size-sm);
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* Acceleration Status Card */
+.acceleration-card {
+    background: var(--card-background);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--card-padding);
+    transition: all var(--transition-fast);
+}
+
+.acceleration-card:hover {
+    border-color: var(--ti-red);
+    box-shadow: var(--shadow-md);
+}
+
+.acceleration-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-4);
+}
+
+.acceleration-title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.acceleration-progress-bar {
+    width: 100%;
+    height: 32px;
+    background: var(--gray-100);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    position: relative;
+    margin-bottom: var(--space-4);
+}
+
+.acceleration-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--success) 0%, #00d46e 100%);
+    transition: width var(--transition-slow);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: var(--space-3);
+}
+
+.acceleration-progress-text {
+    color: var(--white);
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+    font-family: var(--font-mono);
+}
+
+.acceleration-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-8);
+}
+
+.acceleration-stat {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.acceleration-stat-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.acceleration-stat-value {
+    font-size: var(--font-size-3xl);
+    font-weight: 400;
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+}
+
+.acceleration-stat-value.success {
+    color: var(--success);
+}
+
+.acceleration-stat-value.error {
+    color: var(--error);
+}
+
+.acceleration-stat-label {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
 .card {
-    background-color: white;
-    border-radius: var(--radius-md);
+    background-color: var(--card-background);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
     overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    will-change: transform;
-    transform: translateZ(0);
-    backface-visibility: hidden;
+    transition: all var(--transition-fast);
 }
+
+.card:hover {
+    transform: translateY(-2px);
+    border-color: var(--ti-red);
+    box-shadow: var(--shadow-md);
+}
+
 .card-header {
-    padding: calc(var(--card-padding) * 0.7) var(--card-padding);
+    padding: var(--card-padding);
     border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
     justify-content: space-between;
+    background-color: var(--white);
 }
 .card-header h2 {
     font-size: clamp(1.1rem, 1.3vw, 1.4rem);
@@ -856,32 +1227,37 @@ main {
 }
 .stat-item {
     flex: 1;
-    padding: 1rem;
+    padding: var(--space-4);
     border-radius: var(--radius-sm);
-    transition: all 0.3s ease;
-    border-right: 2px solid rgba(128, 128, 128, 0.2);
+    transition: all var(--transition-fast);
+    border-right: 1px solid var(--border-color);
     text-align: center;
 }
+
 .stat-item:last-child {
     border-right: none;
 }
-.stat-label {
-    font-size: clamp(1.3rem, 1.5vw, 1.6rem);
-    color: var(--text-secondary);
-    margin-bottom: 0.3rem;
-    font-weight: 500;
-    letter-spacing: 0.2px;
-    font-family: 'Nunito', sans-serif;
+
+.stat-item:hover {
+    background-color: var(--gray-50);
 }
+
+.stat-label {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    margin-bottom: var(--space-2);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+}
+
 .stat-value {
-    font-size: clamp(1.6rem, 1.9vw, 2rem);
+    font-size: var(--font-size-2xl);
     font-weight: 600;
+    font-family: var(--font-mono);
     color: var(--text-primary);
-    transition: color 0.3s ease;
+    transition: color var(--transition-fast);
     overflow: hidden;
     text-overflow: ellipsis;
-    letter-spacing: 0.3px;
-    font-family: 'Nunito', sans-serif;
 }
 .card-grid {
     display: grid;
@@ -905,7 +1281,7 @@ main {
 }
 .perf-value {
     font-size: clamp(2.5rem, 5vw, 3.5rem);
-    font-weight: 700;
+    font-weight: 400;
     color: var(--ti-red);
     transition: all 0.3s ease;
     cursor: default;
@@ -975,7 +1351,7 @@ main {
 .layer-table th {
     padding: 0.7rem 0.9rem;
     text-align: left;
-    font-weight: 700;
+    font-weight: 400;
     cursor: pointer;
     user-select: none;
     transition: background 0.2s ease;
@@ -1063,28 +1439,31 @@ main {
     display: flex;
     justify-content: space-around;
     align-items: flex-end;
-    gap: 1.5rem;
-    padding: 1.5rem;
-    background: rgba(0, 0, 0, 0.02);
+    gap: 3rem; /* Increase from 1.5rem to 48px */
+    padding: 2rem;
+    background: white;
+    border: 1px solid #D1D1D1;
     border-radius: 8px;
-    min-height: 200px;
+    min-height: 280px; /* Increase from 200px to 280px */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .memory-box {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.8rem;
+    gap: 1rem; /* Increase to 16px */
     flex: 1;
     max-width: 120px;
 }
 
 .memory-label {
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: var(--text-primary);
+    font-size: 0.875rem; /* 14px */
+    font-weight: 600; /* Semibold */
+    color: var(--gray-700); /* #4A4A4A */
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.05em;
+    margin-top: 1rem; /* 16px below bar */
 }
 
 .memory-glass {
@@ -1093,43 +1472,125 @@ main {
     background: white;
     border: 3px solid #ddd;
     border-radius: 8px;
-    position: relative;
-    overflow: hidden;
+    position: relative; /* Critical for absolute positioning of children */
+    overflow: hidden; /* Clip bar at container edges */
     box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* Base bar styling */
 .memory-fill {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
     height: 0%;
-    background: linear-gradient(to top, var(--ti-red), rgba(204, 0, 0, 0.7));
-    transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 0 0 5px 5px;
+    transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.2s ease,
+                box-shadow 0.2s ease,
+                border-color 0.2s ease;
+    border-radius: 8px 8px 0 0; /* Rounded top only */
+    border: 2px solid;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    cursor: pointer;
 }
 
+/* L2 Bar - Blue */
 .memory-box[data-memory="l2"] .memory-fill {
-    background: linear-gradient(to top, #3498db, rgba(52, 152, 219, 0.7));
+    background: linear-gradient(to bottom, #00BCD4, #0097A7);
+    border-color: #00838F;
 }
 
+/* MSMC Bar - Purple */
 .memory-box[data-memory="msmc"] .memory-fill {
-    background: linear-gradient(to top, #9b59b6, rgba(155, 89, 182, 0.7));
+    background: linear-gradient(to bottom, #9C27B0, #7B1FA2);
+    border-color: #6A1B9A;
 }
 
+/* DDR Bar - Light Gray (CHANGED for visibility!) */
 .memory-box[data-memory="ddr"] .memory-fill {
-    background: linear-gradient(to top, #e67e22, rgba(230, 126, 34, 0.7));
+    background: linear-gradient(to bottom, #F5F5F5, #E8E8E8); /* Light gray gradient */
+    border-color: #999999; /* Darker gray border for visibility */
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08), /* Inner shadow */
+                0 2px 4px rgba(0, 0, 0, 0.12); /* Outer shadow */
 }
 
+/* TOTAL Bar - Red */
 .memory-box[data-memory="total"] .memory-fill {
-    background: linear-gradient(to top, var(--ti-red), rgba(204, 0, 0, 0.7));
+    background: linear-gradient(to bottom, #E31E24, #C41E24);
+    border-color: #A01820;
+}
+
+/* Hover States (NEW) */
+.memory-fill:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+    transition: all 0.2s ease;
+}
+
+/* Darken borders on hover */
+.memory-box[data-memory="l2"] .memory-fill:hover {
+    border-color: #006064;
+}
+
+.memory-box[data-memory="msmc"] .memory-fill:hover {
+    border-color: #4A148C;
+}
+
+.memory-box[data-memory="ddr"] .memory-fill:hover {
+    border-color: var(--ti-red); /* Red border on hover */
+    background: linear-gradient(to bottom, #EBEBEB, #D8D8D8); /* Slightly darker on hover */
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1),
+                0 8px 16px rgba(227, 30, 36, 0.15); /* Red-tinted shadow */
+}
+
+.memory-box[data-memory="total"] .memory-fill:hover {
+    border-color: #7F0000;
 }
 
 .memory-value {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--text-secondary);
+    font-family: var(--font-mono); /* CRITICAL: Change to monospace */
+    font-size: 1rem; /* 16px, reduced for better fit */
+    font-weight: 700; /* Bold */
+    color: #000000; /* BLACK text for all bars */
+    position: absolute;
+    top: 45%; /* Adjusted to give space for percentage below */
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8); /* White shadow for contrast on colored backgrounds */
+    pointer-events: none;
     text-align: center;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+/* Special case for DDR gray bar - lighter shadow */
+.memory-box[data-memory="ddr"] .memory-value {
+    color: #000000; /* Black text */
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5); /* Subtle shadow */
+}
+
+/* Add Percentage Labels (NEW) */
+.memory-percentage {
+    font-family: var(--font-mono);
+    font-size: 0.8rem; /* 13px */
+    font-weight: 600;
+    color: #000000; /* BLACK text for all bars */
+    position: absolute;
+    top: 58%; /* Positioned below the value */
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    pointer-events: none;
+    text-align: center;
+    white-space: nowrap;
+    line-height: 1;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8); /* White shadow for contrast */
+}
+
+.memory-box[data-memory="ddr"] .memory-percentage {
+    color: #000000; /* Black text */
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5); /* Subtle shadow */
 }
 
 /* ==================== SCATTER PLOT ==================== */
@@ -1278,8 +1739,8 @@ main {
 .stat-value {
     font-size: 1.3rem;
     color: var(--text-primary);
-    font-weight: 700;
-    font-family: 'JetBrains Mono', monospace;
+    font-weight: 400;
+    font-family: var(--font-mono);
 }
 
 /* ==================== GRAPH VISUALIZATION ==================== */
@@ -1300,7 +1761,7 @@ main {
     height: 100%;
     position: relative;
     overflow: auto;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-mono);
     flex: 1;
     contain: layout style paint;
     transition: transform 0.4s cubic-bezier(0.4, 0.0, 0.2, 1),
@@ -1429,80 +1890,70 @@ main {
     }
 }
 
+/* ==================== GRAPH NODE STYLES ==================== */
 .node-rect {
-    fill: #e5e9f4;
-    stroke-width: 3;
-    rx: 16;
+    fill: #E8F5F0;
+    stroke: #00A651;
+    stroke-width: 2;
+    rx: 8;
     transition: all 0.2s ease;
-    filter:
-        drop-shadow(-8px -8px 16px rgba(255, 255, 255, 0.8))
-        drop-shadow(8px 8px 16px rgba(0, 0, 0, 0.15));
-    will-change: transform;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
+
 .node-rect.non-accelerated {
-    fill: #d4d8e3;
-    stroke: #808080;
-    stroke-width: 3;
-    filter:
-        drop-shadow(-8px -8px 16px rgba(255, 255, 255, 0.6))
-        drop-shadow(8px 8px 16px rgba(0, 0, 0, 0.2));
+    fill: #FFEBEE;
+    stroke: #D32F2F;
+    stroke-width: 2;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
+
 .graph-node:hover .node-rect {
-    transform: scale(1.05);
-    filter:
-        drop-shadow(-10px -10px 20px rgba(255, 255, 255, 0.9))
-        drop-shadow(10px 10px 20px rgba(0, 0, 0, 0.2));
+    stroke-width: 3;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
 }
+
 .graph-node.selected .node-rect {
-    fill: #d8dce9;
-    stroke-width: 4;
-    filter:
-        drop-shadow(-8px -8px 16px rgba(255, 255, 255, 0.8))
-        drop-shadow(8px 8px 16px rgba(0, 0, 0, 0.15))
-        drop-shadow(4px 4px 12px rgba(0, 0, 0, 0.4))
-        drop-shadow(-4px -4px 12px rgba(255, 255, 255, 0.9));
+    stroke: #E31E24;
+    stroke-width: 3;
+    filter: drop-shadow(0 4px 12px rgba(227, 30, 36, 0.3));
 }
+
 .graph-node:active .node-rect {
-    fill: #d8dce9;
-    filter:
-        drop-shadow(-8px -8px 16px rgba(255, 255, 255, 0.8))
-        drop-shadow(8px 8px 16px rgba(0, 0, 0, 0.15))
-        drop-shadow(4px 4px 12px rgba(0, 0, 0, 0.4))
-        drop-shadow(-4px -4px 12px rgba(255, 255, 255, 0.9));
+    transform: scale(0.98);
 }
 .node-icon {
-    fill: #2c3e50;
-    font-size: 32px;
+    fill: var(--text-primary);
+    font-size: 24px;
     text-anchor: middle;
     dominant-baseline: middle;
     font-family: 'Font Awesome 6 Pro', 'Font Awesome 6 Free';
     pointer-events: none;
     user-select: none;
-    transition: all 0.2s ease;
+    transition: all var(--transition-fast);
 }
+
 .graph-node:hover .node-icon {
-    fill: hsl(10, 80%, 50%);
-    font-size: 36px;
+    fill: var(--ti-red);
 }
+
 .graph-node.selected .node-icon,
 .graph-node:active .node-icon {
-    fill: hsl(10, 80%, 50%);
-    font-size: 28px;
+    fill: var(--ti-red);
 }
 .node-type-label {
-    fill: #1a202c;
-    font-family: 'Nunito', sans-serif;
-    font-size: 20;
-    font-weight: 500;
+    fill: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
     text-anchor: start;
     pointer-events: none;
     user-select: none;
-    letter-spacing: 0.3px;
 }
+
 .node-index-label {
-    fill: #666666;
-    font-family: 'Nunito', sans-serif;
-    font-size: 11px;
+    fill: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 10px;
     font-weight: 600;
     text-anchor: middle;
     pointer-events: none;
@@ -1510,23 +1961,21 @@ main {
 }
 
 .node-type {
-    fill: #000000;
-    font-family: 'JetBrains Mono', monospace;
+    fill: var(--text-secondary);
+    font-family: var(--font-mono);
     font-size: 9px;
     text-anchor: middle;
     pointer-events: none;
     user-select: none;
-    letter-spacing: 0.5px;
 }
 .edge-label {
-    fill: #4a5568;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
+    fill: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 10px;
     font-weight: 600;
     text-anchor: middle;
     pointer-events: none;
     user-select: none;
-    letter-spacing: 0.2px;
 }
 .edge-label-bg {
     fill: rgba(255, 255, 255, 0.95);
@@ -1627,7 +2076,7 @@ main {
     margin: 0;
     font-size: 0.95rem;
     color: var(--text-primary);
-    font-weight: 700;
+    font-weight: 400;
 }
 .layer-index-close {
     background: none;
@@ -1659,7 +2108,7 @@ main {
     padding: 10px 12px;
     text-align: left;
     font-size: 0.8rem;
-    font-weight: 700;
+    font-weight: 400;
     color: var(--text-secondary);
     text-transform: uppercase;
     border-bottom: 2px solid var(--border-color);
@@ -1685,7 +2134,7 @@ main {
     color: #1a202c;
     padding: 10px 15px;
     font-size: 14px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-mono);
     cursor: pointer;
     transition: all 0.3s ease;
     backdrop-filter: blur(10px);
@@ -1709,7 +2158,7 @@ main {
     color: #1a202c;
     padding: 10px 15px;
     font-size: 12px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-mono);
     backdrop-filter: blur(10px);
     display: flex;
     flex-direction: column;
@@ -1726,7 +2175,7 @@ main {
 }
 .subgraph-info-value {
     color: #1a202c;
-    font-weight: 700;
+    font-weight: 400;
 }
 .subgraph-info-value.supported {
     color: #2f855a;
@@ -1748,7 +2197,7 @@ main {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(204, 0, 0, 0.3);
     max-width: 300px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-mono);
 }
 .node-tooltip.show {
     opacity: 1;
@@ -1849,7 +2298,7 @@ main {
 }
 .panel-header h3 {
     font-size: clamp(0.9rem, 1vw, 1rem);
-    font-weight: 500;
+    font-weight: 400;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -1892,9 +2341,9 @@ main {
     padding: 12px 10px;
     background: none;
     border: none;
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-    font-weight: 600;
+    color: var(--gray-500); /* Change from --text-secondary (#808080) */
+    font-size: 0.875rem; /* 14px */
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
@@ -1906,6 +2355,11 @@ main {
     white-space: nowrap;
     min-height: 60px;
     letter-spacing: 0.2px;
+}
+
+.tab-btn:hover {
+    color: var(--ti-red);
+    background: #FFF9F9; /* Red-5 tint */
 }
 .tab-btn::before {
     content: '';
@@ -1926,7 +2380,8 @@ main {
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 3px;
+    height: 3px; /* Increase from current */
+    border-radius: 3px 3px 0 0; /* Round top corners */
     background: linear-gradient(90deg, var(--ti-red) 0%, var(--ti-red-light) 100%);
     transform: scaleX(0);
     transition: transform 0.3s ease;
@@ -1934,14 +2389,15 @@ main {
 }
 .tab-btn.active {
     color: var(--ti-red);
-    font-weight: 600;
+    font-weight: 600; /* Increase from 500 */
     background: var(--ti-red-accent);
 }
 .tab-btn.active::after {
     transform: scaleX(1);
 }
 .tab-btn i {
-    font-size: 1.2rem;
+    font-size: 1.125rem; /* 18px, increased from 1.2rem */
+    margin-right: 8px;
     position: relative;
     z-index: 1;
     transition: all 0.3s ease;
@@ -1958,20 +2414,225 @@ main {
     z-index: 1;
     font-size: 0.75rem;
 }
+
+/* Keyboard focus (only on keyboard navigation) */
+.tab-btn:focus-visible {
+    outline: 2px solid var(--ti-red);
+    outline-offset: 2px;
+}
+
+.memory-fill:focus-visible {
+    outline: 2px solid var(--ti-red);
+    outline-offset: 2px;
+}
+
 .detail-section {
-    margin-bottom: 1.5rem;
+    margin-bottom: 4rem; /* 64px gap between sections */
     animation: fadeIn 0.5s ease;
 }
+
+/* First section needs space from tab nav */
+.panel-content .detail-section:first-child {
+    margin-top: 2rem; /* 32px gap from tabs */
+}
 .detail-section h4 {
-    font-size: 0.95rem;
-    color: var(--ti-red);
-    margin-bottom: 12px;
+    font-size: 1.25rem; /* 20px, increased from 0.95rem */
+    font-weight: 600; /* Semibold */
+    color: var(--gray-900); /* #1A1A1A, changed from red */
+    margin-bottom: 8px; /* Reduced, description will follow */
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding-bottom: 8px;
-    border-bottom: 2px solid var(--ti-red-accent);
+    gap: 12px; /* Increased from 8px */
+    padding-bottom: 0; /* Remove bottom padding */
+    border-bottom: none; /* Remove red accent line */
 }
+
+.detail-section h4 i {
+    font-size: 1.5rem; /* 24px icon size */
+    color: var(--ti-red); /* Keep icon red */
+}
+
+/* Add description paragraph styling */
+.section-description {
+    font-size: 0.875rem; /* 14px */
+    font-weight: 400;
+    color: var(--gray-500); /* #808080 */
+    margin-bottom: 1.5rem; /* 24px gap before chart */
+    max-width: 600px;
+    line-height: var(--line-height-normal);
+}
+
+/* Chart container wrapper - positions button and chart together */
+.chart-container-wrapper {
+    position: relative; /* Creates positioning context for button */
+    background: white;
+    border: 1px solid #D1D1D1;
+    border-radius: 8px;
+    padding: 2rem; /* 32px padding */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Chart divs inside wrapper */
+.chart-container-wrapper > div[id*="histogram"],
+.chart-container-wrapper > div[id*="scatter"] {
+    width: 100% !important;
+    /* Height set inline in HTML */
+}
+
+/* Fullscreen button for charts - positioned inside wrapper */
+.chart-fullscreen-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    z-index: 10000;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.chart-fullscreen-btn:hover {
+    background: var(--ti-red);
+    transform: scale(1.15);
+    box-shadow: 0 4px 12px rgba(227, 30, 36, 0.4);
+}
+
+.chart-fullscreen-btn:active {
+    transform: scale(0.95);
+}
+
+/* Keep button visible and accessible in fullscreen */
+.detail-section:fullscreen .chart-fullscreen-btn,
+.detail-section:-webkit-full-screen .chart-fullscreen-btn,
+.detail-section:-moz-full-screen .chart-fullscreen-btn,
+.detail-section:-ms-fullscreen .chart-fullscreen-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+}
+
+/* Fullscreen state */
+.detail-section:fullscreen {
+    background: white;
+    padding: 2rem;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-section:fullscreen h4 {
+    margin-bottom: 0.5rem;
+}
+
+.detail-section:fullscreen .section-description {
+    margin-bottom: 1rem;
+}
+
+.detail-section:fullscreen .chart-container-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+}
+
+.detail-section:fullscreen .chart-container-wrapper > div[id*="histogram"],
+.detail-section:fullscreen .chart-container-wrapper > div[id*="scatter"] {
+    height: calc(100vh - 12rem) !important;
+    width: 100% !important;
+    flex: 1;
+    min-height: 400px;
+}
+
+/* Webkit fullscreen support */
+.detail-section:-webkit-full-screen {
+    background: white;
+    padding: 2rem;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-section:-webkit-full-screen .chart-container-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+}
+
+.detail-section:-webkit-full-screen .chart-container-wrapper > div[id*="histogram"],
+.detail-section:-webkit-full-screen .chart-container-wrapper > div[id*="scatter"] {
+    height: calc(100vh - 12rem) !important;
+    width: 100% !important;
+    flex: 1;
+    min-height: 400px;
+}
+
+/* Mozilla fullscreen support */
+.detail-section:-moz-full-screen {
+    background: white;
+    padding: 2rem;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-section:-moz-full-screen .chart-container-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+}
+
+.detail-section:-moz-full-screen .chart-container-wrapper > div[id*="histogram"],
+.detail-section:-moz-full-screen .chart-container-wrapper > div[id*="scatter"] {
+    height: calc(100vh - 12rem) !important;
+    width: 100% !important;
+    flex: 1;
+    min-height: 400px;
+}
+
+/* MS fullscreen support */
+.detail-section:-ms-fullscreen {
+    background: white;
+    padding: 2rem;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-section:-ms-fullscreen .chart-container-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+}
+
+.detail-section:-ms-fullscreen .chart-container-wrapper > div[id*="histogram"],
+.detail-section:-ms-fullscreen .chart-container-wrapper > div[id*="scatter"] {
+    height: calc(100vh - 12rem) !important;
+    width: 100% !important;
+    flex: 1;
+    min-height: 400px;
+}
+
 .detail-row {
     display: flex;
     justify-content: space-between;
@@ -1989,19 +2650,17 @@ main {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-weight: 500;
-    letter-spacing: 0.2px;
-    font-family: 'Nunito', sans-serif;
+    font-weight: 400;
+    font-family: var(--font-sans);
 }
 .detail-value {
     font-size: 1rem;
-    font-weight: 600;
+    font-weight: 400;
     color: var(--text-primary);
     text-align: right;
     word-break: break-word;
     max-width: 60%;
-    font-family: 'Nunito', sans-serif;
-    letter-spacing: 0.2px;
+    font-family: var(--font-sans);
 }
 .support-badge {
     display: inline-block;
@@ -2077,7 +2736,7 @@ main {
 }
 .metrics-panel-header h3 {
     font-size: 1.2rem;
-    font-weight: 700;
+    font-weight: 400;
     color: var(--text-primary);
     display: flex;
     align-items: center;
@@ -2111,7 +2770,7 @@ main {
     color: var(--text-primary);
     cursor: pointer;
     transition: all 0.3s ease;
-    font-family: 'Nunito', sans-serif;
+    font-family: var(--font-sans);
     font-weight: 500;
 }
 .metric-dropdown:hover {
@@ -2143,7 +2802,7 @@ main {
 }
 .subgraph-chart-title {
     font-size: 1.15rem;
-    font-weight: 700;
+    font-weight: 400;
     color: var(--ti-red);
     margin-bottom: 15px;
     padding-bottom: 12px;
@@ -2181,11 +2840,11 @@ main {
 }
 /* D3 Tooltip styles */
 .d3-tooltip {
-    font-family: 'Nunito', sans-serif;
+    font-family: var(--font-sans);
     line-height: 1.5;
 }
 .d3-tooltip strong {
-    font-weight: 700;
+    font-weight: 400;
     color: #fff;
 }
 
@@ -2329,37 +2988,42 @@ main {
 /* ==================== VIEW TABS STYLES ==================== */
 .view-tabs {
     display: flex;
-    gap: 10px;
+    gap: var(--space-2);
 }
 
 .view-tab-btn {
-    padding: 8px 20px;
-    border: 2px solid var(--border-color);
-    background: var(--background-color);
-    color: var(--text-primary);
-    border-radius: 6px;
+    padding: var(--space-2) var(--space-4);
+    border: 1px solid var(--border-color);
+    background: var(--white);
+    color: var(--text-secondary);
+    border-radius: var(--radius-md);
     cursor: pointer;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 500;
-    transition: all 0.2s ease;
+    transition: all var(--transition-fast);
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-2);
 }
 
 .view-tab-btn i {
-    font-size: 16px;
+    font-size: var(--font-size-sm);
 }
 
 .view-tab-btn:hover {
-    background: var(--ti-red-accent);
+    background: var(--gray-50);
     border-color: var(--ti-red);
+    color: var(--ti-red);
 }
 
 .view-tab-btn.active {
     background: var(--ti-red);
-    color: white;
+    color: var(--white);
     border-color: var(--ti-red);
+}
+
+.view-tab-btn.active:hover {
+    background: var(--ti-red-90);
 }
 
 /* ==================== TREE VIEW STYLES ==================== */
@@ -2618,6 +3282,63 @@ main {
     border: 1px solid #ffcc80;
 }
 
+/* ==================== RESPONSIVE DESIGN ==================== */
+
+/* Mobile: Stack memory bars vertically */
+@media (max-width: 767px) {
+    .memory-usage-container {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1.5rem;
+        min-height: auto;
+    }
+
+    .memory-box {
+        max-width: 100%;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    .memory-glass {
+        order: 2;
+    }
+
+    .memory-label {
+        order: 1;
+        margin-top: 0;
+        align-self: center;
+    }
+
+    .memory-value {
+        order: 3;
+    }
+
+    /* Stack chart sections with less spacing */
+    .detail-section {
+        margin-bottom: 2rem;
+    }
+
+    /* Reduce chart heights */
+    .detail-section > div[id*="histogram"] {
+        height: 250px !important;
+    }
+
+    .detail-section > div[id*="scatter"] {
+        height: 350px !important;
+    }
+}
+
+/* Tablet: 2x2 memory bar grid */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .memory-usage-container {
+        flex-wrap: wrap;
+        gap: 2rem;
+    }
+
+    .memory-box {
+        flex: 0 0 calc(50% - 1rem);
+    }
+}
 
 </style>
 </head>
@@ -2669,56 +3390,121 @@ main {
     <!-- Model Details Tab -->
     <section id="model-details" class="tab-content active">
         <div class="model-details-container">
-            <div class="card model-summary">
-                <div class="card-header">
-                    <h2><i class="fas fa-cube"></i> Model Overview</h2>
-                </div>
-                <div class="card-body">
-                    <div class="model-icon">
-                        <img src="https://img.icons8.com/?size=100&id=62903&format=png&color=FA5252" width="100" height="100" alt="Neural Network Icon">
-                    </div>
-                    <div class="model-stats">
-                        <div class="stat-row">
-                            <div class="stat-item">
-                                <div class="stat-label">Model Name</div>
-                                <div class="stat-value" id="model-name" title="">-</div>
-                            </div>
-                            <div class="stat-item">
-                                <div class="stat-label">Total Parameters</div>
-                                <div class="stat-value" id="parameters">-</div>
-                            </div>
-                            <div class="stat-item">
-                                <div class="stat-label">Layers</div>
-                                <div class="stat-value" id="layers">-</div>
-                            </div>
-                            <div class="stat-item">
-                                <div class="stat-label">Input Shape</div>
-                                <div class="stat-value" id="input-shape">-</div>
-                            </div>
+
+            <!-- Hero Cards (3-column grid) -->
+            <div class="hero-cards-grid">
+                <!-- Model Info Card -->
+                <div class="hero-card">
+                    <div class="hero-card-header">
+                        <div class="hero-card-icon">
+                            <i class="fas fa-brain"></i>
                         </div>
-                        <div class="stat-row">
-                            <div class="stat-item">
-                                <div class="stat-label">Output Shape</div>
-                                <div class="stat-value" id="output-shape">-</div>
-                            </div>
-                            <div class="stat-item">
-                                <div class="stat-label">Task Type</div>
-                                <div class="stat-value" id="task-type">-</div>
-                            </div>
-                            <div class="stat-item">
-                                <div class="stat-label">Accuracy</div>
-                                <div class="stat-value" id="accuracy-value">-</div>
-                            </div>
-                            <div class="stat-item">
-                                <div class="stat-label">Tensor Bits</div>
-                                <div class="stat-value" id="tensor-bits">-</div>
-                            </div>
+                        <div class="hero-card-title">Model Info</div>
+                    </div>
+                    <div class="hero-card-value" id="model-name" title="">-</div>
+                    <div class="hero-card-label"><span id="task-type">-</span></div>
+                </div>
+
+                <!-- Performance Card -->
+                <div class="hero-card">
+                    <div class="hero-card-header">
+                        <div class="hero-card-icon">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <div class="hero-card-title">Performance</div>
+                    </div>
+                    <div class="hero-card-value"><span id="accuracy-value">-</span></div>
+                    <div class="hero-card-label">Accuracy</div>
+                </div>
+
+                <!-- Architecture Card -->
+                <div class="hero-card">
+                    <div class="hero-card-header">
+                        <div class="hero-card-icon">
+                            <i class="fas fa-sitemap"></i>
+                        </div>
+                        <div class="hero-card-title">Architecture</div>
+                    </div>
+                    <div class="hero-card-value" id="layers">-</div>
+                    <div class="hero-card-label">Total Layers</div>
+                </div>
+            </div>
+
+            <!-- Specification Cards (2-column grid) -->
+            <div class="spec-cards-grid">
+                <!-- Input Specification Card -->
+                <div class="spec-card">
+                    <div class="spec-card-header">
+                        <div class="spec-card-icon">
+                            <i class="fas fa-download"></i>
+                        </div>
+                        <div class="spec-card-title">Input Specification</div>
+                    </div>
+                    <div class="spec-card-content">
+                        <div class="spec-item">
+                            <span class="spec-item-label">Input Shape</span>
+                            <span class="spec-item-value" id="input-shape">-</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-item-label">Tensor Bits</span>
+                            <span class="spec-item-value" id="tensor-bits">-</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-item-label">Parameters</span>
+                            <span class="spec-item-value" id="parameters">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Output Specification Card -->
+                <div class="spec-card">
+                    <div class="spec-card-header">
+                        <div class="spec-card-icon">
+                            <i class="fas fa-upload"></i>
+                        </div>
+                        <div class="spec-card-title">Output Specification</div>
+                    </div>
+                    <div class="spec-card-content">
+                        <div class="spec-item">
+                            <span class="spec-item-label">Output Shape</span>
+                            <span class="spec-item-value" id="output-shape">-</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-item-label">Task Type</span>
+                            <span class="spec-item-value" id="task-type-spec">-</span>
                         </div>
                     </div>
                 </div>
             </div>
-            <!-- Runtime Graph Card -->
-            <div class="card" style="margin-top: 2rem;">
+
+            <!-- Acceleration Status Card (Full Width) -->
+            <div class="acceleration-card">
+                <div class="acceleration-header">
+                    <div class="acceleration-title">Hardware Acceleration Status</div>
+                </div>
+                <div class="acceleration-progress-bar">
+                    <div class="acceleration-progress-fill" id="acceleration-progress" style="width: 0%;">
+                        <span class="acceleration-progress-text" id="acceleration-percentage">0%</span>
+                    </div>
+                </div>
+                <div class="acceleration-stats">
+                    <div class="acceleration-stat">
+                        <div class="acceleration-stat-content">
+                            <div class="acceleration-stat-value success" id="accelerated-count">0</div>
+                            <div class="acceleration-stat-label">Accelerated</div>
+                        </div>
+                    </div>
+                    <div class="acceleration-stat">
+                        <div class="acceleration-stat-content">
+                            <div class="acceleration-stat-value error" id="cpu-count">0</div>
+                            <div class="acceleration-stat-label">CPU Fallback</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Model Visualization Card -->
+            <div class="card">
                 <div class="card-header" style="display: flex; align-items: center; justify-content: space-between;">
                     <h2><i class="fas fa-project-diagram"></i> Model Visualization</h2>
                     <div class="view-tabs">
@@ -3023,6 +3809,27 @@ main {
 </main>
 <script>
 // ==================== INJECTED MODEL DATA ====================
+// NOTE: This template receives data transformed by html_generator.py
+//
+// DATA STRUCTURE EVOLUTION:
+// - The data_extractor.py now outputs a NEW 3-object structure:
+//   {model, subgraphs[], performance}
+//
+// - For backward compatibility, html_generator.py transforms this
+//   new structure back to the format expected by this template:
+//   - INJECTED_MODEL_DATA: {model_details, layer_details, edges}
+//   - SUBGRAPH_DATA: {subgraphs, node_support}
+//   - TIDL_LAYER_DATA: {subgraph_id: {layers, total_gmacs, graph}}
+//   - METRICS_DATA, CONFIG_DATA, PROCTIME_DATA, CYCLES_DATA, MEMORY_DATA
+//   - TREE_DATA: Hierarchical module structure
+//
+// - This transformation ensures existing visualizations continue to work
+//   while the underlying data format has been cleaned up to eliminate
+//   duplicates and improve semantic organization.
+//
+// FUTURE: This template could be refactored to directly consume the
+// new 3-object structure for better performance and clarity.
+// ==================================================================
 
 const INJECTED_MODEL_DATA = {{MODEL_DATA}};
 
@@ -3276,7 +4083,7 @@ function updateProctimeChart(subgraphNum) {
     console.log(`Chart updated for subgraph ${subgraphNum} with ${data.length} layers`);
 }
 
-// Initialize Cycles Chart (Stacked: kernelOnlyCycles + coreLoopCycles)
+// Initialize Cycles Chart (Stacked: kernelOnlyCycles is subset of coreLoopCycles)
 let cyclesChart = null;
 let activationScatterCharts = {};
 
@@ -3328,6 +4135,7 @@ function updateCyclesChart(subgraphNum) {
     const labels = data.map(d => d.layer_num);
     const kernelOnlyCycles = data.map(d => d.kernelOnlyCycles);
     const coreLoopCycles = data.map(d => d.coreLoopCycles);
+    const loopOverhead = data.map((d, i) => coreLoopCycles[i] - kernelOnlyCycles[i]); // Overhead = total - kernel
     const layerNames = data.map(d => d.layer_type);
 
     // Get canvas
@@ -3339,7 +4147,7 @@ function updateCyclesChart(subgraphNum) {
         cyclesChart.destroy();
     }
 
-    // Create stacked bar chart
+    // Create stacked bar chart (kernel-only is subset of core-loop)
     cyclesChart = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -3353,10 +4161,10 @@ function updateCyclesChart(subgraphNum) {
                     borderWidth: 1
                 },
                 {
-                    label: 'Core Loop Cycles',
-                    data: coreLoopCycles,
-                    backgroundColor: 'rgba(75, 192, 192, 0.8)', // Teal
-                    borderColor: 'rgba(75, 192, 192, 1)',
+                    label: 'Loop Overhead',
+                    data: loopOverhead,
+                    backgroundColor: 'rgba(201, 203, 207, 0.8)', // Gray
+                    borderColor: 'rgba(201, 203, 207, 1)',
                     borderWidth: 1
                 }
             ]
@@ -3391,8 +4199,8 @@ function updateCyclesChart(subgraphNum) {
                         afterBody: function(context) {
                             if (context.length > 0) {
                                 const index = context[0].dataIndex;
-                                const total = kernelOnlyCycles[index] + coreLoopCycles[index];
-                                return `Total: ${total.toFixed(2)} cycles`;
+                                const total = coreLoopCycles[index]; // Core loop is the actual total
+                                return `Total Core Loop: ${total.toFixed(2)} cycles`;
                             }
                         }
                     },
@@ -3647,83 +4455,83 @@ function updateMemoryChart(subgraphNum, memoryType) {
     console.log(`Memory chart updated for subgraph ${subgraphNum} (${memoryLabel}) with ${data.length} layers`);
 }
 
-// V4: Decompress activation data with extensive debugging
-console.log('=== [V4] ACTIVATION DATA DECOMPRESSION START ===');
-let ACTIVATION_DATA = {};
+// V5: Per-layer compressed activation data (lazy loading - decompress on demand)
+console.log('=== [V5] LOADING ACTIVATION DATA (LAZY) ===');
+let ACTIVATION_DATA_COMPRESSED = {};
+let ACTIVATION_DATA_CACHE = {}; // Cache for decompressed layers
 
 try {
-    // Step 1: Get compressed base64 string
-    const compressedBase64 = {{ACTIVATION_DATA}};
-    console.log('[V4 Step 1] Received compressed data type:', typeof compressedBase64);
-    console.log('[V4 Step 1] Compressed data length:', compressedBase64 ? compressedBase64.length : 0);
-    console.log('[V4 Step 1] First 100 chars:', compressedBase64 ? compressedBase64.substring(0, 100) : 'EMPTY');
+    // Load the per-layer compressed data (each layer is a separate compressed string)
+    ACTIVATION_DATA_COMPRESSED = {{ACTIVATION_DATA}};
+    console.log('[V5] Loaded per-layer compressed activation data');
+    console.log('[V5] Total layers:', Object.keys(ACTIVATION_DATA_COMPRESSED).length);
+    console.log('[V5] First 5 layer keys:', Object.keys(ACTIVATION_DATA_COMPRESSED).slice(0, 5));
+    console.log('[V5] Data will be decompressed on-demand when layers are clicked');
+} catch (error) {
+    console.error('[V5] ERROR loading activation data:', error);
+    ACTIVATION_DATA_COMPRESSED = {};
+}
+console.log('=== [V5] ACTIVATION DATA LOADED ===\n');
 
-    if (!compressedBase64 || compressedBase64.length === 0) {
-        console.warn('[V4 Step 1] WARNING: Compressed data is empty!');
-        ACTIVATION_DATA = {};
-    } else {
-        // Step 2: Decode base64 to binary
-        console.log('[V4 Step 2] Decoding base64...');
+/**
+ * Decompress activation data for a specific layer (lazy/on-demand loading)
+ * @param {string} layerKey - Layer key in format "subgraphId_layerIndex"
+ * @returns {Object|null} Decompressed layer activation data or null
+ */
+function decompressLayerActivation(layerKey) {
+    // Check cache first
+    if (ACTIVATION_DATA_CACHE[layerKey]) {
+        console.log(`[V5] Using cached activation data for layer ${layerKey}`);
+        return ACTIVATION_DATA_CACHE[layerKey];
+    }
+
+    // Check if compressed data exists
+    const compressedBase64 = ACTIVATION_DATA_COMPRESSED[layerKey];
+    if (!compressedBase64) {
+        console.warn(`[V5] No activation data for layer ${layerKey}`);
+        return null;
+    }
+
+    try {
+        console.log(`[V5] Decompressing activation data for layer ${layerKey}...`);
+        const startTime = performance.now();
+
+        // Decode base64 to binary string
         const binaryString = atob(compressedBase64);
-        console.log('[V4 Step 2] Binary string length:', binaryString.length);
-        console.log('[V4 Step 2] Binary string first 20 bytes:',
-            Array.from(binaryString.substring(0, 20)).map(c => c.charCodeAt(0).toString(16).padStart(2, '0')).join(' '));
 
-        // Step 3: Convert to Uint8Array
-        console.log('[V4 Step 3] Converting to Uint8Array...');
+        // Convert to Uint8Array
         const compressedData = new Uint8Array(binaryString.length);
         for (let i = 0; i < binaryString.length; i++) {
             compressedData[i] = binaryString.charCodeAt(i);
         }
-        console.log('[V4 Step 3] Uint8Array length:', compressedData.length);
-        console.log('[V4 Step 3] First 20 bytes:', Array.from(compressedData.slice(0, 20)).map(b => b.toString(16).padStart(2, '0')).join(' '));
-        console.log('[V4 Step 3] Gzip magic number check (should be 1f 8b):',
-            compressedData[0].toString(16).padStart(2, '0'),
-            compressedData[1].toString(16).padStart(2, '0'));
 
-        // Step 4: Decompress with pako
-        console.log('[V4 Step 4] Decompressing with pako...');
+        // Decompress with pako
         if (typeof pako === 'undefined') {
             throw new Error('pako library not loaded!');
         }
-        console.log('[V4 Step 4] pako library version:', pako.version || 'unknown');
+        const decompressedArray = pako.inflate(compressedData);
 
-        const decompressed = pako.inflate(compressedData, { to: 'string' });
-        console.log('[V4 Step 4] Decompressed string length:', decompressed.length);
-        console.log('[V4 Step 4] Decompressed first 200 chars:', decompressed.substring(0, 200));
+        // Convert to string using TextDecoder
+        const decoder = new TextDecoder('utf-8');
+        const decompressed = decoder.decode(decompressedArray);
 
-        // Step 5: Parse JSON
-        console.log('[V4 Step 5] Parsing JSON...');
-        ACTIVATION_DATA = JSON.parse(decompressed);
-        console.log('[V4 Step 5] JSON parsed successfully!');
-        console.log('[V4 Step 5] Number of activation data keys:', Object.keys(ACTIVATION_DATA).length);
-        console.log('[V4 Step 5] First 5 keys:', Object.keys(ACTIVATION_DATA).slice(0, 5));
+        // Parse JSON
+        const layerData = JSON.parse(decompressed);
 
-        // Step 6: Validate structure
-        console.log('[V4 Step 6] Validating data structure...');
-        const firstKey = Object.keys(ACTIVATION_DATA)[0];
-        if (firstKey) {
-            const firstData = ACTIVATION_DATA[firstKey];
-            console.log('[V4 Step 6] First key:', firstKey);
-            console.log('[V4 Step 6] First data structure:', Object.keys(firstData));
-            console.log('[V4 Step 6] Has stats?', !!firstData.stats);
-            console.log('[V4 Step 6] Has histogram?', !!firstData.histogram);
-            console.log('[V4 Step 6] Has scatter?', !!firstData.scatter);
-        }
+        // Cache it for future use
+        ACTIVATION_DATA_CACHE[layerKey] = layerData;
 
-        console.log('[V4] Decompression successful!');
-        console.log('[V4] Total activation data size (estimated):',
-            JSON.stringify(ACTIVATION_DATA).length / (1024 * 1024), 'MB');
+        const endTime = performance.now();
+        console.log(`[V5] Layer ${layerKey} decompressed successfully in ${(endTime - startTime).toFixed(2)}ms`);
+
+        return layerData;
+
+    } catch (error) {
+        console.error(`[V5] ERROR decompressing layer ${layerKey}:`, error.name, error.message);
+        return null;
     }
-}  catch (error) {
-    console.error('[V4] DECOMPRESSION FAILED!');
-    console.error('[V4] Error name:', error.name);
-    console.error('[V4] Error message:', error.message);
-    console.error('[V4] Error stack:', error.stack);
-    console.error('[V4] Setting ACTIVATION_DATA to empty object');
-    ACTIVATION_DATA = {};
 }
-console.log('=== [V4] ACTIVATION DATA DECOMPRESSION END ===\n');
+
 
 // Global state
 let graphData = null;
@@ -4038,7 +4846,20 @@ function transformData(data) {
             layerdetails: {
                 name: layerData.layer_name || layerName,
                 type: layerData.type || 'N/A',
-                inputshape: layerData.input_shape?.formatted || 'N/A',
+                inputshape: (() => {
+                    if (layerData.input_metadata && layerData.input_metadata.length > 0) {
+                        return layerData.input_metadata.map((meta, idx) => {
+                            let shapeStr;
+                            if (Array.isArray(meta.shape)) {
+                                shapeStr = meta.shape.length > 0 ? `[${meta.shape.join(', ')}]` : 'scalar';
+                            } else {
+                                shapeStr = meta.shape || 'N/A';
+                            }
+                            return layerData.input_metadata.length > 1 ? `Input ${idx}: ${shapeStr}` : shapeStr;
+                        }).join('; ');
+                    }
+                    return layerData.input_shape?.formatted || 'N/A';
+                })(),
                 outputshape: layerData.output_shape?.formatted || 'N/A',
                 kernelshape: formatKernelShape(layerData.kernel_shapes),
                 strides: formatStrides(layerData.strides),
@@ -4075,16 +4896,59 @@ function transformData(data) {
 function populateUI(data) {
     const modelName = data.model_details.name;
     const truncatedName = truncateString(modelName, 30);
+
+    // Header and hero cards
     document.getElementById('header-model-name').textContent = truncatedName;
     document.getElementById('header-model-name').title = modelName;
     document.getElementById('model-name').textContent = truncatedName;
     document.getElementById('model-name').title = modelName;
     document.getElementById('parameters').textContent = formatNumber(data.model_details.weights);
     document.getElementById('layers').textContent = data.model_details.no_of_layers;
+
+    // Input/Output specification cards
     const inputShapeStr = data.model_details.input_shape?.[0]?.shape?.join(' × ') || '-';
     const outputShapeStr = data.model_details.output_shape?.[0]?.shape?.join(' × ') || '-';
     document.getElementById('input-shape').textContent = inputShapeStr;
     document.getElementById('output-shape').textContent = outputShapeStr;
+
+    // Populate task type in Output Specification card
+    const taskTypeSpecEl = document.getElementById('task-type-spec');
+    if (taskTypeSpecEl) {
+        taskTypeSpecEl.textContent = document.getElementById('task-type').textContent;
+    }
+}
+
+// ==================== ACCELERATION STATUS ====================
+function populateAccelerationStatus(nodes) {
+    if (!nodes || nodes.length === 0) return;
+
+    // Count acceleration status
+    let acceleratedCount = 0;
+    let cpuCount = 0;
+
+    nodes.forEach(node => {
+        if (node.tidl_supported) {
+            acceleratedCount++;
+        } else {
+            cpuCount++;
+        }
+    });
+
+    const totalNodes = nodes.length;
+    const accelerationPercentage = totalNodes > 0 ? Math.round((acceleratedCount / totalNodes) * 100) : 0;
+
+    // Update DOM
+    document.getElementById('accelerated-count').textContent = acceleratedCount;
+    document.getElementById('cpu-count').textContent = cpuCount;
+    document.getElementById('acceleration-percentage').textContent = accelerationPercentage + '%';
+
+    // Update progress bar
+    const progressFill = document.getElementById('acceleration-progress');
+    if (progressFill) {
+        progressFill.style.width = accelerationPercentage + '%';
+    }
+
+    console.log(`Acceleration Status: ${acceleratedCount} accelerated, ${cpuCount} CPU (${accelerationPercentage}%)`);
 }
 // ==================== LAYER BREAKDOWN TABLE ====================
 let layerTableData = [];
@@ -4573,10 +5437,10 @@ function renderChartJSScatter(nodeIndex, scatterData) {
 
     const ctx = canvas.getContext('2d');
 
-    // Prepare scatter data points: {x: TIDL (INT8), y: NotIDL (FP32)}
+    // Prepare scatter data points: {x: TIDL (INT8), y: No-TIDL (FP32)}
     const allPoints = scatterData.points.map(p => ({
         x: p.x,  // TIDL (INT8)
-        y: p.y,  // NotIDL (FP32)
+        y: p.y,  // No-TIDL (FP32)
         error: Math.abs(p.y - p.x)
     }));
 
@@ -4666,14 +5530,14 @@ function renderChartJSScatter(nodeIndex, scatterData) {
                             const point = context.raw;
                             return [
                                 `TIDL (INT8): ${point.x.toFixed(5)}`,
-                                `NotIDL (FP32): ${point.y.toFixed(5)}`,
+                                `No-TIDL (FP32): ${point.y.toFixed(5)}`,
                                 `Abs Error: ${point.error.toFixed(7)}`
                             ];
                         }
                     },
                     backgroundColor: 'rgba(33, 33, 33, 0.95)',
-                    titleFont: { size: 12, weight: '600', family: 'Nunito' },
-                    bodyFont: { size: 11, family: 'JetBrains Mono' },
+                    titleFont: { size: 12, weight: '600', family: '-apple-system' },
+                    bodyFont: { size: 11, family: 'SF Mono' },
                     padding: 10,
                     cornerRadius: 6,
                     borderColor: 'rgba(255, 87, 34, 0.8)',
@@ -4733,13 +5597,13 @@ function renderChartJSScatter(nodeIndex, scatterData) {
                     title: {
                         display: true,
                         text: 'TIDL (INT8) →',
-                        font: { size: 13, weight: '600', family: 'Nunito' },
+                        font: { size: 13, weight: '600', family: '-apple-system' },
                         color: '#495057',
                         padding: { top: 10 }
                     },
                     ticks: {
                         color: '#6c757d',
-                        font: { size: 10, family: 'JetBrains Mono' },
+                        font: { size: 10, family: 'SF Mono' },
                         maxTicksLimit: 10
                     },
                     grid: {
@@ -4755,14 +5619,14 @@ function renderChartJSScatter(nodeIndex, scatterData) {
                     max: scatterData.axis.max,
                     title: {
                         display: true,
-                        text: '↑ NotIDL (FP32)',
-                        font: { size: 13, weight: '600', family: 'Nunito' },
+                        text: '↑ No-TIDL (FP32)',
+                        font: { size: 13, weight: '600', family: '-apple-system' },
                         color: '#495057',
                         padding: { bottom: 10 }
                     },
                     ticks: {
                         color: '#6c757d',
-                        font: { size: 10, family: 'JetBrains Mono' },
+                        font: { size: 10, family: 'SF Mono' },
                         maxTicksLimit: 10
                     },
                     grid: {
@@ -5560,7 +6424,7 @@ class Graph {
                         <span class="detail-label">Subgraph:</span>
                         <span class="detail-value">
                             <span style="display: inline-block; width: 12px; height: 12px; background: ${node.subgraph_color}; border-radius: 3px; margin-right: 5px;"></span>
-                            Subgraph ${node.subgraph_index + 1}
+                            Subgraph ${node.subgraph_index}
                         </span>
                     </div>
                 `;
@@ -5577,10 +6441,10 @@ class Graph {
                 }
                 reasonHTML = `
                     <div class="detail-row" style="background: rgba(229, 62, 62, 0.1); padding: 12px; border-radius: 6px; margin-top: 8px; border-left: 4px solid #e53e3e;">
-                        <span class="detail-label" style="color: #c53030; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                        <span class="detail-label" style="color: #c53030; font-weight: 400; display: flex; align-items: center; gap: 6px;">
                             <i class="fas fa-exclamation-triangle"></i> Reason:
                         </span>
-                        <span class="detail-value" style="margin-top: 6px; display: block; font-family: 'JetBrains Mono', monospace; font-size: 0.85em; line-height: 1.6; color: #555;">${reason}</span>
+                        <span class="detail-value" style="margin-top: 6px; display: block; font-family: 'SF Mono', Monaco, Menlo, Consolas, monospace; font-size: 0.85em; line-height: 1.6; color: #555;">${reason}</span>
                     </div>
                 `;
             }
@@ -5596,7 +6460,12 @@ class Graph {
                         ? '<span class="tensor-badge constant" style="background: #e53e3e; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.75em; margin-left: 4px;">Constant</span>'
                         : '<span class="tensor-badge variable" style="background: #38a169; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.75em; margin-left: 4px;">Variable</span>';
 
-                    const shapeStr = Array.isArray(meta.shape) ? `[${meta.shape.join(', ')}]` : (meta.shape || 'N/A');
+                    let shapeStr;
+                    if (Array.isArray(meta.shape)) {
+                        shapeStr = meta.shape.length > 0 ? `[${meta.shape.join(', ')}]` : 'scalar';
+                    } else {
+                        shapeStr = meta.shape || 'N/A';
+                    }
                     const dtype = meta.dtype || 'unknown';
 
                     return `
@@ -5604,10 +6473,9 @@ class Graph {
                             <span class="detail-label">Input [${idx}]:</span>
                             <span class="detail-value" style="cursor: help;"
                                   title="${meta.name}\nType: ${meta.is_constant ? 'Constant' : 'Variable'}\nDtype: ${dtype}\nShape: ${shapeStr}">
-                                <span style="font-family: 'JetBrains Mono', monospace;">${shapeStr}</span>
+                                <span style="font-family: 'SF Mono', Monaco, Menlo, Consolas, monospace;">${shapeStr}</span>
                                 ${badge}
                                 <span style="color: #666; font-size: 0.85em; margin-left: 6px;">${dtype}</span>
-                                <i class="fas fa-info-circle" style="margin-left: 6px; color: #4299e1; font-size: 0.9em;"></i>
                             </span>
                         </div>
                     `;
@@ -5628,7 +6496,12 @@ class Graph {
 
             if (outputMetadata.length > 0) {
                 outputShapesHTML = outputMetadata.map((meta, idx) => {
-                    const shapeStr = Array.isArray(meta.shape) ? `[${meta.shape.join(', ')}]` : (meta.shape || 'N/A');
+                    let shapeStr;
+                    if (Array.isArray(meta.shape)) {
+                        shapeStr = meta.shape.length > 0 ? `[${meta.shape.join(', ')}]` : 'scalar';
+                    } else {
+                        shapeStr = meta.shape || 'N/A';
+                    }
                     const dtype = meta.dtype || 'unknown';
 
                     return `
@@ -5636,10 +6509,9 @@ class Graph {
                             <span class="detail-label">Output [${idx}]:</span>
                             <span class="detail-value" style="cursor: help;"
                                   title="${meta.name}\nType: Variable\nDtype: ${dtype}\nShape: ${shapeStr}">
-                                <span style="font-family: 'JetBrains Mono', monospace;">${shapeStr}</span>
+                                <span style="font-family: 'SF Mono', Monaco, Menlo, Consolas, monospace;">${shapeStr}</span>
                                 <span class="tensor-badge variable" style="background: #38a169; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.75em; margin-left: 4px;">Variable</span>
                                 <span style="color: #666; font-size: 0.85em; margin-left: 6px;">${dtype}</span>
-                                <i class="fas fa-info-circle" style="margin-left: 6px; color: #4299e1; font-size: 0.9em;"></i>
                             </span>
                         </div>
                     `;
@@ -5706,7 +6578,7 @@ class Graph {
                         <span class="detail-label">Subgraph:</span>
                         <span class="detail-value">
                             <span style="display: inline-block; width: 12px; height: 12px; background: ${node.subgraph_color}; border-radius: 3px; margin-right: 5px;"></span>
-                            Subgraph ${node.subgraph_index + 1}
+                            Subgraph ${node.subgraph_index}
                         </span>
                     </div>
                 `;
@@ -5732,132 +6604,119 @@ class Graph {
                     </div>
                 ` : '';
 
-                // Format outputs information
+                // Format outputs information (flattened - no subsections)
                 let outputsInfo = '';
                 if (outputs.length > 0) {
                     outputsInfo = outputs.map((out, idx) => {
                         const dims = Array.isArray(out.dims) ? `[${out.dims.join(', ')}]` : (out.dims || 'N/A');
+                        const outLabel = out.index !== undefined ? out.index : idx;
                         return `
-                            <div class="detail-subsection">
-                                <h5>Output [${out.index !== undefined ? out.index : idx}]</h5>
-                                <div class="detail-row">
-                                    <span class="detail-label">Dimensions:</span>
-                                    <span class="detail-value">${dims}</span>
-                                </div>
-                                ${out.elementType ? `
-                                    <div class="detail-row">
-                                        <span class="detail-label">Element Type:</span>
-                                        <span class="detail-value">${out.elementType}</span>
-                                    </div>
-                                ` : ''}
-                                ${out.dataQ !== undefined ? `
-                                    <div class="detail-row">
-                                        <span class="detail-label">Data Q:</span>
-                                        <span class="detail-value">${out.dataQ}</span>
-                                    </div>
-                                ` : ''}
-                                ${out.tensorScale !== undefined ? `
-                                    <div class="detail-row">
-                                        <span class="detail-label">Tensor Scale:</span>
-                                        <span class="detail-value">${out.tensorScale}</span>
-                                    </div>
-                                ` : ''}
-                                ${out.tensorZeroPoint !== undefined ? `
-                                    <div class="detail-row">
-                                        <span class="detail-label">Zero Point:</span>
-                                        <span class="detail-value">${out.tensorZeroPoint}</span>
-                                    </div>
-                                ` : ''}
+                            <div class="detail-row">
+                                <span class="detail-label">Output [${outLabel}] Dimensions:</span>
+                                <span class="detail-value">${dims}</span>
                             </div>
+                            ${out.elementType ? `
+                                <div class="detail-row">
+                                    <span class="detail-label">Output [${outLabel}] Element Type:</span>
+                                    <span class="detail-value">${out.elementType}</span>
+                                </div>
+                            ` : ''}
+                            ${out.dataQ !== undefined ? `
+                                <div class="detail-row">
+                                    <span class="detail-label">Output [${outLabel}] Data Q:</span>
+                                    <span class="detail-value">${out.dataQ}</span>
+                                </div>
+                            ` : ''}
+                            ${out.tensorScale !== undefined ? `
+                                <div class="detail-row">
+                                    <span class="detail-label">Output [${outLabel}] Tensor Scale:</span>
+                                    <span class="detail-value">${out.tensorScale}</span>
+                                </div>
+                            ` : ''}
+                            ${out.tensorZeroPoint !== undefined ? `
+                                <div class="detail-row">
+                                    <span class="detail-label">Output [${outLabel}] Zero Point:</span>
+                                    <span class="detail-value">${out.tensorZeroPoint}</span>
+                                </div>
+                            ` : ''}
                         `;
                     }).join('');
                 }
 
                 tidlDetailsHTML = `
-                    <hr style="border: none; border-top: 2px solid #e0e0e0; margin: 2rem 0;">
-                    <div class="detail-section">
-                        <h4><i class="fas fa-microchip"></i> TIDL Layer Information</h4>
-                        <div class="detail-row">
-                            <span class="detail-label">Layer Index:</span>
-                            <span class="detail-value">${layerData.layer_index !== undefined ? layerData.layer_index : 'N/A'}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Layer Type:</span>
-                            <span class="detail-value">${layerData.layer_type || 'N/A'}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Layer Name:</span>
-                            <span class="detail-value" style="word-break: break-all;">${layerData.layer_name || 'N/A'}</span>
-                        </div>
-                        ${gmacsInfo}
-                    </div>
+                    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 1rem 0;">
 
-                    ${params.weightsElementSizeInBits !== undefined || params.kernelType !== undefined || params.numChannels !== undefined ? `
-                    <div class="detail-section">
-                        <h4><i class="fas fa-cog"></i> TIDL Parameters</h4>
-                        ${params.weightsElementSizeInBits !== undefined ? `
-                            <div class="detail-row">
-                                <span class="detail-label">Weights Element Size:</span>
-                                <span class="detail-value">${params.weightsElementSizeInBits} bits</span>
-                            </div>
-                        ` : ''}
-                        ${params.kernelType !== undefined ? `
-                            <div class="detail-row">
-                                <span class="detail-label">Kernel Type:</span>
-                                <span class="detail-value">${params.kernelType}</span>
-                            </div>
-                        ` : ''}
-                        ${params.numChannels !== undefined ? `
-                            <div class="detail-row">
-                                <span class="detail-label">Num Channels:</span>
-                                <span class="detail-value">${params.numChannels}</span>
-                            </div>
-                        ` : ''}
-                        ${params.dataQ !== undefined ? `
-                            <div class="detail-row">
-                                <span class="detail-label">Data Q:</span>
-                                <span class="detail-value">${params.dataQ}</span>
-                            </div>
-                        ` : ''}
-                        ${params.strideOffsetMethod ? `
-                            <div class="detail-row">
-                                <span class="detail-label">Stride Offset Method:</span>
-                                <span class="detail-value">${params.strideOffsetMethod}</span>
-                            </div>
-                        ` : ''}
-                    </div>
+                    ${layerData.layer_index !== undefined ? `
+                        <div class="detail-row">
+                            <span class="detail-label">TIDL Layer Index:</span>
+                            <span class="detail-value">${layerData.layer_index}</span>
+                        </div>
+                    ` : ''}
+                    ${layerData.layer_type ? `
+                        <div class="detail-row">
+                            <span class="detail-label">TIDL Layer Type:</span>
+                            <span class="detail-value">${layerData.layer_type}</span>
+                        </div>
+                    ` : ''}
+                    ${layerData.layer_name ? `
+                        <div class="detail-row">
+                            <span class="detail-label">TIDL Layer Name:</span>
+                            <span class="detail-value" style="word-break: break-all;">${layerData.layer_name}</span>
+                        </div>
+                    ` : ''}
+                    ${gmacsInfo}
+
+                    ${params.weightsElementSizeInBits !== undefined ? `
+                        <div class="detail-row">
+                            <span class="detail-label">Weights Element Size:</span>
+                            <span class="detail-value">${params.weightsElementSizeInBits} bits</span>
+                        </div>
+                    ` : ''}
+                    ${params.kernelType !== undefined ? `
+                        <div class="detail-row">
+                            <span class="detail-label">Kernel Type:</span>
+                            <span class="detail-value">${params.kernelType}</span>
+                        </div>
+                    ` : ''}
+                    ${params.numChannels !== undefined ? `
+                        <div class="detail-row">
+                            <span class="detail-label">Num Channels:</span>
+                            <span class="detail-value">${params.numChannels}</span>
+                        </div>
+                    ` : ''}
+                    ${params.dataQ !== undefined ? `
+                        <div class="detail-row">
+                            <span class="detail-label">Data Q:</span>
+                            <span class="detail-value">${params.dataQ}</span>
+                        </div>
+                    ` : ''}
+                    ${params.strideOffsetMethod ? `
+                        <div class="detail-row">
+                            <span class="detail-label">Stride Offset Method:</span>
+                            <span class="detail-value">${params.strideOffsetMethod}</span>
+                        </div>
                     ` : ''}
 
-                    ${Object.keys(actParams).length > 0 ? `
-                    <div class="detail-section">
-                        <h4><i class="fas fa-bolt"></i> Activation Parameters</h4>
-                        ${actParams.actType ? `
-                            <div class="detail-row">
-                                <span class="detail-label">Activation Type:</span>
-                                <span class="detail-value">${actParams.actType}</span>
-                            </div>
-                        ` : ''}
-                        ${actParams.slopeScale !== undefined ? `
-                            <div class="detail-row">
-                                <span class="detail-label">Slope Scale:</span>
-                                <span class="detail-value">${actParams.slopeScale}</span>
-                            </div>
-                        ` : ''}
-                        ${actParams.clipMin !== undefined || actParams.clipMax !== undefined ? `
-                            <div class="detail-row">
-                                <span class="detail-label">Clip Min/Max:</span>
-                                <span class="detail-value">(${actParams.clipMin || 0}, ${actParams.clipMax || 0})</span>
-                            </div>
-                        ` : ''}
-                    </div>
+                    ${actParams.actType ? `
+                        <div class="detail-row">
+                            <span class="detail-label">Activation Type:</span>
+                            <span class="detail-value">${actParams.actType}</span>
+                        </div>
+                    ` : ''}
+                    ${actParams.slopeScale !== undefined ? `
+                        <div class="detail-row">
+                            <span class="detail-label">Activation Slope Scale:</span>
+                            <span class="detail-value">${actParams.slopeScale}</span>
+                        </div>
+                    ` : ''}
+                    ${actParams.clipMin !== undefined || actParams.clipMax !== undefined ? `
+                        <div class="detail-row">
+                            <span class="detail-label">Activation Clip Min/Max:</span>
+                            <span class="detail-value">(${actParams.clipMin || 0}, ${actParams.clipMax || 0})</span>
+                        </div>
                     ` : ''}
 
-                    ${outputs.length > 0 ? `
-                    <div class="detail-section">
-                        <h4><i class="fas fa-arrow-right"></i> Output Tensors</h4>
-                        ${outputsInfo}
-                    </div>
-                    ` : ''}
+                    ${outputsInfo}
                 `;
             }
 
@@ -5884,10 +6743,10 @@ class Graph {
                 }
                 reasonHTML = `
                     <div class="detail-row" style="background: rgba(229, 62, 62, 0.1); padding: 12px; border-radius: 6px; margin-top: 8px; border-left: 4px solid #e53e3e;">
-                        <span class="detail-label" style="color: #c53030; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                        <span class="detail-label" style="color: #c53030; font-weight: 400; display: flex; align-items: center; gap: 6px;">
                             <i class="fas fa-exclamation-triangle"></i> Reason:
                         </span>
-                        <span class="detail-value" style="margin-top: 6px; display: block; font-family: 'JetBrains Mono', monospace; font-size: 0.85em; line-height: 1.6; color: #555;">${reason}</span>
+                        <span class="detail-value" style="margin-top: 6px; display: block; font-family: 'SF Mono', Monaco, Menlo, Consolas, monospace; font-size: 0.85em; line-height: 1.6; color: #555;">${reason}</span>
                     </div>
                 `;
                 console.log('✅ Reason HTML generated');
@@ -5969,46 +6828,57 @@ class Graph {
                 ${this.isTIDL && this.currentSubgraph !== null ? `
                 <div class="detail-section">
                     <h4><i class="fas fa-memory"></i> Memory Usage</h4>
+                    <p class="section-description">Memory allocation across L2 cache, MSMC, DDR, and total usage</p>
                     <div class="memory-usage-container">
                         <div class="memory-box" data-memory="l2">
                             <div class="memory-label">L2</div>
                             <div class="memory-glass">
                                 <div class="memory-fill" id="memory-fill-l2-${node.index}"></div>
+                                <div class="memory-value" id="memory-value-l2-${node.index}">-</div>
                             </div>
-                            <div class="memory-value" id="memory-value-l2-${node.index}">-</div>
                         </div>
                         <div class="memory-box" data-memory="msmc">
                             <div class="memory-label">MSMC</div>
                             <div class="memory-glass">
                                 <div class="memory-fill" id="memory-fill-msmc-${node.index}"></div>
+                                <div class="memory-value" id="memory-value-msmc-${node.index}">-</div>
                             </div>
-                            <div class="memory-value" id="memory-value-msmc-${node.index}">-</div>
                         </div>
                         <div class="memory-box" data-memory="ddr">
                             <div class="memory-label">DDR</div>
                             <div class="memory-glass">
                                 <div class="memory-fill" id="memory-fill-ddr-${node.index}"></div>
+                                <div class="memory-value" id="memory-value-ddr-${node.index}">-</div>
                             </div>
-                            <div class="memory-value" id="memory-value-ddr-${node.index}">-</div>
                         </div>
                         <div class="memory-box" data-memory="total">
                             <div class="memory-label">Total</div>
                             <div class="memory-glass">
                                 <div class="memory-fill" id="memory-fill-total-${node.index}"></div>
+                                <div class="memory-value" id="memory-value-total-${node.index}">-</div>
                             </div>
-                            <div class="memory-value" id="memory-value-total-${node.index}">-</div>
                         </div>
                     </div>
                 </div>
-                <hr style="border: none; border-top: 2px solid #e0e0e0; margin: 2rem 0;">
-                <div class="detail-section">
+                <div class="detail-section" id="histogram-section-${node.index}">
                     <h4><i class="fas fa-chart-bar"></i> Activation Histogram</h4>
-                    <div id="activation-histogram-${node.index}" style="width: 100%; height: 300px;"></div>
+                    <p class="section-description">Distribution of activation values across NotIDL and TIDL quantization methods</p>
+                    <div class="chart-container-wrapper">
+                        <button class="chart-fullscreen-btn" onclick="toggleChartFullscreen('histogram-section-${node.index}')" title="Toggle Fullscreen">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                        <div id="activation-histogram-${node.index}" style="width: 100%; height: 300px;"></div>
+                    </div>
                 </div>
-                <hr style="border: none; border-top: 2px solid #e0e0e0; margin: 2rem 0;">
-                <div class="detail-section">
+                <div class="detail-section" id="scatter-section-${node.index}">
                     <h4><i class="fas fa-chart-line"></i> Activation Scatter Plot</h4>
-                    <div id="activation-scatter-${node.index}" style="width: 100%; height: 500px;"></div>
+                    <p class="section-description">Correlation between NotIDL and TIDL quantization quality metrics. Each point represents a layer; closer to trend line indicates better correlation</p>
+                    <div class="chart-container-wrapper">
+                        <button class="chart-fullscreen-btn" onclick="toggleChartFullscreen('scatter-section-${node.index}')" title="Toggle Fullscreen">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                        <div id="activation-scatter-${node.index}" style="width: 100%; height: 500px;"></div>
+                    </div>
                 </div>
                 ` : '<div class="no-selection-message"><i class="fas fa-chart-area"></i><p>Select a node in the subgraph view to see analysis</p></div>'}
             `;
@@ -6163,6 +7033,16 @@ function populateMemoryUsage(layerNum, nodeIndex, subgraphId) {
     if (l2Fill && l2Value) {
         l2Fill.style.height = `${Math.min(l2Usage * scale, 100)}%`;
         l2Value.textContent = `${l2Usage.toFixed(1)} KB`;
+
+        // Add percentage
+        const l2Percentage = maxUsage > 0 ? Math.round((l2Usage / maxUsage) * 100) : 0;
+        let l2PercentageEl = l2Fill.parentElement.querySelector('.memory-percentage');
+        if (!l2PercentageEl) {
+            l2PercentageEl = document.createElement('div');
+            l2PercentageEl.className = 'memory-percentage';
+            l2Fill.parentElement.appendChild(l2PercentageEl);
+        }
+        l2PercentageEl.textContent = `${l2Percentage}%`;
     }
 
     // Update MSMC
@@ -6171,6 +7051,16 @@ function populateMemoryUsage(layerNum, nodeIndex, subgraphId) {
     if (msmcFill && msmcValue) {
         msmcFill.style.height = `${Math.min(msmcUsage * scale, 100)}%`;
         msmcValue.textContent = `${msmcUsage.toFixed(1)} KB`;
+
+        // Add percentage
+        const msmcPercentage = maxUsage > 0 ? Math.round((msmcUsage / maxUsage) * 100) : 0;
+        let msmcPercentageEl = msmcFill.parentElement.querySelector('.memory-percentage');
+        if (!msmcPercentageEl) {
+            msmcPercentageEl = document.createElement('div');
+            msmcPercentageEl.className = 'memory-percentage';
+            msmcFill.parentElement.appendChild(msmcPercentageEl);
+        }
+        msmcPercentageEl.textContent = `${msmcPercentage}%`;
     }
 
     // Update DDR
@@ -6179,6 +7069,16 @@ function populateMemoryUsage(layerNum, nodeIndex, subgraphId) {
     if (ddrFill && ddrValue) {
         ddrFill.style.height = `${Math.min(ddrUsage * scale, 100)}%`;
         ddrValue.textContent = `${ddrUsage.toFixed(1)} KB`;
+
+        // Add percentage
+        const ddrPercentage = maxUsage > 0 ? Math.round((ddrUsage / maxUsage) * 100) : 0;
+        let ddrPercentageEl = ddrFill.parentElement.querySelector('.memory-percentage');
+        if (!ddrPercentageEl) {
+            ddrPercentageEl = document.createElement('div');
+            ddrPercentageEl.className = 'memory-percentage';
+            ddrFill.parentElement.appendChild(ddrPercentageEl);
+        }
+        ddrPercentageEl.textContent = `${ddrPercentage}%`;
     }
 
     // Update Total
@@ -6187,9 +7087,195 @@ function populateMemoryUsage(layerNum, nodeIndex, subgraphId) {
     if (totalFill && totalValue) {
         totalFill.style.height = `${Math.min(totalUsage * scale, 100)}%`;
         totalValue.textContent = `${totalUsage.toFixed(1)} KB`;
+
+        // Add percentage
+        const totalPercentage = maxUsage > 0 ? Math.round((totalUsage / maxUsage) * 100) : 0;
+        let totalPercentageEl = totalFill.parentElement.querySelector('.memory-percentage');
+        if (!totalPercentageEl) {
+            totalPercentageEl = document.createElement('div');
+            totalPercentageEl.className = 'memory-percentage';
+            totalFill.parentElement.appendChild(totalPercentageEl);
+        }
+        totalPercentageEl.textContent = `${totalPercentage}%`;
     }
 
     console.log('[Memory] Updated memory usage visualization');
+}
+
+/**
+ * Toggle fullscreen mode for chart sections
+ */
+function toggleChartFullscreen(sectionId) {
+    const section = document.getElementById(sectionId);
+    if (!section) {
+        console.error('[Fullscreen] Section not found:', sectionId);
+        return;
+    }
+
+    const isFullscreen = document.fullscreenElement ||
+                        document.webkitFullscreenElement ||
+                        document.mozFullScreenElement ||
+                        document.msFullscreenElement;
+
+    if (!isFullscreen) {
+        console.log('[Fullscreen] Entering fullscreen for:', sectionId);
+
+        // Enter fullscreen
+        const requestFullscreen = section.requestFullscreen ||
+                                 section.webkitRequestFullscreen ||
+                                 section.mozRequestFullScreen ||
+                                 section.msRequestFullscreen;
+
+        if (requestFullscreen) {
+            requestFullscreen.call(section).then(() => {
+                console.log('[Fullscreen] Entered fullscreen successfully');
+
+                // Change icon to compress
+                const btn = section.querySelector('.chart-fullscreen-btn i');
+                if (btn) btn.className = 'fas fa-compress';
+
+                // Trigger Plotly resize after entering fullscreen
+                setTimeout(() => {
+                    resizeChartInSection(section);
+                }, 300); // Increased delay for transition
+            }).catch(err => {
+                console.error('[Fullscreen] Error entering fullscreen:', err);
+            });
+        } else {
+            console.error('[Fullscreen] Fullscreen API not supported');
+        }
+    } else {
+        console.log('[Fullscreen] Exiting fullscreen');
+
+        // Exit fullscreen
+        const exitFullscreen = document.exitFullscreen ||
+                              document.webkitExitFullscreen ||
+                              document.mozCancelFullScreen ||
+                              document.msExitFullscreen;
+
+        if (exitFullscreen) {
+            exitFullscreen.call(document).then(() => {
+                console.log('[Fullscreen] Exited fullscreen successfully');
+
+                // Change icon back to expand
+                const btn = section.querySelector('.chart-fullscreen-btn i');
+                if (btn) btn.className = 'fas fa-expand';
+
+                // Trigger Plotly resize after exiting fullscreen
+                setTimeout(() => {
+                    resizeChartInSection(section);
+                }, 300);
+            }).catch(err => {
+                console.error('[Fullscreen] Error exiting fullscreen:', err);
+            });
+        }
+    }
+}
+
+/**
+ * Helper function to resize charts in a section
+ */
+function resizeChartInSection(section) {
+    // Find chart within wrapper or directly in section
+    const chartDiv = section.querySelector('.chart-container-wrapper [id*="histogram"], .chart-container-wrapper [id*="scatter"]') ||
+                    section.querySelector('[id*="histogram"], [id*="scatter"]');
+
+    if (chartDiv) {
+        console.log('[Fullscreen] Resizing chart:', chartDiv.id);
+
+        if (window.Plotly && window.Plotly.Plots) {
+            try {
+                // Force relayout with new dimensions
+                Plotly.Plots.resize(chartDiv);
+
+                // Additional relayout for better sizing
+                setTimeout(() => {
+                    Plotly.relayout(chartDiv, {
+                        autosize: true
+                    });
+                }, 100);
+
+                console.log('[Fullscreen] Chart resized successfully');
+            } catch (error) {
+                console.error('[Fullscreen] Error resizing chart:', error);
+            }
+        } else {
+            console.warn('[Fullscreen] Plotly not available for resize');
+        }
+    } else {
+        console.warn('[Fullscreen] Chart div not found in section');
+    }
+}
+
+// Listen for fullscreen changes to update button icon and resize charts
+document.addEventListener('fullscreenchange', handleFullscreenChange);
+document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+function handleFullscreenChange() {
+    const isFullscreen = document.fullscreenElement ||
+                        document.webkitFullscreenElement ||
+                        document.mozFullScreenElement ||
+                        document.msFullscreenElement;
+
+    if (!isFullscreen) {
+        console.log('[Fullscreen] Fullscreen exited via ESC or other means');
+
+        // Update all fullscreen button icons
+        document.querySelectorAll('.chart-fullscreen-btn i').forEach(icon => {
+            icon.className = 'fas fa-expand';
+        });
+
+        // Resize all visible charts after a delay
+        setTimeout(() => {
+            document.querySelectorAll('[id*="histogram"], [id*="scatter"]').forEach(chartDiv => {
+                if (chartDiv.offsetParent !== null && window.Plotly) { // Check if visible
+                    try {
+                        Plotly.Plots.resize(chartDiv);
+                    } catch (error) {
+                        console.error('[Fullscreen] Error resizing chart on exit:', error);
+                    }
+                }
+            });
+        }, 300);
+    }
+}
+
+/**
+ * Calculate R² (coefficient of determination) for scatter plot
+ */
+function calculateRSquared(xValues, yValues) {
+    const n = xValues.length;
+    if (n === 0) return 0;
+
+    // Calculate means
+    const xMean = xValues.reduce((a, b) => a + b, 0) / n;
+    const yMean = yValues.reduce((a, b) => a + b, 0) / n;
+
+    // Calculate sums for regression
+    let ssRes = 0; // Sum of squares of residuals
+    let ssTot = 0; // Total sum of squares
+
+    // Calculate slope and intercept
+    let numerator = 0;
+    let denominator = 0;
+    for (let i = 0; i < n; i++) {
+        numerator += (xValues[i] - xMean) * (yValues[i] - yMean);
+        denominator += Math.pow(xValues[i] - xMean, 2);
+    }
+    const slope = denominator !== 0 ? numerator / denominator : 0;
+    const intercept = yMean - slope * xMean;
+
+    // Calculate R²
+    for (let i = 0; i < n; i++) {
+        const predicted = slope * xValues[i] + intercept;
+        ssRes += Math.pow(yValues[i] - predicted, 2);
+        ssTot += Math.pow(yValues[i] - yMean, 2);
+    }
+
+    const rSquared = ssTot !== 0 ? 1 - (ssRes / ssTot) : 0;
+    return Math.max(0, Math.min(1, rSquared)); // Clamp between 0 and 1
 }
 
 // ==================== ACTIVATION PLOTTING ====================
@@ -6204,29 +7290,63 @@ let plotResizeObserver = null;
  * @param {number} subgraphId - Subgraph index
  */
 function renderActivationPlots(nodeIndex, subgraphId) {
-    console.log(`[V4 Plot] === Rendering plots for ONNX node ${nodeIndex}, subgraph ${subgraphId} ===`);
+    console.log(`[V5 Plot] === Rendering plots for ONNX node ${nodeIndex}, subgraph ${subgraphId} ===`);
 
-    // V4: Enhanced debugging
-    if (typeof ACTIVATION_DATA === 'undefined') {
-        console.error('[V4 Plot] ACTIVATION_DATA not defined!');
+    // V5: Check if compressed activation data exists
+    if (typeof ACTIVATION_DATA_COMPRESSED === 'undefined') {
+        console.error('[V5 Plot] ACTIVATION_DATA_COMPRESSED not defined!');
         return;
     }
 
-    console.log('[V4 Plot] ACTIVATION_DATA type:', typeof ACTIVATION_DATA);
-    console.log('[V4 Plot] ACTIVATION_DATA keys count:', Object.keys(ACTIVATION_DATA).length);
+    // Check if activation data is empty (not extracted)
+    const totalActivationLayers = Object.keys(ACTIVATION_DATA_COMPRESSED).length;
+    console.log('[V5 Plot] Total compressed layers:', totalActivationLayers);
+
+    if (totalActivationLayers === 0) {
+        console.warn('[V5 Plot] No activation data extracted - showing message');
+        const histId = `activation-histogram-${nodeIndex}`;
+        const scatterId = `activation-scatter-${nodeIndex}`;
+
+        const messageHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 40px; background: #F5F5F5; border-radius: 8px; border: 2px dashed #D1D1D1;">
+                <i class="fas fa-info-circle" style="font-size: 48px; color: #808080; margin-bottom: 16px;"></i>
+                <p style="font-size: 16px; font-weight: 600; color: #1A1A1A; margin-bottom: 8px; text-align: center;">Activation data not available</p>
+                <p style="font-size: 14px; color: #4A4A4A; text-align: center; max-width: 500px; line-height: 1.5;">
+                    To generate activation analysis data, please run <code style="background: #E8F5F0; padding: 2px 6px; border-radius: 4px; font-family: monospace;">data_extractor.py</code> with the <code style="background: #E8F5F0; padding: 2px 6px; border-radius: 4px; font-family: monospace;">--act_data</code> flag.
+                </p>
+                <p style="font-size: 13px; color: #808080; text-align: center; margin-top: 12px; font-family: monospace;">
+                    python data_extractor.py &lt;model_dir&gt; &lt;output.json&gt; --act_data
+                </p>
+            </div>
+        `;
+
+        const histContainer = document.getElementById(histId);
+        const scatterContainer = document.getElementById(scatterId);
+
+        if (histContainer) {
+            histContainer.innerHTML = messageHTML;
+        }
+        if (scatterContainer) {
+            scatterContainer.innerHTML = messageHTML;
+        }
+
+        return;
+    }
 
     const key = `${subgraphId}_${nodeIndex}`;
-    console.log('[V4 Plot] Looking for key:', key);
+    console.log('[V5 Plot] Looking for key:', key);
 
-    if (!ACTIVATION_DATA[key]) {
-        console.warn('[V4 Plot] No activation data for key:', key);
-        console.log('[V4 Plot] Available keys:', Object.keys(ACTIVATION_DATA).slice(0, 10));
+    // V5: Decompress layer data on-demand
+    const data = decompressLayerActivation(key);
+
+    if (!data) {
+        console.warn('[V5 Plot] No activation data for key:', key);
+        console.log('[V5 Plot] Available keys (first 10):', Object.keys(ACTIVATION_DATA_COMPRESSED).slice(0, 10));
         return;
     }
 
-    const data = ACTIVATION_DATA[key];
-    console.log('[V4 Plot] Found activation data for key:', key);
-    console.log('[V4 Plot] Data structure:', {
+    console.log('[V5 Plot] Successfully loaded activation data for key:', key);
+    console.log('[V5 Plot] Data structure:', {
         hasStats: !!data.stats,
         hasHistogram: !!data.histogram,
         hasScatter: !!data.scatter,
@@ -6251,7 +7371,19 @@ function renderActivationPlots(nodeIndex, subgraphId) {
             width: 1200,
             scale: 2
         },
-        scrollZoom: false
+        scrollZoom: false,
+        hovermode: 'closest',
+        hoverlabel: {
+            bgcolor: 'white',
+            bordercolor: '#1A1A1A',
+            font: {
+                family: 'Inter, sans-serif',
+                size: 13,
+                color: '#1A1A1A'
+            },
+            align: 'left',
+            namelength: -1
+        }
     };
 
     // Render histogram
@@ -6273,11 +7405,68 @@ function renderActivationPlots(nodeIndex, subgraphId) {
                 }
 
                 console.log('[V4 Plot] Creating histogram plot...');
-                // Create new plot
+
+                // Enhance histogram layout with professional styling
+                const enhancedHistogramLayout = Object.assign({}, data.histogram.layout, {
+                    title: {
+                        text: data.histogram.layout.title?.text || 'Activation Distribution',
+                        font: { size: 16, weight: 600, color: '#1A1A1A', family: 'Inter, -apple-system' }
+                    },
+                    xaxis: Object.assign({}, data.histogram.layout.xaxis, {
+                        title: {
+                            text: data.histogram.layout.xaxis?.title?.text || 'Normalized Activation Value',
+                            font: { size: 12, family: 'Inter, -apple-system' }
+                        },
+                        tickfont: { size: 12, family: 'SF Mono, Monaco, monospace' },
+                        gridcolor: '#D1D1D1',
+                        gridwidth: 1,
+                        griddash: 'dash'
+                    }),
+                    yaxis: Object.assign({}, data.histogram.layout.yaxis, {
+                        title: {
+                            text: 'Frequency (count)',
+                            font: { size: 12, family: 'Inter, -apple-system' }
+                        },
+                        tickfont: { size: 12, family: 'SF Mono, Monaco, monospace' },
+                        gridcolor: '#D1D1D1',
+                        gridwidth: 1,
+                        griddash: 'dash',
+                        rangemode: 'tozero'
+                    }),
+                    bargap: 0.1,
+                    barmode: data.histogram.layout.barmode || 'overlay',
+                    legend: {
+                        x: 1,
+                        y: 1,
+                        xanchor: 'right',
+                        yanchor: 'top',
+                        bgcolor: 'rgba(255, 255, 255, 0.95)',
+                        bordercolor: '#D1D1D1',
+                        borderwidth: 1,
+                        font: { size: 12, family: 'Inter, -apple-system' }
+                    },
+                    plot_bgcolor: 'white',
+                    paper_bgcolor: 'white',
+                    margin: { l: 60, r: 30, t: 60, b: 60 }
+                });
+
+                // Enhance trace colors with highly contrasting colors
+                const enhancedTraces = data.histogram.traces.map(trace => ({
+                    ...trace,
+                    marker: {
+                        ...trace.marker,
+                        color: trace.name && (trace.name.includes('No-TIDL') || trace.name.includes('NxRDL')) ?
+                            'rgba(231, 76, 60, 0.85)' : // Bright red/orange (#E74C3C) for No-TIDL
+                            'rgba(46, 204, 113, 0.85)',  // Bright green (#2ECC71) for TIDL
+                        line: { width: 0 }
+                    }
+                }));
+
+                // Create new plot with enhanced styling
                 Plotly.newPlot(
                     histId,
-                    data.histogram.traces,
-                    data.histogram.layout,
+                    enhancedTraces,
+                    enhancedHistogramLayout,
                     plotConfig
                 );
 
@@ -6398,54 +7587,75 @@ function renderActivationPlots(nodeIndex, subgraphId) {
 
                 console.log(`[V4 Plot] Full range view: X[${xMin.toFixed(2)}, ${xMax.toFixed(2)}], Y[${yMin.toFixed(2)}, ${yMax.toFixed(2)}]`);
 
-                // Prepare scatter trace with larger point size
+                // Calculate R² for correlation
+                const xValues = displayPoints.map(p => p.x);
+                const yValues = displayPoints.map(p => p.y);
+                const rSquared = calculateRSquared(xValues, yValues);
+
+                // Prepare scatter trace with enhanced styling
                 const scatterTrace = {
-                    x: displayPoints.map(p => p.x),
-                    y: displayPoints.map(p => p.y),
+                    x: xValues,
+                    y: yValues,
                     mode: 'markers',
                     type: 'scatter',
-                    name: 'NotIDL vs TIDL',
+                    name: 'No-TIDL vs TIDL',
                     marker: {
-                        size: totalPoints > 100000 ? 5 : totalPoints > 50000 ? 6 : 7,
-                        color: 'rgba(31, 119, 180, 0.6)',
-                        line: { width: 0 }
+                        size: 6, // Increased from 5-7 to consistent 6px
+                        color: 'rgba(66, 165, 245, 0.8)', // Blue at 80%
+                        line: {
+                            color: '#1976D2',
+                            width: 1
+                        }
                     },
-                    hovertemplate: '<b>TIDL (INT8)</b>: %{x:.5f}<br><b>NotIDL (FP32)</b>: %{y:.5f}<br><b>Error</b>: %{text}<extra></extra>',
+                    hovertemplate: '<b>TIDL (INT8)</b>: %{x:.5f}<br><b>No-TIDL (FP32)</b>: %{y:.5f}<br><b>Difference</b>: %{text}<extra></extra>',
                     text: displayPoints.map(p => Math.abs(p.y - p.x).toFixed(7))
                 };
 
-                // Diagonal reference line (y=x) - hidden by default
+                // Diagonal reference line (y=x) with R² in legend
                 const diagonalTrace = {
                     x: [data.scatter.axis.min, data.scatter.axis.max],
                     y: [data.scatter.axis.min, data.scatter.axis.max],
                     mode: 'lines',
                     type: 'scatter',
-                    name: 'Perfect Match (y=x)',
+                    name: `Trend Line (R² = ${rSquared.toFixed(2)})`,
                     visible: 'legendonly',
                     line: {
-                        color: 'rgba(40, 167, 69, 0.7)',
+                        color: '#1565C0',
                         width: 2,
                         dash: 'dash'
                     },
+                    opacity: 0.9,
                     hoverinfo: 'skip'
                 };
 
                 const layout = {
                     title: {
-                        text: 'NotIDL vs TIDL Quantization Quality',
-                        font: { size: 16, family: 'Nunito' }
+                        text: `TIDL vs NotIDL Quantization Quality<br><sub style="font-size:14px;font-family:monospace;color:#4A4A4A">Correlation: R² = ${rSquared.toFixed(3)}</sub>`,
+                        font: { size: 16, weight: 600, color: '#1A1A1A', family: 'Inter, -apple-system' }
                     },
                     xaxis: {
-                        title: 'TIDL (INT8)',
+                        title: {
+                            text: 'TIDL (INT8)',
+                            font: { size: 13, weight: 500, family: 'Inter, -apple-system' }
+                        },
                         range: [xMin - xPadding, xMax + xPadding],
-                        gridcolor: '#e0e0e0',
+                        tickfont: { size: 12, family: 'SF Mono, Monaco, monospace' },
+                        gridcolor: '#D1D1D1',
+                        gridwidth: 1,
+                        griddash: 'dash',
                         showgrid: true,
                         zeroline: false
                     },
                     yaxis: {
-                        title: 'NotIDL (FP32)',
+                        title: {
+                            text: 'No-TIDL (FP32)',
+                            font: { size: 13, weight: 500, family: 'Inter, -apple-system' }
+                        },
                         range: [yMin - yPadding, yMax + yPadding],
-                        gridcolor: '#e0e0e0',
+                        tickfont: { size: 12, family: 'SF Mono, Monaco, monospace' },
+                        gridcolor: '#D1D1D1',
+                        gridwidth: 1,
+                        griddash: 'dash',
                         showgrid: true,
                         zeroline: false
                     },
@@ -6457,10 +7667,12 @@ function renderActivationPlots(nodeIndex, subgraphId) {
                     legend: {
                         x: 0.02,
                         y: 0.98,
-                        bgcolor: 'rgba(255, 255, 255, 0.9)',
-                        bordercolor: '#ccc',
-                        borderwidth: 1
-                    }
+                        bgcolor: 'rgba(255, 255, 255, 0.95)',
+                        bordercolor: '#D1D1D1',
+                        borderwidth: 1,
+                        font: { size: 12, family: 'Inter, -apple-system' }
+                    },
+                    margin: { l: 60, r: 30, t: 80, b: 60 }
                 };
 
                 Plotly.newPlot(scatterId, [scatterTrace, diagonalTrace], layout, plotConfig);
@@ -6659,7 +7871,7 @@ function renderD3Scatter(containerId, scatterData) {
                 .style('pointer-events', 'none')
                 .style('z-index', '10000')
                 .style('border', '1px solid #ff9800')
-                .html(`<b>TIDL (INT8):</b> ${d.x.toFixed(4)}<br><b>NotIDL (FP32):</b> ${d.y.toFixed(4)}<br><b>Error:</b> ${Math.abs(d.y - d.x).toFixed(6)}`);
+                .html(`<b>TIDL (INT8):</b> ${d.x.toFixed(4)}<br><b>No-TIDL (FP32):</b> ${d.y.toFixed(4)}<br><b>Error:</b> ${Math.abs(d.y - d.x).toFixed(6)}`);
 
             tooltip.style('left', (event.pageX + 10) + 'px')
                    .style('top', (event.pageY - 28) + 'px');
@@ -6760,7 +7972,7 @@ function renderD3Scatter(containerId, scatterData) {
         .style('font-size', '18px')
         .style('font-weight', 'bold')
         .style('fill', '#fff')
-        .text('NotIDL vs TIDL Quantization Quality');
+        .text('No-TIDL vs TIDL Quantization Quality');
 
     svg.append('text')
         .attr('x', width / 2)
@@ -6787,7 +7999,7 @@ function renderD3Scatter(containerId, scatterData) {
         .attr('text-anchor', 'middle')
         .style('font-size', '14px')
         .style('fill', '#fff')
-        .text('NotIDL (FP32)');
+        .text('No-TIDL (FP32)');
 
     // Stats annotation
     const stats = scatterData.stats;
@@ -8056,7 +9268,7 @@ function populateLayerIndex() {
         row.innerHTML = `
             <td><span class="layer-symbol" style="background-color: ${layerColors[type]}"></span></td>
             <td style="font-weight: 600;">${type}</td>
-            <td style="text-align: center; font-weight: 700; color: var(--ti-red);">${count}</td>
+            <td style="text-align: center; font-weight: 400; color: var(--ti-red);">${count}</td>
         `;
         tbody.appendChild(row);
     });
@@ -8078,7 +9290,7 @@ function showTooltip(node, event, isTIDL = false) {
                     <span class="tooltip-label">Subgraph:</span>
                     <span class="tooltip-value">
                         <span style="display: inline-block; width: 10px; height: 10px; background: ${node.subgraph_color}; border-radius: 2px; margin-right: 4px;"></span>
-                        ${node.subgraph_index + 1}
+                        ${node.subgraph_index}
                     </span>
                 </div>
             </div>
@@ -8125,12 +9337,15 @@ function init() {
     
     graphData = transformData(data);
     allEdges = graphData.edges;
-    
+
     // Fix: Pass the correct data path
     populateUI(data);  // This should work now with the updated populateUI function
-    
+
     populateLayerBreakdown(graphData.nodes);
-    
+
+    // Populate acceleration status card
+    populateAccelerationStatus(graphData.nodes);
+
     // Initialize subgraph selector
     if (SUBGRAPH_DATA && SUBGRAPH_DATA.subgraphs) {
         initializeSubgraphSelector();
@@ -8243,6 +9458,11 @@ function init() {
     
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
+        // Ignore if user is typing in an input field
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+            return;
+        }
+
         if (e.key >= '1' && e.key <= '3') {
             const index = parseInt(e.key) - 1;
             const tabs = document.querySelectorAll('.tab');
@@ -8355,7 +9575,7 @@ function renderModule(moduleName, moduleData, depth) {
             // Inputs with metadata
             if (details.input_metadata && details.input_metadata.length > 0) {
                 const inputsHtml = details.input_metadata.map(inp => {
-                    const shapeStr = inp.shape && inp.shape.length > 0 ? `[${inp.shape.join(',')}]` : '[]';
+                    const shapeStr = inp.shape && inp.shape.length > 0 ? `[${inp.shape.join(',')}]` : 'scalar';
                     const typeLabel = inp.is_constant ? 'constant' : 'variable';
                     const typeClass = inp.is_constant ? 'tree-const-badge' : 'tree-var-badge';
                     return `
@@ -8380,7 +9600,7 @@ function renderModule(moduleName, moduleData, depth) {
             // Outputs with metadata
             if (details.output_metadata && details.output_metadata.length > 0) {
                 const outputsHtml = details.output_metadata.map(out => {
-                    const shapeStr = out.shape && out.shape.length > 0 ? `[${out.shape.join(',')}]` : '[]';
+                    const shapeStr = out.shape && out.shape.length > 0 ? `[${out.shape.join(',')}]` : 'scalar';
                     return `
                         <div class="tree-tensor-info">
                             <div class="tree-tensor-name">${out.name}</div>

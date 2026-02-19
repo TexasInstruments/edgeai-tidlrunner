@@ -65,7 +65,9 @@ class GenerateModelInsightJSON(CompileModelBase):
         modelinsight_base_path = os.path.join(self.run_dir, 'insight')
         output_json_path = os.path.join(modelinsight_base_path, 'modelinsight.json')
         os.makedirs(modelinsight_base_path, exist_ok=True)
-        gen_json(self.run_dir, output_json_path)
+        common_kwargs = self.settings['common']
+        extract_activations = common_kwargs.get('act_data', False)
+        gen_json(self.run_dir, output_json_path, extract_activations)
  
 
 class GenerateModelInsightHTML(CompileModelBase):
@@ -90,7 +92,17 @@ class GenerateModelInsightHTML(CompileModelBase):
         modelinsight_base_path = os.path.join(self.run_dir, 'insight')
         output_json_path = os.path.join(modelinsight_base_path, 'modelinsight.json.gz')
         output_html_path = os.path.join(modelinsight_base_path, 'modelinsight.html')
+        activations_json_path = os.path.join(modelinsight_base_path, 'modelinsight_activations.json.gz')
         os.makedirs(modelinsight_base_path, exist_ok=True)
         template_file = os.path.join(os.path.dirname(modelinsight.__file__), 'template.html')
-        gen_html(output_json_path, template_file, output_html_path)
+
+        # Check the act_data flag from settings
+        common_kwargs = self.settings['common']
+        extract_activations = common_kwargs.get('act_data', False)
+
+        # Pass activations file ONLY if flag is set AND file exists
+        if extract_activations and os.path.exists(activations_json_path):
+            gen_html(output_json_path, template_file, output_html_path, activations_json_path)
+        else:
+            gen_html(output_json_path, template_file, output_html_path)
  
