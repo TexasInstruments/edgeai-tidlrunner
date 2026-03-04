@@ -574,7 +574,7 @@ class DetectionImageSave():
             pt1 = (int(bbox_one[0]), int(bbox_one[1]))
             pt2 = (int(bbox_one[2]), int(bbox_one[3]))
             label = apply_label_offset(label, self.label_offset_pred)
-            output_name = self.dataset_categories_map[label] if label in self.dataset_categories_map else label
+            output_name = self.dataset_categories_map[label] if label in self.dataset_categories_map else 'UNKNOWN_' + str(label)
             output_txt = output_name
             img_data = self.put_text(img_data, (pt1[0], pt1[1] - 5), output_txt, label_color)
             img_data = self.put_rectangle(img_data, pt1, pt2, label_color)

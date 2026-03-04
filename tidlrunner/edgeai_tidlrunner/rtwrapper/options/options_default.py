@@ -95,7 +95,7 @@ RUNTIME_OPTIONS_DEFAULT = {
     # 3 - TF-Lite pre-quantized model
     # 4 - Asymmetric, Per-channel Quantization (not supported in TDA4VM)
     # Defaults in this code - TDA4VM: 1, Other SOCs: 4
-    # 'advanced_options:quantization_scale_type': 4
+    'advanced_options:quantization_scale_type': 4,
 
     # This option specifies number of frames to be used for calibration - min 10 frames recommended
     # Any - min 10 frames recommended
