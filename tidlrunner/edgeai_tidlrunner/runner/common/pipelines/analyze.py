@@ -44,6 +44,9 @@ from .common_ import compile_base
 from . import compile
 from . import infer
 
+# TIDL maximum supported ONNX IR version
+MAX_SUPPORTED_IR_VERSION = 9
+
 
 def _write_outputs_to_bin(root, basename, output_dict):
     os.makedirs(root, exist_ok=True)
@@ -67,10 +70,13 @@ class CompileAnalyzeNoTIDL(compile.CompileModel):
     def _prepare_model(self):
         import onnx
         super()._prepare_model()
-        if self.kwargs['common.analyze_level'] >= 2:
+        if self.kwargs['common.analyze_level'] >= 2 and self.model_path.endswith('.onnx'):
             # Load the original ONNX model and add intermediate outputs
             model_path = self.model_path
             onnx_model = onnx.load(model_path)
+
+            # Store original IR version for later comparison
+            original_ir_version = onnx_model.ir_version
 
             # using native onnx
             # intermediate_layer_value_info = onnx.helper.ValueInfoProto()
@@ -95,7 +101,17 @@ class CompileAnalyzeNoTIDL(compile.CompileModel):
                         graph.outputs.append(out)
             
             onnx_model = gs.export_onnx(graph)
+            # Check and downgrade IR version if needed (using stored original version)
+            if original_ir_version > MAX_SUPPORTED_IR_VERSION:
+                print(f'WARNING: IR version of model: {original_ir_version} - not supported in TIDL - updating ONNX IR version to {MAX_SUPPORTED_IR_VERSION}')
+                onnx_model.ir_version = MAX_SUPPORTED_IR_VERSION
+            else:
+                onnx_model.ir_version = original_ir_version
             onnx.save(onnx_model, model_path)
+        
+        else :
+            # Not implemented for other model formats
+            raise NotImplementedError("This model format is curretly not supported")
 
     def _prepare(self):     
         # if os.path.exists(self.run_dir):
@@ -303,11 +319,17 @@ class InferAnalyzeFinal(compile_base.CompileModelBase):
             for k, v in comparison_patterns:
                 num_traces = len(comparison_traces_dirs[v])
                 layer_info_dir = os.path.join(comparison_run_dir[v], 'artifacts', 'tempDir')
-                layer_info_files = [os.path.join(layer_info_dir,f) for f in os.listdir(layer_info_dir) if f.endswith('layer_info.txt')]
+                layer_info_files = sorted(
+                    [os.path.join(layer_info_dir,f) for f in os.listdir(layer_info_dir) if f.endswith('layer_info.txt')]
+                )
                 tidl_onnx_trace_mapping_dict = dict()
                 for frame_idx in range(num_traces):
                     tidl_onnx_trace_mapping_dict[frame_idx] = dict()
-                    for subgraph_idx, layer_info_path in enumerate(layer_info_files):
+                    for layer_info_path in layer_info_files:
+                        # Extract subgraph index from filename (e.g., subgraph_2_tidl_net.bin.layer_info.txt → 2)
+                        import re
+                        sg_match = re.search(r'subgraph_(\d+)_tidl_net', os.path.basename(layer_info_path))
+                        subgraph_idx = int(sg_match.group(1)) if sg_match else 0
                         tidl_onnx_trace_mapping = self._get_traces(k, v, subgraph_idx, comparison_traces_dirs[k][frame_idx], comparison_traces_dirs[v][frame_idx], layer_info_path)
                         tidl_onnx_trace_mapping_dict[frame_idx].update(tidl_onnx_trace_mapping)
                     #
@@ -364,7 +386,9 @@ class InferAnalyzeFinal(compile_base.CompileModelBase):
         return column_start_idx
 
     def _analyze_model_layers(self, refname, tidlname, tidl_onnx_trace_mapping_dict, analyze_xlsx):
-        zero_if_nan = lambda v: 0.0 if (math.isnan(v) or v is None) else v
+        sanitize_val = lambda v: 0.0 if (v is None or math.isnan(v) or math.isinf(v)) else v
+        # Median% is only meaningful for error metrics, not for ratio metrics like SNR
+        skip_median_keys = {'SNR_dB'}
         num_frames = len(tidl_onnx_trace_mapping_dict)
         layers_diff_dict = dict()
         for frame_idx in range(num_frames):
@@ -378,7 +402,7 @@ class InferAnalyzeFinal(compile_base.CompileModelBase):
             layers_diff_transposed = {key: [] for key in layers_diff_keys}
             for layer_idx in range(len(layers_diff)):
                 for key, v in layers_diff[layer_idx].items():
-                    v = zero_if_nan(v)
+                    v = sanitize_val(v)
                     layers_diff[layer_idx][key] = v
                     layers_diff_transposed[key].append(v)
                 #
@@ -386,16 +410,18 @@ class InferAnalyzeFinal(compile_base.CompileModelBase):
             layers_diff_median = {key: np.median(np.array(vs)) for key, vs in layers_diff_transposed.items()}
         #
 
-        # add percentage values as well
+        # add percentage values for error metrics only (not for SNR)
         for frame_idx in range(num_frames):
             layers_diff = layers_diff_dict[frame_idx]
             for layer_idx, layer_diff in enumerate(layers_diff):
                 for key in layers_diff_median.keys():
+                    if key in skip_median_keys:
+                        continue
                     median_val = layers_diff_median[key]
                     eps = 1e-6 if median_val == 0 else 0
                     layer_diff[key + '_Median%'] = abs((layer_diff[key] + eps) * 100 / (median_val + eps))
                 #
-            # 
+            #
         #
 
         for frame_idx in range(num_frames):
@@ -406,10 +432,10 @@ class InferAnalyzeFinal(compile_base.CompileModelBase):
             frame_worksheet.write_row(0, 0, ['Subgraph', 'SerialNum', 'ONNXLayer', 'TIDLDataID'])
             frame_worksheet.write_row(0, 4, layers_diff[0].keys())
             tidl_onnx_trace_mapping_keys = list(tidl_onnx_trace_mapping.keys())
-            subgraph_idx = 0 # to be corrected
             for layer_idx in range(len(layers_diff)):
                 tidl_data_id = tidl_onnx_trace_mapping_keys[layer_idx]
                 tidl_onnx_trace_mapping_entry = tidl_onnx_trace_mapping[tidl_data_id]
+                subgraph_idx = tidl_onnx_trace_mapping_entry[4] if len(tidl_onnx_trace_mapping_entry) > 4 else 0
                 layer_id_mapping_list = [str(subgraph_idx), str(layer_idx), tidl_onnx_trace_mapping_entry[2], tidl_onnx_trace_mapping_entry[3]]
                 frame_worksheet.write_row(row_idx+layer_idx, 0, layer_id_mapping_list)
                 frame_worksheet.write_row(row_idx+layer_idx, 4, layers_diff[layer_idx].values())
@@ -450,11 +476,14 @@ class InferAnalyzeFinal(compile_base.CompileModelBase):
             tidl_trace_path = tidl_trace_path[0] if len(tidl_trace_path)>0 else None
 
             if onnx_trace_path and tidl_trace_path:
-                tidl_onnx_trace_mapping[tidl_data_id] = [
+                # Use subgraph_idx in key to prevent collision across subgraphs
+                unique_key = f"{subgraph_idx}_{tidl_data_id}"
+                tidl_onnx_trace_mapping[unique_key] = [
                     onnx_trace_path,
                     tidl_trace_path,
                     onnx_layer_name,
-                    tidl_data_id
+                    tidl_data_id,
+                    subgraph_idx
                 ]
             # else:
             #     print(f"WARNING: Traces Not found for outdataId: {_tidl_data_id}")
@@ -475,7 +504,15 @@ class InferAnalyzeFinal(compile_base.CompileModelBase):
         median_delta = np.median(abs_delta)
         mean_scale = np.mean(np.abs(goldenBuffer))
         mean_abs_rel_diff = mean_delta / mean_scale if mean_scale > eps else (mean_delta+eps) / (mean_scale+eps)
-        diff_dict = {'MeanAbsRelDiff': float(mean_abs_rel_diff), 'MeanAbsDiff': float(mean_delta), 'MedianAbsDiff': float(median_delta), 'MaxAbsDiff': float(max_delta)}
+        # SNR: Signal-to-Noise Ratio in dB
+        signal_power = np.mean(goldenBuffer ** 2)
+        noise_power = np.mean(delta ** 2)
+        if noise_power > eps and signal_power > eps:
+            snr_db = float(10 * np.log10(signal_power / noise_power))
+        else:
+            # Near-zero noise means near-perfect match — cap at a high but finite value
+            snr_db = 100.0
+        diff_dict = {'SNR_dB': snr_db, 'MeanAbsRelDiff': float(mean_abs_rel_diff), 'MeanAbsDiff': float(mean_delta), 'MedianAbsDiff': float(median_delta), 'MaxAbsDiff': float(max_delta)}
         return diff_dict
 
     def _get_layers_diff(self, tidl_onnx_trace_mapping):

@@ -41,11 +41,51 @@ class RandomDataLoader(dataset_base.DatasetBase):
 
     def __getitem__(self, index, info_dict=None):
         info_dict = info_dict or {}
-        shape = self.size_details[0]['shape']
-        type = self.size_details[0]['type']
-        dtype = np.uint8 if 'uint8' in type else np.float32
-        tensor = np.random.rand(*shape).astype(dtype=dtype)
-        return tensor, info_dict
+        # Handle multiple inputs - return a list of tensors
+        if len(self.size_details) > 1:
+            tensors = []
+            for input_detail in self.size_details:
+                shape = input_detail['shape']
+                type_str = input_detail['type']
+                # Determine dtype from type string
+                if 'uint8' in type_str:
+                    dtype = np.uint8
+                elif 'int32' in type_str or 'int64' in type_str:
+                    dtype = np.int32
+                elif 'int8' in type_str:
+                    dtype = np.int8
+                else:
+                    dtype = np.float32
+                #
+                # Generate random data with appropriate range
+                if dtype in (np.uint8, np.int8, np.int32):
+                    tensor = np.random.randint(0, 10, size=shape, dtype=dtype)
+                else:
+                    tensor = np.random.rand(*shape).astype(dtype=dtype)
+                #
+                tensors.append(tensor)
+            return tensors, info_dict
+        else:
+            # Single input - return single tensor for backward compatibility
+            shape = self.size_details[0]['shape']
+            type_str = self.size_details[0]['type']
+            # Determine dtype from type string
+            if 'uint8' in type_str:
+                dtype = np.uint8
+            elif 'int32' in type_str or 'int64' in type_str:
+                dtype = np.int32
+            elif 'int8' in type_str:
+                dtype = np.int8
+            else:
+                dtype = np.float32
+            
+            # Generate random data with appropriate range
+            if dtype in (np.uint8, np.int8, np.int32):
+                tensor = np.random.randint(0, 10, size=shape, dtype=dtype)
+            else:
+                tensor = np.random.rand(*shape).astype(dtype=dtype)
+            #
+            return tensor, info_dict
 
     def __len__(self):
         return self.num_frames
