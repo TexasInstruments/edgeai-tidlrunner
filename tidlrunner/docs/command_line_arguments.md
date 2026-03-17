@@ -194,7 +194,7 @@ Note: the "Config Field" column uses the argparse `dest` value expressed as a fl
 | postprocess_enable | utils.str_to_bool | False | enable postprocessing after inference | common.postprocess_enable |
 | postprocess_name | str | None | name of the postprocessing pipeline | postprocess.name |
 
-## insight
+## inspect
 
 | Option | Type | Default | Help | Config Field |
 |---|---:|---|---|---|

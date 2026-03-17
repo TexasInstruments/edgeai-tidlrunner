@@ -15,7 +15,7 @@ Example:
     python data_extractor.py work_dirs/ model_data.json
 
 Output:
-    - Single JSON file with all parsed data (model, subgraphs, TIDL, activation, metrics, config, performance)
+    - Single JSON file with all parsed data (metadata, model, compilation)
 """
 
 import onnx
@@ -213,6 +213,148 @@ class ActivationDataParser:
             print(f"    Error loading {bin_path}: {e}")
             return None
 
+    def _smart_sample_scatter_points(self, tidl_data: np.ndarray, notidl_data: np.ndarray,
+                                      max_points: int = 4000) -> Tuple[np.ndarray, np.ndarray]:
+        """Smart sampling using best-fit line as reference to preserve outliers
+
+        Args:
+            tidl_data: TIDL (quantized) activation values
+            notidl_data: Original FP32 activation values
+            max_points: Maximum number of points to keep (default 4000)
+
+        Returns:
+            Tuple of (sampled_tidl_data, sampled_notidl_data)
+        """
+        total_points = len(tidl_data)
+
+        # Adaptive minimum: ensure we have enough points for visualization
+        # For small datasets, keep more; for large datasets, aim for max_points
+        if total_points <= 2000:
+            return tidl_data, notidl_data
+        elif total_points <= 8000:
+            min_points = int(total_points * 0.4)  # Keep at least 40% for small-medium datasets
+        else:
+            min_points = max(2000, int(max_points * 0.5))  # At least 2000 or 50% of max_points
+
+        # If already under max limit, return all points
+        if total_points <= max_points:
+            return tidl_data, notidl_data
+
+        try:
+            # Calculate best-fit line through all points
+            # Try sklearn first (more robust), fallback to numpy
+            try:
+                from sklearn.linear_model import LinearRegression
+                X = tidl_data.reshape(-1, 1)
+                y = notidl_data
+                model = LinearRegression()
+                model.fit(X, y)
+                slope = float(model.coef_[0])
+                intercept = float(model.intercept_)
+            except ImportError:
+                # Fallback to numpy polyfit
+                coeffs = np.polyfit(tidl_data, notidl_data, 1)
+                slope = float(coeffs[0])
+                intercept = float(coeffs[1])
+
+            # Calculate perpendicular distance from best-fit line
+            # Distance = |y - (mx + b)| / sqrt(1 + m^2)
+            predicted = slope * tidl_data + intercept
+            distances = np.abs(notidl_data - predicted) / np.sqrt(1 + slope**2)
+
+            # Adaptive thresholds based on percentiles
+            p50 = np.percentile(distances, 50)
+            p75 = np.percentile(distances, 75)
+            p90 = np.percentile(distances, 90)
+            p95 = np.percentile(distances, 95)
+
+            # Zone-based sampling with different rates
+            # Format: (lower_bound, upper_bound, sampling_rate, zone_name)
+            zones = [
+                (p95, np.inf, 1.0, 'critical'),    # Keep ALL outliers
+                (p90, p95, 0.8, 'poor'),            # Keep 80% of poor points
+                (p75, p90, 0.4, 'fair'),            # Keep 40% of fair points
+                (p50, p75, 0.15, 'good'),           # Keep 15% of good points
+                (0.0, p50, 0.15, 'excellent')       # Keep 5% of excellent points
+            ]
+
+            # Build index list for each zone
+            selected_indices = []
+            np.random.seed(42)  # Reproducible sampling
+
+            for lower, upper, rate, zone_name in zones:
+                # Find points in this zone
+                mask = (distances >= lower) & (distances < upper)
+                zone_indices = np.where(mask)[0]
+
+                if len(zone_indices) == 0:
+                    continue
+
+                # Sample from this zone
+                n_to_sample = int(np.ceil(len(zone_indices) * rate))
+                if n_to_sample > len(zone_indices):
+                    n_to_sample = len(zone_indices)
+
+                sampled_indices = np.random.choice(zone_indices, n_to_sample, replace=False)
+                selected_indices.extend(sampled_indices)
+
+            # Convert to array
+            selected_indices = np.array(selected_indices)
+
+            # If we don't have enough points, fill up by sampling more from better zones
+            if len(selected_indices) < min_points:
+                # Get all unselected indices
+                all_indices = np.arange(total_points)
+                selected_set = set(selected_indices)
+                unselected_indices = np.array([i for i in all_indices if i not in selected_set])
+
+                if len(unselected_indices) > 0:
+                    # How many more points do we need?
+                    needed = min_points - len(selected_indices)
+                    needed = min(needed, len(unselected_indices))
+
+                    # Sample from unselected points, preferring those closer to outliers
+                    unselected_distances = distances[unselected_indices]
+                    # Sort by distance (descending) and take the top 'needed' points
+                    sorted_unselected = unselected_indices[np.argsort(-unselected_distances)]
+                    additional_indices = sorted_unselected[:needed]
+
+                    selected_indices = np.concatenate([selected_indices, additional_indices])
+
+            # Limit to max_points if we have too many
+            if len(selected_indices) > max_points:
+                # Prioritize by distance (keep worst outliers)
+                sorted_by_distance = selected_indices[np.argsort(-distances[selected_indices])]
+                selected_indices = sorted_by_distance[:max_points]
+
+            # Validation: ensure we kept the worst outlier
+            max_distance_idx = np.argmax(distances)
+            if max_distance_idx not in selected_indices:
+                # Replace a random good point with the max outlier
+                good_zone_mask = distances[selected_indices] < p75
+                if np.any(good_zone_mask):
+                    good_indices_in_selection = np.where(good_zone_mask)[0]
+                    replace_idx = np.random.choice(good_indices_in_selection)
+                    selected_indices[replace_idx] = max_distance_idx
+
+            # Return sampled data
+            sampled_tidl = tidl_data[selected_indices]
+            sampled_notidl = notidl_data[selected_indices]
+
+            # Print sampling summary
+            reduction_pct = (1 - len(selected_indices) / total_points) * 100
+            print(f"    Smart sampling: {total_points} -> {len(selected_indices)} points ({reduction_pct:.1f}% reduction, min: {min_points})")
+            print(f"    Best-fit line: y = {slope:.4f}*x + {intercept:.4f}")
+
+            return sampled_tidl, sampled_notidl
+
+        except Exception as e:
+            print(f"    Warning: Smart sampling failed ({e}), using random sampling")
+            # Fallback to simple random sampling
+            np.random.seed(42)
+            indices = np.random.choice(total_points, max_points, replace=False)
+            return tidl_data[indices], notidl_data[indices]
+
     def _sample_data(self, data: np.ndarray, max_samples: int = 50000) -> np.ndarray:
         """Sample data for visualization"""
         if len(data) <= max_samples:
@@ -294,79 +436,10 @@ class ActivationDataParser:
             traceback.print_exc()
             return {'traces': [], 'layout': {}}
 
-        traces = [
-            {
-                'type': 'bar',
-                'x': notidl_centers_list,
-                'y': notidl_counts_list,
-                'name': 'No-TIDL (FP32)',
-                'marker': {
-                    'color': 'rgba(255, 127, 0, 0.75)',
-                    'line': {'color': 'rgba(255, 127, 0, 1)', 'width': 0.5}
-                },
-                'opacity': 0.75,
-                'hovertemplate': '<b>No-TIDL</b><br>Value: %{x:.4f}<br>Count: %{y:,}<extra></extra>'
-            },
-            {
-                'type': 'bar',
-                'x': tidl_centers_list,
-                'y': tidl_counts_list,
-                'name': 'TIDL (INT8)',
-                'marker': {
-                    'color': 'rgba(255, 152, 0, 0.7)',
-                    'line': {'color': 'rgba(255, 152, 0, 1)', 'width': 0.5}
-                },
-                'opacity': 0.7,
-                'hovertemplate': '<b>TIDL</b><br>Value: %{x:.4f}<br>Count: %{y:,}<extra></extra>'
-            }
-        ]
-
-        layout = {
-            'title': {
-                'text': 'Activation Distribution Comparison',
-                'font': {'size': 14, 'color': '#333'}
-            },
-            'xaxis': {
-                'title': 'Activation Value',
-                'showgrid': False,
-                'showline': True,
-                'linewidth': 1,
-                'linecolor': '#e0e0e0'
-            },
-            'yaxis': {
-                'title': 'Frequency',
-                'type': 'log',
-                'showgrid': True,
-                'gridcolor': 'rgba(255, 255, 255, 0.15)'
-            },
-            'barmode': 'overlay',
-            'template': 'plotly_white',
-            'showlegend': True,
-            'legend': {
-                'orientation': 'h',
-                'yanchor': 'bottom',
-                'y': 1.02,
-                'xanchor': 'left',
-                'x': 0
-            },
-            'hovermode': 'x unified',
-            'margin': {'l': 50, 'r': 20, 't': 60, 'b': 50},
-            'annotations': [
-                {
-                    'text': f"No-TIDL: [{stats.get('notidl_min') or 0:.2f}, {stats.get('notidl_max') or 0:.2f}] | " +
-                            f"TIDL: [{stats.get('tidl_min') or 0:.2f}, {stats.get('tidl_max') or 0:.2f}]",
-                    'xref': 'paper',
-                    'yref': 'paper',
-                    'x': 0.5,
-                    'y': -0.15,
-                    'showarrow': False,
-                    'xanchor': 'center',
-                    'font': {'size': 10, 'color': '#666'}
-                }
-            ]
+        return {
+            'notidl': {'centers': notidl_centers_list, 'counts': notidl_counts_list},
+            'tidl': {'centers': tidl_centers_list, 'counts': tidl_counts_list}
         }
-
-        return {'traces': traces, 'layout': layout}
 
     def _generate_scatter_plot_d3(self, notidl_data: np.ndarray, tidl_data: np.ndarray,
                                    stats: Dict[str, float]) -> Dict[str, Any]:
@@ -380,6 +453,14 @@ class ActivationDataParser:
 
             notidl_rounded = np.round(notidl_flat, 4)
             tidl_rounded = np.round(tidl_flat, 4)
+
+            # Apply smart sampling if too many points
+            if total_points > 4000:
+                tidl_sampled, notidl_sampled = self._smart_sample_scatter_points(
+                    tidl_rounded, notidl_rounded, max_points=4000
+                )
+                tidl_rounded = tidl_sampled
+                notidl_rounded = notidl_sampled
 
             all_values = np.concatenate([notidl_rounded, tidl_rounded])
             min_val = float(np.min(all_values))
@@ -403,7 +484,8 @@ class ActivationDataParser:
                     'max': axis_max
                 },
                 'stats': {
-                    'total_points': total_points
+                    'total_points': total_points,
+                    'displayed_points': len(tidl_rounded)
                 }
             }
 
@@ -556,33 +638,53 @@ class MetricsParser:
 
             for sheet_name in wb.sheetnames:
                 if sheet_name.startswith('diff_notidl_tidl_'):
-                    subgraph_id = sheet_name.split('_')[-1]
                     sheet = wb[sheet_name]
 
-                    headers = [cell.value for cell in sheet[1]]
-
-                    subgraph_metrics = []
                     for row_idx in range(2, sheet.max_row + 1):
                         row = [cell.value for cell in sheet[row_idx]]
 
                         if len(row) >= 12 and row[1] is not None:
-                            metric_entry = {
-                                'subgraph': row[0],
-                                'serial_num': row[1],
-                                'onnx_layer': row[2],
-                                'tidl_layer_id': row[3],
-                                'mean_abs_rel_diff': float(row[4]) if row[4] is not None else 0.0,
-                                'mean_abs_diff': float(row[5]) if row[5] is not None else 0.0,
-                                'median_abs_diff': float(row[6]) if row[6] is not None else 0.0,
-                                'max_abs_diff': float(row[7]) if row[7] is not None else 0.0,
-                                'mean_abs_diff_median': float(row[9]) if row[9] is not None else 0.0,
-                                'median_abs_diff_median': float(row[10]) if row[10] is not None else 0.0,
-                                'max_abs_diff_median': float(row[11]) if row[11] is not None else 0.0
-                            }
-                            subgraph_metrics.append(metric_entry)
+                            # Group by the Subgraph column (row[0]) — not by sheet name
+                            subgraph_id = str(row[0]) if row[0] is not None else '0'
+                            # Detect new format (with SNR_dB as first metric column) vs old format
+                            has_snr = len(row) >= 13 and isinstance(row[4], (int, float)) and str(row[4]) not in ('', 'None')
+                            if has_snr:
+                                # New format: SNR_dB, MeanAbsRelDiff, MeanAbsDiff, MedianAbsDiff, MaxAbsDiff, ...
+                                metric_entry = {
+                                    'subgraph': subgraph_id,
+                                    'serial_num': row[1],
+                                    'onnx_layer': row[2],
+                                    'tidl_layer_id': row[3],
+                                    'snr_db': float(row[4]) if row[4] is not None else 0.0,
+                                    'mean_abs_rel_diff': float(row[5]) if row[5] is not None else 0.0,
+                                    'mean_abs_diff': float(row[6]) if row[6] is not None else 0.0,
+                                    'median_abs_diff': float(row[7]) if row[7] is not None else 0.0,
+                                    'max_abs_diff': float(row[8]) if row[8] is not None else 0.0,
+                                    'mean_abs_diff_median': float(row[10]) if len(row) > 10 and row[10] is not None else 0.0,
+                                    'median_abs_diff_median': float(row[11]) if len(row) > 11 and row[11] is not None else 0.0,
+                                    'max_abs_diff_median': float(row[12]) if len(row) > 12 and row[12] is not None else 0.0
+                                }
+                            else:
+                                # Old format: MeanAbsRelDiff, MeanAbsDiff, MedianAbsDiff, MaxAbsDiff, ...
+                                metric_entry = {
+                                    'subgraph': subgraph_id,
+                                    'serial_num': row[1],
+                                    'onnx_layer': row[2],
+                                    'tidl_layer_id': row[3],
+                                    'mean_abs_rel_diff': float(row[4]) if row[4] is not None else 0.0,
+                                    'mean_abs_diff': float(row[5]) if row[5] is not None else 0.0,
+                                    'median_abs_diff': float(row[6]) if row[6] is not None else 0.0,
+                                    'max_abs_diff': float(row[7]) if row[7] is not None else 0.0,
+                                    'mean_abs_diff_median': float(row[9]) if len(row) > 9 and row[9] is not None else 0.0,
+                                    'median_abs_diff_median': float(row[10]) if len(row) > 10 and row[10] is not None else 0.0,
+                                    'max_abs_diff_median': float(row[11]) if len(row) > 11 and row[11] is not None else 0.0
+                                }
+                            if subgraph_id not in self.metrics_data:
+                                self.metrics_data[subgraph_id] = []
+                            self.metrics_data[subgraph_id].append(metric_entry)
 
-                    self.metrics_data[subgraph_id] = subgraph_metrics
-                    print(f"  Loaded {len(subgraph_metrics)} metrics for subgraph {subgraph_id}")
+            for sg_id, metrics in self.metrics_data.items():
+                print(f"  Loaded {len(metrics)} metrics for subgraph {sg_id}")
 
             wb.close()
 
@@ -676,6 +778,29 @@ class TIDLSubgraphParser:
         self.base_dir = base_dir
         self.node_support = node_support or {}
 
+    def _parse_layer_info_file(self, subgraph_id: int) -> Dict[int, str]:
+        """Parse layer_info.txt to get TIDL layer index → ONNX tensor name mapping"""
+        layer_info_path = os.path.join(self.base_dir, f'subgraph_{subgraph_id}_tidl_net.bin.layer_info.txt')
+        mapping = {}  # tidl_layer_index → onnx_tensor_name
+        if not os.path.exists(layer_info_path):
+            return mapping
+        with open(layer_info_path, 'r') as f:
+            for line in f:
+                parts = line.strip().split()
+                if len(parts) < 3:
+                    continue
+                tidl_idx = int(parts[0])
+                buffer_id = int(parts[1])
+                tensor_name = parts[2]
+                # Skip buffer reuse entries and model input
+                if tidl_idx != buffer_id or tensor_name == 'images':
+                    continue
+                # Strip _netFormat suffix to get the base ONNX tensor name
+                if tensor_name.endswith('_netFormat'):
+                    tensor_name = tensor_name[:-10]
+                mapping[tidl_idx] = tensor_name
+        return mapping
+
     def _map_tidl_to_onnx_node(self, tidl_output_name: str) -> Optional[int]:
         """
         Map TIDL layer output tensor name to ONNX node index
@@ -695,9 +820,15 @@ class TIDLSubgraphParser:
         if onnx_node_name.endswith('_netFormat'):
             onnx_node_name = onnx_node_name[:-10]
 
+        # First try: match by node name
         for node_idx, node_data in self.node_support.items():
             if node_data.get('node_name') == onnx_node_name:
                 return node_idx
+
+        # Second try: match by output tensor name in the ONNX layer details
+        if hasattr(self, 'tensor_to_node_map') and self.tensor_to_node_map:
+            if onnx_node_name in self.tensor_to_node_map:
+                return self.tensor_to_node_map[onnx_node_name]
 
         return None
 
@@ -864,10 +995,13 @@ class TIDLSubgraphParser:
 
         return layer_info
 
-    def _extract_graph_structure(self, soup, layers) -> Tuple[List[Dict], List[Dict]]:
+    def _extract_graph_structure(self, soup, layers, subgraph_id=0) -> Tuple[List[Dict], List[Dict]]:
         """Extract graph structure (nodes + edges) from SVG for visualization"""
         graph_nodes = []
         graph_edges = []
+
+        # Parse layer_info.txt for authoritative TIDL → ONNX tensor name mapping
+        layer_info_mapping = self._parse_layer_info_file(subgraph_id)
 
         layer_map = {layer['layer_index']: layer for layer in layers}
 
@@ -900,73 +1034,49 @@ class TIDLSubgraphParser:
                 formatted_shapes = [f"[{','.join(map(str, dims))}]" for dims in output_dims]
                 output_shape_str = ', '.join(formatted_shapes)
 
-            kernel_shape_str = 'N/A'
-            if 'kernelShape' in layer_info and layer_info['kernelShape']:
-                kernel_shape_str = str(layer_info['kernelShape'])
-
-            strides_str = 'N/A'
-            if 'strides' in layer_info and layer_info['strides']:
-                strides_str = str(layer_info['strides'])
-
-            dilations_str = 'N/A'
-            if 'dilations' in layer_info and layer_info['dilations']:
-                dilations_str = str(layer_info['dilations'])
-
-            pads_str = 'N/A'
-            if 'pads' in layer_info and layer_info['pads']:
-                pads_str = str(layer_info['pads'])
-
-            groups_str = 'N/A'
-            if 'groups' in layer_info:
-                groups_str = str(layer_info['groups'])
-
-            activation_str = 'N/A'
-            if 'parameters' in layer_info and 'actParams' in layer_info['parameters']:
-                act_type = layer_info['parameters']['actParams'].get('actType')
-                if act_type:
-                    activation_str = act_type
-
             input_shape_str = 'N/A'
             if 'numInChannels' in layer_info:
                 input_shape_str = f"Channels: {layer_info['numInChannels']}"
 
-            layerdetails = {
-                'name': layer_info['layer_name'] or f"Layer_{layer_idx}",
-                'type': layer_info['layer_type'] or 'Unknown',
-                'inputshape': input_shape_str,
-                'outputshape': output_shape_str,
-                'kernelshape': kernel_shape_str,
-                'strides': strides_str,
-                'dilations': dilations_str,
-                'pads': pads_str,
-                'groups': groups_str,
-                'activation': activation_str,
-                'auto_pad': 'N/A',
-                'numInChannels': layer_info.get('numInChannels', 'N/A'),
-                'numOutChannels': layer_info.get('numOutChannels', 'N/A')
-            }
-
-            if 'parameters' in layer_info:
-                params = layer_info['parameters']
-                if 'weightsElementSizeInBits' in params:
-                    layerdetails['weightsElementSizeInBits'] = params['weightsElementSizeInBits']
-                if 'numChannels' in params:
-                    layerdetails['numChannels'] = params['numChannels']
-                if 'dataQ' in params:
-                    layerdetails['dataQ'] = params['dataQ']
+            # Get ONNX mapping from layer_info.txt (authoritative source)
+            # Only map computational layers — skip DataLayer and DataConvertLayer
+            layer_type = layer_info['layer_type'] or 'Unknown'
+            non_computational_types = {'TIDL_DataLayer', 'TIDL_DataConvertLayer'}
+            onnx_tensor_name = layer_info_mapping.get(layer_idx, '') if layer_type not in non_computational_types else ''
+            onnx_node_index = None
+            onnx_name = ''
+            if onnx_tensor_name and hasattr(self, 'tensor_to_node_map'):
+                onnx_node_index = self.tensor_to_node_map.get(onnx_tensor_name)
+                if onnx_node_index is not None and hasattr(self, 'onnx_layer_names'):
+                    onnx_name = self.onnx_layer_names[onnx_node_index] if onnx_node_index < len(self.onnx_layer_names) else ''
 
             node = {
                 'id': f"tidl_layer_{layer_idx}",
                 'index': layer_idx,
                 'name': layer_info['layer_name'][:20] if layer_info['layer_name'] else f"Layer{layer_idx}",
                 'full_name': layer_info['layer_name'] or f"Layer_{layer_idx}",
-                'type': layer_info['layer_type'] or 'Unknown',
+                'type': layer_type,
                 'tidl_supported': True,
+                'inputshape': input_shape_str,
+                'outputshape': output_shape_str,
                 'layer_data': layer_info,
-                'layerdetails': layerdetails
+                'onnx_node_index': onnx_node_index,
+                'onnx_name': onnx_name
             }
 
             graph_nodes.append(node)
+
+        # Build lookup maps for shape propagation
+        node_map = {node['index']: node for node in graph_nodes}
+        output_dims_map = {}
+        for node in graph_nodes:
+            ld = node.get('layer_data', {})
+            params = ld.get('parameters', {})
+            if 'outputs' in params:
+                for out in params['outputs']:
+                    if 'dims' in out:
+                        output_dims_map[node['index']] = out['dims']
+                        break  # use first output with dims
 
         svg_edges = soup.find_all('g', class_='edge')
 
@@ -1002,9 +1112,33 @@ class TIDLSubgraphParser:
 
             graph_edges.append(edge)
 
+        # Propagate input shapes from predecessor output shapes via edges
+        incoming = {}
+        for edge in graph_edges:
+            target_idx = edge['target_node_id']
+            source_idx = edge['source_node_id']
+            incoming.setdefault(target_idx, []).append(source_idx)
+
+        for target_idx, source_indices in incoming.items():
+            target_node = node_map.get(target_idx)
+            if not target_node:
+                continue
+
+            input_shapes = []
+            for src_idx in source_indices:
+                dims = output_dims_map.get(src_idx)
+                if dims:
+                    input_shapes.append(f"[{','.join(map(str, dims))}]")
+
+            if input_shapes:
+                if len(input_shapes) == 1:
+                    target_node['inputshape'] = input_shapes[0]
+                else:
+                    target_node['inputshape'] = ', '.join(input_shapes)
+
         return graph_nodes, graph_edges
 
-    def parse_subgraph_html(self, filepath: str, netlog_filepath: str = None) -> Dict[str, Any]:
+    def parse_subgraph_html(self, filepath: str, netlog_filepath: str = None, subgraph_id: int = 0) -> Dict[str, Any]:
         """Parse a single subgraph HTML file and its netLog file"""
         print(f"  Parsing: {os.path.basename(filepath)}")
 
@@ -1044,7 +1178,9 @@ class TIDLSubgraphParser:
                     if onnx_node_idx is not None:
                         layer['onnx_node_index'] = onnx_node_idx
 
-        graph_nodes, graph_edges = self._extract_graph_structure(soup, layers)
+        # Note: ONNX mapping is now done in _extract_graph_structure using layer_info.txt
+
+        graph_nodes, graph_edges = self._extract_graph_structure(soup, layers, subgraph_id)
 
         print(f"    Extracted graph: {len(graph_nodes)} nodes, {len(graph_edges)} edges")
 
@@ -1074,7 +1210,7 @@ class TIDLSubgraphParser:
 
         for subgraph_idx, html_filepath, netlog_filepath in subgraph_files:
             try:
-                tidl_data[subgraph_idx] = self.parse_subgraph_html(html_filepath, netlog_filepath)
+                tidl_data[subgraph_idx] = self.parse_subgraph_html(html_filepath, netlog_filepath, subgraph_idx)
             except Exception as e:
                 print(f"  Warning: Failed to parse {html_filepath}: {e}")
                 continue
@@ -1580,6 +1716,29 @@ class ONNXParser:
             ]
         }
 
+        # Get model opset version for schema lookup
+        opset_version = 18  # default
+        try:
+            if hasattr(onnx_model, 'opset_import'):
+                for opset in onnx_model.opset_import:
+                    if opset.domain == '' or opset.domain == 'ai.onnx':
+                        opset_version = opset.version
+                        break
+        except Exception:
+            pass
+
+        def get_input_param_names(op_type, num_inputs):
+            """Get formal ONNX input parameter names for an operator."""
+            try:
+                import onnx as _onnx
+                schema = _onnx.defs.get_schema(op_type, opset_version)
+                names = [inp.name for inp in schema.inputs]
+                while len(names) < num_inputs:
+                    names.append(f'input_{len(names)}')
+                return names
+            except Exception:
+                return [f'input_{i}' for i in range(num_inputs)]
+
         output_to_node = {}
         for idx, node in enumerate(graph.nodes):
             for out_tensor in node.outputs:
@@ -1597,23 +1756,15 @@ class ONNXParser:
             input_names = [inp_tensor.name for inp_tensor in node.inputs]
             output_names = [out_tensor.name for out_tensor in node.outputs]
 
-            input_shapes = []
-            for inp_name in input_names:
-                shape = shape_lookup.get(inp_name, [])
-                if shape:
-                    input_shapes.append(shape)
-
-            output_shapes = []
-            for out_name in output_names:
-                shape = shape_lookup.get(out_name, [])
-                if shape:
-                    output_shapes.append(shape)
+            # Get formal input parameter names for this op type
+            param_names = get_input_param_names(node.op, len(input_names))
 
             input_metadata = []
-            for inp_name in input_names:
+            for inp_idx, inp_name in enumerate(input_names):
                 meta = tensor_metadata.get(inp_name, {})
                 input_metadata.append({
                     'name': inp_name,
+                    'param_name': param_names[inp_idx] if inp_idx < len(param_names) else f'input_{inp_idx}',
                     'shape': meta.get('shape', []),
                     'dtype': meta.get('dtype', 'unknown'),
                     'is_constant': meta.get('is_constant', False)
@@ -1636,28 +1787,11 @@ class ONNXParser:
                 'output': output_names,
                 'input_metadata': input_metadata,
                 'output_metadata': output_metadata,
+                'attributes': attrs,
                 'x': 0,
                 'y': 0,
                 'depth': 0,
-                'horizontal_position': 0,
-                'input_shape': {
-                    'channels': len(input_names),
-                    'shapes': input_shapes,
-                    'formatted': self.format_shapes(input_shapes)
-                },
-                'output_shape': {
-                    'channels': len(output_names),
-                    'shapes': output_shapes,
-                    'formatted': self.format_shapes(output_shapes)
-                },
-                'kernel_shapes': attrs.get('kernel_shape', 'N/A'),
-                'strides': attrs.get('strides', 'N/A'),
-                'dilations': attrs.get('dilations', 'N/A'),
-                'pads': attrs.get('pads', 'N/A'),
-                'groups': attrs.get('group', 1),
-                'activation': attrs.get('activation', 'N/A'),
-                'auto_pad': attrs.get('auto_pad', 'N/A'),
-                'attributes': attrs
+                'horizontal_position': 0
             }
 
             for input_name in input_names:
@@ -1793,6 +1927,30 @@ class ONNXParser:
             ]
         }
 
+        # Get model opset version for schema lookup
+        opset_version = 18  # default
+        try:
+            if hasattr(onnx_model, 'opset_import'):
+                for opset in onnx_model.opset_import:
+                    if opset.domain == '' or opset.domain == 'ai.onnx':
+                        opset_version = opset.version
+                        break
+        except Exception:
+            pass
+
+        def get_input_param_names(op_type, num_inputs):
+            """Get formal ONNX input parameter names for an operator."""
+            try:
+                import onnx as _onnx
+                schema = _onnx.defs.get_schema(op_type, opset_version)
+                names = [inp.name for inp in schema.inputs]
+                # For variadic inputs, extend with indexed names
+                while len(names) < num_inputs:
+                    names.append(f'input_{len(names)}')
+                return names
+            except Exception:
+                return [f'input_{i}' for i in range(num_inputs)]
+
         output_to_node = {}
         for idx, node in enumerate(graph.node):
             for output in node.output:
@@ -1807,23 +1965,15 @@ class ONNXParser:
             node_name = node.name if node.name else f"{node.op_type}_{idx}"
             attrs = self.extract_node_attributes(node)
 
-            input_shapes = []
-            for inp in node.input:
-                shape = shape_lookup.get(inp, [])
-                if shape:
-                    input_shapes.append(shape)
-
-            output_shapes = []
-            for out in node.output:
-                shape = shape_lookup.get(out, [])
-                if shape:
-                    output_shapes.append(shape)
+            # Get formal input parameter names for this op type
+            param_names = get_input_param_names(node.op_type, len(node.input))
 
             input_metadata = []
-            for inp_name in node.input:
+            for inp_idx, inp_name in enumerate(node.input):
                 meta = tensor_metadata.get(inp_name, {})
                 input_metadata.append({
                     'name': inp_name,
+                    'param_name': param_names[inp_idx] if inp_idx < len(param_names) else f'input_{inp_idx}',
                     'shape': meta.get('shape', []),
                     'dtype': meta.get('dtype', 'unknown'),
                     'is_constant': meta.get('is_constant', False)
@@ -1846,28 +1996,11 @@ class ONNXParser:
                 'output': list(node.output),
                 'input_metadata': input_metadata,
                 'output_metadata': output_metadata,
+                'attributes': attrs,
                 'x': 0,
                 'y': 0,
                 'depth': 0,
-                'horizontal_position': 0,
-                'input_shape': {
-                    'channels': len(node.input),
-                    'shapes': input_shapes,
-                    'formatted': self.format_shapes(input_shapes)
-                },
-                'output_shape': {
-                    'channels': len(node.output),
-                    'shapes': output_shapes,
-                    'formatted': self.format_shapes(output_shapes)
-                },
-                'kernel_shapes': attrs.get('kernel_shape', 'N/A'),
-                'strides': attrs.get('strides', 'N/A'),
-                'dilations': attrs.get('dilations', 'N/A'),
-                'pads': attrs.get('pads', 'N/A'),
-                'groups': attrs.get('group', 1),
-                'activation': attrs.get('activation', 'N/A'),
-                'auto_pad': attrs.get('auto_pad', 'N/A'),
-                'attributes': attrs
+                'horizontal_position': 0
             }
 
             for input_name in node.input:
@@ -2255,11 +2388,23 @@ def load_cycles_data(model_dir_path: str) -> Dict[int, List[Dict[str, Any]]]:
                         kernel_only_cycles = float(kernel_only_cycles_str) if kernel_only_cycles_str else 0.0
                         core_loop_cycles = float(core_loop_cycles_str) if core_loop_cycles_str else 0.0
 
+                        layer_cycles_str = row.get('LayerCycles', '0').strip()
+                        # CSV header has typo 'IOcyles' with leading spaces
+                        io_cycles_str = '0'
+                        for key in row:
+                            if 'IOcyles' in key or 'IOcycles' in key:
+                                io_cycles_str = row[key].strip()
+                                break
+                        layer_cycles = float(layer_cycles_str) if layer_cycles_str else 0.0
+                        io_cycles = float(io_cycles_str) if io_cycles_str else 0.0
+
                         layer_data.append({
                             'layer_num': layer_num,
                             'layer_type': layer_type,
                             'kernelOnlyCycles': kernel_only_cycles,
-                            'coreLoopCycles': core_loop_cycles
+                            'coreLoopCycles': core_loop_cycles,
+                            'layerCycles': layer_cycles,
+                            'ioCycles': io_cycles
                         })
                     except (ValueError, KeyError) as e:
                         continue
@@ -2368,21 +2513,21 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
         print("=" * 70)
         print("Data Extractor - Extract TIDL Artifacts to JSON")
         print("=" * 70)
-        print("\nUsage: python data_extractor.py <model_dir/> <output.json> [--act_data]")
+        print("\nUsage: python data_extractor.py <model_dir/> <output.json> [--act_data=false]")
         print("\nArguments:")
         print("  model_dir/   - Direct path to model directory (e.g., work_dirs/compile/AM69A/cl_onnx_model_name/)")
         print("  output.json  - Output JSON file path (will be compressed)")
-        print("  --act_data   - Optional: Extract activations data to separate file (activations_data.json.gz)")
+        print("  --act_data   - Extract activations data to separate file (enabled by default, use --act_data=false to disable)")
         print("\nExample:")
         print("  python data_extractor.py work_dirs/compile/AM69A/cl-ort-resnet18/ model_data.json")
-        print("  python data_extractor.py work_dirs/compile/AM69A/cl-ort-resnet18/ model_data.json --act_data")
+        print("  python data_extractor.py work_dirs/compile/AM69A/cl-ort-resnet18/ model_data.json --act_data=false")
         print("\nThe script will automatically discover and parse:")
         print("  - ONNX model from <model_dir>/model/*.onnx")
         print("  - GraphViz info from <model_dir>/artifacts/tempDir/graphvizInfo.txt")
         print("  - Allowed nodes from <model_dir>/artifacts/allowedNode.txt")
         print("  - Subgraph files from <model_dir>/artifacts/tempDir/")
         print("  - Metrics from <model_dir>/analyze.xlsx")
-        print("  - Activation data from layer_info.txt and binary files (with --act_data)")
+        print("  - Activation data from layer_info.txt and binary files (enabled by default)")
         print("  - Config/Result from <model_dir>/tidl/*.yaml")
         print("  - Performance data from <model_dir>/tidl/artifacts/tempDir/**/*.csv")
         print("=" * 70)
@@ -2454,7 +2599,17 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
             print(f"WARNING: {allowednode_path} not found")
 
         print("\n[4/8] Parsing TIDL subgraph HTML files...")
+        # Build tensor name → ONNX node index map for TIDL-to-ONNX mapping
+        tensor_to_node_map = {}
+        for idx, (layer_name, layer_info) in enumerate(model_data.get('layer_details', {}).items()):
+            for out_tensor in layer_info.get('output', []):
+                tensor_to_node_map[out_tensor] = idx
+        # Build ordered list of ONNX layer names for ONNX name lookup
+        onnx_layer_names = list(model_data.get('layer_details', {}).keys())
+
         tidl_parser = TIDLSubgraphParser(subgraph_dir, subgraph_data['node_support'])
+        tidl_parser.tensor_to_node_map = tensor_to_node_map
+        tidl_parser.onnx_layer_names = onnx_layer_names
         tidl_data = tidl_parser.parse_all_subgraphs()
 
         print("\n[5/8] Parsing activation data...")
@@ -2468,7 +2623,7 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
                 import traceback
                 traceback.print_exc()
         else:
-            print("  Skipping activation data extraction (use --act_data flag to enable)")
+            print("  Skipping activation data extraction (disabled with --act_data=false)")
 
         print("\n[6/8] Parsing metrics data...")
         metrics_data = {}
@@ -2510,6 +2665,8 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
                         layer_entry['layer_type'] = cycles_lookup[layer_num]['layer_type']
                     layer_entry['kernel_cycles'] = cycles_lookup[layer_num]['kernelOnlyCycles']
                     layer_entry['core_loop_cycles'] = cycles_lookup[layer_num]['coreLoopCycles']
+                    layer_entry['layer_cycles'] = cycles_lookup[layer_num].get('layerCycles', 0)
+                    layer_entry['io_cycles'] = cycles_lookup[layer_num].get('ioCycles', 0)
 
                 if layer_num in memory_lookup:
                     if 'layer_type' not in layer_entry:
@@ -2565,12 +2722,15 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
 
                 if tidl_layer_id in metrics_lookup:
                     metric = metrics_lookup[tidl_layer_id]
-                    enhanced_layer['metrics'] = {
+                    metrics_dict = {
                         'mae': metric['mean_abs_diff'],
                         'mean_abs_rel_diff': metric['mean_abs_rel_diff'],
                         'median_abs_diff': metric['median_abs_diff'],
                         'max_abs_diff': metric['max_abs_diff']
                     }
+                    if 'snr_db' in metric:
+                        metrics_dict['snr_db'] = metric['snr_db']
+                    enhanced_layer['metrics'] = metrics_dict
 
                 # Activation data is stored separately (not embedded in layers) to avoid JSON bloat
                 # Keys are formatted as: f"{subgraph_id}_{onnx_node_idx}"
@@ -2592,15 +2752,12 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
             'target_device': config_data.get('target_device', 'Unknown'),
             'task_type': config_data.get('task_type', 'Unknown'),
             'tensor_bits': config_data.get('tensor_bits', 'Unknown'),
-            'model_accuracy': config_data.get('accuracy', 'N/A')
-        }
-
-        performance_summary = {
+            'model_accuracy': config_data.get('accuracy', 'N/A'),
             'num_frames': config_data.get('num_frames', 'N/A'),
-            'total_gmacs': config_data.get('perfsim_gmacs', 'N/A'),
-            'total_time_ms': config_data.get('perfsim_time_ms', 'N/A'),
-            'ddr_transfer_mb': config_data.get('perfsim_ddr_transfer_mb', 'N/A'),
-            'num_subgraphs': config_data.get('num_subgraphs', 'N/A')
+            'num_subgraphs': config_data.get('num_subgraphs', 'N/A'),
+            'perfsim_gmacs': config_data.get('perfsim_gmacs', 'N/A'),
+            'perfsim_time_ms': config_data.get('perfsim_time_ms', 'N/A'),
+            'perfsim_ddr_transfer_mb': config_data.get('perfsim_ddr_transfer_mb', 'N/A')
         }
 
         combined_data = {
@@ -2616,8 +2773,7 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
             'compilation': {
                 'node_support': subgraph_data.get('node_support', {}),
                 'tidl_subgraphs': enhanced_tidl_data
-            },
-            'performance': performance_summary
+            }
         }
 
         print(f"Writing compressed JSON to: {output_json_path}")
@@ -2674,7 +2830,7 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
             total_activation_layers = len(activation_data)
             print(f"  - Layers with activation data: {total_activation_layers}")
         else:
-            print(f"  - Layers with activation data: 0 (use --act_data to extract)")
+            print(f"  - Layers with activation data: 0 (disabled with --act_data=false)")
 
         total_metrics_layers = 0
         for subgraph_id, subgraph in combined_data['compilation']['tidl_subgraphs'].items():
