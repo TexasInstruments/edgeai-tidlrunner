@@ -39,7 +39,7 @@ def load_json_data(json_path: str) -> Dict[str, Any]:
             with open(json_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
 
-        expected_keys = ['metadata', 'model', 'compilation', 'performance']
+        expected_keys = ['metadata', 'model', 'compilation']
         missing_keys = [k for k in expected_keys if k not in data]
         if missing_keys:
             print(f"WARNING: JSON missing keys: {missing_keys}")
@@ -197,7 +197,7 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
         subgraph_data = json_data.get('subgraph_data', {})
         tree_structure = model_data.get('tree_structure', {})
     else:
-        # OLD FORMAT: metadata, model, compilation, performance
+        # OLD FORMAT: metadata, model, compilation
         print("  Detected: OLD 4-object structure")
         is_new_format = False
         model_data = {
@@ -299,7 +299,7 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
                 # Metrics/Accuracy data
                 if 'accuracy' in layer:
                     acc = layer['accuracy']
-                    metrics_list.append({
+                    metrics_entry = {
                         'subgraph': sg_id,
                         'tidl_layer_id': layer_id,
                         'onnx_layer': layer.get('name', ''),
@@ -307,7 +307,10 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
                         'mean_abs_rel_diff': acc.get('mae_relative', 0),
                         'median_abs_diff': acc.get('median_error', 0),
                         'max_abs_diff': acc.get('max_error', 0)
-                    })
+                    }
+                    if 'snr_db' in acc:
+                        metrics_entry['snr_db'] = acc['snr_db']
+                    metrics_list.append(metrics_entry)
 
                 # Performance data
                 if 'perf' in layer:
@@ -326,7 +329,9 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
                             'layer_num': layer_id,
                             'layer_type': layer_type,
                             'kernelOnlyCycles': perf['cycles'].get('kernel', 0),
-                            'coreLoopCycles': perf['cycles'].get('core_loop', 0)
+                            'coreLoopCycles': perf['cycles'].get('core_loop', 0),
+                            'layerCycles': perf['cycles'].get('layer', 0),
+                            'ioCycles': perf['cycles'].get('io', 0)
                         })
 
                     if 'memory_kb' in perf:
@@ -415,22 +420,23 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
                         'median_abs_diff': layer['metrics'].get('median_abs_diff', 0),
                         'max_abs_diff': layer['metrics'].get('max_abs_diff', 0)
                     }
+                    if 'snr_db' in layer['metrics']:
+                        metrics_entry['snr_db'] = layer['metrics']['snr_db']
                     metrics_list.append(metrics_entry)
             if metrics_list:
                 metrics_data[str(subgraph_id)] = metrics_list
 
         metadata = json_data.get('metadata', {})
-        performance = json_data.get('performance', {})
         config_data = {
             'target_device': metadata.get('target_device', 'Unknown'),
             'task_type': metadata.get('task_type', 'Unknown'),
             'tensor_bits': metadata.get('tensor_bits', 'Unknown'),
             'accuracy': metadata.get('model_accuracy', 'N/A'),
-            'num_frames': performance.get('num_frames', 'N/A'),
-            'num_subgraphs': performance.get('num_subgraphs', 'N/A'),
-            'perfsim_ddr_transfer_mb': performance.get('ddr_transfer_mb', 'N/A'),
-            'perfsim_gmacs': performance.get('total_gmacs', 'N/A'),
-            'perfsim_time_ms': performance.get('total_time_ms', 'N/A')
+            'num_frames': metadata.get('num_frames', 'N/A'),
+            'num_subgraphs': metadata.get('num_subgraphs', 'N/A'),
+            'perfsim_ddr_transfer_mb': metadata.get('perfsim_ddr_transfer_mb', 'N/A'),
+            'perfsim_gmacs': metadata.get('perfsim_gmacs', 'N/A'),
+            'perfsim_time_ms': metadata.get('perfsim_time_ms', 'N/A')
         }
 
         proctime_data = {}
@@ -460,7 +466,9 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
                             'layer_num': layer_num,
                             'layer_type': layer_type,
                             'kernelOnlyCycles': perf.get('kernel_cycles', 0),
-                            'coreLoopCycles': perf.get('core_loop_cycles', 0)
+                            'coreLoopCycles': perf.get('core_loop_cycles', 0),
+                            'layerCycles': perf.get('layer_cycles', 0),
+                            'ioCycles': perf.get('io_cycles', 0)
                         })
 
                     if 'memory' in perf:
@@ -509,7 +517,7 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
         print(f"  Activation data compressed: {len(activation_json) / 1024:.2f} KB")
     else:
         activation_json = json.dumps({})
-        print(f"  No activation data provided (use --act_data flag in data_extractor.py)")
+        print(f"  No activation data provided (was --act_data=false used?)")
 
     print("\nReplacing template placeholders...")
     compiled_html = template.replace('{{MODEL_DATA}}', model_json)

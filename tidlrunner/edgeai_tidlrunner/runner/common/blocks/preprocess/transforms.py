@@ -229,6 +229,9 @@ class ImageNormMeanScale(object):
         Returns:
             Tensor: Normalized Tensor image.
         """
+        # Convert PIL Image to numpy array if needed
+        tensor = self._ensure_numpy(tensor)
+
         if isinstance(tensor, list):
             if isinstance(self.mean, list) and isinstance(self.scale, list):
                 tensor_ = []
@@ -240,33 +243,53 @@ class ImageNormMeanScale(object):
                     tensor_.append(tensor[t_idx])
                 #
             else:
-                tensor_ = [self._apply_normalize_mean_scale(t, self.mean, self.scale, self.data_layout, self.inplace) for t in tensor]
+                # For multi-input models, only normalize the first input (index 0)
+                # which is typically the image tensor. Other inputs (coordinates,
+                # camera params, features, etc.) are passed through unchanged.
+                tensor_ = []
+                for t_idx, t in enumerate(tensor):
+                    if len(tensor) == 1 or t_idx == 0:
+                        tensor_.append(self._apply_normalize_mean_scale(t, self.mean, self.scale, self.data_layout, self.inplace))
+                    else:
+                        tensor_.append(t)
+                    #
+                #
             #
         elif isinstance(tensor, tuple):
-            #tensor = tuple([F.normalize_mean_scale(t, self.mean, self.scale, self.data_layout, self.inplace) for t in tensor])
             tensor_ = []
-            for t in tensor:
-                # for image tensor (ndim = 4, RGB channel)
-                if t.ndim == 4:
+            for t_idx, t in enumerate(tensor):
+                if len(tensor) == 1 or t_idx == 0:
                     tensor_.append(self._apply_normalize_mean_scale(t, self.mean, self.scale, self.data_layout, self.inplace))
                 else:
-                   assert False, f'ImageNormMeanScale: shape mismatch - {t.shape} {self.mean}'
+                    tensor_.append(t)
                 #
             #
             tensor_ = tuple(tensor_)
         elif isinstance(tensor, dict):
             tensor_ = {}
-            for name, t in tensor.items():
-                # only for image tensor
-                if t.ndim == 4:
+            for t_idx, (name, t) in enumerate(tensor.items()):
+                if len(tensor) == 1 or t_idx == 0:
                     tensor_[name] = self._apply_normalize_mean_scale(t, self.mean, self.scale, self.data_layout, self.inplace)
                 else:
-                   assert False, f'ImageNormMeanScale: shape mismatch - {t.shape} {self.mean}'
+                    tensor_[name] = t
                 #
         else:
             tensor_ = self._apply_normalize_mean_scale(tensor, self.mean, self.scale, self.data_layout, self.inplace)
 
         return tensor_, info_dict
+
+    @staticmethod
+    def _ensure_numpy(tensor):
+        """Convert PIL Images to numpy arrays recursively."""
+        if isinstance(tensor, PIL.Image.Image):
+            return np.asarray(tensor)
+        elif isinstance(tensor, list):
+            return [ImageNormMeanScale._ensure_numpy(t) for t in tensor]
+        elif isinstance(tensor, tuple):
+            return tuple(ImageNormMeanScale._ensure_numpy(t) for t in tensor)
+        elif isinstance(tensor, dict):
+            return {k: ImageNormMeanScale._ensure_numpy(v) for k, v in tensor.items()}
+        return tensor
 
     def _apply_normalize_mean_scale(self, tensor, mean, scale, data_layout, inplace):
         return F.normalize_mean_scale(tensor, mean, scale, data_layout, inplace)

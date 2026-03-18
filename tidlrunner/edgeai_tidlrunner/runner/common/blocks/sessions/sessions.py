@@ -65,11 +65,11 @@ class ONNXRuntimeSession(rtwrapper.core.ONNXRuntimeWrapper):
         self.input_normalizer = create_input_normalizer(**self.kwargs)
 
     def run_import(self, input_data, output_keys=None):
-        input_data, info_dict = self.input_normalizer(input_data, info_dict={}) if self.input_normalizer else input_data, {}
+        input_data, info_dict = self.input_normalizer(input_data, info_dict={}) if self.input_normalizer else (input_data, {})
         return super().run_import(input_data, output_keys)
 
     def run_inference(self, input_data, output_keys=None):
-        input_data, info_dict = self.input_normalizer(input_data, info_dict={}) if self.input_normalizer else input_data, {}
+        input_data, info_dict = self.input_normalizer(input_data, info_dict={}) if self.input_normalizer else (input_data, {})
         return super().run_inference(input_data, output_keys)
 
 
@@ -82,11 +82,11 @@ class TFLITERuntimeSession(rtwrapper.core.TFLiteRuntimeWrapper):
         self.input_normalizer = create_input_normalizer(**self.kwargs)
 
     def run_import(self, input_data, output_keys=None):
-        input_data, info_dict = self.input_normalizer(input_data, info_dict={}) if self.input_normalizer else input_data, {}
+        input_data, info_dict = self.input_normalizer(input_data, info_dict={}) if self.input_normalizer else (input_data, {})
         return super().run_import(input_data, output_keys)
 
     def run_inference(self, input_data, output_keys=None):
-        input_data, info_dict = self.input_normalizer(input_data, info_dict={}) if self.input_normalizer else input_data, {}
+        input_data, info_dict = self.input_normalizer(input_data, info_dict={}) if self.input_normalizer else (input_data, {})
         return super().run_inference(input_data, output_keys)
 
 
@@ -99,11 +99,11 @@ class TVMRuntimeSession(rtwrapper.core.TVMRuntimeWrapper):
         self.input_normalizer = create_input_normalizer(**self.kwargs)
 
     def run_import(self, input_data, output_keys=None):
-        input_data, info_dict = self.input_normalizer(input_data, info_dict={}) if self.input_normalizer else input_data, {}
+        input_data, info_dict = self.input_normalizer(input_data, info_dict={}) if self.input_normalizer else (input_data, {})
         return super().run_import(input_data, output_keys)
 
     def run_inference(self, input_data, output_keys=None):
-        input_data, info_dict = self.input_normalizer(input_data, info_dict={}) if self.input_normalizer else input_data, {}
+        input_data, info_dict = self.input_normalizer(input_data, info_dict={}) if self.input_normalizer else (input_data, {})
         return super().run_inference(input_data, output_keys)
 
 
