@@ -4269,6 +4269,7 @@ if (CONFIG_DATA) {
 // Build per-subgraph performance summary table from layer-level data
 // Per-subgraph performance summary — sortable table
 let sgPerfData = [];
+let nonAccelLayers = [];
 let sgPerfSortCol = 'sgId';
 let sgPerfSortDir = 'asc';
 
@@ -4305,7 +4306,16 @@ function buildSubgraphPerfTable() {
         }
 
         const numLayers = Math.max(proctimeArr.length, cyclesArr.length);
-        sgPerfData.push({ sgId: parseInt(sgId), numLayers, estTime, totalLayerCycles, gmacs });
+        sgPerfData.push({ sgId: parseInt(sgId), numLayers, estTime, totalLayerCycles, gmacs, isAccelerated: true });
+    }
+
+    // Collect non-accelerated layers (shown after subgraph rows)
+    nonAccelLayers = [];
+    if (graphData && graphData.nodes) {
+        nonAccelLayers = graphData.nodes.filter(n => !n.tidl_supported).map(n => ({
+            name: n.full_name || n.name || '-',
+            type: n.type || 'Unknown'
+        }));
     }
 
     // Build container with table wrapper
@@ -4313,7 +4323,8 @@ function buildSubgraphPerfTable() {
         <div class="operator-summary-table-container" style="max-height: 350px;">
             <table class="operator-summary-table" id="sg-perf-table">
                 <thead><tr>
-                    <th class="sortable" data-column="sgId" style="text-align: center;">Subgraph <i class="fas fa-sort"></i></th>
+                    <th class="sortable" data-column="sgId" style="text-align: center;">Component <i class="fas fa-sort"></i></th>
+                    <th style="text-align: center;">Status</th>
                     <th class="sortable" data-column="numLayers" style="text-align: center;">Layers <i class="fas fa-sort"></i></th>
                     <th class="sortable" data-column="estTime" style="text-align: center;">Est. Time (μs) <i class="fas fa-sort"></i></th>
                     <th class="sortable" data-column="totalLayerCycles" style="text-align: center;">Total Cycles <i class="fas fa-sort"></i></th>
@@ -4322,7 +4333,6 @@ function buildSubgraphPerfTable() {
                 <tbody id="sg-perf-table-body"></tbody>
             </table>
         </div>
-        <p class="sg-perf-note">* TIDL-accelerated layers only. Layers on ARM or other delegates are not included.</p>
     `;
 
     renderSgPerfTable();
@@ -4346,10 +4356,25 @@ function renderSgPerfTable() {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td style="font-weight: 600; text-align: center;">Subgraph ${r.sgId}</td>
+            <td style="text-align: center;"><span class="badge-accelerated">Accelerated</span></td>
             <td style="text-align: center;"><span class="badge-total">${r.numLayers}</span></td>
             <td style="text-align: center; font-variant-numeric: tabular-nums;">${r.estTime.toFixed(2)}</td>
             <td style="text-align: center; font-variant-numeric: tabular-nums;">${formatWithPrefix(r.totalLayerCycles)}</td>
             <td style="text-align: center; font-variant-numeric: tabular-nums;">${r.gmacs > 0 ? r.gmacs.toFixed(4) : '-'}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    // Append non-accelerated layers after subgraph rows
+    nonAccelLayers.forEach(layer => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td style="font-weight: 600; text-align: center;" title="${layer.name}">${layer.name}</td>
+            <td style="text-align: center;"><span class="badge-cpu">Non-Accelerated</span></td>
+            <td style="text-align: center;">1</td>
+            <td style="text-align: center; color: var(--text-muted);">-</td>
+            <td style="text-align: center; color: var(--text-muted);">-</td>
+            <td style="text-align: center; color: var(--text-muted);">-</td>
         `;
         tbody.appendChild(tr);
     });
@@ -4409,6 +4434,7 @@ function applyChartScroll(wrapperId, numBars, numDatasets, minBarWidth) {
  */
 function buildLayerLookups(subgraphNum) {
     const names = {}, types = {};
+    // Source 1: TIDL_LAYER_DATA.layers (most reliable)
     if (typeof TIDL_LAYER_DATA !== 'undefined' && TIDL_LAYER_DATA && TIDL_LAYER_DATA[subgraphNum]) {
         (TIDL_LAYER_DATA[subgraphNum].layers || []).forEach(layer => {
             const idx = layer.layer_index;
@@ -4418,6 +4444,11 @@ function buildLayerLookups(subgraphNum) {
             }
         });
     }
+    // Source 2: proctime/cycles data (fallback for missing entries)
+    const sgProctime = (PROCTIME_DATA && PROCTIME_DATA[subgraphNum]) || [];
+    const sgCycles = (CYCLES_DATA && CYCLES_DATA[subgraphNum]) || [];
+    sgProctime.forEach(d => { if (!types[d.layer_num]) types[d.layer_num] = d.layer_type || ''; });
+    sgCycles.forEach(d => { if (!types[d.layer_num]) types[d.layer_num] = d.layer_type || ''; });
     return { names, types };
 }
 
@@ -5870,59 +5901,13 @@ function renderSnrDashboard(container, data, subgraphId) {
     const existing = container.querySelector('.snr-dashboard');
     if (existing) existing.remove();
 
-    const values = data.map(d => d.value);
-    const sorted = [...data].sort((a, b) => a.value - b.value);
-
-    // Count per category
-    const counts = { critical: 0, poor: 0, good: 0, excellent: 0 };
-    values.forEach(v => {
-        if (v < 10) counts.critical++;
-        else if (v < 20) counts.poor++;
-        else if (v < 40) counts.good++;
-        else counts.excellent++;
-    });
-    const total = values.length;
-    const avgSnr = total > 0 ? (values.reduce((s, v) => s + v, 0) / total).toFixed(1) : '0.0';
-    const minSnr = total > 0 ? Math.min(...values).toFixed(1) : '0.0';
-
-    // Stacked bar percentages
-    const pctCritical = ((counts.critical / total) * 100).toFixed(1);
-    const pctPoor = ((counts.poor / total) * 100).toFixed(1);
-    const pctGood = ((counts.good / total) * 100).toFixed(1);
-    const pctExcellent = ((counts.excellent / total) * 100).toFixed(1);
-
     const dash = document.createElement('div');
     dash.className = 'snr-dashboard';
     dash.style.cssText = 'display: flex; flex-direction: column; gap: 1.25rem;';
 
     dash.innerHTML = `
-        <!-- Row 1: Summary cards -->
-        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.6rem;">
-            <div style="padding: 0.6rem; border-radius: 8px; background: rgba(204,0,0,0.08); border-left: 4px solid rgba(204,0,0,0.8); text-align: center;">
-                <div style="font-size: 1.4rem; font-weight: 700; color: rgba(204,0,0,1);">${counts.critical}</div>
-                <div style="font-size: 0.7rem; color: var(--text-secondary);">Critical (&lt;10)</div>
-            </div>
-            <div style="padding: 0.6rem; border-radius: 8px; background: rgba(255,152,0,0.08); border-left: 4px solid rgba(255,152,0,0.8); text-align: center;">
-                <div style="font-size: 1.4rem; font-weight: 700; color: rgba(255,152,0,1);">${counts.poor}</div>
-                <div style="font-size: 0.7rem; color: var(--text-secondary);">Poor (10-20)</div>
-            </div>
-            <div style="padding: 0.6rem; border-radius: 8px; background: rgba(76,175,80,0.08); border-left: 4px solid rgba(76,175,80,0.8); text-align: center;">
-                <div style="font-size: 1.4rem; font-weight: 700; color: rgba(76,175,80,1);">${counts.good}</div>
-                <div style="font-size: 0.7rem; color: var(--text-secondary);">Good (20-40)</div>
-            </div>
-            <div style="padding: 0.6rem; border-radius: 8px; background: rgba(33,150,243,0.08); border-left: 4px solid rgba(33,150,243,0.8); text-align: center;">
-                <div style="font-size: 1.4rem; font-weight: 700; color: rgba(33,150,243,1);">${counts.excellent}</div>
-                <div style="font-size: 0.7rem; color: var(--text-secondary);">Excellent (&gt;40)</div>
-            </div>
-            <div style="padding: 0.6rem; border-radius: 8px; background: rgba(128,128,128,0.05); border-left: 4px solid rgba(128,128,128,0.4); text-align: center;">
-                <div style="font-size: 1rem; font-weight: 700; color: var(--text-primary);">Avg ${avgSnr} dB</div>
-                <div style="font-size: 0.7rem; font-weight: 600; color: ${parseFloat(minSnr) < 10 ? 'rgba(204,0,0,1)' : 'var(--text-secondary)'};">Min ${minSnr} dB</div>
-            </div>
-        </div>
-
         <!-- Layer table (scrollable, sortable) -->
         <div>
-            <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.4rem;">Layer Details</div>
             <div class="operator-summary-table-container snr-table-container" style="max-height: 400px;"></div>
         </div>
     `;
@@ -5955,27 +5940,17 @@ function renderSnrDashboard(container, data, subgraphId) {
                 <th class="sortable" data-col="layerId" style="text-align: center;">Layer Number <i class="fas fa-sort"></i></th>
                 <th class="sortable" data-col="layerType" style="text-align: center;">TIDL Layer Type <i class="fas fa-sort"></i></th>
                 <th class="sortable" data-col="label" style="text-align: center;">Layer Name <i class="fas fa-sort"></i></th>
-                <th class="sortable" data-col="value" style="width: 95px; text-align: center;">SNR (dB) <i class="fas fa-sort"></i></th>
-                <th style="width: 20%; text-align: center;">Quality</th>
+                <th class="sortable" data-col="value" style="text-align: center;">SNR (dB) <i class="fas fa-sort"></i></th>
             </tr></thead><tbody>`;
 
         sortedData.forEach(d => {
             const v = d.value;
-            const c = getSnrColor(v);
-            const qualityBadge = v < 10
-                ? '<span class="badge-cpu">Critical</span>'
-                : v < 20
-                ? '<span style="display:inline-block;padding:0.2rem 0.6rem;background:#fff3e0;color:#e65100;border-radius:4px;font-weight:600;font-size:0.8rem;">Poor</span>'
-                : v < 40
-                ? '<span class="badge-accelerated">Good</span>'
-                : '<span style="display:inline-block;padding:0.2rem 0.6rem;background:#e3f2fd;color:#1565c0;border-radius:4px;font-weight:600;font-size:0.8rem;">Excellent</span>';
 
             html += `<tr>
                 <td style="text-align: center; font-weight: 600; color: var(--text-secondary);">${d.layerId}</td>
                 <td style="font-family: monospace; font-size: 0.82rem; text-align: center;" title="${d.layerType || ''}">${d.layerType || '-'}</td>
                 <td style="font-size: 0.82rem; text-align: center; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${d.label}">${d.label}</td>
-                <td style="text-align: center; font-weight: 700; color: ${c.border};">${v.toFixed(1)}</td>
-                <td style="text-align: center;">${qualityBadge}</td>
+                <td style="text-align: center; font-weight: 700;">${v.toFixed(1)}</td>
             </tr>`;
         });
 
@@ -6674,11 +6649,20 @@ function renderMetricsCharts() {
         effectiveMetric = 'mean_abs_diff';
     }
 
-    // Build a lookup for TIDL layer type from proctime/cycles data
+    // Build a lookup for TIDL layer type from multiple sources
     const layerTypeLookup = {};
+    // Source 1: TIDL_LAYER_DATA.layers (most reliable — has layer_index and layer_type)
+    if (typeof TIDL_LAYER_DATA !== 'undefined' && TIDL_LAYER_DATA && TIDL_LAYER_DATA[subgraphId]) {
+        (TIDL_LAYER_DATA[subgraphId].layers || []).forEach(layer => {
+            if (layer.layer_index !== undefined && layer.layer_type) {
+                layerTypeLookup[layer.layer_index] = layer.layer_type;
+            }
+        });
+    }
+    // Source 2: proctime/cycles data (fallback)
     const sgProctime = (PROCTIME_DATA && PROCTIME_DATA[subgraphId]) || [];
     const sgCycles = (CYCLES_DATA && CYCLES_DATA[subgraphId]) || [];
-    sgProctime.forEach(d => { layerTypeLookup[d.layer_num] = d.layer_type; });
+    sgProctime.forEach(d => { if (!layerTypeLookup[d.layer_num]) layerTypeLookup[d.layer_num] = d.layer_type; });
     sgCycles.forEach(d => { if (!layerTypeLookup[d.layer_num]) layerTypeLookup[d.layer_num] = d.layer_type; });
 
     const chartData = subgraphMetrics.map((m, idx) => ({
@@ -7271,23 +7255,14 @@ class Graph {
             .style('stroke-linecap', 'round')
             .style('stroke-linejoin', 'round');
 
-        // V4: Layer Type Label (outside on the right) — shows "LayerNum: Type"
+        // V4: Layer Type Label (outside on the right)
         nodeG.append('text')
             .attr('class', 'node-type-label')
             .attr('x', 60)
             .attr('y', 0)
             .attr('dominant-baseline', 'middle')
             .style('fill', d => d.tidl_supported ? '#1a202c' : '#666666')
-            .text(d => d.index !== undefined ? `${d.index}: ${d.type}` : d.type);
-
-        // V4: Layer Number Label (bottom of node)
-        nodeG.append('text')
-            .attr('class', 'node-index-label')
-            .attr('y', 40)
-            .attr('text-anchor', 'middle')
-            .attr('dominant-baseline', 'middle')
-            .style('fill', '#666666')
-            .text(d => d.index !== undefined ? `Layer ${d.index}` : '');
+            .text(d => d.type);
 
         // Store references
         this.nodeG = nodeG;
@@ -7624,10 +7599,10 @@ class Graph {
                         <span class="detail-label">Type</span>
                         <span class="detail-value">${node.type || ld.type || 'N/A'}</span>
                     </div>
-                    <div class="detail-row">
+                    ${this.isTIDL ? `<div class="detail-row">
                         <span class="detail-label">Layer Number</span>
                         <span class="detail-value">${node.index}</span>
-                    </div>
+                    </div>` : ''}
                     ${subgraphInfo}
                     <div class="detail-row">
                         <span class="detail-label">Acceleration</span>
@@ -7921,10 +7896,10 @@ class Graph {
                             <span class="detail-label">Type</span>
                             <span class="detail-value">${node.type || ld.type || 'N/A'}</span>
                         </div>
-                        <div class="detail-row">
+                        ${this.isTIDL ? `<div class="detail-row">
                             <span class="detail-label">Layer Number</span>
                             <span class="detail-value">${node.index}</span>
-                        </div>
+                        </div>` : ''}
                         ${infoRows.join('')}
                         ${reasonHTML}
                         <div class="detail-row">
@@ -9706,7 +9681,7 @@ class LayerSearch {
             
             return `
                 <div class="search-item" data-node-id="${node.id}" data-node-index="${node.index}" data-context="${result.context}">
-                    <div class="search-item-index">Layer ${node.index}</div>
+                    <div class="search-item-index">${result.context === 'tidl' ? `Layer ${node.index}` : `#${node.index}`}</div>
                     <div class="search-item-content">
                         <div class="search-item-name">${this.highlightMatch(node.full_name, this.searchInput.value)}</div>
                         <div class="search-item-type">${this.highlightMatch(node.type, this.searchInput.value)} ${subgraphBadge}</div>
@@ -9983,9 +9958,6 @@ document.addEventListener('DOMContentLoaded', function() {
             console.warn('Panel not found for:', targetId);
         }
     });
-
-    // Build per-subgraph performance summary table
-    buildSubgraphPerfTable();
 
     // Initialize proctime chart
     initProctimeChart();
@@ -10418,6 +10390,9 @@ function init() {
 
     // Populate acceleration status card
     populateAccelerationStatus(graphData.nodes);
+
+    // Build per-subgraph performance summary table (after graphData is ready)
+    buildSubgraphPerfTable();
 
     // Initialize subgraph selector
     if (SUBGRAPH_DATA && SUBGRAPH_DATA.subgraphs) {
