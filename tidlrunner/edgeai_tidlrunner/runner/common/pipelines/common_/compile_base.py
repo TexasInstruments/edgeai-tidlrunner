@@ -296,6 +296,20 @@ class CompileModelBase(CommonPipelineBase):
                 if kwargs_out.get('postprocess.name',None) is None:
                     kwargs_out['postprocess.name'] = 'keypoint_detection_postprocess'
                 #  
+            elif task_type == constants.TaskType.TASK_TYPE_SOUND_CLASSIFICATION:
+                if kwargs_out.get('preprocess.name',None) is None:
+                    kwargs_out['preprocess.name'] = 'audio_preprocess'
+                #
+                if kwargs_out.get('postprocess.name',None) is None:
+                    kwargs_out['postprocess.name'] = 'audio_postprocess'
+                #
+            elif task_type == constants.TaskType.TASK_TYPE_SPEECH_ENHANCEMENT:
+                if kwargs_out.get('preprocess.name',None) is None:
+                    kwargs_out['preprocess.name'] = 'audio_preprocess'
+                #
+                if kwargs_out.get('postprocess.name',None) is None:
+                    kwargs_out['postprocess.name'] = 'audio_postprocess'
+                #
             else:
                 print(f'WARNING: task_type {task_type} is not supported - please use a supported task_type OR specify both preprocess.name and postprocess.name')  
             #

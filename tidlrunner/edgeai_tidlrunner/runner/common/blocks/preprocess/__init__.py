@@ -104,3 +104,7 @@ def semantic_segmentation_preprocess(settings, name='semantic_segmentation_prepr
     assert settings.task_type == constants.TaskType.TASK_TYPE_SEGMENTATION, \
         'semantic_segmentation_preprocess can only be used for segmentation task type'
     return image_preprocess(settings, name=name, resize=resize, crop=crop, **kwargs)
+
+
+def audio_preprocess(settings, **kwargs):
+    return PreProcessTransforms(settings, transforms=[], **kwargs)

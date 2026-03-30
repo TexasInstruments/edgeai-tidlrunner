@@ -65,6 +65,10 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
             transforms, transforms_kwargs = cls.create_transforms_lidar_base(settings, **kwargs)
         elif settings.common.task_type == constants.TaskType.TASK_TYPE_OBJECT_6D_POSE_ESTIMATION:
             transforms, transforms_kwargs = cls.create_transforms_detection_base(settings, object6dpose=True, **kwargs)
+        elif settings.common.task_type == constants.TaskType.TASK_TYPE_SOUND_CLASSIFICATION:
+            transforms, transforms_kwargs = cls.create_transforms_none(settings, **kwargs)
+        elif settings.common.task_type == constants.TaskType.TASK_TYPE_SPEECH_ENHANCEMENT:
+            transforms, transforms_kwargs = cls.create_transforms_none(settings, **kwargs)
         else:
             transforms, transforms_kwargs = cls.create_transforms_none(settings, **kwargs)
         #
@@ -77,7 +81,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     @classmethod
     def create_transforms_none(cls, settings, **kwargs):
         transforms_list = []
-        return transforms_list
+        return transforms_list, dict()
 
     ###############################################################
     # post process transforms for classification
@@ -297,3 +301,7 @@ def keypoint_detection_postprocess(settings, name='keypoint_detection_postproces
     assert settings.common.task_type == constants.TaskType.TASK_TYPE_KEYPOINT_DETECTION, \
         'keypoint_detection_postprocess can only be used for keypoint detection task type'
     return PostProcessTransforms.from_kwargs(settings, **kwargs)
+
+
+def audio_postprocess(settings, **kwargs):
+    return PostProcessTransforms(settings, transforms=[], **kwargs)
