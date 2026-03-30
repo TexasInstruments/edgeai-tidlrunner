@@ -61,7 +61,10 @@ dev = [
     "flake8",
     "mypy"
 ]
-audio-eval = [
+audio = [
+    "librosa",
+    "soundfile",
+    "scipy",
     "pesq",
     "pystoi",
     "scikit-learn"
