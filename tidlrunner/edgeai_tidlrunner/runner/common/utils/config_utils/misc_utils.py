@@ -157,6 +157,9 @@ def yamlstr_to_object(v):
     if v is None:
         return None
     #
+    if isinstance(v, str) and v.lower() == 'none':
+        return None
+    #
     if isinstance(v, list):
         v = ' '.join(v)
     #
@@ -165,7 +168,7 @@ def yamlstr_to_object(v):
 
 
 def str_to_dict(v):
-    return yamlstr_to_object
+    return yamlstr_to_object(v)
 
 
 def str_to_int(v):

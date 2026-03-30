@@ -59,16 +59,8 @@ class PipelineBase():
 
         self.pipeline_config = kwargs.pop('common.pipeline_config', None)
 
-        kwargs_in = self._flatten_dict(**kwargs)
-        kwargs_in = self._expand_short_args(**kwargs_in)
-        kwargs_in = self._upgrade_kwargs(**kwargs_in)
-
-        kwargs_cmd = self._set_default_args()        
-        kwargs_cmd.update(kwargs_in)
-
-        kwargs_cmd = self._copy_args(**kwargs_cmd)
-        self.kwargs = kwargs_cmd
-
+        kwargs_cmd = self.process_args(**kwargs)
+        self.kwargs = self._copy_args(**kwargs_cmd)
         settings = self._parse_to_dict(**self.kwargs)
         self.settings = attr_dict.AttrDict(settings)
 
@@ -82,12 +74,21 @@ class PipelineBase():
 
     def info(self):
         print(f'INFO: running - {__file__}')
-
+    
     def get_run_data(self):
         """
         Returns the input, output details of the last run.
         """
         return self.run_data
+
+    @classmethod
+    def process_args(cls, **kwargs):
+        kwargs_in = cls._flatten_dict(**kwargs)
+        kwargs_in = cls._expand_short_args(**kwargs_in)
+        kwargs_cmd = cls._set_default_args()  
+        kwargs_cmd.update(kwargs_in)
+        kwargs_cmd = cls._upgrade_kwargs(**kwargs_cmd)
+        return kwargs_cmd
 
     @classmethod
     def _flatten_dict_fields(cls, kwargs_flat, prefix, override_dict_fields=False, **kwargs):
@@ -174,7 +175,6 @@ class PipelineBase():
         for k_name, v_dict in cls.ARGS_DICT.items():
             if v_dict['default'] != argparse.SUPPRESS:
                 kwargs_cmd[v_dict['dest']] = v_dict['default']
-        kwargs_cmd.update(kwargs)
         return kwargs_cmd
 
     @classmethod

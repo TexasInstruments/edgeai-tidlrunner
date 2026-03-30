@@ -290,10 +290,8 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
             kwargs_copy.pop('command', None)
             kwargs_cfg.update(kwargs_copy)
 
-            # process args
-            kwargs_cfg = command_module._flatten_dict(**kwargs_cfg)
-            kwargs_cfg = command_module._expand_short_args(**kwargs_cfg)                
-            kwargs_cfg = command_module._upgrade_kwargs(**kwargs_cfg)
+            # upgrade cfg
+            kwargs_cfg = command_module.process_args(**kwargs_cfg)
 
             kwargs_model = dict()    
             # set defaults+command line args

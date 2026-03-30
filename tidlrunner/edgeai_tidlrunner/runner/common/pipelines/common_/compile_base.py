@@ -73,6 +73,7 @@ class CompileModelBase(CommonPipelineBase):
         self.run_data = None
 
         if 'session' in self.settings and self.settings[self.session_prefix].get('model_path', None):
+            common_kwargs = self.settings[self.common_prefix]
             dataloader_kwargs = self.settings[self.dataloader_prefix]
             preprocess_kwargs = self.settings[self.preprocess_prefix]
             session_kwargs = self.settings[self.session_prefix]
@@ -88,10 +89,10 @@ class CompileModelBase(CommonPipelineBase):
                         f'\n  in addition data_path or dataloader.path may need to be provided.')
                     dataloader_kwargs['name'] = 'random_dataloader'
                 #
-                if not preprocess_kwargs['name']:
+                if not preprocess_kwargs.get('name', None):
                     preprocess_kwargs['name'] = 'no_preprocess'
                 #
-                if not postprocess_kwargs['name']:
+                if not postprocess_kwargs.get('name', None):
                     postprocess_kwargs['name'] = 'no_postprocess'
                 #
             #
@@ -174,7 +175,12 @@ class CompileModelBase(CommonPipelineBase):
             ###################################################################################
             if not (kwargs_out.get('dataloader.name',None) and kwargs_out.get('dataloader.path',None)):
                 input_dataset = kwargs_out.get('common.input_dataset', None)
-                if input_dataset == 'imagenet':
+
+                if kwargs_out.get('common.dataset_type_dict', None) and input_dataset in kwargs_out['common.dataset_type_dict']:
+                    input_dataset = kwargs_out['common.dataset_type_dict'][input_dataset]
+                #
+
+                if input_dataset == 'imagenetv2c':
                     if kwargs_out.get('dataloader.name', None) is None:
                         kwargs_out['dataloader.name'] = 'image_classification_dataloader'
                     #

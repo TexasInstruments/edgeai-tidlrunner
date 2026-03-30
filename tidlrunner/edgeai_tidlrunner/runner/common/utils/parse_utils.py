@@ -34,6 +34,9 @@ def str_to_dict(v):
     if v is None:
         return None
     #
+    if isinstance(v, str) and v.lower() == 'none':
+        return None
+    #
     if isinstance(v, str):
         v = v.replace(' ', '')
         v = v.split(',')

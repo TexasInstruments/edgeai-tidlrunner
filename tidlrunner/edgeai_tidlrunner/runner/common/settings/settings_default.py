@@ -113,6 +113,7 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | SETTINGS_DEFAULT['surg
     'runtime_name':             {'dest': 'session.name', 'default': None, 'type': str, 'group': 'runtime_name', 'metavar': 'value', 'help': 'name of the runtime session'},
     'session_type_dict':        {'dest': 'common.session_type_dict', 'default': None, 'type': str, 'group': 'runtime_name', 'metavar': 'value', 'help': 'mapping of model extensions to session names'},
     # input_data
+    'dataset_type_dict':        {'dest': 'common.dataset_type_dict', 'default': {'imagenet':'imagenetv2c'}, 'type': utils.str_to_dict, 'metavar': 'value', 'help': 'dataset_type maping. example: imagenet:imagenetv2c, cocoseg21:coco'},
     'data_name':                {'dest': 'dataloader.name', 'default': None, 'type': str, 'metavar': 'value', 'help': 'name of the input dataset'},
     'data_path':                {'dest': 'dataloader.path', 'default': None, 'type': str, 'metavar': 'path', 'help': 'path to the input data directory'},
     # runtime_settings
