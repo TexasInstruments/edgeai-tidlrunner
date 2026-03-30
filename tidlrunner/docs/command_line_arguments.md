@@ -5,6 +5,7 @@ Note: the "Config Field" column uses the argparse `dest` value expressed as a fl
 - `session.runtime_options.advanced_options:calibration_frames` corresponds to `session['runtime_options']['advanced_options:calibration_frames']` in the flat dest notation.
 
 ## compile
+Compile the model on PC.
 
 | Option | Type | Default | Help | Config Field |
 |---|---:|---|---|---|
@@ -62,6 +63,7 @@ Note: the "Config Field" column uses the argparse `dest` value expressed as a fl
 | postprocess_name | str | None | name of the postprocessing pipeline | postprocess.name |
 
 ## infer
+Reun inference and measure performance.
 
 | Option | Type | Default | Help | Config Field |
 |---|---:|---|---|---|
@@ -119,6 +121,7 @@ Note: the "Config Field" column uses the argparse `dest` value expressed as a fl
 | postprocess_name | str | None | name of the postprocessing pipeline | postprocess.name |
 
 ## evaluate
+Eun inference and evaluate the accuracy and performance.
 
 | Option | Type | Default | Help | Config Field |
 |---|---:|---|---|---|
@@ -138,6 +141,7 @@ Note: the "Config Field" column uses the argparse `dest` value expressed as a fl
 | postprocess_save_output_frames | int | 10 | number of output frames to save | postprocess.save_output_frames |
 
 ## analyze
+Analyze model and write analyze.xlsx which indicates the correctness of individual layers.
 
 | Option | Type | Default | Help | Config Field |
 |---|---:|---|---|---|
@@ -195,6 +199,7 @@ Note: the "Config Field" column uses the argparse `dest` value expressed as a fl
 | postprocess_name | str | None | name of the postprocessing pipeline | postprocess.name |
 
 ## inspect
+Inspect and generate Model Inspector visualization (HTML)
 
 | Option | Type | Default | Help | Config Field |
 |---|---:|---|---|---|
@@ -252,6 +257,7 @@ Note: the "Config Field" column uses the argparse `dest` value expressed as a fl
 | postprocess_name | str | None | name of the postprocessing pipeline | postprocess.name |
 
 ## surgery
+Model surgery with tidl-onnx-model-optimizer
 
 | Option | Type | Default | Help | Config Field |
 |---|---:|---|---|---|
@@ -268,6 +274,7 @@ Note: the "Config Field" column uses the argparse `dest` value expressed as a fl
 | input_scale | float | (0.017125, 0.017507, 0.017429) | scale values for input normalization (RGB channels) | session.input_scale |
 
 ## extract
+Extract su-parts of the model
 
 | Option | Type | Default | Help | Config Field |
 |---|---:|---|---|---|
@@ -283,6 +290,7 @@ Note: the "Config Field" column uses the argparse `dest` value expressed as a fl
 | end_names | str | None | ending layer names for start2end extraction | common.extract.end_names |
 
 ## report
+Generate csv report
 
 | Option | Type | Default | Help | Config Field |
 |---|---:|---|---|---|
@@ -291,6 +299,7 @@ Note: the "Config Field" column uses the argparse `dest` value expressed as a fl
 | report_path | str | ./work_dirs/compile | path where reports will be generated | common.report.path |
 
 ## package
+Package the compiled model artifacts to be used in EVM.
 
 | Option | Type | Default | Help | Config Field |
 |---|---:|---|---|---|
