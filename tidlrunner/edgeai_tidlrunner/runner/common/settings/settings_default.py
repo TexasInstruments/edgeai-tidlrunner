@@ -179,7 +179,7 @@ COPY_SETTINGS_DEFAULT['infer'] = COPY_SETTINGS_DEFAULT['compile'] | {
 
 ##########################################################################
 # accuracy requires label_path as well
-SETTINGS_DEFAULT['accuracy'] = SETTINGS_DEFAULT['compile'] | {
+SETTINGS_DEFAULT['evaluate'] = SETTINGS_DEFAULT['compile'] | {
     'label_path':                         {'dest': 'dataloader.label_path', 'default':None, 'type':str, 'metavar':'path', 'help': 'path to ground truth labels for accuracy evaluation'},
     # increase number of frames for infer_accuracy
     'num_frames': {'dest': 'common.num_frames', 'default': 1000, 'type': int, 'metavar': 'value', 'help': 'number of frames to process for accuracy evaluation'},
@@ -198,7 +198,7 @@ SETTINGS_DEFAULT['accuracy'] = SETTINGS_DEFAULT['compile'] | {
     'postprocess_save_output_frames':     {'dest':'postprocess.save_output_frames', 'default':10, 'type':int, 'metavar':'value', 'help': 'number of output frames to save'},
 }
 
-COPY_SETTINGS_DEFAULT['accuracy'] = COPY_SETTINGS_DEFAULT['compile'] | {   
+COPY_SETTINGS_DEFAULT['evaluate'] = COPY_SETTINGS_DEFAULT['compile'] | {   
 }
 
 ##########################################################################

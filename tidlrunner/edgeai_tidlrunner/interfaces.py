@@ -392,7 +392,7 @@ def _run(model_command_dict):
     if (parallel_processes and multiple_models) or (multiple_models or multiple_commands):
         # there are multiple commands given to be run back to back - running them on the same process can be problematic
         # so we will run them using multiprocessing - using separate process for each sub-command
-        # this is useful for cases like 'compile,accuracy' or 'import,infer'
+        # this is useful for cases like 'compile,evaluate' or 'import,infer'
         def command_proc(proc_name, proc_func):
             print(f'INFO: running - {proc_name}')
             proc = utils.ProcessWithQueue(name=proc_name, target=proc_func)

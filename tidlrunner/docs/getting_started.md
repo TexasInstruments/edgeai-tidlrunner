@@ -4,7 +4,7 @@ Welcome to the **edgeai-tidlrunner** repository! This guide will help you quickl
 
 ## What is edgeai-tidlrunner?
 
-edgeai-tidlrunner is a comprehensive toolkit that provides easy-to-use interfaces for compiling AI models to run on TI edge devices. It supports various operations including model compilation, inference, accuracy evaluation, and performance analysis.
+edgeai-tidlrunner is a comprehensive toolkit that provides easy-to-use interfaces for compiling AI models to run on TI edge devices. It supports various operations including model compilation, inference, evaluate evaluation, and performance analysis.
 
 ## Usage
 
@@ -57,10 +57,10 @@ The configuration file can contain any of the fields documented in [command_line
 |------------------|---------------------------------------------------------------------------|
 | compile          | Compile the given model(s)                                                |
 | infer            | Run inference using using already compiled model artifacts                |
-| accuracy         | Analyze compiled artifacts, run inference and analyze layerwise deviations|
+| evaluate         | Analyze compiled artifacts, run inference and analyze layerwise deviations|
 | compile+infer    | compile the model and run inference                                       |
 | compile+analyze  | Compile the model and analyze the outputs of different layers             |
-| compile+accuracy | Compile the model, run inference and compute accuracy                     |
+| compile+evaluate | Compile the model, run inference and compute accuracy                     |
 | analyze          | Analyze TIDL layer outputs, compare them to onnxruntime outputs and write statistics - can be used to identify layer level issues |
 | report           | Generate overall csv report of infer or accuracy                          |
 | surgery          | Perform model surgery - simplifier, layer optimizations, shape inference (included in compile)|

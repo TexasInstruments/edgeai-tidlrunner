@@ -29,7 +29,7 @@
 
 from .infer import InferModel
 from .compile import CompileModel
-from .accuracy import InferAccuracy
+from .evaluate import InferEvaluate
 from .analyze import CompileAnalyzeNoTIDL, InferAnalyzeNoTIDL, CompileAnalyzeTIDL32, InferAnalyzeTIDL32, CompileAnalyzeTIDL, InferAnalyzeTIDL, InferAnalyzeFinal
 from .report import GenReport 
 from .surgery import ModelSurgery
@@ -43,9 +43,9 @@ def get_command_pipelines(**kwargs):
         # compile related
         'compile':'CompileModel',
         'infer':'InferModel',
-        'accuracy': ['InferAccuracy'],
+        'evaluate': ['InferEvaluate'],
         'compile+infer': ['CompileModel', 'InferModel'],
-        'compile+accuracy': ['CompileModel', 'InferAccuracy'],
+        'compile+evaluate': ['CompileModel', 'InferEvaluate'],
         'analyze': ['CompileAnalyzeTIDL', 'InferAnalyzeTIDL', 'CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL32', 'InferAnalyzeTIDL32', 'InferAnalyzeFinal'],    
         'inspect': ['CompileAnalyzeTIDL', 'InferAnalyzeTIDL', 'CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL32', 'InferAnalyzeTIDL32', 'InferAnalyzeFinal','GenerateModelInspectorJSON', 'GenerateModelInspectorHTML'],
         'report': ['GenReport'],   

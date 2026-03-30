@@ -52,4 +52,4 @@ TARGET_DEVICE="AM68A"
 ##################################################################
 # Example 4: evaluate accuracy using compiled artifacts and aggregate configs file
 #----------------------------------------------------------------
-# tidlrunner-cli accuracy --config_path ./data/models/configs.yaml --target_device ${TARGET_DEVICE}
+# tidlrunner-cli evaluate --config_path ./data/models/configs.yaml --target_device ${TARGET_DEVICE}

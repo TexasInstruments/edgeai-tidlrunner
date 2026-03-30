@@ -66,7 +66,7 @@ tidlrunner-cli compile --model_path ./data/models/vision/classification/imagenet
 ##################################################################
 # Example 4: compile and evaluate accuracy using aggregate configs file
 #----------------------------------------------------------------
-# tidlrunner-cli compile+accuracy --config_path ./data/models/configs.yaml --target_device ${TARGET_DEVICE}
+# tidlrunner-cli compile+evaluate --config_path ./data/models/configs.yaml --target_device ${TARGET_DEVICE}
 
 
 ##################################################################

@@ -43,9 +43,9 @@ from ..blocks import sessions
 from . import infer
 
 
-class InferAccuracy(infer.InferModel):
-    ARGS_DICT=SETTINGS_DEFAULT['accuracy']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['accuracy']
+class InferEvaluate(infer.InferModel):
+    ARGS_DICT=SETTINGS_DEFAULT['evaluate']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['evaluate']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -56,7 +56,7 @@ class InferAccuracy(infer.InferModel):
         if common_kwargs['incremental']:
             if os.path.exists(self.result_yaml):
                 print(f'INFO: incremental={common_kwargs["incremental"]} AND result.yaml exists: {self.result_yaml}')
-                print(f'INFO: skipping infer/accuracy. o re-run, delete the result.yaml file OR set incremental to False')
+                print(f'INFO: skipping infer/evaluate. o re-run, delete the result.yaml file OR set incremental to False')
                 return
             #
         #
