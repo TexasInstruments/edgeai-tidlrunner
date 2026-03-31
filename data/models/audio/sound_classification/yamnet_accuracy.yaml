@@ -28,6 +28,6 @@ session:
   num_inputs: 1
 model_info:
   metric_reference:
-    accuracy_top1%: 55.6  # FP32 CPU (tidl_offload=0), fold-10, 837 samples, AudioSet→US8K mapping
+    accuracy_top1%: 54.0  # INT8 TIDL (tidl_offload=1), fold-10, 837 samples, AudioSet→US8K mapping
   compact_name: yamnet
   shortlisted: true
