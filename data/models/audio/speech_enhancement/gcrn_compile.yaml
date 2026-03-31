@@ -18,7 +18,7 @@ session:
   input_optimization: false  # disable image-specific input normalization
   input_mean: null  # override image default (123.675, 116.28, 103.53)
   input_scale: null  # override image default (0.017125, 0.017507, 0.017429)
-  model_path: gcrn_model_4sec.onnx
+  model_path: gcrn_fixed_4sec.onnx
   model_id: se-0200
   input_details: null
   output_details: null
