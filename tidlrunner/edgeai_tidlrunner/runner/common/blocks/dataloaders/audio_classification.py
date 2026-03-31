@@ -53,6 +53,60 @@ URBANSOUND8K_CLASSES = [
 
 NUM_CLASSES = len(URBANSOUND8K_CLASSES)
 
+# Mapping from AudioSet class indices (521-class YAMNet output) to UrbanSound8K classIDs (0-9).
+# Derived from repos/audioai-modelzoo/inference/yamnet_sc/yamnet_class_map.yml (0-indexed).
+# Only AudioSet classes with a clear US8K equivalent are mapped; others are ignored.
+# Used in evaluate() to aggregate 521-class probabilities into 10 US8K bins.
+AUDIOSET_TO_US8K = {
+    # US8K 0: air_conditioner
+    406: 0,  # Mechanical fan
+    407: 0,  # Air conditioning
+    # US8K 1: car_horn
+    302: 1,  # Vehicle horn, car horn, honking
+    303: 1,  # Toot
+    312: 1,  # Air horn, truck horn
+    # US8K 2: children_playing
+    10:  2,  # Children shouting
+    66:  2,  # Children playing
+    # US8K 3: dog_bark
+    69:  3,  # Dog
+    70:  3,  # Bark
+    71:  3,  # Yip
+    72:  3,  # Howl
+    73:  3,  # Bow-wow
+    74:  3,  # Growling
+    75:  3,  # Whimper (dog)
+    # US8K 4: drilling
+    339: 4,  # Dental drill, dentist's drill
+    418: 4,  # Power tool
+    419: 4,  # Drill
+    # US8K 5: engine_idling
+    337: 5,  # Engine
+    338: 5,  # Light engine (high frequency)
+    342: 5,  # Medium engine (mid frequency)
+    343: 5,  # Heavy engine (low frequency)
+    344: 5,  # Engine knocking
+    345: 5,  # Engine starting
+    346: 5,  # Idling
+    347: 5,  # Accelerating, revving, vroom
+    # US8K 6: gun_shot
+    421: 6,  # Gunshot, gunfire
+    422: 6,  # Machine gun
+    423: 6,  # Fusillade
+    424: 6,  # Artillery fire
+    425: 6,  # Cap gun
+    # US8K 7: jackhammer
+    414: 7,  # Jackhammer
+    # US8K 8: siren
+    317: 8,  # Police car (siren)
+    318: 8,  # Ambulance (siren)
+    319: 8,  # Fire engine, fire truck (siren)
+    390: 8,  # Siren
+    391: 8,  # Civil defense siren
+    # US8K 9: street_music — Music + all instrument/genre subcategories (indices 132-276)
+    **{i: 9 for i in range(132, 277)},
+}
+
 
 class UrbanSound8KDataLoader(DatasetBase):
     """Dataloader for the UrbanSound8K dataset.
@@ -164,6 +218,13 @@ class UrbanSound8KDataLoader(DatasetBase):
             output = np.squeeze(output)
             if output.ndim > 1:
                 output = output.flatten()
+
+            # YAMNet outputs 521 AudioSet classes — aggregate to 10 US8K bins.
+            if output.shape[0] == 521:
+                aggregated = np.zeros(NUM_CLASSES, dtype=np.float32)
+                for audioset_idx, us8k_idx in AUDIOSET_TO_US8K.items():
+                    aggregated[us8k_idx] += output[audioset_idx]
+                output = aggregated
 
             top1 = int(np.argmax(output))
             top5 = set(np.argsort(output)[-5:].tolist())
