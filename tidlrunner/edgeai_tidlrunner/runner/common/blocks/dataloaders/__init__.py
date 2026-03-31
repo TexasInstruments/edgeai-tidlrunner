@@ -36,3 +36,4 @@ from .keypoint_detection import coco_keypoint_detection_dataloader
 from .modelmaker_dataloaders import modelmaker_classification_dataloader, \
     modelmaker_detection_dataloader, modelmaker_segmentation_dataloader
 from .audio_classification import audio_classification_dataloader
+from .speech_enhancement import speech_enhancement_dataloader
