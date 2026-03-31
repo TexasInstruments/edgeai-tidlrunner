@@ -310,6 +310,9 @@ class CompileModelBase(CommonPipelineBase):
         settings = copy.deepcopy(settings)
         if 'session' in settings:
             settings['session']['session_name'] = settings['session']['name']
+            settings['session']['input_details'] = self.session.get_kwargs()['input_details']
+            settings['session']['output_details'] = self.session.get_kwargs()['output_details']
+            
             if cleanup_paths:
                 settings['session']['model_path'] = os.path.join(*os.path.normpath(settings['session']['model_path']).split(os.sep)[-2:])    
                 settings['session']['artifacts_folder'] = os.path.normpath(settings['session']['artifacts_folder']).split(os.sep)[-1]  

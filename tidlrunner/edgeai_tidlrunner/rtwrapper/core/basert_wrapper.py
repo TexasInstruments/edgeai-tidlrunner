@@ -57,6 +57,9 @@ class BaseRuntimeWrapper:
         self.infer_stats_dict = {}
         self._infer_stats_sum = {}
 
+    def get_kwargs(self):
+        return self.kwargs
+
     def get_runtime_options(self):
         return self.kwargs['runtime_options']
 

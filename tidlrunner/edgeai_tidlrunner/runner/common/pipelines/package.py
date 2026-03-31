@@ -142,13 +142,16 @@ class PackageArtifacts(CommonPipelineBase):
         # create the param file in source folder with relative paths
         param_file = os.path.join(run_dir, 'param.yaml')
         pipeline_param = copy.deepcopy(pipeline_param)
-        pipeline_param = utils.cleanup_dict(pipeline_param, param_template)
 
-        pipeline_param = utils.pretty_object(pipeline_param)
         pipeline_param['session']['run_dir'] = os.path.basename(run_dir)
         pipeline_param['session']['model_folder'] = relative_model_dir
         pipeline_param['session']['model_path'] = relative_model_path
         pipeline_param['session']['artifacts_folder'] = relative_artifacts_dir
+        pipeline_param['task_type'] = pipeline_param['common']['task_type']
+
+        pipeline_param = utils.cleanup_dict(pipeline_param, param_template)
+        pipeline_param = utils.pretty_object(pipeline_param)
+
         # result is being excluded from the param.yaml - that will only be in result.yaml
         if 'result' in pipeline_param:
             del pipeline_param['result']
