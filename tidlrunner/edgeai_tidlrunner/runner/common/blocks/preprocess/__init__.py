@@ -32,7 +32,7 @@ from ....common.bases import transforms_base
 from ...settings import constants
 from ...settings.constants import presets
 from .transforms import *
-from .audio_transforms import AudioLoadAndResample, VGGishMelSpectrogram, YAMNetMelSpectrogram, STFTTransform
+from .audio_transforms import AudioLoadAndResample, VGGishMelSpectrogram, YAMNetMelSpectrogram, STFTTransform, GCRNSTFTTransform
 
 
 class PreProcessTransforms(transforms_base.TransformsCompose):
@@ -95,9 +95,14 @@ class PreProcessTransforms(transforms_base.TransformsCompose):
         return transforms_list, transforms_kwargs
 
     @classmethod
-    def create_transforms_speech_enhancement(cls, settings, **kwargs):
-        transforms_list = [STFTTransform()]
-        return transforms_list, dict()
+    def create_transforms_speech_enhancement(cls, settings, audio_model_type=None,
+                                              sample_rate=16000, audio_duration=4.0, **kwargs):
+        if audio_model_type == 'gcrn':
+            transforms_list = [GCRNSTFTTransform(sample_rate=sample_rate, audio_duration=audio_duration)]
+        else:
+            transforms_list = [STFTTransform()]
+        return transforms_list, dict(audio_model_type=audio_model_type,
+                                     sample_rate=sample_rate, audio_duration=audio_duration)
 
     def set_size_details(self, resize, crop):
         for t in self.transforms:

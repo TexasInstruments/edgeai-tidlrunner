@@ -285,3 +285,76 @@ class STFTTransform:
         stft_ri = np.stack([stft.real, stft.imag], axis=-1)  # (257, T, 2)
         output = stft_ri[np.newaxis].astype(np.float32)       # (1, 257, T, 2)
         return output, info_dict
+
+
+class GCRNSTFTTransform:
+    """Complex STFT for GCRN speech enhancement.
+
+    Produces shape (1, 2, 401, 161) float32 — (batch, real/imag, time=401, freq=161)
+    for 4s / 16kHz audio (64000 samples).
+
+    Uses Hamming window (sym=True) matching GCRN training code
+    (repos/GCRN-complex-qat/src/stft.py: hamming(320) with default sym=True).
+    center=True reproduces the zero-padding of F.conv1d(..., padding=160) in the
+    reference (win_size - hop_size = 320 - 160 = 160).
+
+    Unlike GTCRN (variable-length), GCRN expects a fixed 4-second input —
+    the waveform is padded/truncated to audio_duration * sample_rate samples.
+
+    Frame count: center=True pads by n_fft//2=160 on each side →
+    effective_length = 64000 + 320 = 64320; T = 1 + floor((64320-320)/160) = 401.
+
+    Note: tensor layout (B, RI, T, F) differs from GTCRN's (B, F, T, RI).
+    """
+
+    def __init__(
+        self,
+        sample_rate=16000,
+        audio_duration=4.0,
+        n_fft=320,
+        hop_length=160,
+        win_length=320,
+        center=True,
+    ):
+        self.sample_rate = sample_rate
+        self.audio_duration = audio_duration
+        self.n_fft = n_fft
+        self.hop_length = hop_length
+        self.win_length = win_length
+        self.center = center
+
+    def __call__(self, data, info_dict):
+        import librosa
+        import scipy.signal
+
+        waveform = np.asarray(data, dtype=np.float32)
+        if waveform.ndim != 1:
+            waveform = waveform.ravel()
+
+        # Pad or truncate to fixed duration (GCRN requires fixed-length input)
+        target_samples = int(self.sample_rate * self.audio_duration)
+        if len(waveform) < target_samples:
+            waveform = np.pad(waveform, (0, target_samples - len(waveform)))
+        else:
+            waveform = waveform[:target_samples]
+
+        # Hamming window — sym=True (default) matches repos/GCRN-complex-qat/src/stft.py
+        window = scipy.signal.windows.hamming(self.win_length, sym=True)
+
+        stft = librosa.stft(
+            y=waveform,
+            n_fft=self.n_fft,
+            hop_length=self.hop_length,
+            win_length=self.win_length,
+            window=window,
+            center=self.center,
+        )
+        # stft: (161, T) complex64
+
+        # Stack real/imag as channel axis → (2, 161, T); transpose to (2, T, 161)
+        stft_ri = np.stack([stft.real, stft.imag], axis=0)  # (2, 161, T)
+        stft_ri = stft_ri.transpose(0, 2, 1)                # (2, T, 161)
+
+        # Add batch dimension → (1, 2, T, 161)
+        output = stft_ri[np.newaxis].astype(np.float32)      # (1, 2, T, 161)
+        return output, info_dict

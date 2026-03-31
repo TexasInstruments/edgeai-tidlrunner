@@ -8,6 +8,7 @@ dataloader:
   path: ./data/datasets/VoiceBank-DEMAND-16k
 preprocess:
   sample_rate: 16000
+  audio_model_type: gtcrn  # dispatches STFTTransform (sqrt-Hann, n_fft=512, hop=256, center=False)
 postprocess: {}  # dispatched via PostProcessTransforms.from_kwargs() using task_type
 session:
   session_name: onnxrt
