@@ -57,6 +57,12 @@ def create_input_normalizer(**kwargs):
 
 
 class ONNXRuntimeSession(rtwrapper.core.ONNXRuntimeWrapper):
+    # Dynamic-shape note: this session layer adds NO shape validation — inputs are passed
+    # directly to onnxruntime.InferenceSession.run().  Models with symbolic axes (e.g. GTCRN
+    # speech-enhancement, input shape (1,257,T,2) where T varies per clip) work correctly
+    # when tidl_offload=0 because CPUExecutionProvider natively supports dynamic axes.
+    # The tidl_offload=1 path (TIDLExecutionProvider) requires fixed shapes at compile time
+    # and is NOT supported for variable-T models.
     def __init__(self, settings, **kwargs):
         if not isinstance(kwargs, RuntimeSettings):
             kwargs = RuntimeSettings(**kwargs)
