@@ -53,6 +53,14 @@ class CompileModel(CompileModelBase):
         super().__init__(**kwargs)
 
     def _prepare_model(self):
+        session_kwargs = self.settings[self.session_prefix]
+        if not session_kwargs.get('tidl_offload', True):
+            # ARM-only (tidl_offload=False): skip TIDL model surgery.
+            # Model runs as-is via onnxruntime CPUExecutionProvider, so TIDL-specific graph
+            # optimizations are unnecessary. Also avoids strict ONNX shape inference failures
+            # that occur with dynamic-dimension models (e.g. GTCRN's variable time axis).
+            print(f'INFO: skipping model surgery for tidl_offload=False model: {self.model_path}')
+            return
         print(f'INFO: running model surgery {self.model_path}')
         common_kwargs = self.settings[self.common_prefix]
         surgery_kwargs = common_kwargs['surgery']

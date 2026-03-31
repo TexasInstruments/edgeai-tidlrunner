@@ -23,8 +23,8 @@ session:
   num_inputs: 1
 model_info:
   metric_reference:
-    pesq: ~  # to be filled after first accuracy run
-    stoi: ~
-    si_sdr_db: ~
+    pesq: 2.508     # GTCRN DNS3, ARM CPU FP32, VoiceBank-DEMAND-16k test set (824 files)
+    stoi: 0.915
+    si_sdr_db: 15.7
   compact_name: gtcrn_dns3
   shortlisted: true
