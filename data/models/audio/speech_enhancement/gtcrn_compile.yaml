@@ -1,0 +1,23 @@
+# GTCRN speech enhancement — compile pipeline (ARM-only, no TIDL offload)
+# Usage: tidlrunner-cli compile --config_path data/models/audio/speech_enhancement/gtcrn_compile.yaml
+# Note: GTCRN has unsupported TIDL operators; runs on ARM Cortex-A only (tidl_offload: false)
+# Note: GTCRN input has a dynamic time dimension (T); onnxrt handles variable-shape natively
+task_type: speech_enhancement
+dataloader:
+  name: speech_enhancement_dataloader
+  path: ./data/datasets/VoiceBank-DEMAND-16k
+preprocess:
+  sample_rate: 16000
+postprocess: {}  # dispatched via PostProcessTransforms.from_kwargs() using task_type
+session:
+  session_name: onnxrt
+  target_device: AM62A
+  tidl_offload: false  # ARM-only execution; GTCRN uses operators not supported by TIDL
+  input_optimization: false  # disable image-specific input normalization
+  input_mean: null  # override image default (123.675, 116.28, 103.53)
+  input_scale: null  # override image default (0.017125, 0.017507, 0.017429)
+  model_path: gtcrn_dns3.onnx
+  model_id: se-0100
+  input_details: null
+  output_details: null
+  num_inputs: 1
