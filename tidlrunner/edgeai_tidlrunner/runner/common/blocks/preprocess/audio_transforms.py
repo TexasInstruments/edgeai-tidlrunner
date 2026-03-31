@@ -121,6 +121,11 @@ class VGGishMelSpectrogram:
         if waveform.ndim != 1:
             waveform = waveform.ravel()
 
+        # Resample if source sample rate differs from target (e.g. UrbanSound8K files at 22050 Hz)
+        source_sr = info_dict.get('sample_rate', self.sample_rate) if info_dict else self.sample_rate
+        if source_sr != self.sample_rate:
+            waveform = librosa.resample(waveform, orig_sr=source_sr, target_sr=self.sample_rate)
+
         # Pad or crop waveform to fixed duration
         target_samples = int(self.sample_rate * self.audio_duration)
         if len(waveform) < target_samples:
@@ -200,6 +205,11 @@ class YAMNetMelSpectrogram:
         waveform = np.asarray(data, dtype=np.float32)
         if waveform.ndim != 1:
             waveform = waveform.ravel()
+
+        # Resample if source sample rate differs from target (e.g. UrbanSound8K files at 22050 Hz)
+        source_sr = info_dict.get('sample_rate', self.sample_rate) if info_dict else self.sample_rate
+        if source_sr != self.sample_rate:
+            waveform = librosa.resample(waveform, orig_sr=source_sr, target_sr=self.sample_rate)
 
         # Mel spectrogram — power=1.0 matches torchaudio's power_spec -> sqrt path
         mel = librosa.feature.melspectrogram(
