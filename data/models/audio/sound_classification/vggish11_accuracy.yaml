@@ -1,5 +1,7 @@
 # VGGish11 sound classification — accuracy pipeline
 # Usage: tidlrunner-cli accuracy --config_path data/models/audio/sound_classification/vggish11_accuracy.yaml
+# NOTE: Uses FP32 model for TIDL inference (PTQ model fails TIDL import on tools 11.02.04.00).
+# Use --tidl_offload 0 to run the PTQ model directly via CPU ONNX Runtime.
 task_type: sound_classification
 dataloader:
   name: audio_classification_dataloader
@@ -17,10 +19,11 @@ session:
   input_mean: null  # override image default (123.675, 116.28, 103.53)
   input_scale: null  # override image default (0.017125, 0.017507, 0.017429)
   runtime_options:
-    accuracy_level: 0  # VGGish11 is a PTQ model
+    accuracy_level: 1  # FP32 model
     advanced_options:calibration_frames: 100
+    advanced_options:calibration_iterations: 5
     tensor_bits: 8
-  model_path: vggish11_20250324-1807_ptq.onnx
+  model_path: vggish11_20250324-1807.onnx
   model_id: sc-0100
   input_details: null
   output_details: null

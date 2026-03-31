@@ -46,7 +46,8 @@ class PreProcessTransforms(transforms_base.TransformsCompose):
                          reverse_channels=False, backend='cv2', interpolation=None, resize_with_pad=False,
                          add_flip_image=False, pad_color=0, **extra_kwargs):
         # Audio task type dispatch — checked before image logic
-        task_type = getattr(settings, 'task_type', None)
+        # settings is a nested AttrDict; task_type lives at settings.common.task_type
+        task_type = getattr(getattr(settings, 'common', None), 'task_type', None)
         if task_type == constants.TaskType.TASK_TYPE_SOUND_CLASSIFICATION:
             transforms, transforms_kwargs = cls.create_transforms_sound_classification(settings, **extra_kwargs)
             return cls(settings, transforms, **transforms_kwargs)
