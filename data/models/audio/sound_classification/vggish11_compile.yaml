@@ -1,0 +1,27 @@
+# VGGish11 sound classification — compile pipeline
+# Usage: tidlrunner-cli compile --config_path data/models/audio/sound_classification/vggish11_compile.yaml
+task_type: sound_classification
+dataloader:
+  name: audio_classification_dataloader
+  path: ./data/datasets/UrbanSound8K
+  # fold omitted — uses all folds for calibration data diversity
+preprocess:
+  audio_model_type: vggish11  # dispatches VGGishMelSpectrogram in from_kwargs()
+  sample_rate: 16000
+  audio_duration: 4.0  # pad/crop to 4s → 126 mel time frames
+postprocess: {}  # dispatched via PostProcessTransforms.from_kwargs() using task_type
+session:
+  session_name: onnxrt
+  target_device: AM62A
+  input_optimization: false  # disable image-specific input normalization
+  input_mean: null  # override image default (123.675, 116.28, 103.53)
+  input_scale: null  # override image default (0.017125, 0.017507, 0.017429)
+  runtime_options:
+    accuracy_level: 0  # VGGish11 is a PTQ model
+    advanced_options:calibration_frames: 100
+    tensor_bits: 8
+  model_path: vggish11_20250324-1807_ptq.onnx
+  model_id: sc-0100
+  input_details: null
+  output_details: null
+  num_inputs: 1

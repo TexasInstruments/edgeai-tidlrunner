@@ -1,0 +1,28 @@
+# YAMNet sound classification — compile pipeline
+# Usage: tidlrunner-cli compile --config_path data/models/audio/sound_classification/yamnet_compile.yaml
+task_type: sound_classification
+dataloader:
+  name: audio_classification_dataloader
+  path: ./data/datasets/UrbanSound8K
+  # fold omitted — uses all folds for calibration data diversity
+preprocess:
+  audio_model_type: yamnet  # dispatches YAMNetMelSpectrogram in from_kwargs()
+  sample_rate: 16000
+  # audio_duration intentionally omitted — YAMNet always uses the first 96-frame patch
+  # regardless of audio length; pad/crop logic is inside YAMNetMelSpectrogram
+postprocess: {}  # dispatched via PostProcessTransforms.from_kwargs() using task_type
+session:
+  session_name: onnxrt
+  target_device: AM62A
+  input_optimization: false  # disable image-specific input normalization
+  input_mean: null  # override image default (123.675, 116.28, 103.53)
+  input_scale: null  # override image default (0.017125, 0.017507, 0.017429)
+  runtime_options:
+    accuracy_level: 1  # YAMNet is QAT; level 1 required by TIDL even though calibration is effectively a no-op
+    advanced_options:calibration_frames: 100
+    tensor_bits: 8
+  model_path: yamnet_combined.onnx
+  model_id: sc-0200
+  input_details: null
+  output_details: null
+  num_inputs: 1
