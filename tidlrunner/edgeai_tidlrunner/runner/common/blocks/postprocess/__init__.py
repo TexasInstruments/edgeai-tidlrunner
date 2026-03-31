@@ -35,6 +35,7 @@ from .transforms import *
 from .keypoints import *
 #from .object_6d_pose import *
 from . import transforms as postprocess_transforms_types
+from .audio_transforms import SoundClassificationPostProcess, SpeechEnhancementPostProcess
 from ....common.bases import transforms_base
 
 
@@ -66,9 +67,9 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         elif settings.common.task_type == constants.TaskType.TASK_TYPE_OBJECT_6D_POSE_ESTIMATION:
             transforms, transforms_kwargs = cls.create_transforms_detection_base(settings, object6dpose=True, **kwargs)
         elif settings.common.task_type == constants.TaskType.TASK_TYPE_SOUND_CLASSIFICATION:
-            transforms, transforms_kwargs = cls.create_transforms_none(settings, **kwargs)
+            transforms, transforms_kwargs = cls.create_transforms_sound_classification(settings, **kwargs)
         elif settings.common.task_type == constants.TaskType.TASK_TYPE_SPEECH_ENHANCEMENT:
-            transforms, transforms_kwargs = cls.create_transforms_none(settings, **kwargs)
+            transforms, transforms_kwargs = cls.create_transforms_speech_enhancement(settings, **kwargs)
         else:
             transforms, transforms_kwargs = cls.create_transforms_none(settings, **kwargs)
         #
@@ -76,11 +77,27 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         
 
     ###############################################################
-    # post process transforms for classification
+    # post process transforms for none / passthrough
     ###############################################################
     @classmethod
     def create_transforms_none(cls, settings, **kwargs):
         transforms_list = []
+        return transforms_list, dict()
+
+    ###############################################################
+    # post process transforms for sound classification
+    ###############################################################
+    @classmethod
+    def create_transforms_sound_classification(cls, settings, **kwargs):
+        transforms_list = [SoundClassificationPostProcess()]
+        return transforms_list, dict()
+
+    ###############################################################
+    # post process transforms for speech enhancement
+    ###############################################################
+    @classmethod
+    def create_transforms_speech_enhancement(cls, settings, **kwargs):
+        transforms_list = [SpeechEnhancementPostProcess()]
         return transforms_list, dict()
 
     ###############################################################
@@ -304,4 +321,4 @@ def keypoint_detection_postprocess(settings, name='keypoint_detection_postproces
 
 
 def audio_postprocess(settings, **kwargs):
-    return PostProcessTransforms(settings, transforms=[], **kwargs)
+    return PostProcessTransforms.from_kwargs(settings, **kwargs)
