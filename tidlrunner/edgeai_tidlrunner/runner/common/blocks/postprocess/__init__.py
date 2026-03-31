@@ -35,7 +35,7 @@ from .transforms import *
 from .keypoints import *
 #from .object_6d_pose import *
 from . import transforms as postprocess_transforms_types
-from .audio_transforms import SoundClassificationPostProcess, SpeechEnhancementPostProcess
+from .audio_transforms import SoundClassificationPostProcess, SpeechEnhancementPostProcess, GCRNSpeechEnhancementPostProcess
 from ....common.bases import transforms_base
 
 
@@ -97,7 +97,11 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     ###############################################################
     @classmethod
     def create_transforms_speech_enhancement(cls, settings, **kwargs):
-        transforms_list = [SpeechEnhancementPostProcess()]
+        audio_model_type = getattr(getattr(settings, 'preprocess', None), 'audio_model_type', None)
+        if audio_model_type == 'gcrn':
+            transforms_list = [GCRNSpeechEnhancementPostProcess()]
+        else:
+            transforms_list = [SpeechEnhancementPostProcess()]
         return transforms_list, dict()
 
     ###############################################################

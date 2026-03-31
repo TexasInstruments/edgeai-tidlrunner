@@ -107,3 +107,55 @@ class SpeechEnhancementPostProcess:
 
         # Pass original tensor through — evaluate() reads from info_dict
         return tensor, info_dict
+
+
+class GCRNSpeechEnhancementPostProcess:
+    """Postprocess for GCRN speech enhancement model.
+
+    Reconstructs the enhanced waveform from GCRN complex STFT output
+    via librosa.istft with a Hamming window (matching GCRNSTFTTransform).
+
+    Input tensor: list of numpy arrays; first element has shape
+    (1, 2, T, 161) — (batch, real/imag, time, freq=161).
+    Stores the reconstructed waveform in info_dict['enhanced_waveform'].
+    Returns the original tensor unchanged (evaluate() reads from info_dict).
+
+    Note: tensor layout (B, RI, T, F) differs from GTCRN's (B, F, T, RI).
+    The transpose step (real + 1j*imag).T converts (T, 161) → (161, T) for librosa.
+    """
+
+    def __init__(self, n_fft=320, hop_length=160, win_length=320, center=True):
+        self.n_fft = n_fft
+        self.hop_length = hop_length
+        self.win_length = win_length
+        self.center = center
+
+    def __call__(self, tensor, info_dict):
+        import librosa
+        import scipy.signal
+
+        # Extract GCRN output from session result list
+        output = tensor[0] if isinstance(tensor, list) else tensor
+        output = np.squeeze(output, axis=0)  # (2, T, 161)
+
+        # Separate real and imaginary channels
+        real = output[0]  # (T, 161)
+        imag = output[1]  # (T, 161)
+
+        # Build complex spectrogram; transpose to (161, T) for librosa (freq, time)
+        enhanced_complex = (real + 1j * imag).T  # (161, T)
+
+        # Inverse STFT with Hamming window (sym=True, matching GCRNSTFTTransform)
+        window = scipy.signal.windows.hamming(self.win_length, sym=True)
+        waveform = librosa.istft(
+            enhanced_complex,
+            hop_length=self.hop_length,
+            win_length=self.win_length,
+            window=window,
+            center=self.center,
+        )
+
+        info_dict['enhanced_waveform'] = waveform.astype(np.float32)
+
+        # Pass original tensor through — evaluate() reads from info_dict
+        return tensor, info_dict
