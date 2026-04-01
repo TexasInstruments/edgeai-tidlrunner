@@ -32,7 +32,8 @@ dependencies = [
     "wurlitzer",
     "xlsxwriter",
     "tabulate",
-    "bs4"
+    "bs4",
+    "openpyxl"
 ]
 
 [project.urls]
