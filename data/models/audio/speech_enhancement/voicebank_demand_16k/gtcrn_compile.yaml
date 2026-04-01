@@ -1,5 +1,5 @@
-# GTCRN speech enhancement — infer pipeline (ARM-only, no TIDL offload)
-# Usage: tidlrunner-cli infer --config_path data/models/audio/speech_enhancement/gtcrn_infer.yaml
+# GTCRN speech enhancement — compile pipeline (ARM-only, no TIDL offload)
+# Usage: tidlrunner-cli compile --config_path data/models/audio/speech_enhancement/voicebank_demand_16k/gtcrn_compile.yaml
 # Note: GTCRN has unsupported TIDL operators; runs on ARM Cortex-A only (tidl_offload: false)
 # Note: GTCRN input has a dynamic time dimension (T); onnxrt handles variable-shape natively
 task_type: speech_enhancement

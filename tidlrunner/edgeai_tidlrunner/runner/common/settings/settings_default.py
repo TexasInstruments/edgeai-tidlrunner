@@ -155,8 +155,8 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | SETTINGS_DEFAULT['surg
     'resize_with_pad':          {'dest':'preprocess.resize_with_pad', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', 'help': 'resize image with padding to maintain aspect ratio'},
     # audio preprocess
     'sample_rate':              {'dest':'preprocess.sample_rate', 'default':16000, 'type':int, 'metavar':'value', 'help': 'audio sample rate in Hz'},
-    'audio_duration':           {'dest':'preprocess.audio_duration', 'default':4.0, 'type':float, 'metavar':'value', 'help': 'audio clip duration in seconds (VGGish11 only; YAMNet uses first 96-frame patch)'},
-    'audio_model_type':         {'dest':'preprocess.audio_model_type', 'default':None, 'type':str, 'metavar':'value', 'help': 'audio model architecture (vggish11, yamnet)'},
+    'audio_duration':           {'dest':'preprocess.audio_duration', 'default':4.0, 'type':float, 'metavar':'value', 'help': 'audio clip duration in seconds (used by VGGish11 and GCRN; YAMNet/GTCRN ignore this)'},
+    'audio_model_type':         {'dest':'preprocess.audio_model_type', 'default':None, 'type':str, 'metavar':'value', 'help': 'audio model architecture (vggish11, yamnet, gtcrn, gcrn)'},
     # postprocess
     'postprocess_enable':       {'dest': 'common.postprocess_enable', 'default': False, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable postprocessing after inference'},
     'postprocess_name':         {'dest': 'postprocess.name', 'default': None, 'type': str, 'metavar': 'value', 'help': 'name of the postprocessing pipeline'},

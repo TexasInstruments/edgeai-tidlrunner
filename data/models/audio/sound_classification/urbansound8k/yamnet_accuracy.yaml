@@ -1,35 +1,34 @@
-# VGGish11 sound classification — accuracy pipeline
-# Usage: tidlrunner-cli accuracy --config_path data/models/audio/sound_classification/vggish11_accuracy.yaml
-# NOTE: Uses FP32 model for TIDL inference (PTQ model fails TIDL import on tools 11.02.04.00).
-# Use --tidl_offload 0 to run the PTQ model directly via CPU ONNX Runtime.
+# YAMNet sound classification — accuracy pipeline
+# Usage: tidlrunner-cli accuracy --config_path data/models/audio/sound_classification/urbansound8k/yamnet_accuracy.yaml
 task_type: sound_classification
 dataloader:
   name: audio_classification_dataloader
   path: ./data/datasets/UrbanSound8K
   fold: 10  # standard test fold (837 samples)
 preprocess:
-  audio_model_type: vggish11  # dispatches VGGishMelSpectrogram in from_kwargs()
+  audio_model_type: yamnet  # dispatches YAMNetMelSpectrogram in from_kwargs()
   sample_rate: 16000
-  audio_duration: 4.0  # pad/crop to 4s → 126 mel time frames
+  # audio_duration intentionally omitted — YAMNet always uses the first 96-frame patch
+  # regardless of audio length; pad/crop logic is inside YAMNetMelSpectrogram
 postprocess: {}  # dispatched via PostProcessTransforms.from_kwargs() using task_type
 session:
   session_name: onnxrt
   target_device: AM62A
+  tidl_offload: true
   input_optimization: false  # disable image-specific input normalization
   input_mean: null  # override image default (123.675, 116.28, 103.53)
   input_scale: null  # override image default (0.017125, 0.017507, 0.017429)
   runtime_options:
-    accuracy_level: 1  # FP32 model
+    accuracy_level: 1  # YAMNet is QAT; level 1 required by TIDL even though calibration is effectively a no-op
     advanced_options:calibration_frames: 100
-    advanced_options:calibration_iterations: 5
     tensor_bits: 8
-  model_path: vggish11_20250324-1807.onnx
-  model_id: sc-0100
+  model_path: yamnet_combined.onnx
+  model_id: sc-0200
   input_details: null
   output_details: null
   num_inputs: 1
 model_info:
   metric_reference:
-    accuracy_top1%: 72.0  # approx fold-10 reference from published benchmarks
-  compact_name: vggish11
+    accuracy_top1%: 54.0  # INT8 TIDL (tidl_offload=1), fold-10, 837 samples, AudioSet→US8K mapping
+  compact_name: yamnet
   shortlisted: true
