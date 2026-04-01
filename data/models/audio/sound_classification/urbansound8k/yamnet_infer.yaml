@@ -1,5 +1,5 @@
 # YAMNet sound classification — infer pipeline
-# Usage: tidlrunner-cli infer --config_path data/models/audio/sound_classification/yamnet_infer.yaml
+# Usage: tidlrunner-cli infer --config_path data/models/audio/sound_classification/urbansound8k/yamnet_infer.yaml
 task_type: sound_classification
 dataloader:
   name: audio_classification_dataloader
@@ -14,6 +14,7 @@ postprocess: {}  # dispatched via PostProcessTransforms.from_kwargs() using task
 session:
   session_name: onnxrt
   target_device: AM62A
+  tidl_offload: true
   input_optimization: false  # disable image-specific input normalization
   input_mean: null  # override image default (123.675, 116.28, 103.53)
   input_scale: null  # override image default (0.017125, 0.017507, 0.017429)

@@ -1,12 +1,11 @@
-# VGGish11 sound classification — infer pipeline
-# Usage: tidlrunner-cli infer --config_path data/models/audio/sound_classification/vggish11_infer.yaml
-# NOTE: Uses FP32 model for TIDL inference (PTQ model fails TIDL import on tools 11.02.04.00).
-# Use --tidl_offload 0 to run the PTQ model directly via CPU ONNX Runtime.
+# VGGish11 sound classification — accuracy pipeline
+# Usage: tidlrunner-cli accuracy --config_path data/models/audio/sound_classification/urbansound8k/vggish11_accuracy.yaml
+# NOTE: Uses FP32 model with TIDL (PTQ model fails TIDL import on tools 11.02.04.00).
 task_type: sound_classification
 dataloader:
   name: audio_classification_dataloader
   path: ./data/datasets/UrbanSound8K
-  fold: 10  # standard test fold
+  fold: 10  # standard test fold (837 samples)
 preprocess:
   audio_model_type: vggish11  # dispatches VGGishMelSpectrogram in from_kwargs()
   sample_rate: 16000
@@ -15,6 +14,7 @@ postprocess: {}  # dispatched via PostProcessTransforms.from_kwargs() using task
 session:
   session_name: onnxrt
   target_device: AM62A
+  tidl_offload: true
   input_optimization: false  # disable image-specific input normalization
   input_mean: null  # override image default (123.675, 116.28, 103.53)
   input_scale: null  # override image default (0.017125, 0.017507, 0.017429)
@@ -28,3 +28,8 @@ session:
   input_details: null
   output_details: null
   num_inputs: 1
+model_info:
+  metric_reference:
+    accuracy_top1%: 77.0  # TIDL INT8 (tidl_offload=1), fold-10, 837 samples
+  compact_name: vggish11
+  shortlisted: true

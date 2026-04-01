@@ -1,16 +1,11 @@
-# VGGish11 sound classification — compile pipeline
-# Usage: tidlrunner-cli compile --config_path data/models/audio/sound_classification/vggish11_compile.yaml
-#
-# NOTE: model_path uses the FP32 floating-point model (not PTQ) because the PTQ model
-# (vggish11_20250324-1807_ptq.onnx, opset 17 QDQ format) fails TIDL import on
-# TIDL tools 11.02.04.00 with "TIDL Compute Import Failed". The FP32 model (opset 15)
-# compiles successfully and produces equivalent artifacts for target deployment.
-# Use --tidl_offload 0 to run the PTQ model directly via CPU ONNX Runtime.
+# VGGish11 sound classification — infer pipeline
+# Usage: tidlrunner-cli infer --config_path data/models/audio/sound_classification/urbansound8k/vggish11_infer.yaml
+# NOTE: Uses FP32 model with TIDL (PTQ model fails TIDL import on tools 11.02.04.00).
 task_type: sound_classification
 dataloader:
   name: audio_classification_dataloader
   path: ./data/datasets/UrbanSound8K
-  # fold omitted — uses all folds for calibration data diversity
+  fold: 10  # standard test fold
 preprocess:
   audio_model_type: vggish11  # dispatches VGGishMelSpectrogram in from_kwargs()
   sample_rate: 16000
@@ -19,11 +14,12 @@ postprocess: {}  # dispatched via PostProcessTransforms.from_kwargs() using task
 session:
   session_name: onnxrt
   target_device: AM62A
+  tidl_offload: true
   input_optimization: false  # disable image-specific input normalization
   input_mean: null  # override image default (123.675, 116.28, 103.53)
   input_scale: null  # override image default (0.017125, 0.017507, 0.017429)
   runtime_options:
-    accuracy_level: 1  # FP32 model: TIDL performs its own quantization
+    accuracy_level: 1  # FP32 model
     advanced_options:calibration_frames: 100
     advanced_options:calibration_iterations: 5
     tensor_bits: 8

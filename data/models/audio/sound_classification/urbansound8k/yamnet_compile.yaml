@@ -1,5 +1,5 @@
 # YAMNet sound classification — compile pipeline
-# Usage: tidlrunner-cli compile --config_path data/models/audio/sound_classification/yamnet_compile.yaml
+# Usage: tidlrunner-cli compile --config_path data/models/audio/sound_classification/urbansound8k/yamnet_compile.yaml
 task_type: sound_classification
 dataloader:
   name: audio_classification_dataloader
@@ -14,6 +14,7 @@ postprocess: {}  # dispatched via PostProcessTransforms.from_kwargs() using task
 session:
   session_name: onnxrt
   target_device: AM62A
+  tidl_offload: true
   input_optimization: false  # disable image-specific input normalization
   input_mean: null  # override image default (123.675, 116.28, 103.53)
   input_scale: null  # override image default (0.017125, 0.017507, 0.017429)
@@ -27,7 +28,7 @@ session:
     advanced_options:output_feature_16bit_names_list: ""
     advanced_options:params_16bit_names_list: ""
     advanced_options:mixed_precision_factor: -1
-    advanced_options:quantization_scale_type: 0
+    advanced_options:quantization_scale_type: 4
     advanced_options:pre_batchnorm_fold: 1
     advanced_options:activation_clipping: 1  # preset internally for accuracy_level 0/1
     advanced_options:weight_clipping: 1
