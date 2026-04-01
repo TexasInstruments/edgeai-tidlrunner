@@ -36,10 +36,6 @@ from ..settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
 from .common_.common_base import CommonPipelineBase
 from .common_.compile_base import CompileModelBase
 
-from .... import modelinspector
-from ....modelinspector.data_extractor import main as gen_json
-from ....modelinspector.html_generator import main as gen_html
-
 
 class GenerateModelInspectorJSON(CompileModelBase):
     ARGS_DICT=SETTINGS_DEFAULT['analyze']
@@ -60,6 +56,8 @@ class GenerateModelInspectorJSON(CompileModelBase):
 
     def _run(self):
         print(f'INFO: Model Inspector - JSON generation')
+        from ....modelinspector.data_extractor import main as gen_json
+
         inspector_base_path = os.path.join(self.run_dir, 'inspector')
         output_json_path = os.path.join(inspector_base_path, 'modelinspector.json')
         os.makedirs(inspector_base_path, exist_ok=True)
@@ -87,6 +85,9 @@ class GenerateModelInspectorHTML(CompileModelBase):
 
     def _run(self):
         print(f'INFO: Model Inspector - HTML generation')
+        from .... import modelinspector
+        from ....modelinspector.html_generator import main as gen_html
+
         inspector_base_path = os.path.join(self.run_dir, 'inspector')
         output_json_path = os.path.join(inspector_base_path, 'modelinspector.json.gz')
         output_html_path = os.path.join(inspector_base_path, 'modelinspector.html')
