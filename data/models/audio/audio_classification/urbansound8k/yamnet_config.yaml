@@ -1,6 +1,6 @@
 # YAMNet sound classification
-# Usage: tidlrunner-cli {compile,infer,evaluate} --config_path data/models/audio/sound_classification/urbansound8k/yamnet_config.yaml
-task_type: sound_classification
+# Usage: tidlrunner-cli {compile,infer,evaluate} --config_path data/models/audio/audio_classification/urbansound8k/yamnet_config.yaml
+task_type: audio_classification
 dataloader:
   name: audio_classification_dataloader
   path: ./data/datasets/UrbanSound8K
@@ -34,7 +34,7 @@ session:
     advanced_options:add_data_convert_ops: 3
     advanced_options:channel_wise_quantization: 0
   model_path: yamnet_combined.onnx
-  model_id: sc-0200
+  model_id: ac-0200
   input_details: null
   output_details: null
   num_inputs: 1
