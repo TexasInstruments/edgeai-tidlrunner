@@ -2177,7 +2177,36 @@ def discover_files_from_workdir(model_dir_path: str) -> Dict[str, str]:
         discovered['subgraph_dir'] = subgraph_dir
         print(f"[FOUND] {len(subgraph_html_files)} subgraph HTML files in: {os.path.relpath(subgraph_dir)}")
     else:
-        print("[NOT FOUND] Subgraph HTML files not found")
+        # Check if SVG files exist (TIDL Tools < 11.02 generates SVG instead of HTML)
+        subgraph_svg_files = glob.glob(os.path.join(model_dir_path, 'artifacts/tempDir/subgraph_*_tidl_net.bin.svg'), recursive=False)
+        if subgraph_svg_files:
+            svg_dir = os.path.relpath(os.path.dirname(subgraph_svg_files[0]))
+            error_msg = f"""
+================================================================================
+ERROR: TIDL Tools Version Incompatibility
+================================================================================
+
+Found {len(subgraph_svg_files)} SVG subgraph file(s) in: {svg_dir}
+
+Your TIDL Tools version (< 11.02) generates SVG files for subgraphs.
+Model Inspector requires HTML files which are only available in TIDL Tools 11.02+
+
+Detected Issue:
+  - Old TIDL Tools versions (11.01, 11.00, and earlier) generate SVG format
+  - Model Inspector only supports HTML format (TIDL Tools 11.02+)
+
+Solution:
+  1. Upgrade to TIDL Tools version 11.02 or later
+  2. Recompile your model with the new version
+  3. Run the inspect command again
+
+Note: Model Inspector cannot parse SVG format - HTML format is required.
+
+================================================================================
+"""
+            raise RuntimeError(error_msg.strip())
+        else:
+            print("[NOT FOUND] Subgraph HTML files not found")
 
     xlsx_files = glob.glob(os.path.join(model_dir_path, 'analyze.xlsx'), recursive=False)
     if xlsx_files:
