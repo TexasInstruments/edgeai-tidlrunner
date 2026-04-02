@@ -10,7 +10,7 @@ edgeai-tidlrunner is a comprehensive toolkit that provides easy-to-use interface
 
 There are two primary ways to use this repository:
 
-### 1. Basic Command Line Usage
+### 1. Direct Command Line Usage
 
 The simplest way to get started is by providing only the model path. This approach uses random inputs for calibration, making it perfect for quick testing and evaluation.
 

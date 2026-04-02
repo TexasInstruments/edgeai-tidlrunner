@@ -44,9 +44,17 @@ To run example models in this repository with actual data, download example data
 ./examples/example_download_datasets.sh
 ```
 
-## Getting Started
+## Getting Started with tidlrunner
+
+This section has basic usage details, including direct command line usage and config file based usage.
 
 [Getting started instructions and examples](docs/getting_started.md)
+
+## Model Inspector
+
+An interactive HTML visualization tool for analyzing ONNX models compiled with TIDL. Model Inspector provides comprehensive insights into model structure, performance, accuracy, and hardware acceleration.
+
+[Model Inspector](./edgeai_tidlrunner/modelinspector/README.md)
 
 
 ## Detailed Documentation

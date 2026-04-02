@@ -1,6 +1,6 @@
 # 🔍 Edge AI Model Inspector
 
-An interactive HTML visualization tool for analyzing ONNX models compiled with TIDL (Texas Instruments Deep Learning). Model Inspector provides comprehensive insights into model structure, performance, accuracy, and hardware acceleration.
+An interactive HTML visualization tool for analyzing ONNX models compiled with TIDL. Model Inspector provides comprehensive insights into model structure, performance, accuracy, and hardware acceleration.
 
 ---
 
