@@ -102,7 +102,7 @@ Target layout:
 
 ```
 data/models/audio/
-  sound_classification/
+  audio_classification/
     urbansound8k/
       vggish11_20250324-1807.onnx
       yamnet_combined.onnx
@@ -118,14 +118,14 @@ Each model has a single config file used for all pipelines (compile, infer, eval
 
 ```
 data/models/audio/
-  sound_classification/
+  audio_classification/
     urbansound8k/
-      vggish11_config.yaml
-      yamnet_config.yaml
+      vggish11_20250324-1807_config.yaml
+      yamnet_combined_config.yaml
   speech_enhancement/
     voicebank_demand_16k/
-      gtcrn_config.yaml
-      gcrn_config.yaml
+      gtcrn_dns3_config.yaml
+      gcrn_fixed_4sec_config.yaml
 ```
 
 ## Running Pipelines
@@ -135,33 +135,33 @@ All commands are run from the repo root (`edgeai-tidlrunner/`).
 ### VGGish11 — Sound Classification
 
 ```bash
-tidlrunner-cli compile --config_path data/models/audio/audio_classification/urbansound8k/vggish11_config.yaml
-tidlrunner-cli infer --config_path data/models/audio/audio_classification/urbansound8k/vggish11_config.yaml
-tidlrunner-cli evaluate --config_path data/models/audio/audio_classification/urbansound8k/vggish11_config.yaml
+tidlrunner-cli compile --config_path data/models/audio/audio_classification/urbansound8k/vggish11_20250324-1807_config.yaml
+tidlrunner-cli infer --config_path data/models/audio/audio_classification/urbansound8k/vggish11_20250324-1807_config.yaml
+tidlrunner-cli evaluate --config_path data/models/audio/audio_classification/urbansound8k/vggish11_20250324-1807_config.yaml
 ```
 
 ### YAMNet — Sound Classification
 
 ```bash
-tidlrunner-cli compile --config_path data/models/audio/audio_classification/urbansound8k/yamnet_config.yaml
-tidlrunner-cli infer --config_path data/models/audio/audio_classification/urbansound8k/yamnet_config.yaml
-tidlrunner-cli evaluate --config_path data/models/audio/audio_classification/urbansound8k/yamnet_config.yaml
+tidlrunner-cli compile --config_path data/models/audio/audio_classification/urbansound8k/yamnet_combined_config.yaml
+tidlrunner-cli infer --config_path data/models/audio/audio_classification/urbansound8k/yamnet_combined_config.yaml
+tidlrunner-cli evaluate --config_path data/models/audio/audio_classification/urbansound8k/yamnet_combined_config.yaml
 ```
 
 ### GTCRN — Speech Enhancement
 
 ```bash
-tidlrunner-cli compile --config_path data/models/audio/speech_enhancement/voicebank_demand_16k/gtcrn_config.yaml
-tidlrunner-cli infer --config_path data/models/audio/speech_enhancement/voicebank_demand_16k/gtcrn_config.yaml
-tidlrunner-cli evaluate --config_path data/models/audio/speech_enhancement/voicebank_demand_16k/gtcrn_config.yaml
+tidlrunner-cli compile --config_path data/models/audio/speech_enhancement/voicebank_demand_16k/gtcrn_dns3_config.yaml
+tidlrunner-cli infer --config_path data/models/audio/speech_enhancement/voicebank_demand_16k/gtcrn_dns3_config.yaml
+tidlrunner-cli evaluate --config_path data/models/audio/speech_enhancement/voicebank_demand_16k/gtcrn_dns3_config.yaml
 ```
 
 ### GCRN — Speech Enhancement
 
 ```bash
-tidlrunner-cli compile --config_path data/models/audio/speech_enhancement/voicebank_demand_16k/gcrn_config.yaml
-tidlrunner-cli infer --config_path data/models/audio/speech_enhancement/voicebank_demand_16k/gcrn_config.yaml
-tidlrunner-cli evaluate --config_path data/models/audio/speech_enhancement/voicebank_demand_16k/gcrn_config.yaml
+tidlrunner-cli compile --config_path data/models/audio/speech_enhancement/voicebank_demand_16k/gcrn_fixed_4sec_config.yaml
+tidlrunner-cli infer --config_path data/models/audio/speech_enhancement/voicebank_demand_16k/gcrn_fixed_4sec_config.yaml
+tidlrunner-cli evaluate --config_path data/models/audio/speech_enhancement/voicebank_demand_16k/gcrn_fixed_4sec_config.yaml
 ```
 
 ## Audio-Specific Settings
