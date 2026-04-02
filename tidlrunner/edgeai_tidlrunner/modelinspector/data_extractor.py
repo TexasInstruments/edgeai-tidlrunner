@@ -526,7 +526,7 @@ class ActivationDataParser:
             return None
 
         if len(notidl_data) != len(tidl_data):
-            print(f"  Warning: Size mismatch for subgraph {subgraph_id} layer {tidl_layer_id} (NotIDL: {len(notidl_data)}, TIDL: {len(tidl_data)})")
+            print(f"  Warning: Size mismatch for subgraph {subgraph_id} layer {tidl_layer_id} (NoTIDL: {len(notidl_data)}, TIDL: {len(tidl_data)})")
             return None
 
         try:
