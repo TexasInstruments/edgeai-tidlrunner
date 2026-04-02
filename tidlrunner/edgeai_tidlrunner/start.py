@@ -36,6 +36,7 @@ import yaml
 import functools
 import subprocess
 
+
 import edgeai_tidlrunner
 from edgeai_tidlrunner import rtwrapper, runner, interfaces
 
@@ -143,11 +144,15 @@ def start_with_proper_environment(**kwargs):
     print(f'INFO: running - {sys.argv}')
     target_machine = kwargs['target_machine']
     is_tidl_tools_path_defined = (os.environ.get('TIDL_TOOLS_PATH', None) is not None and os.environ.get('LD_LIBRARY_PATH', None) is not None)
+    command_args, rest_args = StartRunner.get_arg_parser().parse_known_args()  
+    command_kwargs = vars(command_args)
+    if 'target_device' not in command_kwargs:
+        print('INFO: provide target_device argument - this has to match to with your device. eg: --target_device=AM62A')
+        print('INFO: list of supported devices can be found here:\n      https://github.com/TexasInstruments/edgeai/blob/main/edgeai-mpu/readme_sdk.md \n      https://github.com/TexasInstruments/edgeai-tidlrunner/blob/main/tools/tidl_tools_package/download.py#L50')
+        exit(0)
 
     if target_machine == rtwrapper.core.presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION and (not is_tidl_tools_path_defined):
         print("INFO: TIDL_TOOLS_PATH or LD_LIBRARY_PATH is not set, restarting with proper environment...")
-        command_args, rest_args = StartRunner.get_arg_parser().parse_known_args()  
-        command_kwargs = vars(command_args)
         start_kwargs = kwargs.copy()
         cmd_keys_mapping = {
             'session.target_device': 'target_device',
