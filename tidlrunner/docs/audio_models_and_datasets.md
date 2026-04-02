@@ -135,17 +135,17 @@ All commands are run from the repo root (`edgeai-tidlrunner/`).
 ### VGGish11 — Sound Classification
 
 ```bash
-tidlrunner-cli compile --config_path data/models/audio/sound_classification/urbansound8k/vggish11_config.yaml
-tidlrunner-cli infer --config_path data/models/audio/sound_classification/urbansound8k/vggish11_config.yaml
-tidlrunner-cli evaluate --config_path data/models/audio/sound_classification/urbansound8k/vggish11_config.yaml
+tidlrunner-cli compile --config_path data/models/audio/audio_classification/urbansound8k/vggish11_config.yaml
+tidlrunner-cli infer --config_path data/models/audio/audio_classification/urbansound8k/vggish11_config.yaml
+tidlrunner-cli evaluate --config_path data/models/audio/audio_classification/urbansound8k/vggish11_config.yaml
 ```
 
 ### YAMNet — Sound Classification
 
 ```bash
-tidlrunner-cli compile --config_path data/models/audio/sound_classification/urbansound8k/yamnet_config.yaml
-tidlrunner-cli infer --config_path data/models/audio/sound_classification/urbansound8k/yamnet_config.yaml
-tidlrunner-cli evaluate --config_path data/models/audio/sound_classification/urbansound8k/yamnet_config.yaml
+tidlrunner-cli compile --config_path data/models/audio/audio_classification/urbansound8k/yamnet_config.yaml
+tidlrunner-cli infer --config_path data/models/audio/audio_classification/urbansound8k/yamnet_config.yaml
+tidlrunner-cli evaluate --config_path data/models/audio/audio_classification/urbansound8k/yamnet_config.yaml
 ```
 
 ### GTCRN — Speech Enhancement

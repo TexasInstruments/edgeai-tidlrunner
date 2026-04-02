@@ -66,10 +66,10 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
             transforms, transforms_kwargs = cls.create_transforms_lidar_base(settings, **kwargs)
         elif settings.common.task_type == constants.TaskType.TASK_TYPE_OBJECT_6D_POSE_ESTIMATION:
             transforms, transforms_kwargs = cls.create_transforms_detection_base(settings, object6dpose=True, **kwargs)
-        elif settings.common.task_type == constants.TaskType.TASK_TYPE_SOUND_CLASSIFICATION:
-            transforms, transforms_kwargs = cls.create_transforms_sound_classification(settings, **kwargs)
-        elif settings.common.task_type == constants.TaskType.TASK_TYPE_SPEECH_ENHANCEMENT:
-            transforms, transforms_kwargs = cls.create_transforms_speech_enhancement(settings, **kwargs)
+        elif settings.common.task_type == constants.TaskType.TASK_TYPE_AUDIO_CLASSIFICATION:
+            transforms, transforms_kwargs = cls.create_transforms_audio_classification(settings, **kwargs)
+        elif settings.common.task_type == constants.TaskType.TASK_TYPE_AUDIO_SPEECHENHANCEMENT:
+            transforms, transforms_kwargs = cls.create_transforms_audio_speechenhancement(settings, **kwargs)
         else:
             transforms, transforms_kwargs = cls.create_transforms_none(settings, **kwargs)
         #
@@ -88,7 +88,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     # post process transforms for sound classification
     ###############################################################
     @classmethod
-    def create_transforms_sound_classification(cls, settings, **kwargs):
+    def create_transforms_audio_classification(cls, settings, **kwargs):
         transforms_list = [SoundClassificationPostProcess()]
         return transforms_list, dict()
 
@@ -96,7 +96,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     # post process transforms for speech enhancement
     ###############################################################
     @classmethod
-    def create_transforms_speech_enhancement(cls, settings, **kwargs):
+    def create_transforms_audio_speechenhancement(cls, settings, **kwargs):
         audio_model_type = getattr(getattr(settings, 'preprocess', None), 'audio_model_type', None)
         if audio_model_type == 'gcrn':
             transforms_list = [GCRNSpeechEnhancementPostProcess()]

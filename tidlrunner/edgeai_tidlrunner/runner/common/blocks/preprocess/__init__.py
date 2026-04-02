@@ -48,11 +48,11 @@ class PreProcessTransforms(transforms_base.TransformsCompose):
         # Audio task type dispatch — checked before image logic
         # settings is a nested AttrDict; task_type lives at settings.common.task_type
         task_type = getattr(getattr(settings, 'common', None), 'task_type', None)
-        if task_type == constants.TaskType.TASK_TYPE_SOUND_CLASSIFICATION:
-            transforms, transforms_kwargs = cls.create_transforms_sound_classification(settings, **extra_kwargs)
+        if task_type == constants.TaskType.TASK_TYPE_AUDIO_CLASSIFICATION:
+            transforms, transforms_kwargs = cls.create_transforms_audio_classification(settings, **extra_kwargs)
             return cls(settings, transforms, **transforms_kwargs)
-        elif task_type == constants.TaskType.TASK_TYPE_SPEECH_ENHANCEMENT:
-            transforms, transforms_kwargs = cls.create_transforms_speech_enhancement(settings, **extra_kwargs)
+        elif task_type == constants.TaskType.TASK_TYPE_AUDIO_SPEECHENHANCEMENT:
+            transforms, transforms_kwargs = cls.create_transforms_audio_speechenhancement(settings, **extra_kwargs)
             return cls(settings, transforms, **transforms_kwargs)
         #
         if resize is None:
@@ -84,7 +84,7 @@ class PreProcessTransforms(transforms_base.TransformsCompose):
     # audio preprocessing classmethods
     ###############################################################
     @classmethod
-    def create_transforms_sound_classification(cls, settings, sample_rate=16000, audio_duration=4.0,
+    def create_transforms_audio_classification(cls, settings, sample_rate=16000, audio_duration=4.0,
                                                 audio_model_type=None, **kwargs):
         if audio_model_type == 'yamnet':
             transforms_list = [YAMNetMelSpectrogram(sample_rate=sample_rate)]
@@ -95,7 +95,7 @@ class PreProcessTransforms(transforms_base.TransformsCompose):
         return transforms_list, transforms_kwargs
 
     @classmethod
-    def create_transforms_speech_enhancement(cls, settings, audio_model_type=None,
+    def create_transforms_audio_speechenhancement(cls, settings, audio_model_type=None,
                                               sample_rate=16000, audio_duration=4.0, **kwargs):
         if audio_model_type == 'gcrn':
             transforms_list = [GCRNSTFTTransform(sample_rate=sample_rate, audio_duration=audio_duration)]
