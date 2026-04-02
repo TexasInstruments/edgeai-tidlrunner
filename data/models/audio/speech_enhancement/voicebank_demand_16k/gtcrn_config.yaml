@@ -10,6 +10,8 @@ preprocess:
   sample_rate: 16000
   audio_model_type: gtcrn  # dispatches STFTTransform (sqrt-Hann, n_fft=512, hop=256, center=False)
 postprocess: {}  # dispatched via PostProcessTransforms.from_kwargs() using task_type
+model_surgery: false
+shape_inference: null
 session:
   session_name: onnxrt
   target_device: AM62A
