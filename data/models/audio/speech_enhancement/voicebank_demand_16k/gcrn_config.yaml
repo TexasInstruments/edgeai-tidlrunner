@@ -11,6 +11,7 @@ preprocess:
   audio_model_type: gcrn  # dispatches GCRNSTFTTransform (Hamming window, n_fft=320, hop=160, center=True)
   audio_duration: 4.0     # pad/truncate to 4s; GCRN expects exactly (1, 2, 401, 161)
 postprocess: {}  # dispatched via PostProcessTransforms.from_kwargs() using task_type
+model_surgery: false
 session:
   session_name: onnxrt
   target_device: AM62A
