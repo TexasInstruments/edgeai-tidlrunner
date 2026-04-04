@@ -6,38 +6,20 @@ Welcome to the **edgeai-tidlrunner** repository! This guide will help you quickl
 
 edgeai-tidlrunner is a comprehensive toolkit that provides easy-to-use interfaces for compiling AI models to run on TI edge devices. It supports various operations including model compilation, inference, evaluate evaluation, and performance analysis.
 
-## Usage
+## Usage - compile & evaluate on PC
 
 There are two primary ways to use this repository:
 
-### 1. Direct Command Line Usage
-
-The simplest way to get started is by providing only the model path. This approach uses random inputs for calibration, making it perfect for quick testing and evaluation.
-
-**Example:**
-```bash
-tidlrunner-cli compile --model_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx
-```
-
-This command will:
-- Compile the model for the default target device (AM68A)
-- Use random inputs for quantization calibration
-- Save the compiled artifacts to the default output directory
-
-Because this uses random inputs by default, it may not produce good outputs while inference. To be able to generate correct outputs, we have to use actual data by specifying dataloader arguments - eg: data_name, data_path.
-
-More details are here: [commandline_interface.md](./commandline_interface.md)
-
-For complete list of available command line arguments, see [command_line_arguments.md](./command_line_arguments.md).
-
-
-### 2. Config File Based Usage
+### 1. Config File Based Usage
 
 For more control and reproducible workflows, you can use configuration files. This approach allows you to specify all parameters including datasets, preprocessing options, target devices, and much more.
 
 **Example:**
 ```bash
-tidlrunner-cli compile --config_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml
+tidlrunner-cli compile --config_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml --target_device AM62A
+```
+```bash
+tidlrunner-cli evaluate --config_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml --target_device AM62A
 ```
 
 This approach provides:
@@ -49,6 +31,37 @@ This approach provides:
 More details are here: [configfile_interface.md](./configfile_interface.md)
 
 The configuration file can contain any of the fields documented in [command_line_arguments.md](./command_line_arguments.md). The Config Field column in that document shows exactly which fields can be populated in the YAML configuration file.
+
+
+### 2. Direct Command Line Usage
+
+*Note: This direct command line usage is useful for quick compilation - to check whether compilation is working or not. This is not our recommended method of usage for actual compilation and inference as it is easy to miss some required arguments (in that case random inputs may get used for quantization calibration and the outputs may not usable). Because of this, the above configfile based interface is our recommended method of usage.*
+
+The simplest way to get started is by providing only the model path. This approach uses random inputs for calibration, making it perfect for quick testing and evaluation.
+
+**Example:**
+```bash
+tidlrunner-cli compile --model_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx  --target_device AM62A
+```
+```bash
+tidlrunner-cli infer --model_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx  --target_device AM62A
+```
+
+This command will:
+- Compile the model for the default target device (AM62A)
+- **Uses random inputs for quantization calibration**
+- Save the compiled artifacts to the default output directory
+
+Because this uses random inputs by default, it **may not produce correct outputs during inference**. To be able to generate correct outputs, actual data has to be used by specifying dataloader arguments - eg: data_name, data_path.
+
+More details are here: [commandline_interface.md](./commandline_interface.md)
+
+For complete list of available command line arguments, see [command_line_arguments.md](./command_line_arguments.md).
+
+
+## Usage - actual infer or evaluate on EVM
+To run the compiled model artifacts on EVM, follw these instrunctions:
+[running_on_evm](./running_on_evm.md)
 
 
 ## List of commands supported
@@ -68,7 +81,7 @@ The configuration file can contain any of the fields documented in [command_line
 
 
 ## Compiling models for a specific device
-It is important to use the correct target device while compiling the model. By default, this tool assumes AM68A, but that may not be the device/EVM that you have. 
+It is important to use the correct target device while compiling the model. By default, this tool assumes AM62A, but that may not be the device/EVM that you have. 
 
 List of devices supported by TIDL are listed in the page [Supported Devices & SDKs](https://github.com/TexasInstruments/edgeai/blob/main/edgeai-mpu/readme_sdk.md).
 
