@@ -16,7 +16,7 @@ Compile the model on the PC first. The compiled artifacts will be written to `wo
 ```bash
 tidlrunner-cli compile \
     --model_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx \
-    --target_device AM68A --data_name random_dataloader
+    --target_device AM62A
 ```
 
 > **Important:** The target_device setting must match the EVM and the version of `tidl-tools` used for compilation must match the SDK version on the EVM. See [setup.md](./setup.md) for details on installing the correct version.
@@ -70,7 +70,7 @@ ssh root@<EVM_IP>
 cd /opt/edgeai-tidlrunner
 tidlrunner-cli infer \
     --model_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx \
-    --target_device AM68A --data_name random_dataloader
+    --target_device AM62A
 ```
 
 See [example_runner_cli_evm.sh](../../examples/example_runner_cli_evm.sh) for more inference examples.
@@ -120,13 +120,13 @@ With the directory mounted, run inference the same way as on PC:
 cd /opt/edgeai-tidlrunner
 tidlrunner-cli infer \
     --model_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx \
-    --target_device AM68A --data_name random_dataloader
+    --target_device AM62A --data_name random_dataloader
 ```
 
 ---
 
 ## Notes
 
-- Replace `AM68A` with your actual target device (e.g., `AM69A`, `TDA4VH`). See [getting_started.md](./getting_started.md) for the full list of supported devices.
+- Replace `AM62A` with your actual target device (e.g., `AM69A`, `TDA4VH`). See [getting_started.md](./getting_started.md) for the full list of supported devices.
 - The `tidlrunner-cli infer` command requires compiled artifacts to already exist in `work_dirs/`. If they are missing, run `compile` first on the PC.
 - For a full list of inference options, see [command_line_arguments.md](./command_line_arguments.md).

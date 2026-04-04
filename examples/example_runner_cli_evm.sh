@@ -31,7 +31,7 @@
 
 ##################################################################
 # for convenience, setting TARGET_DEVICE env variable to be used below - this is not needed.
-TARGET_DEVICE="AM68A"
+TARGET_DEVICE="AM62A"
 
 ##################################################################
 # Example 1 - infer using compiled artifacts given a model
@@ -42,14 +42,3 @@ TARGET_DEVICE="AM68A"
 #----------------------------------------------------------------
 # tidlrunner-cli infer --config_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml --target_device ${TARGET_DEVICE}
 
-
-##################################################################
-# Example 3: infer using compiled artifacts and a wrapper configs file that aggregates other config files
-#----------------------------------------------------------------
-# tidlrunner-cli infer --config_path ./data/models/configs.yaml --target_device ${TARGET_DEVICE}
-
-
-##################################################################
-# Example 4: evaluate accuracy using compiled artifacts and aggregate configs file
-#----------------------------------------------------------------
-# tidlrunner-cli evaluate --config_path ./data/models/configs.yaml --target_device ${TARGET_DEVICE}

@@ -31,7 +31,7 @@
 
 ##################################################################
 # for convenience, setting TARGET_DEVICE env variable to be used below - this is not needed.
-TARGET_DEVICE="AM68A"
+TARGET_DEVICE="AM62A"
 
 ##################################################################
 # Example 1: compile by directly using a model path

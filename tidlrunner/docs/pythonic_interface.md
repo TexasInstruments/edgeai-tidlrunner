@@ -9,7 +9,7 @@ The parameters used in the commandline or in the configfile - one is a shortcut 
 |                                        |                                                                              | session:                                                            |
 | model_path                             | session.model_path                                                           | &nbsp; model_path: mobilenet_v2.onnx                                |
 |                                        |                                                                              | &nbsp; runtime_settings:                                            |
-| target_device                          | session.runtime_settings.target_device                                       | &nbsp; &nbsp; target_device: AM68A                                  |
+| target_device                          | session.runtime_settings.target_device                                       | &nbsp; &nbsp; target_device: AM62A                                  |
 |                                        |                                                                              | &nbsp; &nbsp; runtime_options:                                      |
 | tensor_bits                            | session.runtime_settings.runtime_options.target_device                       | &nbsp; &nbsp; &nbsp; tensor_bits: 8                                 |
 | calibration_frames                     | session.runtime_settings.runtime_options.advanced_options:calibration_frames | &nbsp; &nbsp; &nbsp; advanced_options:calibration_frames: 12        |

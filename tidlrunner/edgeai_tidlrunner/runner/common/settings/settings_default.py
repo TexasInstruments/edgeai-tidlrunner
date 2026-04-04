@@ -46,7 +46,7 @@ RUNTIME_SETTINGS_DEFAULT = {
     # False: No TIDL
     'tidl_offload': True,
 
-    'target_device': presets.TargetDeviceType.TARGET_DEVICE_AM68A,
+    'target_device': presets.TargetDeviceType.TARGET_DEVICE_AM62A,
     'target_machine': presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION,
     'target_device_preset': True,
 
@@ -117,7 +117,7 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | SETTINGS_DEFAULT['surg
     'data_name':                {'dest': 'dataloader.name', 'default': None, 'type': str, 'metavar': 'value', 'help': 'name of the input dataset'},
     'data_path':                {'dest': 'dataloader.path', 'default': None, 'type': str, 'metavar': 'path', 'help': 'path to the input data directory'},
     # runtime_settings
-    'target_device':            {'dest': 'session.target_device', 'default': presets.TargetDeviceType.TARGET_DEVICE_AM68A, 'type': str, 'metavar': 'value', 'help': 'target device for inference (AM68A, AM69A, etc.)'},
+    'target_device':            {'dest': 'session.target_device', 'default': presets.TargetDeviceType.TARGET_DEVICE_AM62A, 'type': str, 'metavar': 'value', 'help': 'target device for inference (AM68A, AM69A, etc.)'},
     'tidl_offload':             {'dest': 'session.tidl_offload', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable TIDL acceleration for inference'},
     'graph_optimization_level': {'dest': 'session.onnxruntime:graph_optimization_level', 'default': presets.GraphOptimizationLevel.ORT_DISABLE_ALL, 'type': int, 'metavar': 'value', 'help': 'ONNX Runtime graph optimization level'},
     # runtime_settings.runtime_options
@@ -253,7 +253,7 @@ COPY_SETTINGS_DEFAULT['report'] = COPY_SETTINGS_DEFAULT['basic'] | {
 ##########################################################################
 SETTINGS_DEFAULT['package'] = SETTINGS_DEFAULT['basic'] | {
     'pipeline_type':        {'dest': 'common.pipeline_type', 'default': 'package', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'}, 
-    'target_device':        {'dest': 'session.target_device', 'default': presets.TargetDeviceType.TARGET_DEVICE_AM68A, 'type': str, 'metavar': 'value', 'help': 'target device for inference (AM68A, AM69A, etc.)'},
+    'target_device':        {'dest': 'session.target_device', 'default': presets.TargetDeviceType.TARGET_DEVICE_AM62A, 'type': str, 'metavar': 'value', 'help': 'target device for inference (AM68A, AM69A, etc.)'},
     'tensor_bits':          {'dest': 'session.runtime_options.tensor_bits', 'default': 8, 'type': int, 'metavar': 'value', 'help': 'quantization bit-width for tensors (8 or 16)'},
     'work_path':            {'dest': 'common.work_path', 'default':'./work_dirs/compile/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'work path'},
     'package_path':         {'dest': 'common.package_path', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'packaged path'},

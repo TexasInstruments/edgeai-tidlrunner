@@ -29,7 +29,7 @@ Compile the model on PC.
 | runtime_name | str | None | name of the runtime session | session.name |
 | data_name | str | None | name of the input dataset | dataloader.name |
 | data_path | str | None | path to the input data directory | dataloader.path |
-| target_device | str | TargetDeviceType.TARGET_DEVICE_AM68A | target device for inference (AM68A, AM69A, etc.) | session.target_device |
+| target_device | str | TargetDeviceType.TARGET_DEVICE_AM62A | target device for inference (AM62A, AM69A, etc.) | session.target_device |
 | tidl_offload | utils.str_to_bool | True | enable TIDL acceleration for inference | session.tidl_offload |
 | graph_optimization_level | int | GraphOptimizationLevel.ORT_DISABLE_ALL | ONNX Runtime graph optimization level | session.onnxruntime:graph_optimization_level |
 | tensor_bits | int | 8 | quantization bit-width for tensors (8 or 16) | session.runtime_options.tensor_bits |
@@ -87,7 +87,7 @@ Reun inference and measure performance.
 | runtime_name | str | None | name of the runtime session | session.name |
 | data_name | str | None | name of the input dataset | dataloader.name |
 | data_path | str | None | path to the input data directory | dataloader.path |
-| target_device | str | TargetDeviceType.TARGET_DEVICE_AM68A | target device for inference (AM68A, AM69A, etc.) | session.target_device |
+| target_device | str | TargetDeviceType.TARGET_DEVICE_AM62A | target device for inference (AM62A, AM69A, etc.) | session.target_device |
 | tidl_offload | utils.str_to_bool | True | enable TIDL acceleration for inference | session.tidl_offload |
 | graph_optimization_level | int | GraphOptimizationLevel.ORT_DISABLE_ALL | ONNX Runtime graph optimization level | session.onnxruntime:graph_optimization_level |
 | tensor_bits | int | 8 | quantization bit-width for tensors (8 or 16) | session.runtime_options.tensor_bits |
@@ -165,7 +165,7 @@ Analyze model and write analyze.xlsx which indicates the correctness of individu
 | runtime_name | str | None | name of the runtime session | session.name |
 | data_name | str | None | name of the input dataset | dataloader.name |
 | data_path | str | None | path to the input data directory | dataloader.path |
-| target_device | str | TargetDeviceType.TARGET_DEVICE_AM68A | target device for inference (AM68A, AM69A, etc.) | session.target_device |
+| target_device | str | TargetDeviceType.TARGET_DEVICE_AM62A | target device for inference (AM62A, AM69A, etc.) | session.target_device |
 | tidl_offload | utils.str_to_bool | True | enable TIDL acceleration for inference | session.tidl_offload |
 | graph_optimization_level | int | GraphOptimizationLevel.ORT_DISABLE_ALL | ONNX Runtime graph optimization level | session.onnxruntime:graph_optimization_level |
 | tensor_bits | int | 8 | quantization bit-width for tensors (8 or 16) | session.runtime_options.tensor_bits |
@@ -223,7 +223,7 @@ Inspect and generate Model Inspector visualization (HTML)
 | runtime_name | str | None | name of the runtime session | session.name |
 | data_name | str | None | name of the input dataset | dataloader.name |
 | data_path | str | None | path to the input data directory | dataloader.path |
-| target_device | str | TargetDeviceType.TARGET_DEVICE_AM68A | target device for inference (AM68A, AM69A, etc.) | session.target_device |
+| target_device | str | TargetDeviceType.TARGET_DEVICE_AM62A | target device for inference (AM62A, AM69A, etc.) | session.target_device |
 | tidl_offload | utils.str_to_bool | True | enable TIDL acceleration for inference | session.tidl_offload |
 | graph_optimization_level | int | GraphOptimizationLevel.ORT_DISABLE_ALL | ONNX Runtime graph optimization level | session.onnxruntime:graph_optimization_level |
 | tensor_bits | int | 8 | quantization bit-width for tensors (8 or 16) | session.runtime_options.tensor_bits |
@@ -304,7 +304,7 @@ Package the compiled model artifacts to be used in EVM.
 | Option | Type | Default | Help | Config Field |
 |---|---:|---|---|---|
 | pipeline_type | str | package | type of pipeline to run | common.pipeline_type |
-| target_device | str | TargetDeviceType.TARGET_DEVICE_AM68A | target device for inference (AM68A, AM69A, etc.) | session.target_device |
+| target_device | str | TargetDeviceType.TARGET_DEVICE_AM62A | target device for inference (AM62A, AM69A, etc.) | session.target_device |
 | tensor_bits | int | 8 | quantization bit-width for tensors (8 or 16) | session.runtime_options.tensor_bits |
 | work_path | str | ./work_dirs/compile/{target_device}/{tensor_bits}bits | work path | common.work_path |
 | package_path | str | ./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}bits | packaged path | common.package_path |

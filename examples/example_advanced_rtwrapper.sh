@@ -30,7 +30,7 @@
 
 ##################################################################
 # set target device
-export TARGET_DEVICE="AM68A"
+export TARGET_DEVICE="AM62A"
 
 ##################################################################
 python3 ./examples/vision/scripts/example_advanced_rtwrapper.py "compile" \

@@ -31,7 +31,7 @@
 
 ##################################################################
 # set target device
-export TARGET_DEVICE="AM68A"
+export TARGET_DEVICE="AM62A"
 
 ##################################################################
 python ./examples/vision/scripts/example_runner_py.py "compile" \

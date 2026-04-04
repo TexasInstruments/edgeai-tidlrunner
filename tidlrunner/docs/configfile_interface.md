@@ -3,7 +3,7 @@
 tidlrunner-cli can also accept a config file as input. The syntax is:
 
 ```
-tidlrunner-cli <command> --config_path <configfile> [overrideoptions...]
+tidlrunner-cli <command> --config_path <configfile>  --target_device <SOC> [overrideoptions...]
 ```
 
 The configfile can be an aggregate config file listing multiple config files as in [this example](../data/models/configs.yaml) or it can be individual config files provided [under this directory here](../data/models/vision/)
@@ -12,24 +12,24 @@ The configfile can be an aggregate config file listing multiple config files as 
 #### Example - running using a single config file
 * Config file can be provided with the required arguments, instead of providing them on the commandline. The fields that can be used in the config file is described [in the Config Field here](./command_line_arguments.md)
 ```
-tidlrunner-cli compile --config_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml
+tidlrunner-cli compile --config_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml --target_device AM62A
 ```
 
 To run inference:
 ```
-tidlrunner-cli infer --config_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml
+tidlrunner-cli infer --config_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml --target_device AM62A
 ```
 
 #### Example - running using an aggregate config file
 * Using an aggregate config file that lists other config files under the configs field. 
 * When aggregate configfile is provided, multiple models will run in parallel and the log will go into a log file specific to each model (will not be displayed on screen)
 ```
-tidlrunner-cli compile --config_path ./data/models/configs.yaml
+tidlrunner-cli compile --config_path ./data/models/configs.yaml --target_device AM62A
 ```
 
 To run inference:
 ```
-tidlrunner-cli infer --config_path ./data/models/configs.yaml
+tidlrunner-cli infer --config_path ./data/models/configs.yaml --target_device AM62A
 ```
 
 #### Example - running all the models in the edgeai-modelzoo
@@ -39,13 +39,10 @@ tidlrunner-cli infer --config_path ./data/models/configs.yaml
 * Important Note: edgeai-modelzoo has a large number of models - but for now we have enabled support for only imagenet and coco models. Support for more datasets can be added in [pipelines/compile_/compile_base.py](../edgeai-tidlrunner/edgeai_tidlrunner/runner/modules/vision/pipelines/compile_/compile_base.py) in _upgrade_kwargs() method.
 
 ```
-tidlrunner-cli compile --config_path ../edgeai-modelzoo/models/configs.yaml
+tidlrunner-cli compile --config_path ../edgeai-modelzoo/models/configs.yaml --target_device AM62A
 ```
 
 To run inference:
 ```
-tidlrunner-cli infer --config_path ../edgeai-modelzoo/models/configs.yaml
+tidlrunner-cli infer --config_path ../edgeai-modelzoo/models/configs.yaml --target_device AM62A
 ```
-
-
-
