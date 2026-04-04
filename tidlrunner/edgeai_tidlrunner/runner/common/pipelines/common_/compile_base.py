@@ -143,14 +143,14 @@ class CompileModelBase(CommonPipelineBase):
                     #                
                 elif k == 'session.session_name':
                     kwargs_out['session.name'] = v
-                elif k == 'dataloader.name':
-                    if kwargs_in[k] is not None:
-                        kwargs_out[k] = kwargs_in[k]
-                    #
-                elif k == 'dataloader.path':
-                    if kwargs_in[k] is not None:
-                        kwargs_out[k] = kwargs_in[k]
-                    #
+                # elif k == 'dataloader.name':
+                #     if kwargs_in[k] is not None:
+                #         kwargs_out[k] = kwargs_in[k]
+                #     #
+                # elif k == 'dataloader.path':
+                #     if kwargs_in[k] is not None:
+                #         kwargs_out[k] = kwargs_in[k]
+                #     #
                 elif k == 'preprocess.name':
                     if kwargs_in[k] is not None:
                         kwargs_out[k] = kwargs_in[k]
