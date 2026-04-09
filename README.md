@@ -18,6 +18,8 @@ There are two packages in this repository with different purposes.
 
 Please go through the documentation of [tidlrunner](tidlrunner) to get started with this repository.
 
+The core documentation for TI Deep Learning is available in the [edgeai-tidl-tools repo under /docs](github.com/TexasInstruments/edgeai-tidl-tools/tree/master/docs). Please refer there for detailed guidance on model compilation and inference arguments, supported operators, versioning debugging tips, and more. 
+
 
 ## What is new?
 * 2026-April-03: [Model Inspector](./tidlrunner/edgeai_tidlrunner/modelinspector/README.md) is an interactive HTML visualization tool for analyzing ONNX models compiled with TIDL. Model Inspector provides comprehensive insights into model structure, performance, accuracy, and hardware acceleration.
