@@ -37,8 +37,8 @@ Compile the model on PC.
 | debug_level | int | 0 | debug level for compile and infer | session.runtime_options.debug_level |
 | deny_list_layer_type | str | '' | comma separated layer types to exclude from TIDL offload | session.runtime_options.deny_list:layer_type |
 | deny_list_layer_name | str | '' | comma separated layer names to exclude from TIDL offload | session.runtime_options.deny_list:layer_name |
-| deny_list_start_end_dict | utils.aststr_to_object | '' | a dict contaning start and end nodes - it will be used to generate deny_list:layer_name. example: {"/decoder/Concat_3":None, "/aux/Relu_5":None} | session.deny_list_start_end_dict |
-| output_16bit_names_start_end_dict | utils.aststr_to_object | '' | a dict contaning start and end nodes - it will be used to generate advanced_options:output_feature_16bit_names_list. example: {"/decoder/Concat_3":None, "/aux/Relu_5":None} | session.output_16bit_names_start_end_dict |
+| deny_list_start_end_dict | utils.aststr_to_object | '' | a dict containing start and end nodes - it will be used to generate deny_list:layer_name. example: {"/decoder/Concat_3":None, "/aux/Relu_5":None} | session.deny_list_start_end_dict |
+| output_16bit_names_start_end_dict | utils.aststr_to_object | '' | a dict containing start and end nodes - it will be used to generate advanced_options:output_feature_16bit_names_list. example: {"/decoder/Concat_3":None, "/aux/Relu_5":None} | session.output_16bit_names_start_end_dict |
 | quantization_scale_type | int | None | type of quantization scale to use | session.runtime_options.advanced_options:quantization_scale_type |
 | calibration_frames | int | 12 | number of frames for quantization calibration | session.runtime_options.advanced_options:calibration_frames |
 | calibration_iterations | int | 12 | number of calibration iterations | session.runtime_options.advanced_options:calibration_iterations |
@@ -95,8 +95,8 @@ Reun inference and measure performance.
 | debug_level | int | 0 | debug level for compile and infer | session.runtime_options.debug_level |
 | deny_list_layer_type | str | '' | comma separated layer types to exclude from TIDL offload | session.runtime_options.deny_list:layer_type |
 | deny_list_layer_name | str | '' | comma separated layer names to exclude from TIDL offload | session.runtime_options.deny_list:layer_name |
-| deny_list_start_end_dict | utils.aststr_to_object | '' | a dict contaning start and end nodes - it will be used to generate deny_list:layer_name. example: {"/decoder/Concat_3":None, "/aux/Relu_5":None} | session.deny_list_start_end_dict |
-| output_16bit_names_start_end_dict | utils.aststr_to_object | '' | a dict contaning start and end nodes - it will be used to generate advanced_options:output_feature_16bit_names_list. example: {"/decoder/Concat_3":None, "/aux/Relu_5":None} | session.output_16bit_names_start_end_dict |
+| deny_list_start_end_dict | utils.aststr_to_object | '' | a dict containing start and end nodes - it will be used to generate deny_list:layer_name. example: {"/decoder/Concat_3":None, "/aux/Relu_5":None} | session.deny_list_start_end_dict |
+| output_16bit_names_start_end_dict | utils.aststr_to_object | '' | a dict containing start and end nodes - it will be used to generate advanced_options:output_feature_16bit_names_list. example: {"/decoder/Concat_3":None, "/aux/Relu_5":None} | session.output_16bit_names_start_end_dict |
 | quantization_scale_type | int | None | type of quantization scale to use | session.runtime_options.advanced_options:quantization_scale_type |
 | calibration_frames | int | 12 | number of frames for quantization calibration | session.runtime_options.advanced_options:calibration_frames |
 | calibration_iterations | int | 12 | number of calibration iterations | session.runtime_options.advanced_options:calibration_iterations |
@@ -173,8 +173,8 @@ Analyze model and write analyze.xlsx which indicates the correctness of individu
 | debug_level | int | 0 | debug level for compile and infer | session.runtime_options.debug_level |
 | deny_list_layer_type | str | '' | comma separated layer types to exclude from TIDL offload | session.runtime_options.deny_list:layer_type |
 | deny_list_layer_name | str | '' | comma separated layer names to exclude from TIDL offload | session.runtime_options.deny_list:layer_name |
-| deny_list_start_end_dict | utils.aststr_to_object | '' | a dict contaning start and end nodes - it will be used to generate deny_list:layer_name. example: {"/decoder/Concat_3":None, "/aux/Relu_5":None} | session.deny_list_start_end_dict |
-| output_16bit_names_start_end_dict | utils.aststr_to_object | '' | a dict contaning start and end nodes - it will be used to generate advanced_options:output_feature_16bit_names_list. example: {"/decoder/Concat_3":None, "/aux/Relu_5":None} | session.output_16bit_names_start_end_dict |
+| deny_list_start_end_dict | utils.aststr_to_object | '' | a dict containing start and end nodes - it will be used to generate deny_list:layer_name. example: {"/decoder/Concat_3":None, "/aux/Relu_5":None} | session.deny_list_start_end_dict |
+| output_16bit_names_start_end_dict | utils.aststr_to_object | '' | a dict containing start and end nodes - it will be used to generate advanced_options:output_feature_16bit_names_list. example: {"/decoder/Concat_3":None, "/aux/Relu_5":None} | session.output_16bit_names_start_end_dict |
 | quantization_scale_type | int | None | type of quantization scale to use | session.runtime_options.advanced_options:quantization_scale_type |
 | calibration_frames | int | 12 | number of frames for quantization calibration | session.runtime_options.advanced_options:calibration_frames |
 | calibration_iterations | int | 12 | number of calibration iterations | session.runtime_options.advanced_options:calibration_iterations |
@@ -231,8 +231,8 @@ Inspect and generate Model Inspector visualization (HTML)
 | debug_level | int | 0 | debug level for compile and infer | session.runtime_options.debug_level |
 | deny_list_layer_type | str | '' | comma separated layer types to exclude from TIDL offload | session.runtime_options.deny_list:layer_type |
 | deny_list_layer_name | str | '' | comma separated layer names to exclude from TIDL offload | session.runtime_options.deny_list:layer_name |
-| deny_list_start_end_dict | utils.aststr_to_object | '' | a dict contaning start and end nodes - it will be used to generate deny_list:layer_name. example: {"/decoder/Concat_3":None, "/aux/Relu_5":None} | session.deny_list_start_end_dict |
-| output_16bit_names_start_end_dict | utils.aststr_to_object | '' | a dict contaning start and end nodes - it will be used to generate advanced_options:output_feature_16bit_names_list. example: {"/decoder/Concat_3":None, "/aux/Relu_5":None} | session.output_16bit_names_start_end_dict |
+| deny_list_start_end_dict | utils.aststr_to_object | '' | a dict containing start and end nodes - it will be used to generate deny_list:layer_name. example: {"/decoder/Concat_3":None, "/aux/Relu_5":None} | session.deny_list_start_end_dict |
+| output_16bit_names_start_end_dict | utils.aststr_to_object | '' | a dict containing start and end nodes - it will be used to generate advanced_options:output_feature_16bit_names_list. example: {"/decoder/Concat_3":None, "/aux/Relu_5":None} | session.output_16bit_names_start_end_dict |
 | quantization_scale_type | int | None | type of quantization scale to use | session.runtime_options.advanced_options:quantization_scale_type |
 | calibration_frames | int | 12 | number of frames for quantization calibration | session.runtime_options.advanced_options:calibration_frames |
 | calibration_iterations | int | 12 | number of calibration iterations | session.runtime_options.advanced_options:calibration_iterations |

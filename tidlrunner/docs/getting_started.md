@@ -4,11 +4,13 @@ Welcome to the **edgeai-tidlrunner** repository! This guide will help you quickl
 
 ## What is edgeai-tidlrunner?
 
-edgeai-tidlrunner is a comprehensive toolkit that provides easy-to-use interfaces for compiling AI models to run on TI edge devices. It supports various operations including model compilation, inference, evaluate evaluation, and performance analysis.
+edgeai-tidlrunner is a comprehensive toolkit that provides easy-to-use interfaces for compiling AI models to run on TI Processors devices with the C7 NPU accelerator. It supports various operations including model compilation, inference, evaluate evaluation, and performance analysis.
 
 ## Usage - compile & evaluate on PC
 
-There are two primary ways to use this repository:
+It is generally assumed that the `tidlrunner-cli` tool will be run from the root of this repository, but it is not an explicit requirement. Outputs of the tool will be placed into [work_dirs](../../work_dirs) by default.
+
+There are two primary ways to use this tool:
 
 ### 1. Config File Based Usage
 
@@ -60,7 +62,7 @@ For complete list of available command line arguments, see [command_line_argumen
 
 
 ## Usage - actual infer or evaluate on EVM
-To run the compiled model artifacts on EVM, follw these instrunctions:
+To run the compiled model artifacts on EVM, follow these instructions:
 [running_on_evm](./running_on_evm.md)
 
 
@@ -70,7 +72,7 @@ To run the compiled model artifacts on EVM, follw these instrunctions:
 |------------------|---------------------------------------------------------------------------|
 | compile          | Compile the given model(s)                                                |
 | infer            | Run inference using using already compiled model artifacts                |
-| evaluate         | Analyze compiled artifacts, run inference and analyze layerwise deviations|
+| evaluate         | Analyze compiled artifacts, run inference and analyze layer-wise deviations|
 | compile+infer    | compile the model and run inference                                       |
 | compile+analyze  | Compile the model and analyze the outputs of different layers             |
 | compile+evaluate | Compile the model, run inference and compute accuracy                     |

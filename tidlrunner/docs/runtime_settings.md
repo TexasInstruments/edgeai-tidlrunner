@@ -1,11 +1,10 @@
 ## Runtime Session Settings/Options Explained
 
 <hr>
-<hr>
 
 ### input_mean and input_scale 
 
-input_mean and input_scale are options that are unique for every model. If there are not provided, default values will be used. input_mean subtraction and input_scale is applied to normalize the input and then it is given to the model. Setting correct values for this is important to get a functionally correct model.
+The input_mean and input_scale parameters are options that are unique for every model. If these are not provided, default values will be used. Mean subtraction with input_mean and multiplication by input_scale is applied to normalize the input and then it is given to the model. Setting correct values for this is important to get a functionally correct model. It is assumed that inputs are 3-channel images
 
 In [settings_default.py](../edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py) the values are set as follows:
 ```
@@ -32,6 +31,7 @@ It requires careful analyzing of the torchvision code to understand how these va
 x_normalized = (x/255 - mean)/std                          (eqn. 1)
 ```
 
+These particular values are common because they represent the mean and standard deviation of the ImageNet1k dataset.
 
 #### TIDL example
 The input_mean, input_scale definition in this package is used for normalization in a straight forward way:
@@ -55,9 +55,9 @@ Setting the input_mean and input_scale needs careful consideration. If these val
 
 Whichever interface (runner cli, runner configfile, runner py or rtwrapper) is being used, there are some common parameters that control the core runtimes. These are called runtime_settings and runtime_options
 
-runtime_settings: runtime_settings consists of runtime_options that go directly into the underlying inference runtime and also some additional arguments. runtime_settings is basically the key words arguments dict that can be passed to [session interface](../edgeai_tidlrunner/runner/modules/vision/blocks/sessions/) or the [rtwrapper interface](../edgeai_tidlrunner/rtwrapper/core/). runtime_options is part of runtime_settings. It also has additional parameters that are needed in the abstractions in runner. Default runtime_settings are in [edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py](../edgeai_tidlrunner/runner/modules/vision/settings/runtime_settings.py)
+`runtime_settings`: runtime_settings consists of `runtime_options` that go directly into the underlying inference runtime and also some additional arguments. The runtime_settings is basically the keyword arguments dict that can be passed to [session interface](..//edgeai_tidlrunner/runner/common/blocks/sessions) or the [rtwrapper interface](../edgeai_tidlrunner/rtwrapper/core/). The runtime_options is part of runtime_settings. It also has additional parameters that are needed in the abstractions in runner. Default runtime_settings are in [edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py](../edgeai_tidlrunner/runner/common/settings/runtime_settings.py)
 
-runtime_options: runtime_options control the behaviour of core runtimes - default values are specified in [edgeai_tidlrunner/rtwrapper/options/options_default.py](../edgeai_tidlrunner/rtwrapper/options/options_default.py)
+`runtime_options`: runtime_options control the behavior of core runtimes - default values are specified in [edgeai_tidlrunner/rtwrapper/options/options_default.py](../edgeai_tidlrunner/rtwrapper/options/options_default.py)
 
 Example:<br>
 These settings and options can be passed to the underlying runner interface in one of the several ways - for example in a config file or in the Pythonic interface. Here is an example of the Pythonic form:
@@ -77,6 +77,7 @@ These settings and options can be passed to the underlying runner interface in o
 
 And here is an example usage through rtwrapper interface:
 ```
+from edgeai_tidlrunner import rtwrapper
 session = rtwrapper.core.ONNXRuntimeWrapper(model_path='model.onnx', **runtime_settings)
 ```
 

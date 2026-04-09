@@ -17,7 +17,7 @@ The parameters used in the commandline or in the configfile - one is a shortcut 
 
 As can be seen from this example, there is a one-to-one mapping between the shortcut style names, internal dot style names and the dictionary format.
 
-There are many more arguments that are supported. All the supported options and how they map to internal names can be seen in this file [settings_default.py](../edgeai_tidlrunner/runner/modules/vision/settings/settings_default.py) and this file [settings_base.py](../edgeai_tidlrunner/runner/bases/settings_base.py)
+There are many more arguments that are supported. All the supported options and how they map to internal names can be seen in this file [settings_default.py](../edgeai_tidlrunner/runner/common/settings/settings_default.py) and this file [settings_base.py](../edgeai_tidlrunner/runner/common/bases/settings_base.py)
 
 
 ### How to use the Pythonic interface 
@@ -28,15 +28,18 @@ The arguments can be provided as Shortcut Style Names in a Dictionary, Explicit 
 ```
 kwargs = {
     'session': {
-        'model_path': ./data/examples/models/mobilenet_v2.onnx',
-    }
+        'model_path': './data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx',
+    },
     'dataloader': {
-        'name': 'image_classification_dataloader'
-        'path': ./data/datasets/vision/imagenetv2c/val',
-     }
+        'name': 'image_classification_dataloader',
+        'path': './data/datasets/vision/imagenetv2c/val',
+     },
+    'preprocess': {
+        'name': 'image_preprocess',
+    },
 }
 
-edgeai_tidlrunner.runner.run('compile', **kwargs)
+edgeai_tidlrunner.run('compile', **kwargs)
 ```
 
-See the Pythonic example in [examples/vision/scripts/example_runner_py.py](../examples/vision/scripts/example_runner_py.py) which is invoked via [examples/example_advanced_runner_py.sh](../examples/example_advanced_runner_py.sh)
+See the Pythonic example in [examples/vision/scripts/example_runner_py.py](../../examples/vision/scripts/example_runner_py.py) which is invoked via [examples/example_advanced_runner_py.sh](../../examples/example_advanced_runner_py.sh)

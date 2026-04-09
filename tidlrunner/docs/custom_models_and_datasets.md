@@ -1,11 +1,12 @@
 ## Custom datasets and models
 
 ### Custom models using runner
-It is fairly easy to compile custom datasets using runner. The user can point data_path their own folder and model_path to their own model. data_name can point to the appropriate dataloader, if a built-in dataloader can load the dataset used for that model. There are some generic dataloaders provided, that can be used to load a variety of dataset formats. 
+It is fairly easy to compile with custom datasets using runner. The user can point `--data_path` to their own folder and `--model_path` to their own model. `--data_name` will reference the dataloader of choice, assuming dataloader can load the dataset format used for that model. There are several generic dataloaders provided that can be used to load a variety of dataset formats like ImageNet1k and COCO from Microsoft. 
 
 <hr>
 
 #### DataLoaders
+The `--data_name` argument will reference an appropriate loader
 ##### Built-in image dataloaders
 * image_files_dataloader: Image dataset from a folder - if accuracy computation is not needed, then this can be used (this does not provide any ground truth - so no accuracy will be computed when using this).
 * image_classification_dataloader: This can be used in two ways (1) Image classification dataset from a folder of folders - images of each category is in its own folder. (2) A flat image folder and a txt file listing the image names and the category ids.
@@ -14,7 +15,7 @@ It is fairly easy to compile custom datasets using runner. The user can point da
 
 ##### Built-in image dataloaders With ModelMaker / ModelComposer dataset formats
 These are dataloaders for the dataset format used in [Edge AI Studio](dev.ti.com/modelcomposer) or [edgeai-tensorlab/edgeai-modelmaker](https://github.com/TexasInstruments/edgeai-tensorlab)
-* For details see [MoelMaker / ModelComposer datasets](./modelmaker_datasets.md)
+* For details see [ModelMaker / ModelComposer datasets](./modelmaker_datasets.md)
 * modelmaker_classification_dataloader: For Image Classification 
 * modelmaker_detection_dataloader: For Object Detection
 * modelmaker_segmentation_dataloader: For Semantic/Instance Segmentation
