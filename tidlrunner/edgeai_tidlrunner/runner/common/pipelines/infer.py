@@ -34,6 +34,7 @@ import copy
 import ast
 import math
 import tqdm
+import platform
 
 from edgeai_tidlrunner.rtwrapper.core import presets
 
@@ -196,13 +197,17 @@ class InferModel(CompileModelBase):
             #
         #
         tqdm_obj.update(input_index + 1 - tqdm_obj.n)
-
         print(f'INFO: model infer done. output is in: {self.run_dir}')
         self.run_data = run_data
-        # TODO: populate the result entry
+
         result = self.session.get_stats()   
         self.settings['result'] = result     
+        # Display benchmark results if enabled and running on EVM
+        if common_kwargs.get('display_benchmark', False):
+            self._display_result()
+
         self._write_params(self.settings, self.result_yaml, cleanup_paths=True)
+        print(f'INFO: results written to {self.result_yaml}')
         return run_data
 
     def _run_frame(self, input_index):
@@ -226,3 +231,21 @@ class InferModel(CompileModelBase):
         #
         return run_data
 
+    def _display_result(self):
+        session_kwargs = self.settings[self.session_prefix]
+
+        # Only display benchmark if enabled and target is EVM
+        target_machine = session_kwargs.get('target_machine')
+        result = self.settings.get('result', None)
+        if result and (target_machine == presets.TargetMachineType.TARGET_MACHINE_EVM or platform.machine() == 'aarch64'):
+            print(f'INFO: Displaying benchmark results for {result["num_frames"]} inferences: ')
+            print(f'\tModel contains {int(result["num_subgraphs"])} subgraphs')
+            print(f'\tInference latency (wall clock):\t\t{result["infer_time_invoke_ms"]:.3f} ms')
+            print(f'\tInference latency (core runtime):\t{result["infer_time_core_ms"]:.3f} ms')
+            print(f'\tData copy latency:\t\t\t{(result["infer_time_core_ms"] - result["infer_time_subgraph_ms"]):.3f} ms')
+            # DDR measurements includes all reads and writes during inference, even if not related to inference
+            print(f'\tDDR transfers per frame:\t\t{result["ddr_transfer_mb"]:.3f} MB')
+            #
+        else:
+            print(f'WARNING: cannot display benchmark data if the model is not run on the target processor / EVM')
+            #

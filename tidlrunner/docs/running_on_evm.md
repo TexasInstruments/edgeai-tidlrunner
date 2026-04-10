@@ -123,6 +123,24 @@ tidlrunner-cli infer \
     --target_device AM62A --data_name random_dataloader
 ```
 
+### Viewing Benchmark Results on EVM
+
+To display detailed performance benchmark statistics after inference, use the `--display_benchmark` flag:
+
+```bash
+tidlrunner-cli infer \
+    --model_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx \
+    --target_device AM62A --display_benchmark
+```
+
+This will print performance metrics including:
+- Model number of subgraphs
+- Inference latency (wall clock) -- measured at the Python user level, including Python userspace data transfer overhead  
+- Inference latency (core runtime) -- measured internally by TIDL runtime and represents a lower bound on latency
+- Data copy latency
+- DDR transfers per frame
+
+To see layer-level performance on a per-frame basis, append setting `--debug_level 1`. Note that this may increase wall clock time
 ---
 
 ## Notes

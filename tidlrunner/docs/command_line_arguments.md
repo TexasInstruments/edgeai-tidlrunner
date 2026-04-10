@@ -119,6 +119,8 @@ Reun inference and measure performance.
 | resize_with_pad | utils.str_to_bool | False | resize image with padding to maintain aspect ratio | preprocess.resize_with_pad |
 | postprocess_enable | utils.str_to_bool | False | enable postprocessing after inference | common.postprocess_enable |
 | postprocess_name | str | None | name of the postprocessing pipeline | postprocess.name |
+| display_benchmark | utils.str_to_bool | False | display benchmark statistics after inference on EVM | common.display_benchmark |
+| target_machine | str | TARGET_MACHINE_PC_EMULATION | The machine this is running on, either "pc" or "evm" | session.target_machine |
 
 ## evaluate
 Eun inference and evaluate the accuracy and performance.
