@@ -123,7 +123,7 @@ Reun inference and measure performance.
 | target_machine | str | TARGET_MACHINE_PC_EMULATION | The machine this is running on, either "pc" or "evm" | session.target_machine |
 
 ## evaluate
-Eun inference and evaluate the accuracy and performance.
+Run inference and evaluate the accuracy and performance.
 
 | Option | Type | Default | Help | Config Field |
 |---|---:|---|---|---|
