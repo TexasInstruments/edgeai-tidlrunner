@@ -82,7 +82,8 @@ def run_compile(args, runtime_type, runtime_settings, model_path, artifacts_fold
             **runtime_settings)
 
     for input_index in range(runtime_wrapper.get_runtime_options()['advanced_options:calibration_frames']):
-        input_data = preprocess_input(calib_dataset[input_index])
+        idx = input_index % len(calib_dataset)
+        input_data = preprocess_input(calib_dataset[idx])
         runtime_wrapper.run_import(input_data)
     print(f'INFO: model import done')
 
@@ -163,8 +164,10 @@ def main(args):
     if args.command == "compile":
         os.makedirs(model_folder, exist_ok=True)
         shutil.copy2(args.model_path, model_path)
-        import onnx
-        onnx.shape_inference.infer_shapes_path(model_path, model_path)
+        if model_path.endswith('.onnx'):
+            import onnx
+            onnx.shape_inference.infer_shapes_path(model_path, model_path)
+            #
         os.makedirs(artifacts_folder, exist_ok=True)
     #
     print(f'INFO: model_path - {model_path}')
@@ -209,7 +212,7 @@ def get_arg_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('command', type=str, choices=('compile', 'infer'))
     parser.add_argument('--model_path', type=str, default='./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx')
-    parser.add_argument('--data_path', type=str, default='./data/datasets/vision/imagenetv2c/val')
+    parser.add_argument('--data_path', type=str, default='./data/datasets/vision/imagenetv2c/val/0')
     parser.add_argument('--target_device', type=str, default='AM62A')
     parser.add_argument('--runtime_name', type=str, default=None)
     return parser
