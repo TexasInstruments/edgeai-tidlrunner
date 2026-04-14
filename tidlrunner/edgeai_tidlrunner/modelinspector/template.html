@@ -4031,12 +4031,6 @@ main {
                                 </select>
                             </div>
                         </div>
-                        <div id="proctime-total-card" style="display: none; margin: 0.75rem 0; text-align: center;">
-                            <div style="display: inline-block; padding: 0.6rem 1.5rem; background: rgba(204, 0, 0, 0.08); border: 1px solid rgba(204, 0, 0, 0.2); border-radius: 8px;">
-                                <span id="proctime-total-label" style="font-size: 0.85rem; color: var(--text-secondary); margin-right: 0.5rem;"></span>
-                                <span id="proctime-total-value" style="font-size: 1.1rem; font-weight: 700; color: var(--ti-red, #cc0000);"></span>
-                            </div>
-                        </div>
                         <div class="chart-scroll-wrapper" id="proctime-scroll-wrapper">
                             <div class="chart-scroll-inner">
                                 <canvas id="proctime-chart"></canvas>
@@ -4326,8 +4320,6 @@ function buildSubgraphPerfTable() {
                     <th class="sortable" data-column="sgId" style="text-align: center;">Component <i class="fas fa-sort"></i></th>
                     <th style="text-align: center;">Status</th>
                     <th class="sortable" data-column="numLayers" style="text-align: center;">Layers <i class="fas fa-sort"></i></th>
-                    <th class="sortable" data-column="estTime" style="text-align: center;">Est. Time (μs) <i class="fas fa-sort"></i></th>
-                    <th class="sortable" data-column="totalLayerCycles" style="text-align: center;">Total Cycles <i class="fas fa-sort"></i></th>
                     <th class="sortable" data-column="gmacs" style="text-align: center;">GMACs <i class="fas fa-sort"></i></th>
                 </tr></thead>
                 <tbody id="sg-perf-table-body"></tbody>
@@ -4358,8 +4350,6 @@ function renderSgPerfTable() {
             <td style="font-weight: 600; text-align: center;">Subgraph ${r.sgId}</td>
             <td style="text-align: center;"><span class="badge-accelerated">Accelerated</span></td>
             <td style="text-align: center;"><span class="badge-total">${r.numLayers}</span></td>
-            <td style="text-align: center; font-variant-numeric: tabular-nums;">${r.estTime.toFixed(2)}</td>
-            <td style="text-align: center; font-variant-numeric: tabular-nums;">${formatWithPrefix(r.totalLayerCycles)}</td>
             <td style="text-align: center; font-variant-numeric: tabular-nums;">${r.gmacs > 0 ? r.gmacs.toFixed(4) : '-'}</td>
         `;
         tbody.appendChild(tr);
@@ -4372,8 +4362,6 @@ function renderSgPerfTable() {
             <td style="font-weight: 600; text-align: center;" title="${layer.name}">${layer.name}</td>
             <td style="text-align: center;"><span class="badge-cpu">Non-Accelerated</span></td>
             <td style="text-align: center;">1</td>
-            <td style="text-align: center; color: var(--text-muted);">-</td>
-            <td style="text-align: center; color: var(--text-muted);">-</td>
             <td style="text-align: center; color: var(--text-muted);">-</td>
         `;
         tbody.appendChild(tr);
@@ -4507,15 +4495,15 @@ function updateProctimeChart(subgraphNum) {
     const layerNames = data.map(d => d.layer_type);
     const lkp = buildLayerLookups(subgraphNum);
     // Show total subgraph time in card
-    const totalTime = proctimes.reduce((sum, t) => sum + (t || 0), 0);
-    const totalCard = document.getElementById('proctime-total-card');
-    const totalLabel = document.getElementById('proctime-total-label');
-    const totalValue = document.getElementById('proctime-total-value');
-    if (totalCard && totalLabel && totalValue) {
-        totalLabel.textContent = `Subgraph ${subgraphNum} Total:`;
-        totalValue.textContent = `${totalTime.toFixed(2)} μs`;
-        totalCard.style.display = 'block';
-    }
+    // const totalTime = proctimes.reduce((sum, t) => sum + (t || 0), 0);
+    // const totalCard = document.getElementById('proctime-total-card');
+    // const totalLabel = document.getElementById('proctime-total-label');
+    // const totalValue = document.getElementById('proctime-total-value');
+    // if (totalCard && totalLabel && totalValue) {
+    //     totalLabel.textContent = `Subgraph ${subgraphNum} Total:`;
+    //     totalValue.textContent = `${totalTime.toFixed(2)} μs`;
+    //     totalCard.style.display = 'block';
+    // }
 
     const ctx = document.getElementById('proctime-chart');
     if (!ctx) return;
