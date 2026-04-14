@@ -138,7 +138,7 @@ The Model Inspector HTML has **3 main tabs** for different analysis views:
 
 ### 1️⃣ **Model Summary Tab**
 
-![Model Summary](../../docs/assets/model_summary.png)
+![Model Summary](assets/model_summary.png)
 
 **What you see:**
 - **MODEL INFO** - Model name and task type
@@ -152,7 +152,7 @@ The Model Inspector HTML has **3 main tabs** for different analysis views:
 
 #### Model Visualization Section
 
-![Model Visualization](../../docs/assets/model_visualization.png)
+![Model Visualization](assets/model_visualization.png)
 
 Within the Model Summary tab, scroll down to the **Model Visualization** section:
 
@@ -200,7 +200,7 @@ When you click on a node in the graph, the right panel shows 2 tabs:
 
 ### 2️⃣ **Subgraphs Tab**
 
-![Subgraph Layer Details](../../docs/assets/subgraph_layer_details.png)
+![Subgraph Layer Details](assets/subgraph_layer_details.png)
 
 **What you see:**
 - **Subgraph Dropdown** - Select which subgraph to view (e.g., "Subgraph 0 (37 layers - 8.9400 GMACS)")
@@ -225,7 +225,7 @@ When you click on a layer node in the subgraph, the panel shows 2 tabs:
 
 
 - **Analysis Tab:**
-![Subgraph Analysis](../../docs/assets/subgraph_analysis.png)
+![Subgraph Analysis](assets/subgraph_analysis.png)
 This tab shows quantization analysis (only available for layers with matched traces):
 
   - **Activation Histogram**
@@ -249,7 +249,7 @@ This tab shows quantization analysis (only available for layers with matched tra
 
 ### 3️⃣ **Performance Tab**
 
-![Performance](../../docs/assets/performance.png)
+![Performance](assets/performance.png)
 
 ⚠️ **Note:** All metrics in this tab are **estimated** values.
 
@@ -277,7 +277,7 @@ This tab shows quantization analysis (only available for layers with matched tra
 
 #### Cycle Per Layer Chart
 
-![Cycle Per Layer](../../docs/assets/cycle_per_layer.png)
+![Cycle Per Layer](assets/cycle_per_layer.png)
 
 **What it shows:**
 - Bar chart showing DSP cycle breakdown for each layer
@@ -301,7 +301,7 @@ This tab shows quantization analysis (only available for layers with matched tra
 
 #### Memory Usage Chart
 
-![Memory Usage](../../docs/assets/memory_usage.png)
+![Memory Usage](assets/memory_usage.png)
 
 **What it shows:**
 - Bar chart displaying memory usage for each layer across different memory hierarchies
@@ -330,7 +330,7 @@ This tab shows quantization analysis (only available for layers with matched tra
 
 #### SNR Metrics Graph
 
-![Metrics Graph](../../docs/assets/matrics_graph.png)
+![Metrics Graph](assets/matrics_graph.png)
 
 **What it shows:**
 - Bar chart displaying SNR metrics for quantization analysis
