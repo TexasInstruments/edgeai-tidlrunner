@@ -35,6 +35,7 @@ import ast
 import yaml
 import functools
 import subprocess
+import platform
 
 from edgeai_tidlrunner import rtwrapper, runner
 from edgeai_tidlrunner.start import StartRunner, start_with_proper_environment
@@ -50,8 +51,7 @@ from edgeai_tidlrunner.start import StartRunner, start_with_proper_environment
 
 def _main(**kwargs):
     print(f"INFO: checking machine architecture...")
-    result = subprocess.run(['uname', '-m'], capture_output=True, text=True)
-    arch = result.stdout.strip()
+    arch = platform.machine()
     print(f"INFO: machine architecture found: {arch}")
     target_machine = rtwrapper.core.presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION \
         if 'x86' in arch or 'amd64' in arch else rtwrapper.core.presets.TargetMachineType.TARGET_MACHINE_EVM
