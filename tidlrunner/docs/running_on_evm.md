@@ -137,7 +137,7 @@ This will print performance metrics including:
 - Total number of subgraphs for the model
 - Inference latency (wall clock) -- measured at the Python user level, including Python userspace data transfer overhead  
 - Inference latency (core runtime) -- measured internally by TIDL runtime and represents a lower bound on latency
-- Data copy latency
+- Data copy latency for input and output tensors
 - DDR transfers per frame -- this includes system-level bandwidth, so other applications running may result in higher values
 
 To see layer-level performance on a per-frame basis, append setting `--debug_level 1`. Note that this may increase wall clock time
