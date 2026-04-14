@@ -257,11 +257,9 @@ This tab shows quantization analysis (only available for layers with matched tra
 
 **Estimated Performance Metrics Table:**
 - **Component** - Subgraph name or CPU layer name
-- **Status** - "Accelerated" (green) or "Non-Accelerated" (red)
-- **Layers** - Number of layers in this component
-- **Est. Time (µs)** - Estimated processing time in microseconds
-- **Total Cycles** - Total DSP cycles
-- **GMACs** - Giga multiply-accumulate operations
+- **Status** - "Accelerated" (green) or "Non-Accelerated" (red) status for this subgraph or layer
+- **Layers** - Number of layers in this subgraph
+- **GMACs** - Giga multiply-accumulate operations in this subgraph
 
 **PER-LAYER ANALYSIS Section:**
 
