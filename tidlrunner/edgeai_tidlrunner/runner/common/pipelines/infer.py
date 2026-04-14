@@ -237,12 +237,12 @@ class InferModel(CompileModelBase):
         # Only display benchmark if enabled and target is EVM
         target_machine = session_kwargs.get('target_machine')
         result = self.settings.get('result', None)
-        if result and (target_machine == presets.TargetMachineType.TARGET_MACHINE_EVM or platform.machine() == 'aarch64'):
+        if result and target_machine == presets.TargetMachineType.TARGET_MACHINE_EVM:
             print(f'INFO: Displaying benchmark results for {result["num_frames"]} inferences: ')
             print(f'\tModel contains {int(result["num_subgraphs"])} subgraphs')
             print(f'\tInference latency (wall clock):\t\t{result["infer_time_invoke_ms"]:.3f} ms')
             print(f'\tInference latency (core runtime):\t{result["infer_time_core_ms"]:.3f} ms')
-            print(f'\tData copy latency:\t\t\t{(result["infer_time_core_ms"] - result["infer_time_subgraph_ms"]):.3f} ms')
+            print(f'\tInput/Output Data copy latency:\t\t{(result["infer_time_core_ms"] - result["infer_time_subgraph_ms"]):.3f} ms')
             # DDR measurements includes all reads and writes during inference, even if not related to inference
             print(f'\tDDR transfers per frame:\t\t{result["ddr_transfer_mb"]:.3f} MB')
             #

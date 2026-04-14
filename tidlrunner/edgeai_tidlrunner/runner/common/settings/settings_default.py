@@ -173,7 +173,6 @@ COPY_SETTINGS_DEFAULT['compile'] = COPY_SETTINGS_DEFAULT['basic'] | COPY_SETTING
 ##########################################################################
 SETTINGS_DEFAULT['infer'] = SETTINGS_DEFAULT['compile'] | {
     'display_benchmark':        {'dest': 'common.display_benchmark', 'default': False, 'type': utils.str_to_bool, 'nargs': '?', 'const': True, 'metavar': 'value', 'help': 'display benchmark statistics after inference on EVM'},
-    'target_machine':        {'dest': 'session.target_machine', 'default': presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION, 'type': str, 'metavar': 'value', 'help': 'The machine this is running on, either "pc" or "evm"'},
 }
 
 COPY_SETTINGS_DEFAULT['infer'] = COPY_SETTINGS_DEFAULT['compile'] | {
