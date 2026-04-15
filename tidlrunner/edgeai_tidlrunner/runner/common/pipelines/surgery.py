@@ -108,6 +108,7 @@ class ModelSurgery(common_base.CommonPipelineBase):
                 custom_optimizers = {
                     'shape_inference_mode': kwargs.get('shape_inference_mode', 'pre'), 
                     'simplify_mode': kwargs.get('simplify_mode', None),
+                    'simplify_kwargs': kwargs.get('simplify_kwargs', None),
                     'add_input_normalization': kwargs.get('add_input_normalization', False)
                 }
                 tidl_onnx_model_optimizer.optimize(model_path, model_path, custom_optimizers=custom_optimizers)

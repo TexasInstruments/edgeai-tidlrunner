@@ -36,6 +36,7 @@ This is the example for a semantic segmentation model:
 ```
 tidlrunner-cli compile --model_path=./data/models/vision/segmentation/cocoseg21/edgeai-tv/deeplabv3plus_mobilenetv2_edgeailite_512x512_20210405.onnx --target_device AM62A --data_name coco_segmentation_dataloader --data_path=./data/datasets/vision/coco --preprocess_name image_preprocess 
 ```
+* Note: Model simplification with onnxsim may fail on this model for the latest onnxsim installation, but this call to onnxsim can be disabled with the --simplify-model argument as shown.
 
 #### Example - a commandline example
 See the commandline examples in [examples/example_runner_pc.sh](../../examples/example_runner_pc.sh) and [examples/example_runner_evm.sh](../../examples/example_runner_evm.sh). 
