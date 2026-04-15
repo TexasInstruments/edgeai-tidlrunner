@@ -172,6 +172,7 @@ COPY_SETTINGS_DEFAULT['compile'] = COPY_SETTINGS_DEFAULT['basic'] | COPY_SETTING
 
 ##########################################################################
 SETTINGS_DEFAULT['infer'] = SETTINGS_DEFAULT['compile'] | {
+    'display_benchmark':        {'dest': 'common.display_benchmark', 'default': False, 'type': utils.str_to_bool, 'nargs': '?', 'const': True, 'metavar': 'value', 'help': 'display benchmark statistics after inference on EVM'},
 }
 
 COPY_SETTINGS_DEFAULT['infer'] = COPY_SETTINGS_DEFAULT['compile'] | {
