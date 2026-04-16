@@ -246,7 +246,6 @@ class ParallelRunner:
         num_completed = len(completed_tasks)
         num_running = len(running_tasks)
 
-
         udate_interval = time.time() - self.last_update_time
         update_interval_elapsed = (udate_interval > self.maxinterval)
         if self.with_progressbar and (update_interval_elapsed or num_processes == 0):

@@ -294,6 +294,7 @@ class PipelineBase():
             os.makedirs(os.path.dirname(log_file), exist_ok=True)
             with open(log_file, 'a') as log_fp:
                 if capture_log == settings_base.CaptureLogModes.CAPTURE_LOG_MODE_TEE:
+                    assert False, 'ERROR: Tee log capture is not working now. Please set capture_log to CAPTURE_LOG_MODE_ON or CAPTURE_LOG_MODE_OFF for run() method.'
                     tee_stdout = utils.TeeLogWriter([sys.stdout, log_fp])
                     tee_stderr = utils.TeeLogWriter([sys.stderr, log_fp])  
                 else:

@@ -369,6 +369,7 @@ def _run(model_command_dict):
             parallel_processes = command_kwargs['common.parallel_processes']
             
             if command_kwargs['common.capture_log'] == bases.settings_base.CaptureLogModes.CAPTURE_LOG_MODE_ADAPTIVE:
+                # CAPTURE_LOG_MODE_TEE is not working now - need to fix it before using here
                 capture_log = bases.settings_base.CaptureLogModes.CAPTURE_LOG_MODE_ON \
                     if parallel_processes and multiple_models else bases.settings_base.CaptureLogModes.CAPTURE_LOG_MODE_OFF #CAPTURE_LOG_MODE_TEE
             else:
@@ -378,7 +379,8 @@ def _run(model_command_dict):
             task_func = functools.partial(_run_command, task_index, command_key, pipeline_name, command_kwargs, capture_log)
             model_key = model_key or 'model'
             proc_name = f'{model_key}:{command_key}:{pipeline_name}'
-            task_entry = {'proc_name':proc_name, 'proc_func':task_func}
+            proc_info = {'model_path': command_kwargs.get('common.model_path', ''), 'config_path': command_kwargs.get('common.config_path', '')}
+            task_entry = {'proc_name':proc_name, 'proc_func':task_func, 'proc_info':proc_info}
             task_list.append(task_entry)
             task_index = task_index + 1
         #
@@ -391,9 +393,9 @@ def _run(model_command_dict):
         # there are multiple commands given to be run back to back - running them on the same process can be problematic
         # so we will run them using multiprocessing - using separate process for each sub-command
         # this is useful for cases like 'compile,evaluate' or 'import,infer'
-        def command_proc(proc_name, proc_func):
+        def command_proc(proc_name, proc_func, proc_info):
             print(f'INFO: running - {proc_name}')
-            proc = utils.ProcessWithQueue(name=proc_name, target=proc_func)
+            proc = utils.ProcessWithQueue(name=proc_name, target=proc_func, info=proc_info)
             proc.start()
             return proc
 
@@ -401,7 +403,8 @@ def _run(model_command_dict):
             for task_entry in task_list:
                 proc_name = task_entry['proc_name']
                 proc_func = task_entry['proc_func']
-                task_entry['proc_func'] = functools.partial(command_proc, proc_name, proc_func)
+                proc_info = task_entry['proc_info']
+                task_entry['proc_func'] = functools.partial(command_proc, proc_name, proc_func, proc_info)
             #
         #
         if (parallel_processes and multiple_models):

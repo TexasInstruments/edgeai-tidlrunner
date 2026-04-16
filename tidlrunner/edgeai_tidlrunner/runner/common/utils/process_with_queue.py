@@ -45,7 +45,7 @@ mp_context = multiprocessing.get_context('spawn')
 
 
 class ProcessWithQueue(mp_context.Process):
-    def __init__(self, group=None, target=None, name=None, args=(), kwargs=None,
+    def __init__(self, group=None, target=None, name=None, args=(), kwargs=None, info=None,
         result_queue=None, log_file=None, **proc_kwargs):
         if kwargs is None:
             kwargs = {}
@@ -58,6 +58,7 @@ class ProcessWithQueue(mp_context.Process):
         self.log_file = log_file
         self.returncode = None
         self.result_queue = result_queue
+        self.info = info
 
     def wait(self, input=None, timeout=None):
         try:
@@ -98,12 +99,12 @@ class ProcessWithQueue(mp_context.Process):
         try:
             result = task(**kwargs)
         except KeyboardInterrupt:
-            print(f"KeyboardInterrupt occurred in worker process: {__file__}")
+            print(f"INFO: KeyboardInterrupt occurred in worker process: {__file__}")
             traceback.print_exc()
             exception_e = None
             raise
         except Exception as e:
-            print(f"Exception occurred in worker process: {e}")
+            print(f"ERROR: Exception occurred in worker process: {e}\n {self.info}")
             traceback.print_exc()
             exception_e = e
         #
