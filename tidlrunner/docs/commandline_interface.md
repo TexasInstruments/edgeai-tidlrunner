@@ -38,5 +38,5 @@ tidlrunner-cli compile --model_path=./data/models/vision/segmentation/cocoseg21/
 ```
 
 #### Example - a commandline example
-See the commandline examples in [examples/example_runner_cli_pc.sh](../../examples/example_runner_cli_pc.sh) and [examples/example_runner_cli_evm.sh](../../examples/example_runner_cli_evm.sh). 
+See the commandline examples in [examples/example_runner_pc.sh](../../examples/example_runner_pc.sh) and [examples/example_runner_evm.sh](../../examples/example_runner_evm.sh). 
 * To run this tool on the EVM, it must be setup and the models and artifacts must be present. See [running_on_evm.md](./running_on_evm.md) documentation.
