@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Copyright (c) 2018-2025, Texas Instruments
 # All Rights Reserved.
 #
@@ -27,50 +29,12 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-
-from edgeai_tidlrunner.rtwrapper.options import presets
-
-
-class TargetModuleType:
-    TARGET_MODULE_COMMON = 'common'
-
-    
-# task_type
-class TaskType:
-    TASK_TYPE_CLASSIFICATION = 'classification'
-    TASK_TYPE_DETECTION = 'detection'
-    TASK_TYPE_SEGMENTATION = 'segmentation'
-    TASK_TYPE_KEYPOINT_DETECTION = 'keypoint_detection'
-    TASK_TYPE_DEPTH_ESTIMATION = 'depth_estimation'
-    TASK_TYPE_DETECTION_3DOD = 'detection_3d'
-    TASK_TYPE_OBJECT_6D_POSE_ESTIMATION = 'object_6d_pose_estimation'
-    TASK_TYPE_VISUAL_LOCALIZATION = 'visual_localization'
-    TASK_TYPE_DISPARITY_ESTIMATION = 'disparity_estimation'
+##################################################################
+# for convenience, setting TARGET_DEVICE env variable to be used below - this is not needed.
+TARGET_DEVICE="AM62A"
 
 
-TaskTypeShortNames = {
-    TaskType.TASK_TYPE_CLASSIFICATION: 'cl',
-    TaskType.TASK_TYPE_DETECTION: 'od',
-    TaskType.TASK_TYPE_SEGMENTATION: 'ss',
-    TaskType.TASK_TYPE_KEYPOINT_DETECTION: 'kd',
-    TaskType.TASK_TYPE_DEPTH_ESTIMATION: 'de',
-    TaskType.TASK_TYPE_DETECTION_3DOD: '3dod',
-    TaskType.TASK_TYPE_OBJECT_6D_POSE_ESTIMATION: '6dpose',
-    TaskType.TASK_TYPE_VISUAL_LOCALIZATION: 'visloc',
-    TaskType.TASK_TYPE_DISPARITY_ESTIMATION: 'sd',
-}
-
-
-class ModelCompilationPreset:
-    PRESET_QUICK = 'QUICK'
-    PRESET_DEFAULT = 'DEFAULT'
-    PRESET_ACCURACY = 'ACCURACY'
-
-
-SESSION_TYPE_DICT_DEFAULT = {
-    presets.ModelType.MODEL_TYPE_ONNX: presets.RuntimeType.RUNTIME_TYPE_ONNXRT,
-    presets.ModelType.MODEL_TYPE_TFLITE: presets.RuntimeType.RUNTIME_TYPE_TFLITERT
-}
-
-
-ONNX_OPSET_VERSION_DEFAULT = 18 #17
+##################################################################
+# compile and evaluate accuracy using aggregate configs file
+#----------------------------------------------------------------
+tidlrunner-cli compile+evaluate --config_path ./data/models/configs.yaml --target_device ${TARGET_DEVICE}

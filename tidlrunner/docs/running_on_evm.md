@@ -73,7 +73,7 @@ tidlrunner-cli infer \
     --target_device AM62A
 ```
 
-See [example_runner_cli_evm.sh](../../examples/example_runner_cli_evm.sh) for more inference examples.
+See [example_runner_evm.sh](../../examples/example_runner_evm.sh) for more inference examples.
 
 ---
 

@@ -157,7 +157,7 @@ def yamlstr_to_object(v):
     if v is None:
         return None
     #
-    if isinstance(v, str) and v.lower() == 'none':
+    if isinstance(v, str) and v.lower() in ('none', 'null'):
         return None
     #
     if isinstance(v, list):
