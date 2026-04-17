@@ -271,7 +271,7 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
 
             if isinstance(config_entry, str):
                 if is_aggregate_config_file and not (config_entry.startswith('/') or config_entry.startswith('.')):
-                    print('INFO: config_entry is not an absolute path, resolving relative to config_path')
+                    print(f'INFO: config entry is not an absolute path, resolving relative to config_path: {config_entry}')
                     config_base_path = os.path.dirname(config_path)
                     config_entry = os.path.join(config_base_path, config_entry)
                 #
