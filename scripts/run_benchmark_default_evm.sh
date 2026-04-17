@@ -35,12 +35,8 @@
 # You can also run the runner benchmark for each model config separately, instead of using the aggregate configs file, which will allow you to easily identify which model inference is crashing and causing the EVM to be in a bad state. 
 # Please refer to the documentation for more details on how to use the runner benchmark and the various options available.
 
-##################################################################
-# for convenience, setting TARGET_DEVICE env variable to be used below - this is not needed.
-TARGET_DEVICE="AM62A"
-
 
 ##################################################################
 # evaluate accuracy using aggregate configs file
 #----------------------------------------------------------------
-tidlrunner-cli evaluate --config_path ./data/models/configs.yaml --target_device ${TARGET_DEVICE} --parallel_processes 1
+tidlrunner-cli evaluate --config_path ./data/models/configs.yaml --parallel_processes 1 "$@"

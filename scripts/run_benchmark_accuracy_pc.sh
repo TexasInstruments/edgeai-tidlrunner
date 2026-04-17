@@ -30,11 +30,6 @@
 
 
 ##################################################################
-# for convenience, setting TARGET_DEVICE env variable to be used below - this is not needed.
-TARGET_DEVICE="AM62A"
-
-
-##################################################################
 # compile and evaluate accuracy using aggregate configs file
 #----------------------------------------------------------------
-tidlrunner-cli compile+evaluate --config_path ./data/models/configs.yaml --target_device ${TARGET_DEVICE} --preset_selection ACCURACY
+tidlrunner-cli compile+evaluate --config_path ./data/models/configs.yaml --preset_selection ACCURACY "$@"
