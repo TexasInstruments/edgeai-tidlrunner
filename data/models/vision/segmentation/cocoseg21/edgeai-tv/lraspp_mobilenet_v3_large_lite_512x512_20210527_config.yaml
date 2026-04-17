@@ -1,10 +1,8 @@
 task_type: segmentation
-#dataset_category: coco
-#calibration_dataset: coco
-#input_dataset: coco
-dataloader:
-  name: coco_segmentation_dataloader
-  path: ./data/datasets/vision/coco
+input_dataset: coco
+# dataloader:
+#   name: coco_segmentation_dataloader
+#   path: ./data/datasets/vision/coco
 preprocess:
   resize:
   - 512
