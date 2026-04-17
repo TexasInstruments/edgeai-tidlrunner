@@ -271,7 +271,6 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
 
             if isinstance(config_entry, str):
                 if is_aggregate_config_file and not (config_entry.startswith('/') or config_entry.startswith('.')):
-                    print(f'INFO: config entry is not an absolute path, resolving relative to config_path: {config_entry}')
                     config_base_path = os.path.dirname(config_path)
                     config_entry = os.path.join(config_base_path, config_entry)
                 #
@@ -286,7 +285,7 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
             kwargs_cfg.get('session', {}).pop('run_dir', None)
 
             # add given args
-            kwargs_copy = copy.deepcopy(kwargs)
+            kwargs_copy = copy.deepcopy(kwargs_combined)
             kwargs_copy.pop('command', None)
             kwargs_cfg.update(kwargs_copy)
 
@@ -324,6 +323,7 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
                 model_command_list.append((command,pipeline_name,kwargs_model))
                 run_dict[model_id] = model_command_list
                 selected_models.append(model_id)
+                print(f'INFO: shortlisted/selected: model_id: {kwargs_model.get("session.model_id",None)}, config_path: {kwargs_model.get("common.config_path",None)}, model_path: {kwargs_model.get("session.model_path",None)}')
             elif verbose > 0:
                 if config_entry_path:
                     print(f'INFO: skipping entry: {config_entry_path} - does not match model_shortlist: {model_shortlist}, model_selection: {model_selection}')
