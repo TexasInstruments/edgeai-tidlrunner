@@ -53,7 +53,7 @@ class RuntimeSettings(attr_dict.AttrDict):
     def __init__(self, **kwargs):
         self.calibration_iterations_factor = None
         self.target_device_preset = True
-        self.target_device = presets.TargetDeviceType.TARGET_DEVICE_AM68A
+        self.target_device = presets.TargetDeviceType.TARGET_DEVICE_DEFAULT
         super().__init__()
         runtime_settings = self._get_runtime_settings(**kwargs)
         update_runtime_settings(self, **runtime_settings)

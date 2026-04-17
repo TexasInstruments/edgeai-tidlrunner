@@ -46,7 +46,7 @@ RUNTIME_SETTINGS_DEFAULT = {
     # False: No TIDL
     'tidl_offload': True,
 
-    'target_device': presets.TargetDeviceType.TARGET_DEVICE_AM62A,
+    'target_device': presets.TargetDeviceType.TARGET_DEVICE_DEFAULT,
     'target_machine': presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION,
     'target_device_preset': True,
 
@@ -254,7 +254,7 @@ COPY_SETTINGS_DEFAULT['report'] = COPY_SETTINGS_DEFAULT['basic'] | {
 ##########################################################################
 SETTINGS_DEFAULT['package'] = SETTINGS_DEFAULT['basic'] | {
     'pipeline_type':        {'dest': 'common.pipeline_type', 'default': 'package', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'}, 
-    'target_device':        {'dest': 'session.target_device', 'default': presets.TargetDeviceType.TARGET_DEVICE_AM62A, 'type': str, 'metavar': 'value', 'help': 'target device for inference (AM68A, AM69A, etc.)'},
+    'target_device':        {'dest': 'session.target_device', 'default': presets.TargetDeviceType.TARGET_DEVICE_DEFAULT, 'type': str, 'metavar': 'value', 'help': 'target device for inference (AM68A, AM69A, etc.)'},
     'tensor_bits':          {'dest': 'session.runtime_options.tensor_bits', 'default': 8, 'type': int, 'metavar': 'value', 'help': 'quantization bit-width for tensors (8 or 16)'},
     'work_path':            {'dest': 'common.work_path', 'default':'./work_dirs/compile/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'work path'},
     'package_path':         {'dest': 'common.package_path', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'packaged path'},
