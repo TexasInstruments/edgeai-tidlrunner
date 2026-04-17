@@ -94,6 +94,7 @@ class TargetDeviceType:
     TARGET_DEVICE_AM68A = 'AM68A'
     TARGET_DEVICE_AM69A = 'AM69A'
     TARGET_DEVICE_AM62 = 'AM62'
+    TARGET_DEVICE_DEFAULT = TARGET_DEVICE_AM62A
 
 
 # compilation can only be run in PC as of now, but inference can be run in both PC and EVM

@@ -35,11 +35,9 @@ from .version import __version__
 def get_tidl_tools_path(target_device):
     """
     Returns the path to the TIDL tools package based on the target device.
-    If target_device is not specified, it defaults to 'AM68A'.
+    target_device must be specified.
     """
-    if target_device is None:
-        target_device = 'AM68A'
-        print(f'WARNING: No target device specified, defaulting to: {target_device}')
+    assert target_device is not None, "ERROR: Target device must be specified"
     
     tidl_tools_package_base = os.path.dirname(os.path.abspath(__file__))
     tidl_tools_path = os.path.join(tidl_tools_package_base, 'bin', target_device, 'tidl_tools')
