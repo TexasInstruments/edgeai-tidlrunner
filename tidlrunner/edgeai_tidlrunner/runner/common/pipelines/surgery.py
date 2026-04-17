@@ -106,7 +106,7 @@ class ModelSurgery(common_base.CommonPipelineBase):
                 # model_surgery is false, but shape_inference and input_optimization may still be required
                 from osrt_model_tools.onnx_tools import tidl_onnx_model_optimizer
                 custom_optimizers = {
-                    'shape_inference_mode': kwargs.get('shape_inference_mode', 'pre'), 
+                    'shape_inference_mode': kwargs.get('shape_inference_mode', 'pre'),
                     'simplify_mode': kwargs.get('simplify_mode', None),
                     'simplify_kwargs': kwargs.get('simplify_kwargs', None),
                     'add_input_normalization': kwargs.get('add_input_normalization', False)

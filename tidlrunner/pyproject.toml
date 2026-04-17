@@ -34,6 +34,9 @@ dependencies = [
     "tabulate",
     "bs4",
     "openpyxl"
+    "librosa",
+    "soundfile",
+    "scipy"
 ]
 
 [project.urls]
@@ -57,6 +60,14 @@ dev = [
     "black",
     "flake8",
     "mypy"
+]
+audio = [
+    "librosa",
+    "soundfile",
+    "scipy",
+    "pesq",
+    "pystoi",
+    "scikit-learn"
 ]
 
 [project.scripts]

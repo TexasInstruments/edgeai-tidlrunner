@@ -32,6 +32,7 @@ from ....common.bases import transforms_base
 from ...settings import constants
 from ...settings.constants import presets
 from .transforms import *
+from .audio_transforms import AudioLoadAndResample, VGGishMelSpectrogram, YAMNetMelSpectrogram, STFTTransform, GCRNSTFTTransform
 
 
 class PreProcessTransforms(transforms_base.TransformsCompose):
@@ -39,11 +40,21 @@ class PreProcessTransforms(transforms_base.TransformsCompose):
         assert transforms is not None, 'transforms must be provided'
         super().__init__(transforms, **kwargs)
         self.settings = settings
-    
+
     @classmethod
-    def from_kwargs(cls, settings, resize=256, crop=224, data_layout=presets.DataLayoutType.NCHW, 
+    def from_kwargs(cls, settings, resize=256, crop=224, data_layout=presets.DataLayoutType.NCHW,
                          reverse_channels=False, backend='cv2', interpolation=None, resize_with_pad=False,
-                         add_flip_image=False, pad_color=0):
+                         add_flip_image=False, pad_color=0, **extra_kwargs):
+        # Audio task type dispatch — checked before image logic
+        # settings is a nested AttrDict; task_type lives at settings.common.task_type
+        task_type = getattr(getattr(settings, 'common', None), 'task_type', None)
+        if task_type == constants.TaskType.TASK_TYPE_AUDIO_CLASSIFICATION:
+            transforms, transforms_kwargs = cls.create_transforms_audio_classification(settings, **extra_kwargs)
+            return cls(settings, transforms, **transforms_kwargs)
+        elif task_type == constants.TaskType.TASK_TYPE_AUDIO_SPEECHENHANCEMENT:
+            transforms, transforms_kwargs = cls.create_transforms_audio_speechenhancement(settings, **extra_kwargs)
+            return cls(settings, transforms, **transforms_kwargs)
+        #
         if resize is None:
             transforms_list = [
                 # ImageRead(backend=backend),
@@ -68,6 +79,30 @@ class PreProcessTransforms(transforms_base.TransformsCompose):
                                     backend=backend, interpolation=interpolation,
                                     add_flip_image=add_flip_image, resize_with_pad=resize_with_pad, pad_color=pad_color)
         return cls(settings, transforms_list, **transforms_kwargs)
+
+    ###############################################################
+    # audio preprocessing classmethods
+    ###############################################################
+    @classmethod
+    def create_transforms_audio_classification(cls, settings, sample_rate=16000, audio_duration=4.0,
+                                                audio_model_type=None, **kwargs):
+        if audio_model_type == 'yamnet':
+            transforms_list = [YAMNetMelSpectrogram(sample_rate=sample_rate)]
+        else:
+            transforms_list = [VGGishMelSpectrogram(sample_rate=sample_rate, audio_duration=audio_duration)]
+        transforms_kwargs = dict(sample_rate=sample_rate, audio_duration=audio_duration,
+                                 audio_model_type=audio_model_type)
+        return transforms_list, transforms_kwargs
+
+    @classmethod
+    def create_transforms_audio_speechenhancement(cls, settings, audio_model_type=None,
+                                              sample_rate=16000, audio_duration=4.0, **kwargs):
+        if audio_model_type == 'gcrn':
+            transforms_list = [GCRNSTFTTransform(sample_rate=sample_rate, audio_duration=audio_duration)]
+        else:
+            transforms_list = [STFTTransform()]
+        return transforms_list, dict(audio_model_type=audio_model_type,
+                                     sample_rate=sample_rate, audio_duration=audio_duration)
 
     def set_size_details(self, resize, crop):
         for t in self.transforms:
@@ -104,3 +139,7 @@ def semantic_segmentation_preprocess(settings, name='semantic_segmentation_prepr
     assert settings.task_type == constants.TaskType.TASK_TYPE_SEGMENTATION, \
         'semantic_segmentation_preprocess can only be used for segmentation task type'
     return image_preprocess(settings, name=name, resize=resize, crop=crop, **kwargs)
+
+
+def audio_preprocess(settings, **kwargs):
+    return PreProcessTransforms.from_kwargs(settings, **kwargs)

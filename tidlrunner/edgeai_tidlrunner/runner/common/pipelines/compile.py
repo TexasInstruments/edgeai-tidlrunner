@@ -168,7 +168,8 @@ class CompileModel(CompileModelBase):
             self.preprocess = preprocess_method()
         elif hasattr(blocks.preprocess, preprocess_kwargs['name']):
             preprocess_method = getattr(blocks.preprocess, preprocess_kwargs['name'])
-            if self.session and not (preprocess_kwargs.get('resize', None) and preprocess_kwargs.get('crop', None)):
+            is_audio_task = (common_kwargs.get('task_type') or '').startswith('audio')
+            if self.session and not is_audio_task and not (preprocess_kwargs.get('resize', None) and preprocess_kwargs.get('crop', None)):
                 # input shape was not provided - use the model input size
                 input_details, output_details = self.session.get_input_output_details()
                 if preprocess_kwargs.get('data_layout') == presets.DataLayoutType.NCHW:

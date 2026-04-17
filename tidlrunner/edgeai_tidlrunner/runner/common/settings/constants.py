@@ -46,6 +46,8 @@ class TaskType:
     TASK_TYPE_OBJECT_6D_POSE_ESTIMATION = 'object_6d_pose_estimation'
     TASK_TYPE_VISUAL_LOCALIZATION = 'visual_localization'
     TASK_TYPE_DISPARITY_ESTIMATION = 'disparity_estimation'
+    TASK_TYPE_AUDIO_CLASSIFICATION = 'audio_classification'
+    TASK_TYPE_AUDIO_SPEECHENHANCEMENT = 'audio_speechenhancement'
 
 
 TaskTypeShortNames = {
@@ -58,6 +60,8 @@ TaskTypeShortNames = {
     TaskType.TASK_TYPE_OBJECT_6D_POSE_ESTIMATION: '6dpose',
     TaskType.TASK_TYPE_VISUAL_LOCALIZATION: 'visloc',
     TaskType.TASK_TYPE_DISPARITY_ESTIMATION: 'sd',
+    TaskType.TASK_TYPE_AUDIO_CLASSIFICATION: 'ac',
+    TaskType.TASK_TYPE_AUDIO_SPEECHENHANCEMENT: 'ase',
 }
 
 

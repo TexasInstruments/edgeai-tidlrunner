@@ -1,0 +1,33 @@
+# GTCRN speech enhancement (ARM-only, no TIDL offload)
+# Usage: tidlrunner-cli {compile,infer,evaluate} --config_path data/models/audio/speech_enhancement/voicebank_demand_16k/gtcrn_config.yaml
+# Note: GTCRN has unsupported TIDL operators; runs on ARM Cortex-A only (tidl_offload: false)
+# Note: GTCRN input has a dynamic time dimension (T); onnxrt handles variable-shape natively
+task_type: audio_speechenhancement
+dataloader:
+  name: speech_enhancement_dataloader
+  path: ./data/datasets/VoiceBank-DEMAND-16k
+preprocess:
+  sample_rate: 16000
+  audio_model_type: gtcrn  # dispatches STFTTransform (sqrt-Hann, n_fft=512, hop=256, center=False)
+postprocess: {}  # dispatched via PostProcessTransforms.from_kwargs() using task_type
+model_surgery: false
+shape_inference: null
+session:
+  session_name: onnxrt
+  target_device: AM62A
+  tidl_offload: false  # ARM-only execution; GTCRN uses operators not supported by TIDL
+  input_optimization: false  # disable image-specific input normalization
+  input_mean: null  # override image default (123.675, 116.28, 103.53)
+  input_scale: null  # override image default (0.017125, 0.017507, 0.017429)
+  model_path: gtcrn_dns3.onnx
+  model_id: ase-0100
+  input_details: null
+  output_details: null
+  num_inputs: 1
+model_info:
+  metric_reference:
+    pesq: 2.508     # GTCRN DNS3, ARM CPU FP32, VoiceBank-DEMAND-16k test set (824 files)
+    stoi: 0.915
+    si_sdr_db: 15.7
+  compact_name: gtcrn_dns3
+  shortlisted: true

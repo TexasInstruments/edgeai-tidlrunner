@@ -35,6 +35,7 @@ from .transforms import *
 from .keypoints import *
 #from .object_6d_pose import *
 from . import transforms as postprocess_transforms_types
+from .audio_transforms import SoundClassificationPostProcess, SpeechEnhancementPostProcess, GCRNSpeechEnhancementPostProcess
 from ....common.bases import transforms_base
 
 
@@ -65,6 +66,10 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
             transforms, transforms_kwargs = cls.create_transforms_lidar_base(settings, **kwargs)
         elif settings.common.task_type == constants.TaskType.TASK_TYPE_OBJECT_6D_POSE_ESTIMATION:
             transforms, transforms_kwargs = cls.create_transforms_detection_base(settings, object6dpose=True, **kwargs)
+        elif settings.common.task_type == constants.TaskType.TASK_TYPE_AUDIO_CLASSIFICATION:
+            transforms, transforms_kwargs = cls.create_transforms_audio_classification(settings, **kwargs)
+        elif settings.common.task_type == constants.TaskType.TASK_TYPE_AUDIO_SPEECHENHANCEMENT:
+            transforms, transforms_kwargs = cls.create_transforms_audio_speechenhancement(settings, **kwargs)
         else:
             transforms, transforms_kwargs = cls.create_transforms_none(settings, **kwargs)
         #
@@ -72,12 +77,32 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         
 
     ###############################################################
-    # post process transforms for classification
+    # post process transforms for none / passthrough
     ###############################################################
     @classmethod
     def create_transforms_none(cls, settings, **kwargs):
         transforms_list = []
-        return transforms_list
+        return transforms_list, dict()
+
+    ###############################################################
+    # post process transforms for sound classification
+    ###############################################################
+    @classmethod
+    def create_transforms_audio_classification(cls, settings, **kwargs):
+        transforms_list = [SoundClassificationPostProcess()]
+        return transforms_list, dict()
+
+    ###############################################################
+    # post process transforms for speech enhancement
+    ###############################################################
+    @classmethod
+    def create_transforms_audio_speechenhancement(cls, settings, **kwargs):
+        audio_model_type = getattr(getattr(settings, 'preprocess', None), 'audio_model_type', None)
+        if audio_model_type == 'gcrn':
+            transforms_list = [GCRNSpeechEnhancementPostProcess()]
+        else:
+            transforms_list = [SpeechEnhancementPostProcess()]
+        return transforms_list, dict()
 
     ###############################################################
     # post process transforms for classification
@@ -296,4 +321,8 @@ def segmentation_postprocess(settings, name='segmentation_postprocess', **kwargs
 def keypoint_detection_postprocess(settings, name='keypoint_detection_postprocess', **kwargs):
     assert settings.common.task_type == constants.TaskType.TASK_TYPE_KEYPOINT_DETECTION, \
         'keypoint_detection_postprocess can only be used for keypoint detection task type'
+    return PostProcessTransforms.from_kwargs(settings, **kwargs)
+
+
+def audio_postprocess(settings, **kwargs):
     return PostProcessTransforms.from_kwargs(settings, **kwargs)
