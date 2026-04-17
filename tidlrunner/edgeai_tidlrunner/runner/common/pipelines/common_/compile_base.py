@@ -211,9 +211,8 @@ class CompileModelBase(CommonPipelineBase):
         #
 
         ###################################################################################
-        if not (kwargs_out.get('dataloader.name',None) and kwargs_out.get('dataloader.path',None)):
-            input_dataset = kwargs_out.get('common.input_dataset', None)
-
+        input_dataset = kwargs_out.get('common.input_dataset', None)
+        if input_dataset:
             if kwargs_out.get('common.dataset_type_dict', None) and input_dataset in kwargs_out['common.dataset_type_dict']:
                 input_dataset = kwargs_out['common.dataset_type_dict'][input_dataset]
             #
