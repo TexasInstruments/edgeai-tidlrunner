@@ -1,0 +1,5 @@
+configs:
+  ac-0100: audio/audio_classification/urbansound8k/vggish11_20250324-1807_config.yaml
+  ac-0200: audio/audio_classification/urbansound8k/yamnet_combined_config.yaml
+  ase-0100: audio/speech_enhancement/voicebank_demand_16k/gtcrn_dns3_config.yaml
+  ase-0200: audio/speech_enhancement/voicebank_demand_16k/gcrn_fixed_4sec_config.yaml
