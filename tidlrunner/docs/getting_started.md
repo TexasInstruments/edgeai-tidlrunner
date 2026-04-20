@@ -117,3 +117,5 @@ tidlrunner-cli compile --help
 ```
 tidlrunner-cli infer --help
 ```
+
+For other types of help, check the [FAQ](./faq.md) and the other docs within this repo. For bugs or issues, create an Issue on this repository or create a support ticket on TI's [e2e forums](https://e2e.ti.com/support/processors-group/processors/f/processors-forum)
