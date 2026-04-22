@@ -40,3 +40,13 @@ class ImageClassificationDataLoader(ImageFilesDataLoader):
 
 def image_classification_dataloader(settings, name, path, label_path=None, **kwargs):
     return ImageClassificationDataLoader(path=path, label_path=label_path, **kwargs)
+
+
+def imagenet_classification_dataloader(*args, **kwargs):
+    return image_classification_dataloader(*args, **kwargs)
+
+
+def imagenetv2c_classification_dataloader(*args, **kwargs):
+    return imagenet_classification_dataloader(*args, **kwargs)
+
+
