@@ -30,6 +30,10 @@
 
 
 ##################################################################
-# compile and evaluate accuracy using aggregate configs file
+# compile and evaluate using default settings (may not produce exact accuracy numbers for all models, as the default settings are for performance and ease of use)
+# provide the argument config_path or model_path to this script to specify which model(s) to run 
+#     examples:
+#         ./scripts/run_benchmark_default_pc.sh --config_path ./data/models/configs.yaml 
+#         ./scripts/run_benchmark_default_pc.sh --config_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml
 #----------------------------------------------------------------
 $(dirname "$0")/_run_benchmark_pc.sh "$@"

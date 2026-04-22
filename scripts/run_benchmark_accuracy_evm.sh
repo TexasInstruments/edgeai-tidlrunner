@@ -37,6 +37,13 @@
 
 
 ##################################################################
-# evaluate accuracy using aggregate configs file
+# evaluate accuracy
+# --preset_selection ACCURACY will change the settings for correct accuracy evaluation - for example 
+#     using imagenet dataset instead of imagenetv2c
+#     detection thresholds and settings to correctly calculate mAP for object detection models
+# provide the argument config_path or model_path to this script to specify which model(s) to run 
+#     examples:
+#         ./scripts/run_benchmark_accuracy_evm.sh --config_path ./data/models/configs.yaml 
+#         ./scripts/run_benchmark_accuracy_evm.sh --config_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml
 #----------------------------------------------------------------
 $(dirname "$0")/_run_benchmark_evm.sh --preset_selection ACCURACY "$@"
