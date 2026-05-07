@@ -33,7 +33,7 @@ dependencies = [
     "xlsxwriter",
     "tabulate",
     "bs4",
-    "openpyxl"
+    "openpyxl",
     "librosa",
     "soundfile",
     "scipy"
