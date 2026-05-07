@@ -42,7 +42,7 @@ This installs: `librosa`, `soundfile`, `scipy`, `pesq`, `pystoi`, `scikit-learn`
 
 ### UrbanSound8K (~5.6 GB) — sound classification
 
-UrbanSound8K requires registration. Run the script and paste the download URL when prompted:
+To download the UrbanSound8K dataset, run the script:
 
 ```bash
 bash examples/audio/scripts/download_urbansound8k.sh
