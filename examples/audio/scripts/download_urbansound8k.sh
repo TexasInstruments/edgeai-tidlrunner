@@ -31,6 +31,10 @@
 ##################################################################
 # UrbanSound8K Dataset Download Script
 #
+# Usage:
+#   bash examples/audio/scripts/download_urbansound8k.sh            # default Zenodo URL
+#   bash examples/audio/scripts/download_urbansound8k.sh <URL>      # custom URL override
+#
 # Attribution (required by dataset terms):
 #   J. Salamon, C. Jacoby and J. P. Bello, "A Dataset and Taxonomy for Urban
 #   Sound Research", 22nd ACM International Conference on Multimedia, Orlando
@@ -45,6 +49,7 @@
 set -e
 
 DATASET_ARCHIVE="UrbanSound8K.tar.gz"
+DEFAULT_URL="https://zenodo.org/records/1203745/files/UrbanSound8K.tar.gz"
 
 # Resolve repo root (script lives at examples/audio/scripts/)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -63,34 +68,22 @@ if [ -d "${DATASET_DIR}" ] && [ -f "${DATASET_DIR}/metadata/UrbanSound8K.csv" ];
 fi
 
 ##################################################################
-# Dataset request instructions
+# Resolve download URL (argument overrides default)
 ##################################################################
+DATASET_URL="${1:-${DEFAULT_URL}}"
+
 echo ""
 echo "======================================================================"
-echo " UrbanSound8K Dataset — Request Required"
+echo " UrbanSound8K Dataset Download"
 echo "======================================================================"
-echo ""
-echo " UrbanSound8K requires registration before downloading."
-echo " Please follow the official procedure:"
-echo ""
-echo "   1. Visit: https://urbansounddataset.weebly.com/urbansound8k.html"
-echo "   2. Click the download link and complete the request form."
-echo "   3. You will receive an email with a download URL."
-echo "   4. Paste that URL below when prompted."
 echo ""
 echo " By using this dataset you agree to cite:"
 echo "   J. Salamon, C. Jacoby and J. P. Bello, 'A Dataset and Taxonomy"
 echo "   for Urban Sound Research', ACM-MM 2014."
 echo "   DOI: 10.1145/2647868.2655045"
+echo "   https://urbansounddataset.weebly.com/urbansound8k.html"
 echo "======================================================================"
 echo ""
-
-read -r -p "Paste your UrbanSound8K download URL here: " DATASET_URL
-
-if [ -z "${DATASET_URL}" ]; then
-    echo "ERROR: No URL provided. Exiting."
-    exit 1
-fi
 
 ##################################################################
 # Check for wget

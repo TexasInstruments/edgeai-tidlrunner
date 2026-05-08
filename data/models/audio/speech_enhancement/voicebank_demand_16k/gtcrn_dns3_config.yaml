@@ -12,6 +12,7 @@ preprocess:
 postprocess: {}  # dispatched via PostProcessTransforms.from_kwargs() using task_type
 model_surgery: false
 shape_inference: null
+simplify_model: null
 session:
   session_name: onnxrt
   target_device: AM62A
