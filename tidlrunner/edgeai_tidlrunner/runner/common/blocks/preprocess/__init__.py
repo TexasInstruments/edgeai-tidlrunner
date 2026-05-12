@@ -40,6 +40,66 @@ class PreProcessTransforms(transforms_base.TransformsCompose):
         assert transforms is not None, 'transforms must be provided'
         super().__init__(transforms, **kwargs)
         self.settings = settings
+        self.input_names = []  # Will be set when we know the input names
+
+    def set_input_names(self, input_names):
+        """Set input names to help identify text vs image inputs"""
+        self.input_names = input_names
+
+    def _is_text_input(self, tensor, input_name=None):
+        """
+        Identify if an input is text/tokens vs image based on:
+        1. Input name (contains text-related keywords)
+        2. Shape (2D tensors are typically text, 4D are images)
+        """
+        import numpy as np
+
+        # Check 1: Input name contains text-related keywords
+        if input_name:
+            text_keywords = ['input_ids', 'attention_mask', 'token', 'text', 'input_id', 'attention']
+            if any(keyword in input_name.lower() for keyword in text_keywords):
+                return True
+
+        # Check 2: Shape-based detection
+        # Text inputs are typically 2D: [batch, sequence_length]
+        # Image inputs are typically 4D: [batch, channels, height, width] or [batch, height, width, channels]
+        if isinstance(tensor, np.ndarray):
+            if len(tensor.shape) == 2:
+                # 2D tensor - likely text/tokens
+                return True
+            elif len(tensor.shape) >= 3:
+                # 3D or 4D tensor - likely image
+                return False
+
+        return False
+
+    def __call__(self, tensor, info_dict):
+        """
+        Apply preprocessing transforms, but skip text/token inputs in multi-modal models.
+        For multi-input models (e.g., CLIP), only preprocess image inputs.
+        """
+        import numpy as np
+
+        if isinstance(tensor, (list, tuple)):
+            # Multiple inputs - process each separately
+            processed = []
+            for idx, t in enumerate(tensor):
+                input_name = self.input_names[idx] if idx < len(self.input_names) else None
+                is_text = self._is_text_input(t, input_name)
+
+                if is_text:
+                    # Skip preprocessing for text/token inputs
+                    processed.append(t)
+                else:
+                    # Apply preprocessing to image inputs
+                    for transform in self.transforms:
+                        t, info_dict = transform(t, info_dict)
+                    processed.append(t)
+
+            return processed, info_dict
+        else:
+            # Single input - use parent class behavior
+            return super().__call__(tensor, info_dict)
 
     @classmethod
     def from_kwargs(cls, settings, resize=256, crop=224, data_layout=presets.DataLayoutType.NCHW,
