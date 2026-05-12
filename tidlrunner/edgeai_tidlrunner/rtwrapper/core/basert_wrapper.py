@@ -176,7 +176,8 @@ class BaseRuntimeWrapper:
         stats_dict = self._infer_frame_stats()
         self.infer_stats_dict['num_frames'] = self.infer_stats_dict.get('num_frames', 0) + 1
         # compute and populate final stats so that it can be used in result
-        self._infer_stats_sum['num_subgraphs'] = int(self._infer_stats_sum.get('num_subgraphs', 0) + stats_dict.get('num_subgraphs', 0))
+        num_subgraphs = stats_dict.get('num_subgraphs', 0) or 0 # 0 if None
+        self._infer_stats_sum['num_subgraphs'] = int(self._infer_stats_sum.get('num_subgraphs', 0) + num_subgraphs)
         if self.kwargs['target_machine'] == options.presets.TargetMachineType.TARGET_MACHINE_EVM:
             self._infer_stats_sum['infer_time_core_ms'] = self._infer_stats_sum.get('infer_time_core_ms', 0) + stats_dict.get('core_time', 0) * options.presets.MILLI_CONST
             self._infer_stats_sum['infer_time_subgraph_ms'] = self._infer_stats_sum.get('infer_time_subgraph_ms', 0) + stats_dict.get('subgraph_time', 0) * options.presets.MILLI_CONST
@@ -186,13 +187,13 @@ class BaseRuntimeWrapper:
             self.infer_stats_dict[k] = self._infer_stats_sum[k] / self.infer_stats_dict['num_frames']
         #
         if 'perfsim_time' in stats_dict:
-            self.infer_stats_dict.update({'perfsim_time_ms': stats_dict['perfsim_time'] * options.presets.MILLI_CONST})
+            self.infer_stats_dict.update({'perfsim_time_ms': stats_dict['perfsim_time'] * options.presets.MILLI_CONST if stats_dict['perfsim_time'] else None})
         #
         if 'perfsim_ddr_transfer' in stats_dict:
-            self.infer_stats_dict.update({'perfsim_ddr_transfer_mb': stats_dict['perfsim_ddr_transfer'] / options.presets.MEGA_CONST})
+            self.infer_stats_dict.update({'perfsim_ddr_transfer_mb': stats_dict['perfsim_ddr_transfer'] / options.presets.MEGA_CONST if stats_dict['perfsim_ddr_transfer'] else None})
         #
         if 'perfsim_macs' in stats_dict:
-            self.infer_stats_dict.update({'perfsim_gmacs': stats_dict['perfsim_macs'] / options.presets.GIGA_CONST})
+            self.infer_stats_dict.update({'perfsim_gmacs': stats_dict['perfsim_macs'] / options.presets.GIGA_CONST if stats_dict['perfsim_macs'] else None})
         #
 
     def _infer_frame_stats(self):
