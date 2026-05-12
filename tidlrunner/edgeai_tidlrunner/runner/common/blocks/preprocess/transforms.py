@@ -220,6 +220,37 @@ class ImageNormMeanScale(object):
         self.scale = scale
         self.data_layout = data_layout
         self.inplace = inplace
+        self.input_names = []  # Will be set when we know the input names
+
+    def set_input_names(self, input_names):
+        """Set input names to help identify text vs image inputs"""
+        self.input_names = input_names
+
+    def _is_text_input(self, tensor, input_name=None):
+        """
+        Identify if an input is text/tokens vs image based on:
+        1. Input name (contains text-related keywords)
+        2. Data type (integer types are typically text tokens)
+        3. Shape (2D tensors are typically text, 4D are images)
+        """
+        # Check 1: Input name contains text-related keywords
+        if input_name:
+            text_keywords = ['input_ids', 'attention_mask', 'token', 'text', 'input_id', 'attention']
+            if any(keyword in input_name.lower() for keyword in text_keywords):
+                return True
+
+        # Check 2: Data type - integer types are typically text tokens
+        if isinstance(tensor, np.ndarray):
+            if tensor.dtype in (np.int8, np.int32, np.int64, np.uint8):
+                # Check 3: Shape - 2D integer tensors are text, 4D might be uint8 images
+                if len(tensor.shape) == 2:
+                    return True  # Definitely text tokens
+                elif len(tensor.shape) == 4 and tensor.dtype == np.uint8:
+                    return False  # Probably uint8 image
+                else:
+                    return True  # Other integer types are likely text
+
+        return False
 
     def __call__(self, tensor, info_dict):
         """
@@ -243,35 +274,42 @@ class ImageNormMeanScale(object):
                     tensor_.append(tensor[t_idx])
                 #
             else:
-                # For multi-input models, only normalize the first input (index 0)
-                # which is typically the image tensor. Other inputs (coordinates,
-                # camera params, features, etc.) are passed through unchanged.
+                # For multi-input models, intelligently detect which inputs need normalization
+                # Skip text/token inputs (int64), only normalize image inputs (float32)
                 tensor_ = []
                 for t_idx, t in enumerate(tensor):
-                    if len(tensor) == 1 or t_idx == 0:
-                        tensor_.append(self._apply_normalize_mean_scale(t, self.mean, self.scale, self.data_layout, self.inplace))
-                    else:
+                    input_name = self.input_names[t_idx] if t_idx < len(self.input_names) else None
+                    is_text = self._is_text_input(t, input_name)
+
+                    if is_text:
+                        # Skip normalization for text/token inputs
                         tensor_.append(t)
+                    else:
+                        # Apply normalization to image inputs
+                        tensor_.append(self._apply_normalize_mean_scale(t, self.mean, self.scale, self.data_layout, self.inplace))
                     #
                 #
             #
         elif isinstance(tensor, tuple):
             tensor_ = []
             for t_idx, t in enumerate(tensor):
-                if len(tensor) == 1 or t_idx == 0:
-                    tensor_.append(self._apply_normalize_mean_scale(t, self.mean, self.scale, self.data_layout, self.inplace))
-                else:
+                input_name = self.input_names[t_idx] if t_idx < len(self.input_names) else None
+                is_text = self._is_text_input(t, input_name)
+                if is_text:
                     tensor_.append(t)
+                else:
+                    tensor_.append(self._apply_normalize_mean_scale(t, self.mean, self.scale, self.data_layout, self.inplace))
                 #
             #
             tensor_ = tuple(tensor_)
         elif isinstance(tensor, dict):
             tensor_ = {}
             for t_idx, (name, t) in enumerate(tensor.items()):
-                if len(tensor) == 1 or t_idx == 0:
-                    tensor_[name] = self._apply_normalize_mean_scale(t, self.mean, self.scale, self.data_layout, self.inplace)
-                else:
+                is_text = self._is_text_input(t, name)
+                if is_text:
                     tensor_[name] = t
+                else:
+                    tensor_[name] = self._apply_normalize_mean_scale(t, self.mean, self.scale, self.data_layout, self.inplace)
                 #
         else:
             tensor_ = self._apply_normalize_mean_scale(tensor, self.mean, self.scale, self.data_layout, self.inplace)
