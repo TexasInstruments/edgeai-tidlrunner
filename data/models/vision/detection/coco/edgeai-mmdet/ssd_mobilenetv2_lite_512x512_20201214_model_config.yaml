@@ -4,7 +4,7 @@ task_type: detection
 #input_dataset: coco
 dataloader:
   name: coco_detection_dataloader
-  path: ./data/datasets/vision/coco
+  path: ./data/datasets/coco
 preprocess:
   resize:
   - 512
