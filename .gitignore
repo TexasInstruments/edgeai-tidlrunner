@@ -9,10 +9,8 @@ dist/
 
 
 /data/private
-/data/datasets/vision/imagenetv2c*
-/data/datasets/vision/coco*
-/data/datasets/UrbanSound8K*
-/data/datasets/VoiceBank-DEMAND*
+/data/datasets/*
+
 *.onnx
 *.prototxt
 
