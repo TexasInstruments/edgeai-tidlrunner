@@ -96,11 +96,6 @@ def get_target_module(command_name, **kwargs):
 
 def _run_command(task_index, command_name, pipeline_name, command_kwargs, capture_log):
     command_kwargs = copy.deepcopy(command_kwargs)
-    parallel_devices = command_kwargs['common.parallel_devices']
-    if parallel_devices is not None and parallel_devices > 0:
-        parallel_devices_index = task_index % parallel_devices
-        os.environ['CUDA_VISIBLE_DEVICES'] = str(parallel_devices_index)
-    #
     command_kwargs['common.capture_log'] = capture_log
 
     target_module = get_target_module(command_name, **command_kwargs)
@@ -367,7 +362,8 @@ def _run(model_command_dict):
             command_key, pipeline_name, command_kwargs = model_command_entry
             # while running multiple configs, it is better to use parallel processing
             parallel_processes = command_kwargs['common.parallel_processes']
-            
+            parallel_devices = command_kwargs['common.parallel_devices']
+
             if command_kwargs['common.capture_log'] == bases.settings_base.CaptureLogModes.CAPTURE_LOG_MODE_ADAPTIVE:
                 # CAPTURE_LOG_MODE_TEE is not working now - need to fix it before using here
                 capture_log = bases.settings_base.CaptureLogModes.CAPTURE_LOG_MODE_ON \
@@ -376,11 +372,18 @@ def _run(model_command_dict):
                 capture_log = command_kwargs['common.capture_log']
             #
 
+            proc_env = None
+            if parallel_processes and parallel_devices is not None and parallel_devices > 0:
+                parallel_devices_index = task_index % parallel_devices
+                proc_env = dict()
+                proc_env['CUDA_VISIBLE_DEVICES'] = str(parallel_devices_index)
+            #
+            
             task_func = functools.partial(_run_command, task_index, command_key, pipeline_name, command_kwargs, capture_log)
             model_key = model_key or 'model'
             proc_name = f'{model_key}:{command_key}:{pipeline_name}'
             proc_info = {'model_path': command_kwargs.get('common.model_path', ''), 'config_path': command_kwargs.get('common.config_path', '')}
-            task_entry = {'proc_name':proc_name, 'proc_func':task_func, 'proc_info':proc_info}
+            task_entry = {'proc_name':proc_name, 'proc_func':task_func, 'proc_info':proc_info, 'proc_env':proc_env}
             task_list.append(task_entry)
             task_index = task_index + 1
         #
@@ -390,21 +393,16 @@ def _run(model_command_dict):
     # if there is more than one model or command or parallel_processes is set, we need to launch in ParallelRunner
     # or else we can directly run it
     if (parallel_processes and multiple_models) or (multiple_models or multiple_commands):
-        # there are multiple commands given to be run back to back - running them on the same process can be problematic
-        # so we will run them using multiprocessing - using separate process for each sub-command
-        # this is useful for cases like 'compile,evaluate' or 'import,infer'
-        def command_proc(proc_name, proc_func, proc_info):
-            print(f'INFO: running - {proc_name}')
-            proc = utils.ProcessWithQueue(name=proc_name, target=proc_func, info=proc_info)
-            proc.start()
-            return proc
-
         for task_list in task_entries.values():
             for task_entry in task_list:
                 proc_name = task_entry['proc_name']
                 proc_func = task_entry['proc_func']
                 proc_info = task_entry['proc_info']
-                task_entry['proc_func'] = functools.partial(command_proc, proc_name, proc_func, proc_info)
+                proc_env = task_entry['proc_env'] 
+                # there are multiple commands given to be run back to back - running them on the same process can be problematic
+                # so we will run them using multiprocessing - using separate process for each sub-command
+                # this is useful for cases like 'compile,evaluate' or 'import,infer'
+                task_entry['proc_func'] = functools.partial(utils.ProcessWithQueue.create, proc_name, proc_func, proc_info, proc_env)
             #
         #
         if (parallel_processes and multiple_models):

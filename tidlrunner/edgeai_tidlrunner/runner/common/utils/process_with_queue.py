@@ -109,3 +109,26 @@ class ProcessWithQueue(mp_context.Process):
             exception_e = e
         #
         result_queue.put((result,exception_e))
+
+    @classmethod
+    def create(cls, proc_name, proc_func, proc_info, proc_env):
+        print(f'INFO: running - {proc_name}')
+        # backup os.environ and restore it after the command is run, 
+        # to avoid any side effects of env changes on other commands
+        if proc_env is not None:
+            os_environ_backup = os.environ.copy()
+            os.environ.update(proc_env)
+        #
+        proc = cls(name=proc_name, target=proc_func, info=proc_info)
+        proc.start()
+        # restore os.environ
+        if proc_env is not None:
+            for k, v in os.environ.items():
+                if k not in os_environ_backup:
+                    del os.environ[k]
+
+            os.environ.update(os_environ_backup)
+        #
+        return proc
+        
+        

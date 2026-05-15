@@ -51,7 +51,10 @@ class StartRunner(runner.common.bases.PipelineBase):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._set_parallel_devices()
+        has_parallel_devides_arg = any(['--parallel_devices' in v for v in sys.argv[1:]])
+        if not has_parallel_devides_arg:
+            self._set_parallel_devices()
+        #
 
     def _set_parallel_devices(self):
         try:
