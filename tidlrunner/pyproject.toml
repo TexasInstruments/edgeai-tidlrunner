@@ -36,7 +36,8 @@ dependencies = [
     "openpyxl",
     "librosa",
     "soundfile",
-    "scipy"
+    "scipy",
+    "plyfile"
 ]
 
 [project.urls]

@@ -35,8 +35,56 @@ from .coco_seg import coco_segmentation_dataloader
 from .coco_kpts import coco_keypoint_detection_dataloader
 from .ade20k import ade20k_segmentation_dataloader, ade20k32_segmentation_dataloader
 
+from .image_pix2pix import image_pix2pix_dataloader
+from .image_det import image_detection_dataloader
+from .image_seg import image_segmentation_dataloader
+
+from .imagenet import imagenet_dataloader
+from .imagenetv2 import imagenetv2c_dataloader
+from .cityscapes import cityscapes_segmentation_dataloader
+from .voc_seg import voc_segmentation_dataloader
+from .widerface_det import widerface_detection_dataloader
+from .nyudepthv2 import nyudepthv2_dataloader
+from .robokit_seg import robokit_segmentation_dataloader
+from .robokit_visloc import robokit_visloc_dataloader
+from .tiscapes_seg import tiscapes_segmentation_dataloader
+from .onnx_backend_dataset import onnx_backend_dataloader
+from .tidl_unit_dataset import tidl_unit_dataloader
+
 from .modelmaker_dataloaders import modelmaker_classification_dataloader, \
     modelmaker_detection_dataloader, modelmaker_segmentation_dataloader
 
 from .audio_classification import audio_classification_dataloader
 from .speech_enhancement import speech_enhancement_dataloader
+
+import warnings
+
+try:
+    from .ycbv import ycbv_dataloader
+except (ImportError, ModuleNotFoundError) as e:
+    warnings.warn(f'WARNING: ycbv dataloader could not be imported - {str(e)}')
+    ycbv_dataloader = None
+
+try:
+    from .kitti_2015 import kitti_2015_dataloader
+except (ImportError, ModuleNotFoundError) as e:
+    warnings.warn(f'WARNING: kitti_2015 dataloader could not be imported - {str(e)}')
+    kitti_2015_dataloader = None
+
+try:
+    from .kitti_lidar_det import kitti_lidar_det_dataloader
+except (ImportError, ModuleNotFoundError) as e:
+    warnings.warn(f'WARNING: kitti_lidar_det dataloader could not be imported - {str(e)}')
+    kitti_lidar_det_dataloader = None
+
+try:
+    from .nuscenes_dataset import nuscenes_dataloader
+except (ImportError, ModuleNotFoundError) as e:
+    warnings.warn(f'WARNING: nuscenes_dataset dataloader could not be imported - {str(e)}')
+    nuscenes_dataloader = None
+
+try:
+    from .pandaset_dataset import pandaset_dataloader
+except (ImportError, ModuleNotFoundError) as e:
+    warnings.warn(f'WARNING: pandaset_dataset dataloader could not be imported - {str(e)}')
+    pandaset_dataloader = None

@@ -39,7 +39,7 @@ from . import dataloader_utils
 
 #######################################################################
 class ImageListDataLoader(dataset_base.DatasetBase):
-    def __init__(self, files, labels=None, file_types=None, shuffle=True, backend='pil', bgr_to_rgb=True):
+    def __init__(self, files, labels=None, file_types=None, shuffle=False, backend='pil', bgr_to_rgb=True):
         super().__init__()
         self.files = copy.deepcopy(files)
         self.labels = copy.deepcopy(labels)

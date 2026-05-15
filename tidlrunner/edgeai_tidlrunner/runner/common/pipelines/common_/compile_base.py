@@ -261,6 +261,13 @@ class CompileModelBase(CommonPipelineBase):
                 if kwargs_out.get('dataloader.path', None) is None:
                     kwargs_out['dataloader.path'] = './data/datasets/coco'
                 #    
+            elif input_dataset == 'ade20k':
+                if kwargs_out.get('dataloader.name', None) is None:
+                    kwargs_out['dataloader.name'] = 'ade20k_segmentation_dataloader'
+                #
+                if kwargs_out.get('dataloader.path', None) is None:
+                    kwargs_out['dataloader.path'] = './data/datasets/ADEChallengeData2016'
+                #   
             elif input_dataset == 'ade20k32':
                 if kwargs_out.get('dataloader.name', None) is None:
                     kwargs_out['dataloader.name'] = 'ade20k32_segmentation_dataloader'
