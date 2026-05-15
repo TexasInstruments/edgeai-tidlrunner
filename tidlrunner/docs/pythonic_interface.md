@@ -32,7 +32,7 @@ kwargs = {
     },
     'dataloader': {
         'name': 'image_classification_dataloader',
-        'path': './data/datasets/vision/imagenetv2c/val',
+        'path': './data/datasets/imagenetv2c/val',
      },
     'preprocess': {
         'name': 'image_preprocess',

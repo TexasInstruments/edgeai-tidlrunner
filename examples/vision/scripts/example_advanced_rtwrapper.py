@@ -212,7 +212,7 @@ def get_arg_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('command', type=str, choices=('compile', 'infer'))
     parser.add_argument('--model_path', type=str, default='./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx')
-    parser.add_argument('--data_path', type=str, default='./data/datasets/vision/imagenetv2c/val/0')
+    parser.add_argument('--data_path', type=str, default='./data/datasets/imagenetv2c/val/0')
     parser.add_argument('--target_device', type=str, default='AM62A')
     parser.add_argument('--runtime_name', type=str, default=None)
     return parser

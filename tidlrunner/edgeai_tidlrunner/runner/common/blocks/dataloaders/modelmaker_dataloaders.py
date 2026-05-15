@@ -40,12 +40,12 @@ from pycocotools import mask as coco_mask
 from ....common import utils
 
 from . import dataset_base
-from . import object_detection
-from . import image_classification
-from . import semantic_segmentation
+from . import coco_det
+from . import image_cls
+from . import coco_seg
 
 
-class ModelmakerDetectionDataset(object_detection.ObjectDetectionDataLoader):
+class ModelmakerDetectionDataset(coco_det.ObjectDetectionDataLoader):
     pass
 
 
@@ -61,7 +61,7 @@ def modelmaker_detection_dataloader(settings, name, path, label_path=None, **kwa
 
 
 ####################################################################################################
-class ModelMakerClassificationDataset(image_classification.ImageClassificationDataLoader):
+class ModelMakerClassificationDataset(image_cls.ImageClassificationDataLoader):
     def __init__(self, img_dir, annotation_file, with_background_class=False, **kwargs):
         super().__init__(img_dir, annotation_file, **kwargs)
         self.image_dir = img_dir
@@ -140,7 +140,7 @@ def modelmaker_classification_dataloader(settings, name, path, label_path, **kwa
 
 
 ####################################################################################################
-class ModelMakerSegmentationDataset(semantic_segmentation.SemanticSegmentationDataLoader):
+class ModelMakerSegmentationDataset(coco_seg.SemanticSegmentationDataLoader):
     def __init__(self, img_dir, annotation_file, with_background_class=True, **kwargs):
         super().__init__(img_dir, annotation_file, with_background_class, **kwargs)
 

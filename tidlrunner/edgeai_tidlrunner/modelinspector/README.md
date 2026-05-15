@@ -108,7 +108,7 @@ tidlrunner-cli inspect \
 tidlrunner-cli inspect \
   --model_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx \
   --data_name image_files_dataloader \
-  --data_path data/datasets/vision/imagenetv2c/val \
+  --data_path data/datasets/imagenetv2c/val \
   --target_device AM62A
 ```
 

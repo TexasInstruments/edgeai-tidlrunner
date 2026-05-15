@@ -223,44 +223,51 @@ class CompileModelBase(CommonPipelineBase):
                     kwargs_out['dataloader.name'] = 'image_classification_dataloader'
                 #
                 if kwargs_out.get('dataloader.path', None) is None:
-                    kwargs_out['dataloader.path'] = './data/datasets/vision/imagenet/val'
-                    kwargs_out['dataloader.label_path'] = './data/datasets/vision/imagenet/val.txt'
+                    kwargs_out['dataloader.path'] = './data/datasets/imagenet/val'
+                    kwargs_out['dataloader.label_path'] = './data/datasets/imagenet/val.txt'
                 #
             elif input_dataset == 'imagenet_folders':
                 if kwargs_out.get('dataloader.name', None) is None:
                     kwargs_out['dataloader.name'] = 'image_classification_dataloader'
                 #
                 if kwargs_out.get('dataloader.path', None) is None:
-                    kwargs_out['dataloader.path'] = './data/datasets/vision/imagenet/val'
+                    kwargs_out['dataloader.path'] = './data/datasets/imagenet/val'
                 #
             elif input_dataset == 'imagenetv2c':
                 if kwargs_out.get('dataloader.name', None) is None:
                     kwargs_out['dataloader.name'] = 'image_classification_dataloader'
                 #
                 if kwargs_out.get('dataloader.path', None) is None:
-                    kwargs_out['dataloader.path'] = './data/datasets/vision/imagenetv2c/val'
+                    kwargs_out['dataloader.path'] = './data/datasets/imagenetv2c/val'
                 #
             elif input_dataset == 'coco':
                 if kwargs_out.get('dataloader.name', None) is None:
                     kwargs_out['dataloader.name'] = 'coco_detection_dataloader'
                 #
                 if kwargs_out.get('dataloader.path', None) is None:
-                    kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
+                    kwargs_out['dataloader.path'] = './data/datasets/coco'
                 #
             elif input_dataset == 'cocoseg21':
                 if kwargs_out.get('dataloader.name', None) is None:
                     kwargs_out['dataloader.name'] = 'coco_segmentation_dataloader'
                 #
                 if kwargs_out.get('dataloader.path', None) is None:
-                    kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
+                    kwargs_out['dataloader.path'] = './data/datasets/coco'
                 #               
             elif input_dataset == 'cocokpts':
                 if kwargs_out.get('dataloader.name', None) is None:
                     kwargs_out['dataloader.name'] = 'coco_keypoint_detection_dataloader'
                 #
                 if kwargs_out.get('dataloader.path', None) is None:
-                    kwargs_out['dataloader.path'] = './data/datasets/vision/coco'
-                #                  
+                    kwargs_out['dataloader.path'] = './data/datasets/coco'
+                #    
+            elif input_dataset == 'ade20k32':
+                if kwargs_out.get('dataloader.name', None) is None:
+                    kwargs_out['dataloader.name'] = 'ade20k32_segmentation_dataloader'
+                #
+                if kwargs_out.get('dataloader.path', None) is None:
+                    kwargs_out['dataloader.path'] = './data/datasets/ADEChallengeData2016'
+                #               
             # else:
             #     print(f'WARNING: {input_dataset} dataset is not supported - please use a supported dataset OR specify both dataloader.name and dataloader.path')  
             # #  

@@ -146,7 +146,7 @@ def main():
                        default='all',
                        help='Dataset to download: imagenetv2c, coco, or all (default: all)')
     parser.add_argument('--dataset_path', 
-                       default='./data/datasets/vision/{dataset_name}',
+                       default='./data/datasets/{dataset_name}',
                        help='Base path where datasets will be downloaded (default: ./data/datasets/vision)')
     parser.add_argument('--force_download', 
                        action='store_true',

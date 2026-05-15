@@ -36,9 +36,9 @@ export TARGET_DEVICE="AM62A"
 python3 ./examples/vision/scripts/example_advanced_rtwrapper.py "compile" \
   --target_device ${TARGET_DEVICE} \
   --model_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx \
-  --data_path ./data/datasets/vision/imagenetv2c/val
+  --data_path ./data/datasets/imagenetv2c/val
 
 python3 ./examples/vision/scripts/example_advanced_rtwrapper.py "infer" \
   --target_device ${TARGET_DEVICE} \
   --model_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx \
-  --data_path ./data/datasets/vision/imagenetv2c/val
+  --data_path ./data/datasets/imagenetv2c/val
