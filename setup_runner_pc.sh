@@ -102,6 +102,11 @@ pip3 install -e ./tidlrunner[pc]
 
 ######################################################################
 # tidlrunner-tools-install is a script that defined in and installed via ./pyproject.toml
+# not required anymore as the recent onnx-graphsurgeon can be put into requirements
 # it installs additional python packages and tools
-echo "Running: tidlrunner-tools-install..."
-tidlrunner-tools-install
+# echo "Running: tidlrunner-tools-install..."
+# tidlrunner-tools-install
+
+
+#######################################################################
+echo "INFO: completed installation."

@@ -52,6 +52,8 @@ pc = [
     "protobuf==3.20.3",
     "numpy==1.23.0",
     "onnxsim==0.4.35", 
+    "onnx-graphsurgeon==0.5.2",
+    "nuscenes-devkit", ## nuscenes-devkit needs to be moved to main requirements after figuring out on how to install on evm
 ]
 evm = [
     "pycocotools"
@@ -72,7 +74,7 @@ audio = [
 ]
 
 [project.scripts]
-tidlrunner-tools-install = "edgeai_tidlrunner.download:main"
+# tidlrunner-tools-install = "edgeai_tidlrunner.download:main" # not required anymore as the recent onnx-graphsurgeon can be put into requirements
 tidlrunner-cli = "edgeai_tidlrunner.main:main"
 
 [tool.setuptools]
