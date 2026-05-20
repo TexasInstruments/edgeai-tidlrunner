@@ -65,12 +65,11 @@ echo "Option 1 - for ubuntu only - details are here: https://ubuntu.com/server/d
 echo "  sudo ubuntu-drivers list"
 echo "  sudo ubuntu-drivers install"
 echo "  or a specific version can be installed with additional arguement - for example:"
-echo "  sudo ubuntu-drivers install nvidia:550"
-echo "Option 2: To install the legacy kernel module flavor:"
-echo "  sudo apt-get install -y cuda-drivers"
-echo "Option 3: To install the open kernel module flavor:"
-echo "  sudo apt-get install -y nvidia-kernel-open-550"
-echo "  sudo apt-get install -y cuda-drivers-550"
+echo "  sudo ubuntu-drivers install nvidia:570"
+echo "Option 2: To install the legacy official flavor:"
+echo "  sudo apt-get install -y nvidia-driver-570"
+echo "Option 3: To install the open flavor:"
+echo "  sudo apt-get install -y nvidia-driver-570-open"
 echo "============================================================"
 
 
