@@ -1,5 +1,5 @@
 # YAMNet sound classification
-# Usage: tidlrunner-cli {compile,infer,evaluate} --config_path data/models/audio/audio_classification/urbansound8k/yamnet_config.yaml
+# Usage: tidlrunner-cli {compile,infer,evaluate} --config_path data/configs/subset/models/audio/audio_classification/urbansound8k/yamnet_config.yaml
 task_type: audio_classification
 dataloader:
   name: audio_classification_dataloader

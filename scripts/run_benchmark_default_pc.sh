@@ -32,4 +32,4 @@
 ##################################################################
 # compile and evaluate accuracy using aggregate configs file
 #----------------------------------------------------------------
-tidlrunner-cli compile+evaluate --config_path ./data/models/configs.yaml "$@"
+tidlrunner-cli compile+evaluate --config_path ./data/configs/subset/models/configs.yaml "$@"

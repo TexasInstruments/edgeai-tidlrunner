@@ -40,37 +40,37 @@ TARGET_DEVICE="AM62A"
 # to understand the options that can be specified, use: tidlrunner-cli-pc compile --help 
 #----------------------------------------------------------------
 # Example 1.1 - compile
-tidlrunner-cli compile --model_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx --target_device ${TARGET_DEVICE}
+tidlrunner-cli compile --model_path ./data/configs/subset/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx --target_device ${TARGET_DEVICE}
 
 ##################################################################
 # Example 1.2 - infer
-# tidlrunner-cli infer --model_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx --target_device ${TARGET_DEVICE}
+# tidlrunner-cli infer --model_path ./data/configs/subset/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx --target_device ${TARGET_DEVICE}
 
 ##################################################################
 # Example 1.3 - compile+infer in a single command
-# tidlrunner-cli compile+infer --model_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx --target_device ${TARGET_DEVICE}
+# tidlrunner-cli compile+infer --model_path ./data/configs/subset/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx --target_device ${TARGET_DEVICE}
 
 
 ##################################################################
 # Exampe 2: compile+infer using a config file
 #----------------------------------------------------------------
-# tidlrunner-cli compile+infer --config_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml --target_device ${TARGET_DEVICE}
+# tidlrunner-cli compile+infer --config_path ./data/configs/subset/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml --target_device ${TARGET_DEVICE}
 
 
 ##################################################################
 # Example 3: compile+infer using a wrapper configs file that aggregates other config files
 #----------------------------------------------------------------
-# tidlrunner-cli compile+infer --config_path ./data/models/configs.yaml --target_device ${TARGET_DEVICE}
+# tidlrunner-cli compile+infer --config_path ./data/configs/subset/models/configs.yaml --target_device ${TARGET_DEVICE}
 
 
 ##################################################################
 # Example 4: compile and evaluate accuracy using aggregate configs file
 #----------------------------------------------------------------
-# tidlrunner-cli compile+evaluate --config_path ./data/models/configs.yaml --target_device ${TARGET_DEVICE}
+# tidlrunner-cli compile+evaluate --config_path ./data/configs/subset/models/configs.yaml --target_device ${TARGET_DEVICE}
 
 
 ##################################################################
 # Example 5: analyze a model using a config file
 #----------------------------------------------------------------
-# tidlrunner-cli analyze --config_path ./data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml --target_device ${TARGET_DEVICE}
+# tidlrunner-cli analyze --config_path ./data/configs/subset/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml --target_device ${TARGET_DEVICE}
 

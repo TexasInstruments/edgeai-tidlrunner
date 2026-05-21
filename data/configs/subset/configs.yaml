@@ -1,0 +1,14 @@
+configs:
+  od-8020: models/vision/detection/coco/edgeai-mmdet/ssd_mobilenetv2_lite_512x512_20201214_model_config.yaml
+  od-8220: models/vision/detection/coco/edgeai-mmdet/yolox_s_lite_640x640_20220221_model_config.yaml
+  cl-6090: models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml
+  ss-8710: models/vision/segmentation/cocoseg21/edgeai-tv/deeplabv3plus_mobilenetv2_edgeailite_512x512_20210405_config.yaml
+  cl-6100: models/vision/classification/imagenet1k/torchvision/resnet18_config.yaml
+  cl-6110: models/vision/classification/imagenet1k/torchvision/resnet50_config.yaml
+  ss-8740: models/vision/segmentation/cocoseg21/edgeai-tv/lraspp_mobilenet_v3_large_lite_512x512_20210527_config.yaml
+  od-8920: models/vision/detection/coco/hf-transformers/detr_fb_resnet50_800x800_simp_config.yaml
+  od-8970: models/vision/detection/coco/edgeai-mmdet/efficientdet_effb0_bifpn_lite_512x512_20240612_model_config.yaml
+  od-9207: models/vision/detection/coco/edgeai-mmdet/rtmdet_m_coco_orig_640x640_20250310_model_config.yaml
+  od-9206: models/vision/detection/coco/edgeai-mmdet/rtmdet_m_coco_lite_640x640_20250404_model_config.yaml
+  od-9208: models/vision/detection/coco/edgeai-mmdet/rtmdet_l_coco_orig_640x640_20250310_model_config.yaml
+  od-9209: models/vision/detection/coco/edgeai-mmdet/rtmdet_l_coco_lite_640x640_20250310_model_config.yaml

@@ -65,7 +65,7 @@ The simplest way to generate Model Inspector:
 
 ```bash
 tidlrunner-cli inspect \
-  --config_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml \
+  --config_path data/configs/subset/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml \
   --target_device AM62A
 ```
 
@@ -90,7 +90,7 @@ work_dirs/compile/AM62A/8bits/{model_id}/inspector/modelinspector.html
 
 ```bash
 tidlrunner-cli inspect \
-  --config_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml \
+  --config_path data/configs/subset/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml \
   --target_device AM62A
 ```
 
@@ -98,7 +98,7 @@ tidlrunner-cli inspect \
 
 ```bash
 tidlrunner-cli inspect \
-  --config_path data/models/vision/detection/coco/edgeai-mmdet/yolox_s_lite_640x640_20220221_model_config.yaml \
+  --config_path data/configs/subset/models/vision/detection/coco/edgeai-mmdet/yolox_s_lite_640x640_20220221_model_config.yaml \
   --target_device AM62A
 ```
 
@@ -106,7 +106,7 @@ tidlrunner-cli inspect \
 
 ```bash
 tidlrunner-cli inspect \
-  --model_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx \
+  --model_path data/configs/subset/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx \
   --data_name image_files_dataloader \
   --data_path data/datasets/imagenetv2c/val \
   --target_device AM62A
@@ -121,7 +121,7 @@ tidlrunner-cli inspect \
 
 ```bash
 tidlrunner-cli inspect \
-  --config_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml \
+  --config_path data/configs/subset/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml \
   --target_device AM62A \
   --act_data=false
 ```

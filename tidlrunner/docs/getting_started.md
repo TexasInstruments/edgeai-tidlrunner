@@ -18,10 +18,10 @@ For more control and reproducible workflows, you can use configuration files. Th
 
 **Example:**
 ```bash
-tidlrunner-cli compile --config_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml --target_device AM62A
+tidlrunner-cli compile --config_path data/configs/subset/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml --target_device AM62A
 ```
 ```bash
-tidlrunner-cli evaluate --config_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml --target_device AM62A
+tidlrunner-cli evaluate --config_path data/configs/subset/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml --target_device AM62A
 ```
 
 This approach provides:
@@ -43,10 +43,10 @@ The simplest way to get started is by providing only the model path. This approa
 
 **Example:**
 ```bash
-tidlrunner-cli compile --model_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx  --target_device AM62A
+tidlrunner-cli compile --model_path data/configs/subset/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx  --target_device AM62A
 ```
 ```bash
-tidlrunner-cli infer --model_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx  --target_device AM62A
+tidlrunner-cli infer --model_path data/configs/subset/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx  --target_device AM62A
 ```
 
 This command will:
@@ -90,7 +90,7 @@ List of devices supported by TIDL are listed in the page [Supported Devices & SD
 All those devices are supported by this tool. A specific device can be specified using the option target_device. For example:
 
 ```bash
-tidlrunner-cli compile --config_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml --target_device TDA4VH
+tidlrunner-cli compile --config_path data/configs/subset/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml --target_device TDA4VH
 ```
 
 If you need more details, please refer to [this script that downloads tidl_tools](../../tools/tidl_tools_package/download.py)

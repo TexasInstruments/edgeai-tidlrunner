@@ -1,5 +1,5 @@
 # VGGish11 sound classification
-# Usage: tidlrunner-cli {compile,infer,evaluate} --config_path data/models/audio/audio_classification/urbansound8k/vggish11_config.yaml
+# Usage: tidlrunner-cli {compile,infer,evaluate} --config_path data/configs/subset/models/audio/audio_classification/urbansound8k/vggish11_config.yaml
 #
 # NOTE: model_path uses the FP32 floating-point model (not PTQ) because the PTQ model
 # (vggish11_20250324-1807_ptq.onnx, opset 17 QDQ format) fails TIDL import on

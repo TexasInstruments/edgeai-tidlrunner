@@ -39,4 +39,4 @@
 ##################################################################
 # evaluate accuracy using aggregate configs file
 #----------------------------------------------------------------
-tidlrunner-cli evaluate --config_path ./data/models/configs.yaml --preset_selection ACCURACY --parallel_processes 1 "$@"
+tidlrunner-cli evaluate --config_path ./data/configs/subset/models/configs.yaml --preset_selection ACCURACY --parallel_processes 1 "$@"

@@ -15,7 +15,7 @@ Compile the model on the PC first. The compiled artifacts will be written to `wo
 
 ```bash
 tidlrunner-cli compile \
-    --model_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx \
+    --model_path data/configs/subset/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx \
     --target_device AM62A
 ```
 
@@ -69,7 +69,7 @@ SSH into the EVM and run inference from the copied directory:
 ssh root@<EVM_IP>
 cd /opt/edgeai-tidlrunner
 tidlrunner-cli infer \
-    --model_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx \
+    --model_path data/configs/subset/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx \
     --target_device AM62A
 ```
 
@@ -119,7 +119,7 @@ With the directory mounted, run inference the same way as on PC:
 ```bash
 cd /opt/edgeai-tidlrunner
 tidlrunner-cli infer \
-    --model_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx \
+    --model_path data/configs/subset/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx \
     --target_device AM62A --data_name random_dataloader
 ```
 
@@ -129,7 +129,7 @@ To display detailed performance benchmark statistics after inference, use the `-
 
 ```bash
 tidlrunner-cli infer \
-    --model_path data/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx \
+    --model_path data/configs/subset/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx \
     --target_device AM62A --display_benchmark
 ```
 
