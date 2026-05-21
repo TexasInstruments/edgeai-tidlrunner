@@ -62,29 +62,29 @@ import warnings
 try:
     from .ycbv import ycbv_dataloader
 except (ImportError, ModuleNotFoundError) as e:
-    warnings.warn(f'WARNING: ycbv dataloader could not be imported - {str(e)}')
+    # warnings.warn(f'WARNING: ycbv dataloader could not be imported - {str(e)}')
     ycbv_dataloader = None
 
 try:
     from .kitti_2015 import kitti_2015_dataloader
 except (ImportError, ModuleNotFoundError) as e:
-    warnings.warn(f'WARNING: kitti_2015 dataloader could not be imported - {str(e)}')
+    # warnings.warn(f'WARNING: kitti_2015 dataloader could not be imported - {str(e)}')
     kitti_2015_dataloader = None
 
 try:
     from .kitti_lidar_det import kitti_lidar_det_dataloader
 except (ImportError, ModuleNotFoundError) as e:
-    warnings.warn(f'WARNING: kitti_lidar_det dataloader could not be imported - {str(e)}')
+    # warnings.warn(f'WARNING: kitti_lidar_det dataloader could not be imported - {str(e)}')
     kitti_lidar_det_dataloader = None
 
 try:
     from .nuscenes_dataset import nuscenes_dataloader
 except (ImportError, ModuleNotFoundError) as e:
-    warnings.warn(f'WARNING: nuscenes_dataset dataloader could not be imported - {str(e)}')
+    # warnings.warn(f'WARNING: nuscenes_dataset dataloader could not be imported - {str(e)}')
     nuscenes_dataloader = None
 
 try:
     from .pandaset_dataset import pandaset_dataloader
 except (ImportError, ModuleNotFoundError) as e:
-    warnings.warn(f'WARNING: pandaset_dataset dataloader could not be imported - {str(e)}')
+    # warnings.warn(f'WARNING: pandaset_dataset dataloader could not be imported - {str(e)}')
     pandaset_dataloader = None

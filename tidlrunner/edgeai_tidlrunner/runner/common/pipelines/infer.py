@@ -86,24 +86,26 @@ class InferModel(CompileModelBase):
         #
 
         # input_data
-        if self.pipeline_config and 'dataloader' in self.pipeline_config:
-            self.dataloader = self.pipeline_config['dataloader']
-        elif self.pipeline_config and 'calibration_dataset' in self.pipeline_config:
-            self.dataloader = self.pipeline_config['calibration_dataset']
-        elif self.pipeline_config and 'input_dataset' in self.pipeline_config:
-            self.dataloader = self.pipeline_config['input_dataset']
-        elif callable(dataloader_kwargs['name']):
-            dataloader_method = dataloader_kwargs['name']
-            self.dataloader = dataloader_method()
-        elif hasattr(blocks.dataloaders, dataloader_kwargs['name']):
-            dataloader_method = getattr(blocks.dataloaders, dataloader_kwargs['name'])
-            self.dataloader = dataloader_method(self.settings, **dataloader_kwargs)
-            if self.session and hasattr(self.dataloader, 'set_size_details'):
-                input_details, output_details = self.session.get_input_output_details()
-                self.dataloader.set_size_details(input_details)
+        try:
+            if self.pipeline_config and 'dataloader' in self.pipeline_config:
+                self.dataloader = self.pipeline_config['dataloader']
+            elif self.pipeline_config and 'calibration_dataset' in self.pipeline_config:
+                self.dataloader = self.pipeline_config['calibration_dataset']
+            elif self.pipeline_config and 'input_dataset' in self.pipeline_config:
+                self.dataloader = self.pipeline_config['input_dataset']
+            elif callable(dataloader_kwargs['name']):
+                dataloader_method = dataloader_kwargs['name']
+                self.dataloader = dataloader_method()
+            elif hasattr(blocks.dataloaders, dataloader_kwargs['name']):
+                dataloader_method = getattr(blocks.dataloaders, dataloader_kwargs['name'])
+                self.dataloader = dataloader_method(self.settings, **dataloader_kwargs)
+                if self.session and hasattr(self.dataloader, 'set_size_details'):
+                    input_details, output_details = self.session.get_input_output_details()
+                    self.dataloader.set_size_details(input_details)
+                #
             #
-        else:
-            raise RuntimeError(f'ERROR: invalid dataloader args: {dataloader_kwargs}')
+        except Exception as e:
+            raise RuntimeError(f'ERROR: invalid dataloader args: {dataloader_kwargs}, Exception occurred: {e}')
         #
 
         # preprocess
