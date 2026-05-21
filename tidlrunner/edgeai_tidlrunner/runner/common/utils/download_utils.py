@@ -106,6 +106,7 @@ def download_file(url, root=None, extract_root=None, filename=None, md5=None, mo
 
     root = os.path.abspath('./') if root is None else root
 
+    new_url = url
     is_linkfile = url.endswith('.link')
     path_is_url = is_url(url)
     if (not path_is_url):
@@ -113,19 +114,24 @@ def download_file(url, root=None, extract_root=None, filename=None, md5=None, mo
             filename = filename or os.path.basename(url)
             local_file = os.path.join(root, filename)
             copy_file(url, local_file)
-            url = local_file
+            new_url = local_file
         elif is_linkfile or force_linkfile:
             url_link = url if is_linkfile else url + '.link'
             if os.path.exists(url_link):
                 with open(url_link) as fp:
-                    url = fp.read().rstrip()
+                    new_url = fp.read().rstrip()
                 #
             #
         #
     #
 
-    fpath = download_and_extract_archive(url, root, extract_root=extract_root, filename=filename,
+    if is_url(new_url):
+        fpath = download_and_extract_archive(new_url, root, extract_root=extract_root, filename=filename,
                                          md5=md5, mode=mode,force_download=force_download)
+    else:
+        shutil.copy2(new_url, root)
+        fpath = os.path.join(root, os.path.basename(new_url))
+    #
     return fpath
 
 
