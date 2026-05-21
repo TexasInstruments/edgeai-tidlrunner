@@ -78,3 +78,9 @@ SESSION_TYPE_DICT_DEFAULT = {
 
 
 ONNX_OPSET_VERSION_DEFAULT = 18 #17
+
+
+# default value to be used when running with aggregate configs file
+# this is not used when running with individual config file
+MODEL_SHORTLIST_DEFAULT = 100
+

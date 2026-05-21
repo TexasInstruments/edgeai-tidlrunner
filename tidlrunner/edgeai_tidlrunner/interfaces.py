@@ -234,6 +234,7 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
     target_module = get_target_module(command, **kwargs)
     pipeline_names = target_module.get_command_pipelines(**kwargs)[command]
     pipeline_names = pipeline_names if isinstance(pipeline_names, list) else [pipeline_names]
+    is_aggregate_config_file = False
 
     selected_models = []
     rest_args_list = []
@@ -308,11 +309,15 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
             verbose = kwargs_model.get('common.verbose', 0)
             model_shortlist = kwargs_model.get('common.model_shortlist', None)
             model_selection = kwargs_model.get('common.model_selection', None)
-            model_path = kwargs_model.get('session.model_path', None)
+            if is_aggregate_config_file:
+                model_path = kwargs_model.get('session.model_path', None)
+                model_shortlist_for_model = kwargs_model.get('model_info.model_shortlist', None)
+                shortlisted_model = _model_shortlist(model_shortlist, model_shortlist_for_model)
+                selected_model = _model_selection(model_selection, config_entry, model_path, model_id)
+            else:
+                selected_model = shortlisted_model = True
+            #
 
-            model_shortlist_for_model = kwargs_model.get('model_info.model_shortlist', None)
-            shortlisted_model = _model_shortlist(model_shortlist, model_shortlist_for_model)
-            selected_model = _model_selection(model_selection, config_entry, model_path, model_id)
             if shortlisted_model and selected_model:
                 # append to command_list for the model
                 model_command_list = run_dict.get(model_id, [])
