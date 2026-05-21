@@ -50,6 +50,5 @@ session:
 model_info:
   metric_reference:
     accuracy_top1%: 69.76
-  model_shortlist: 30
   compact_name: resNet18
   shortlisted: true

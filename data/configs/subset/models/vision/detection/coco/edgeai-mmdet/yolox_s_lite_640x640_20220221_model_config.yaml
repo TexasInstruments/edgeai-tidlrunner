@@ -162,7 +162,6 @@ metric:
 model_info:
   metric_reference:
     accuracy_ap[.5:.95]%: 38.3
-  model_shortlist: 10
   compact_name: yolox-s-lite-mmdet-coco-640x640
   shortlisted: true
   recommended: true

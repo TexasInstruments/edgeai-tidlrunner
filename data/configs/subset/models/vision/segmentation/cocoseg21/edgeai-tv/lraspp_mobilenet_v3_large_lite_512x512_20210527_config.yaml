@@ -55,6 +55,5 @@ postprocess:
 model_info:
   metric_reference:
     accuracy_mean_iou%: 59.8
-  model_shortlist: 40
   compact_name: lraspp-mobV3-ti-lite-large-cocoseg21-512x512
   shortlisted: true

@@ -160,7 +160,6 @@ metric:
 model_info:
   metric_reference:
     accuracy_ap[.5:.95]%: 25.1
-  model_shortlist: 10
   compact_name: ssd-lite-mobv2-mmdet-coco-512x512
   shortlisted: true
   recommended: true

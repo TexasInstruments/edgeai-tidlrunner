@@ -168,6 +168,5 @@ metric:
 model_info:
   metric_reference:
     accuracy_ap[.5:.95]%: 32.2
-  model_shortlist: 100
   compact_name: efficientDet-b0-bifpn-lite-coco-512x512
   shortlisted: false

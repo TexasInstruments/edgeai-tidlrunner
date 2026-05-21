@@ -163,7 +163,6 @@ metric:
 model_info:
   metric_reference:
     accuracy_ap[.5:.95]%: 51.5
-  model_shortlist: 100
   compact_name: rtmdet-l-orig-mmdet-coco-640x640
   shortlisted: true
   recommended: true

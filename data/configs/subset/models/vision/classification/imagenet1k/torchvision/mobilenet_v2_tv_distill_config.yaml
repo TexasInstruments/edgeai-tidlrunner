@@ -47,6 +47,5 @@ session:
 model_info:
   metric_reference:
     accuracy_top1%: 71.88
-  model_shortlist: 20
   compact_name: mobileNetV2-tv
   shortlisted: true

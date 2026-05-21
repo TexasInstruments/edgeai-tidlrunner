@@ -156,6 +156,5 @@ metric:
 model_info:
   metric_reference:
     accuracy_ap[.5:.95]%: 42.0
-  model_shortlist: 80
   compact_name: DETR-fb-resnet50-transformer-coco-800x800
   shortlisted: false

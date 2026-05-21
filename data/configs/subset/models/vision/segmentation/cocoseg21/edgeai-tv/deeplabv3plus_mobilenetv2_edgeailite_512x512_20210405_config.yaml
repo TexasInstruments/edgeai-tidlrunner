@@ -55,6 +55,5 @@ postprocess:
 model_info:
   metric_reference:
     accuracy_mean_iou%: 57.77
-  model_shortlist: 20
   compact_name: deeplabv3lite-mobv2-cocoseg21-512x512
   shortlisted: true
