@@ -58,7 +58,7 @@ __all__ = ['WiderFaceDetection', 'widerfacedet_det_label_offset_1to1']
 
 class WiderFaceDetection(coco_det.COCODetectionDataLoader):
     def __init__(self, num_classes=1, download=False, image_dir=None, annotation_file=None, verbose_mode=True,
-                 num_frames=None, name='widerface', **kwargs):
+                 num_frames=None, shuffle=False, name='widerface', **kwargs):
         self.verbose_mode = verbose_mode
         if image_dir is None or annotation_file is None:
             self.force_download = True if download == 'always' else False
@@ -87,14 +87,7 @@ class WiderFaceDetection(coco_det.COCODetectionDataLoader):
         #
         categories = dataset_store['categories']
         num_classes = num_classes or len(categories)
-        super().__init__(num_classes=num_classes, num_frames=num_frames, name=name, **kwargs)
-        self._load_dataset()
-        categories = [{'id': 1, 'name': 'face'}]
-        info = dict(description='WIDERFACE: A Face Detection Dataset', url='http://shuoyang1213.me/WIDERFACE/', version='1.5',
-                    year='2017', contributor='Multimedia Laboratory, CUHK',
-                    date_created='2017/mar/31')
-        self.dataset_store = dict(info=info, categories=categories)
-        self.kwargs['dataset_info'] = self.get_dataset_info()
+        super().__init__(self.image_dir, self.annotation_file, shuffle=shuffle)
 
     def get_categories(self, project_path):
         return [dict(id=1, supercategory='face', name='face')]
@@ -153,8 +146,10 @@ class WiderFaceDetection(coco_det.COCODetectionDataLoader):
             os.makedirs(images_folder, exist_ok=True)
             os.makedirs(annotations_folder, exist_ok=True)
             dataset_store = dict()
-            dataset_store['info'] = {'description': 'WIDER FACE Dataset', 'version': '0.1',
-                                     'url': 'http://shuoyang1213.me/WIDERFACE/'}
+            info = dict(description='WIDERFACE: A Face Detection Dataset', url='http://shuoyang1213.me/WIDERFACE/', version='1.0',
+                year='2015', contributor='Yang, Shuo and Luo, Ping and Loy, Chen Change and Tang, Xiaoou, Multimedia Laboratory, CUHK',
+                date_created='2015/11/19')
+            dataset_store['info'] = info
             dataset_store['categories'] = categories_list
             dataset_store['licenses'] = None
             dataset_store['images'] = []
@@ -222,19 +217,6 @@ class WiderFaceDetection(coco_det.COCODetectionDataLoader):
         print(utils.log_color('\nINFO', 'dataset ready', path))
         return
 
-    def get_dataset_info(self):
-        if 'dataset_info' in self.kwargs:
-            return self.kwargs['dataset_info']
-        #
-        dataset_store = dict()
-        for key in ('info', 'categories'):
-            if key in self.dataset_store.keys():
-                dataset_store.update({key: self.dataset_store[key]})
-            #
-        #
-        dataset_store.update(dict(color_map=self.get_color_map()))
-        return dataset_store
-
 
 def widerfacedet_det_label_offset_1to1(label_offset=1, num_classes=1):
     coco_label_table = range(1, num_classes + 1)
@@ -250,5 +232,5 @@ def widerfacedet_det_label_offset_1to1(label_offset=1, num_classes=1):
     return coco_label_offset
 
 
-def widerface_detection_dataloader(settings, name, path, label_path=None, **kwargs):
-    return WiderFaceDetection(path=path, **kwargs)
+def widerface_detection_dataloader(settings, name, path, label_path=None, split='val', **kwargs):
+    return WiderFaceDetection(path=path, split=split, **kwargs)

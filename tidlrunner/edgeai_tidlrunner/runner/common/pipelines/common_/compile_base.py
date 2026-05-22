@@ -275,6 +275,13 @@ class CompileModelBase(CommonPipelineBase):
                 if kwargs_out.get('dataloader.path', None) is None:
                     kwargs_out['dataloader.path'] = './data/datasets/ADEChallengeData2016'
                 #               
+            elif input_dataset == 'widerface':
+                if kwargs_out.get('dataloader.name', None) is None:
+                    kwargs_out['dataloader.name'] = 'widerface_detection_dataloader'
+                #
+                if kwargs_out.get('dataloader.path', None) is None:
+                    kwargs_out['dataloader.path'] = './data/datasets/widerface'
+                #               
             # else:
             #     print(f'WARNING: {input_dataset} dataset is not supported - please use a supported dataset OR specify both dataloader.name and dataloader.path')  
             # #  

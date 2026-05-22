@@ -31,6 +31,7 @@ import os
 import sys
 import shutil
 import copy
+import traceback
 
 from edgeai_tidlrunner import rtwrapper
 from edgeai_tidlrunner.rtwrapper.core import presets
@@ -83,6 +84,7 @@ class InferEvaluate(infer.InferModel):
             return self.settings['result']
         except Exception as e:
             print(f'ERROR: exception occurred during accuracy evaluation of {self.dataloader.__class__.__name__}: \n{e}')
+            traceback.print_exc()
             return self.settings['result']
 
 

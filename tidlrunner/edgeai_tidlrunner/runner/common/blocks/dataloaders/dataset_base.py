@@ -29,6 +29,8 @@
 
 import json
 
+from huggingface_hub import dataset_info
+
 from ....common import utils
 
 
@@ -69,7 +71,7 @@ class DatasetBaseWithUtils(DatasetBase):
 
     def get_dataset_info_from_store(self, dataset_store, with_background_class=False):
         if 'dataset_info' in self.kwargs:
-            return
+            return self.kwargs['dataset_info']
         #
         # return only info and categories for now as the whole thing could be quite large.
         dataset_info = dict()
@@ -98,7 +100,8 @@ class DatasetBaseWithUtils(DatasetBase):
 
     def get_dataset_info(self, annotation_file_or_dataset_store, with_background_class=False):
         dataset_store = self.get_dataset_store(annotation_file_or_dataset_store)
-        return self.get_dataset_info_from_store(dataset_store, with_background_class)
+        dataset_info = self.get_dataset_info_from_store(dataset_store, with_background_class)
+        return dataset_info
 
     def get_num_classes(self, annotation_file_or_dataset_store):
         if 'num_classes' in self.kwargs:
