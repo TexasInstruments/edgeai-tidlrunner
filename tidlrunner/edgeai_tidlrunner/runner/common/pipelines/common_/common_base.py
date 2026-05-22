@@ -83,19 +83,8 @@ class CommonPipelineBase(bases.PipelineBase):
             model_source = os.path.join(source_dir, model_source) if source_dir and is_simple_path else model_source
             return model_source
 
-    def download_file(self, model_source, model_folder, source_dir=None):
-        is_web_link = model_source.startswith('http')
-        is_simple_path = os.sep not in os.path.normpath(model_source)
-        if is_web_link:
-            utils.download_file(model_source, model_folder)
-        else:
-            model_source = os.path.join(source_dir, model_source) if source_dir and is_simple_path else model_source
-            if not os.path.exists(model_source) and os.path.exists(model_source + '.link'):
-                model_download_folder = os.path.dirname(model_source)
-                utils.download_file(model_source, model_download_folder)
-            #
-            shutil.copy2(model_source, model_folder)
-        #
+    def download_file(self, model_source, dest_dir, source_dir=None):
+        utils.download_file(model_source, dest_dir, source_dir)
 
     def _build_run_dir(self, run_dir):
         pipeline_type = self.kwargs.get('common.pipeline_type', 'compile')

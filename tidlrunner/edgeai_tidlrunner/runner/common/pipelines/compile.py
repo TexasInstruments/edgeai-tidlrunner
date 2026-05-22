@@ -115,10 +115,10 @@ class CompileModel(CompileModelBase):
         os.makedirs(self.model_folder, exist_ok=True)
 
         config_path = os.path.dirname(common_kwargs['config_path']) if common_kwargs['config_path'] else None
-        self.download_file(self.model_source, model_folder=self.model_folder, source_dir=config_path)
+        self.download_file(self.model_source, dest_dir=self.model_folder, source_dir=config_path)
 
         if self.object_detection_meta_layers_names_list_source:
-            self.download_file(self.object_detection_meta_layers_names_list_source, model_folder=self.model_folder,
+            self.download_file(self.object_detection_meta_layers_names_list_source, dest_dir=self.model_folder,
                                source_dir=config_path)
         #
 

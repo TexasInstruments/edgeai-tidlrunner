@@ -99,11 +99,11 @@ def is_url(path):
     return path.startswith('http://') or path.startswith('https://')
 
 
-def download_file(url, root=None, extract_root=None, filename=None, md5=None, mode=None, force_download=False, force_linkfile=True):
+def _download_file(url, root=None, extract_root=None, filename=None, md5=None, mode=None, force_download=False, force_linkfile=True):
     if not isinstance(url, str):
         print(f"invalid file or url: {url}")
         return None
-
+    #
     root = os.path.abspath('./') if root is None else root
 
     new_url = url
@@ -133,6 +133,25 @@ def download_file(url, root=None, extract_root=None, filename=None, md5=None, mo
         fpath = os.path.join(root, os.path.basename(new_url))
     #
     return fpath
+
+
+def download_file(model_source, dest_dir, source_dir=None):
+    for num_tries in range(10):
+        is_web_link = model_source.startswith('http')
+        if is_web_link:
+            model_source = _download_file(model_source, source_dir or dest_dir)
+        else:
+            is_simple_path = os.sep not in os.path.normpath(model_source)
+            model_source = os.path.join(source_dir, model_source) if source_dir and is_simple_path else model_source
+            if not os.path.exists(model_source) and os.path.exists(model_source + '.link'):
+                source_dir = os.path.dirname(model_source) #source_dir or os.path.dirname(model_source)
+                with open(model_source + '.link') as fp:
+                    model_source = fp.read().rstrip()
+                #
+            #
+        #
+    #
+    copy_file(model_source, dest_dir)
 
 
 def download_files(dataset_urls, root, extract_root=None, save_filenames=None, message=''):
