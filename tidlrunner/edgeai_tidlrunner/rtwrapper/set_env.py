@@ -114,6 +114,7 @@ def update_tvm_artifacts(**kwargs):
     print("INFO: settings the correct symlinks in tvmrt compiled artifacts")
 
     target_device = kwargs['target_device']
+    target_machine = kwargs['target_machine']
 
     if 'ARTIFACTS_BASE_PATH' not in os.environ:
         # Set the default artifacts base path if not already set
@@ -126,10 +127,11 @@ def update_tvm_artifacts(**kwargs):
     artifacts_folders = glob.glob(f'{ARTIFACTS_BASE_PATH}/*_tvmrt_*')
     cur_dir=os.getcwd()
 
-    artifact_files = ["deploy_lib.so", "deploy_graph.json", "deploy_params.params"]
+    # "deploy_param.params" is used in tvmrt corresponding to TIDL 11.2 and later, while "deploy_params.params" is used in earlier versions. 
+    artifact_files = ["deploy_lib.so", "deploy_graph.json", "deploy_param.params"]
 
     for artifact_folder in artifacts_folders:
-      print('INFO: Entering: ${artifact_folder}')
+      print(f'INFO: Entering: ${artifact_folder}')
       try:
         os.chdir(f'{artifact_folder}/artifacts')
       except:
@@ -141,13 +143,13 @@ def update_tvm_artifacts(**kwargs):
           continue
 
         # Create symbolic links for each artifact file for the target machine
-        print(f"INFO: Creating symbolic link for {artifact_file} for TARGET_MACHINE: {os.environ['TARGET_MACHINE']}")
+        print(f"INFO: Creating symbolic link for {artifact_file} for target_machine: {target_machine}")
         # Remove any existing symlink or file with the same name
         if os.path.islink(artifact_file) or os.path.exists(artifact_file):
           os.remove(artifact_file)
 
         # Create a symlink to the specific artifact for the target machine
-        os.symlink(f'{artifact_file}.{os.environ["TARGET_MACHINE"]}', artifact_file)
+        os.symlink(f'{artifact_file}.{target_machine}', artifact_file)
       #
       os.chdir(cur_dir)
 

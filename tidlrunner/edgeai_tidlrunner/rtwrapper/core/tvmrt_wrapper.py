@@ -181,16 +181,16 @@ class TVMRuntimeWrapper(BaseRuntimeWrapper):
         deploy_graph = 'deploy_graph.json'
         deploy_params = 'deploy_param.params'
 
-        for target_machine in self.supported_machines:
-            if target_machine == presets.TargetMachineType.TARGET_MACHINE_EVM:
+        for target_machine_cur in self.supported_machines:
+            if target_machine_cur == presets.TargetMachineType.TARGET_MACHINE_EVM:
                 if(os.path.exists(os.path.join(artifacts_folder, f'{deploy_lib}.pc'))):
                     print("INFO: Reusing TIDL artifacts from x86 compilation for target compilation")
                     os.environ["REUSE_TIDL_ARTIFACTS"] = '1'
 
-            print(f"INFO: Compiling for target device -- {target_machine}")
+            print(f"INFO: Compiling for target device -- {target_machine_cur}")
             status = tidl.compile_model(
                                         platform = platform_name.lower(),
-                                        compile_for_device = (True if (target_machine == presets.TargetMachineType.TARGET_MACHINE_EVM) else False),
+                                        compile_for_device = (True if (target_machine_cur == presets.TargetMachineType.TARGET_MACHINE_EVM) else False),
                                         enable_tidl_offload = self.kwargs.get('tidl_offload', True),
                                         delegate_options = self.kwargs['runtime_options'],
                                         calibration_input_list = calib_list,
@@ -208,9 +208,9 @@ class TVMRuntimeWrapper(BaseRuntimeWrapper):
             path_graph_orig = os.path.join(artifacts_folder, f'{deploy_graph}')
             path_params_orig = os.path.join(artifacts_folder, f'{deploy_params}')
 
-            path_lib_target_machine = os.path.join(artifacts_folder, f'{deploy_lib}.{target_machine}')
-            path_graph_target_machine = os.path.join(artifacts_folder, f'{deploy_graph}.{target_machine}')
-            path_params_target_machine = os.path.join(artifacts_folder, f'{deploy_params}.{target_machine}')
+            path_lib_target_machine = os.path.join(artifacts_folder, f'{deploy_lib}.{target_machine_cur}')
+            path_graph_target_machine = os.path.join(artifacts_folder, f'{deploy_graph}.{target_machine_cur}')
+            path_params_target_machine = os.path.join(artifacts_folder, f'{deploy_params}.{target_machine_cur}')
 
             os.rename(path_lib_orig, path_lib_target_machine)
             os.rename(path_graph_orig, path_graph_target_machine)
@@ -220,7 +220,6 @@ class TVMRuntimeWrapper(BaseRuntimeWrapper):
 
         # create a symbolic link to the deploy_lib specified in target_machine
         artifacts_folder = self.kwargs['artifacts_folder']
-
         cwd = os.getcwd()
         os.chdir(artifacts_folder)
         artifact_files = [deploy_lib, deploy_graph, deploy_params]
@@ -228,6 +227,7 @@ class TVMRuntimeWrapper(BaseRuntimeWrapper):
             os.symlink(f'{artifact_file}.{target_machine}', artifact_file)
         #
         os.chdir(cwd)
+        return status
 
     def _format_input_data(self, input_data):
         if isinstance(input_data, dict):
