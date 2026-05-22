@@ -65,20 +65,25 @@ class InferEvaluate(infer.InferModel):
         run_data = self.get_run_data()
 
         # now calculate the accuracy
-        if hasattr(self.dataloader, 'evaluate'):
-            metric_kwargs = self.settings.get('metric', dict())
-            if isinstance(self.pipeline_config, dict):
-                metric_kwargs['task_name'] = self.pipeline_config.get('task_name', {})
-                metric_kwargs['dataset_category'] = self.pipeline_config.get('dataset_category', {})
-            #
-
-            accuracy = self.dataloader.evaluate(run_data, **metric_kwargs)
-
+        evaluate_method = getattr(self.dataloader, 'evaluate', None)
+        if not evaluate_method:
+            print(f'WARNING: dataloader {self.dataloader.__class__.__name__} does not have evaluate method, skipping accuracy calculation')
+            return self.settings['result']
+        #
+        metric_kwargs = self.settings.get('metric', dict())
+        if isinstance(self.pipeline_config, dict):
+            metric_kwargs['task_name'] = self.pipeline_config.get('task_name', {})
+            metric_kwargs['dataset_category'] = self.pipeline_config.get('dataset_category', {})
+        #
+        try:
+            accuracy = evaluate_method(run_data, **metric_kwargs)
             print(f'INFO: Accuracy - {accuracy}')
             self.settings['result'].update(accuracy)
             self._write_params(self.settings, os.path.join(self.run_dir,'result.yaml'), cleanup_paths=True)
-        else:
-            print(f'WARNING: dataloader {self.dataloader.__class__.__name__} does not have evaluate method, skipping accuracy calculation')
-        #
-        return self.settings['result']
+            return self.settings['result']
+        except Exception as e:
+            print(f'ERROR: exception occurred during accuracy evaluation of {self.dataloader.__class__.__name__}: \n{e}')
+            return self.settings['result']
+
+
     

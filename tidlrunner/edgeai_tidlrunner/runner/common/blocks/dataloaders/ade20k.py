@@ -51,7 +51,7 @@ from . import dataset_base
 
 __all__ = ['ADE20KSegmentation']
 
-class ADE20KSegmentation(dataset_base.DatasetBase):
+class ADE20KSegmentation(dataset_base.DatasetBaseWithUtils):
     def __init__(self, num_classes=151, ignore_label=None, download=False, num_frames=None, name="ADE20K", **kwargs):
         super().__init__(num_classes=num_classes, num_frames=num_frames, name=name, **kwargs)
         self.force_download = True if download == 'always' else False
@@ -226,6 +226,6 @@ def ade20k_segmentation_dataloader(settings, name, path, label_path=None, **kwar
     return ADE20KSegmentation(path=path, **kwargs)
 
 
-def ade20k32_segmentation_dataloader(settings, name, path, label_path=None, num_classes=32, **kwargs):
-    return ADE20KSegmentation(path=path, num_classes=num_classes, **kwargs)
+def ade20k32_segmentation_dataloader(settings, name, path, label_path=None, split='val', num_classes=32, **kwargs):
+    return ADE20KSegmentation(path=path, split=split, num_classes=num_classes, **kwargs)
 

@@ -101,19 +101,19 @@ class DatasetBaseWithUtils(DatasetBase):
         return self.get_dataset_info_from_store(dataset_store, with_background_class)
 
     def get_num_classes(self, annotation_file_or_dataset_store):
-        dataset_store = self.get_dataset_store(annotation_file_or_dataset_store)
         if 'num_classes' in self.kwargs:
             return self.kwargs['num_classes']
         #
+        dataset_store = self.get_dataset_store(annotation_file_or_dataset_store)
         num_classes = len(dataset_store['categories'])
         self.kwargs['num_classes'] = num_classes
         return num_classes
 
     def get_num_images(self, annotation_file_or_dataset_store):
-        dataset_store = self.get_dataset_store(annotation_file_or_dataset_store)
         if 'num_images' in self.kwargs:
             return self.kwargs['num_images']
         #
+        dataset_store = self.get_dataset_store(annotation_file_or_dataset_store)
         num_images = len(dataset_store['images'])
         self.kwargs['num_images'] = num_images
         return num_images
