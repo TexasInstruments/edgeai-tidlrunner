@@ -382,6 +382,7 @@ def _run(model_command_dict):
                 parallel_devices_index = task_index % parallel_devices
                 proc_env = dict()
                 proc_env['CUDA_VISIBLE_DEVICES'] = str(parallel_devices_index)
+                proc_env['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
             #
             
             task_func = functools.partial(_run_command, task_index, command_key, pipeline_name, command_kwargs, capture_log)

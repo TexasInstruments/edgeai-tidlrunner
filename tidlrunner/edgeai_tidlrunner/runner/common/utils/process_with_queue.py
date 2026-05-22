@@ -119,8 +119,10 @@ class ProcessWithQueue(mp_context.Process):
             os_environ_backup = os.environ.copy()
             os.environ.update(proc_env)
         #
+        
         proc = cls(name=proc_name, target=proc_func, info=proc_info)
         proc.start()
+
         # restore os.environ
         if proc_env is not None:
             for k, v in os.environ.items():
