@@ -366,8 +366,7 @@ def download_tidl_tools(download_url, download_path, **tidl_version_dict):
         download_and_extract_archive(download_url, download_path, download_path)
         os.chdir(download_tidl_tools_path)
         _create_symlink(os.path.join("..", "..", "..", GCC_ARM_AARCH64_NAME), GCC_ARM_AARCH64_NAME)
-        _create_symlink(os.path.join("..", "..", GCC_ARM_AARCH64_NAME), GCC_ARM_AARCH64_NAME)
-        _create_symlink(os.path.join("..", "..", CGT7X_NAME), CGT7X_NAME)
+        _create_symlink(os.path.join("..", "..", "..", CGT7X_NAME), CGT7X_NAME)
         with open(os.path.join(download_tidl_tools_path, 'version.yaml'), "w") as fp:
             yaml.safe_dump(tidl_version_dict, fp)
     except Exception as e:

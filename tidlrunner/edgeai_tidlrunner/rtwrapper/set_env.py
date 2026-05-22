@@ -94,6 +94,12 @@ def set_env(**kwargs):
     os.environ['ARM64_GCC_PATH'] = os.path.join(os.environ['TIDL_TOOLS_PATH'], 'arm-gnu-toolchain-13.2.Rel1-x86_64-aarch64-none-linux-gnu')
     print('INFO: ARM64_GCC_PATH is set to:', os.environ['ARM64_GCC_PATH'])
 
+  if 'CGT7X_ROOT' not in os.environ:
+    # Set the ARM64 GCC path for TVM compilation
+    # This is needed for compiling models for ARM64 architecture
+    os.environ['CGT7X_ROOT'] = os.path.join(os.environ['TIDL_TOOLS_PATH'], 'ti-cgt-c7000_5.0.0.LTS')
+    print('INFO: CGT7X_ROOT is set to:', os.environ['CGT7X_ROOT'])
+    
   # if 'PYTHONPATH' not in os.environ:
   #   # Make sure the current directory is included in PYTHONPATH      
   #   os.environ['PYTHONPATH'] = ":" + os.environ.get('PYTHONPATH', '')
