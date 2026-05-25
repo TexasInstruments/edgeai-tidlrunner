@@ -48,11 +48,12 @@ import PIL
 from colorama import Fore
 from ....common import utils
 from . import dataset_base
+from . import dataloader_utils
 
 __all__ = ['ADE20KSegmentation']
 
 class ADE20KSegmentation(dataset_base.DatasetBaseWithUtils):
-    def __init__(self, num_classes=151, ignore_label=None, download=False, num_frames=None, name="ADE20K", **kwargs):
+    def __init__(self, num_classes=151, ignore_label=None, download=False, num_frames=None, name="ADE20K", backend='cv2', bgr_to_rgb=True, **kwargs):
         super().__init__(num_classes=num_classes, num_frames=num_frames, name=name, **kwargs)
         self.force_download = True if download == 'always' else False
         assert 'path' in self.kwargs and 'split' in self.kwargs, 'path and split must be provided'
@@ -101,6 +102,7 @@ class ADE20KSegmentation(dataset_base.DatasetBaseWithUtils):
                       year='2016'),
                                  categories=[dict(id=class_entry_value, name=class_entry_key)  for class_entry_key, class_entry_value in self.classes.items()])
         self.kwargs['dataset_info'] = self.get_dataset_info()
+        self.image_reader = dataloader_utils.ImageRead(backend=backend, bgr_to_rgb=bgr_to_rgb)
 
     def get_dataset_info(self):
         if 'dataset_info' in self.kwargs:
@@ -146,12 +148,14 @@ class ADE20KSegmentation(dataset_base.DatasetBaseWithUtils):
 
     def __getitem__(self, idx, info_dict=None, with_label=False):
         info_dict = info_dict or dict()
+        image_file = self.imgs[idx]
         if with_label:
-            image_file = self.imgs[idx]
             label_file = self.labels[idx]
-            return image_file, info_dict, label_file
+            img, info_dict = self.image_reader(image_file, info_dict)
+            return img, info_dict, label_file
         else:
-            return self.imgs[idx], info_dict
+            img, info_dict = self.image_reader(image_file, info_dict)
+            return img, info_dict
         #
 
     def __len__(self):
@@ -227,5 +231,5 @@ def ade20k_segmentation_dataloader(settings, name, path, label_path=None, **kwar
 
 
 def ade20k32_segmentation_dataloader(settings, name, path, label_path=None, split='val', num_classes=32, **kwargs):
-    return ADE20KSegmentation(path=path, split=split, num_classes=num_classes, **kwargs)
+    return ADE20KSegmentation(path=path, split=('validation' if split == 'val' else 'training'), num_classes=num_classes, **kwargs)
 

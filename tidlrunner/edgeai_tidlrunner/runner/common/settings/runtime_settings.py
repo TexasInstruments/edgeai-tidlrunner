@@ -70,7 +70,7 @@ class RuntimeSettings(attr_dict.AttrDict):
         else:
             return presets.CalibrationIterationsFactor.CALIBRATION_ITERATIONS_FACTOR_1X
 
-    def _get_runtime_settings(self, model_quant_type=None, settings_type=None, is_qat=False, fast_calibration=True,
+    def _get_runtime_settings(self, model_quant_type=None, is_qat=False, fast_calibration=True,
             det_options=None, ext_options=None, **kwargs):
         
         runtime_settings = self._get_runtime_settings_with_default(**kwargs)
@@ -100,7 +100,7 @@ class RuntimeSettings(attr_dict.AttrDict):
         #
 
         runtime_options = RuntimeOptions(
-            model_quant_type=model_quant_type, settings_type=settings_type, is_qat=is_qat,
+            model_quant_type=model_quant_type, is_qat=is_qat,
             calibration_iterations_factor=calibration_iterations_factor,
             det_options=det_options, ext_options=ext_options, **runtime_settings['runtime_options'])
         runtime_settings['runtime_options'] = runtime_options

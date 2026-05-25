@@ -104,6 +104,9 @@ class InferModel(CompileModelBase):
                     self.dataloader.set_size_details(input_details)
                 #
             #
+            if len(self.dataloader) == 0:
+                raise RuntimeError(f'ERROR: dataloader has no data: len(self.dataloader)={len(self.dataloader)}, args: {dataloader_kwargs}')
+            #
         except Exception as e:
             raise RuntimeError(f'ERROR: invalid dataloader args: {dataloader_kwargs}, Exception occurred: {e}')
         #
