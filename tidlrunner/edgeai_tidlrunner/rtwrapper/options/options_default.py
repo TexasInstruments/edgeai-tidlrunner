@@ -148,9 +148,10 @@ RUNTIME_OPTIONS_DEFAULT = {
     # See the SDK version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/version_compatibility_table.md
     #'advanced_options:c7x_firmware_version': ??,
 
-    # object detection settings
+    # object detection settings - more details here: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/od_meta_arch.md
+    # this needs to be set only for Object Detection Models architecutures supported by TIDL DetectionPostProcess layer - for other moddels, don't set it.
+    # 'object_detection:meta_arch_type': None,
     'object_detection:meta_layers_names_list': '',
-    'object_detection:meta_arch_type': None,
     'object_detection:nms_threshold': 0.45,
     'object_detection:confidence_threshold': 0.3,
     'object_detection:top_k': 200,
