@@ -41,6 +41,7 @@ class TaskType:
     TASK_TYPE_DETECTION = 'detection'
     TASK_TYPE_SEGMENTATION = 'segmentation'
     TASK_TYPE_KEYPOINT_DETECTION = 'keypoint_detection'
+    TASK_TYPE_HUMAN_POSE_ESTIMATION = 'human_pose_estimation'
     TASK_TYPE_DEPTH_ESTIMATION = 'depth_estimation'
     TASK_TYPE_DETECTION_3DOD = 'detection_3d'
     TASK_TYPE_OBJECT_6D_POSE_ESTIMATION = 'object_6d_pose_estimation'

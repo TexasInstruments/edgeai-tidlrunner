@@ -82,12 +82,14 @@ class PipelineBase():
         return self.run_data
 
     @classmethod
-    def process_args(cls, **kwargs):
+    def process_args(cls, upgrade_kwargs=True, **kwargs):
         kwargs_in = cls._flatten_dict(**kwargs)
         kwargs_in = cls._expand_short_args(**kwargs_in)
         kwargs_cmd = cls._set_default_args()  
         kwargs_cmd.update(kwargs_in)
-        kwargs_cmd = cls._upgrade_kwargs(**kwargs_cmd)
+        if upgrade_kwargs:
+            kwargs_cmd = cls._upgrade_kwargs(**kwargs_cmd)
+        #
         return kwargs_cmd
 
     @classmethod

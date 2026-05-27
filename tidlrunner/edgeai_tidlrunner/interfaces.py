@@ -244,15 +244,15 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
         command_args, rest_args = command_module.get_arg_parser().parse_known_args()    
         rest_args_list.append(rest_args)
 
-        kwargs_cmd = vars(command_args)
-        provided_args = kwargs_cmd.pop('_provided_args', set())
+        kwargs_with_defaults = vars(command_args)
+        provided_arg_names = kwargs_with_defaults.pop('_provided_args', set())
+        provided_kwargs = {k:kwargs_with_defaults[k] for k in provided_arg_names}
                     
-        config_path = kwargs_cmd.get('common.config_path', None)
-        kwargs_combined = (kwargs_cmd | kwargs)
-        model_path = kwargs_combined.get('session.model_path', None)
-        pipeline_type = kwargs_cmd.get('common.pipeline_type', None)
+        config_path = kwargs_with_defaults.get('common.config_path', None)
+        model_path = kwargs_with_defaults.get('session.model_path', None)
+        pipeline_type = kwargs_with_defaults.get('common.pipeline_type', None)
         if config_path:
-            configs, is_aggregate_config_file = _get_configs(config_path, **kwargs_combined)
+            configs, is_aggregate_config_file = _get_configs(config_path, **kwargs_with_defaults)
         else:
             if model_id is None:
                 print('WARNING: model_id is not given, generating randomly')
@@ -281,37 +281,16 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
             #
             kwargs_cfg.get('session', {}).pop('run_dir', None)
 
-            # add given args
-            kwargs_copy = copy.deepcopy(kwargs)
-            kwargs_copy.pop('command', None)
-            kwargs_cfg.update(kwargs_copy)
+            # create preliminary args (without upgrade) - for some basic checks
+            kwargs_before_upgrade = bases.pipeline_base.PipelineBase.process_args(**kwargs_cfg, **kwargs_with_defaults)
 
-            # upgrade cfg
-            kwargs_cfg = command_module.process_args(**kwargs_cfg)
-
-            kwargs_model = dict()    
-            # set defaults+command line args
-            kwargs_model.update(kwargs_cmd)  
-            # override with cfg                        
-            kwargs_model.update(kwargs_cfg)  
-            # now override with command line args that were provided
-            kwargs_provided = {k:v for k,v in kwargs_cmd.items() if k in provided_args}
-            kwargs_model.update(kwargs_provided)
-            # correct config_path is required to form the full model_path
-            if isinstance(config_entry, str):
-                config_entry_path = config_entry
-                kwargs_model.update({'common.config_path': config_entry})
-            else:
-                config_entry_path = None
-            #
-            kwargs_model['common.pipeline_config'] = pipeline_config
-
-            verbose = kwargs_model.get('common.verbose', 0)
-            model_shortlist = kwargs_model.get('common.model_shortlist', None)
-            model_selection = kwargs_model.get('common.model_selection', None)
+            # selected_model, shortlisted_model
+            verbose = kwargs_before_upgrade.get('common.verbose', 0)
+            model_shortlist = kwargs_before_upgrade.get('common.model_shortlist', None)
+            model_selection = kwargs_before_upgrade.get('common.model_selection', None)
             if is_aggregate_config_file:
-                model_path = kwargs_model.get('session.model_path', None)
-                model_shortlist_for_model = kwargs_model.get('model_info.model_shortlist', None)
+                model_path = kwargs_before_upgrade.get('session.model_path', None)
+                model_shortlist_for_model = kwargs_before_upgrade.get('model_info.model_shortlist', None)
                 shortlisted_model = _model_shortlist(model_shortlist, model_shortlist_for_model)
                 selected_model = _model_selection(model_selection, config_entry, model_path, model_id)
             else:
@@ -319,6 +298,24 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
             #
 
             if shortlisted_model and selected_model:
+                # now systematically create the final kwargs
+                kwargs_model = dict()
+                # set defaults+command line args - so that we have all the args required
+                kwargs_model.update(kwargs_with_defaults)
+                # upgrade the cfg and override kwargs_model with kwargs_cfg - cfg has preferance over default
+                kwargs_cfg = command_module.process_args(**kwargs_cfg)
+                kwargs_model.update(kwargs_cfg)
+                # now override with command line args that were provided - that has preferance over cfg
+                kwargs_model.update(provided_kwargs)
+                # correct config_path is required to form the full model_path
+                if isinstance(config_entry, str):
+                    config_entry_path = config_entry
+                    kwargs_model.update({'common.config_path': config_entry})
+                else:
+                    config_entry_path = None
+                #
+                kwargs_model['common.pipeline_config'] = pipeline_config
+
                 # append to command_list for the model
                 model_command_list = run_dict.get(model_id, [])
                 model_command_list.append((command,pipeline_name,kwargs_model))

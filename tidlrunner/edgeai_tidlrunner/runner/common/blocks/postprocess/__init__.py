@@ -57,6 +57,8 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         elif settings.common.task_type == constants.TaskType.TASK_TYPE_SEGMENTATION:
             transforms, transforms_kwargs = cls.create_transforms_segmentation_base(settings, **kwargs)
         elif settings.common.task_type == constants.TaskType.TASK_TYPE_KEYPOINT_DETECTION:
+            transforms, transforms_kwargs = cls.create_transforms_detection_yolov5_pose_onnx(settings, **kwargs)
+        elif settings.common.task_type == constants.TaskType.TASK_TYPE_HUMAN_POSE_ESTIMATION:
             transforms, transforms_kwargs = cls.create_transforms_human_pose_estimation_base(settings, **kwargs)
         elif settings.common.task_type == constants.TaskType.TASK_TYPE_DEPTH_ESTIMATION:
             transforms, transforms_kwargs = cls.create_transforms_depth_estimation_base(settings, **kwargs)
@@ -185,19 +187,19 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
 
     @classmethod
     def create_transforms_detection_mmdet_onnx(self, settings, formatter=None, reshape_list=[(-1,5), (-1,1)], logits_bbox_to_bbox_ls=False, **kwargs):
-        return self.create_transforms_detection_base(settings, formatter=formatter, reshape_list=reshape_list,logits_bbox_to_bbox_ls=logits_bbox_to_bbox_ls, **kwargs)
+        return self.create_transforms_detection_base(settings, formatter=formatter, reshape_list=reshape_list, logits_bbox_to_bbox_ls=logits_bbox_to_bbox_ls, **kwargs)
 
     @classmethod
-    def create_transforms_detection_yolov5_onnx(self, settings, formatter=None, **kwargs):
-        return self.create_transforms_detection_base(settings, formatter=formatter, reshape_list=[(-1,6)], **kwargs)
+    def create_transforms_detection_yolov5_onnx(self, settings, formatter=None, reshape_list=[(-1,6)], **kwargs):
+        return self.create_transforms_detection_base(settings, formatter=formatter, reshape_list=reshape_list, **kwargs)
 
     @classmethod
-    def create_transforms_detection_yolov5_pose_onnx(self, settings, formatter=None, **kwargs):
-        return self.create_transforms_detection_base(settings, formatter=formatter, reshape_list=[(-1,57)], **kwargs)
+    def create_transforms_detection_yolov5_pose_onnx(self, settings, formatter=None, reshape_list=[(-1,57)], **kwargs):
+        return self.create_transforms_detection_base(settings, formatter=formatter, reshape_list=reshape_list, **kwargs)
 
     @classmethod
-    def create_transforms_detection_yolo_6d_object_pose_onnx(self, settings, formatter=None, **kwargs):
-        return self.create_transforms_detection_base(settings, formatter=formatter, reshape_list=[(-1,15)], **kwargs)
+    def create_transforms_detection_yolo_6d_object_pose_onnx(self, settings, formatter=None, reshape_list=[(-1,15)], **kwargs):
+        return self.create_transforms_detection_base(settings, formatter=formatter, reshape_list=reshape_list, **kwargs)
 
     @classmethod
     def create_transforms_detection_tv_onnx(self, settings, formatter=postprocess_utils.DetectionBoxSL2BoxLS(), reshape_list=[(-1,4), (-1,1), (-1,1)],

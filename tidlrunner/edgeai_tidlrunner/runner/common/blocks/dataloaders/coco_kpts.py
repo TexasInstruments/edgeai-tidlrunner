@@ -272,6 +272,7 @@ class COCOKeypointDetectionDataLoader(dataset_base.DatasetBaseWithUtils):
         return root
 
     def __getitem__(self, idx, info_dict=None):
+        info_dict = info_dict or dict()
         img_id = self.img_ids[idx]
         img = self.coco_dataset.loadImgs([img_id])[0]
         image_path = os.path.join(self.image_dir, img['file_name'])
@@ -340,7 +341,8 @@ class COCOKeypointDetectionDataLoader(dataset_base.DatasetBaseWithUtils):
         areas = []
         bboxes = []
 
-        for output in outputs:
+        for run_data in outputs:
+            output = run_data['output']
             preds.append(output['preds'])
             scores.append(output['scores'])
             image_paths.append(output['image_paths'][0])
@@ -380,7 +382,7 @@ def coco_keypoint_detection_dataloader(settings, name, path, label_path=None, **
         data_path = path
     else:
         data_path = os.path.join(path, 'val2017')
-        label_path = label_path or os.path.join(path, 'annotations', 'instances_val2017.json')
+        label_path = label_path or os.path.join(path, 'annotations', f'person_keypoints_val2017.json')
     #
     return COCOKeypointDetectionDataLoader(data_path, label_path, **kwargs)
 
