@@ -33,7 +33,7 @@ from ...settings import constants
 from ...settings.constants import presets
 from .transforms import *
 from .keypoints import *
-#from .object_6d_pose import *
+from .object_6d_pose import *
 from . import transforms as postprocess_transforms_types
 from .audio_transforms import SoundClassificationPostProcess, SpeechEnhancementPostProcess, GCRNSpeechEnhancementPostProcess
 from ....common.bases import transforms_base
@@ -71,7 +71,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         elif settings.common.task_type == constants.TaskType.TASK_TYPE_DETECTION_3DOD:
             transforms, transforms_kwargs = cls.create_transforms_lidar_base(settings, **kwargs)
         elif settings.common.task_type == constants.TaskType.TASK_TYPE_OBJECT_6D_POSE_ESTIMATION:
-            transforms, transforms_kwargs = cls.create_transforms_detection_base(settings, object6dpose=True, **kwargs)
+            transforms, transforms_kwargs = cls.create_transforms_detection_yolo_6d_object_pose_onnx(settings, **kwargs)
         elif settings.common.task_type == constants.TaskType.TASK_TYPE_AUDIO_CLASSIFICATION:
             transforms, transforms_kwargs = cls.create_transforms_audio_classification(settings, **kwargs)
         elif settings.common.task_type == constants.TaskType.TASK_TYPE_AUDIO_SPEECHENHANCEMENT:
@@ -202,8 +202,8 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         return self.create_transforms_detection_base(settings, formatter=formatter, reshape_list=reshape_list, **kwargs)
 
     @classmethod
-    def create_transforms_detection_yolo_6d_object_pose_onnx(self, settings, formatter=None, reshape_list=[(-1,15)], **kwargs):
-        return self.create_transforms_detection_base(settings, formatter=formatter, reshape_list=reshape_list, **kwargs)
+    def create_transforms_detection_yolo_6d_object_pose_onnx(self, settings, object6dpose=True, formatter=None, reshape_list=[(-1,15)], **kwargs):
+        return self.create_transforms_detection_base(settings, object6dpose=object6dpose, formatter=formatter, reshape_list=reshape_list, **kwargs)
 
     @classmethod
     def create_transforms_detection_tv_onnx(self, settings, formatter=postprocess_utils.DetectionBoxSL2BoxLS(), reshape_list=[(-1,4), (-1,1), (-1,1)],
@@ -307,10 +307,8 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         return cls.create_transforms_disparity_estimation_base(data_layout=data_layout, **kwargs)
 
 
-
 def no_postprocess(settings, **kwargs):
     return PostProcessTransforms(settings, transforms=[], **kwargs)
-
 
 def object_detection_postprocess(settings, name='object_detection_postprocess', **kwargs):
     assert settings.common.task_type == constants.TaskType.TASK_TYPE_DETECTION, \
@@ -328,6 +326,12 @@ def keypoint_detection_postprocess(settings, name='keypoint_detection_postproces
     assert settings.common.task_type == constants.TaskType.TASK_TYPE_KEYPOINT_DETECTION, \
         'keypoint_detection_postprocess can only be used for keypoint detection task type'
     return PostProcessTransforms.from_kwargs(settings, **kwargs)
+
+
+def yolo_6d_object_pose_postprocess(settings, reshape_list=[(-1,15)], **kwargs):
+    assert settings.common.task_type == constants.TaskType.TASK_TYPE_OBJECT_6D_POSE_ESTIMATION, \
+        'keypoint_detection_postprocess can only be used for keypoint detection task type'
+    return PostProcessTransforms.from_kwargs(settings, reshape_list=reshape_list, **kwargs)
 
 
 def audio_postprocess(settings, **kwargs):

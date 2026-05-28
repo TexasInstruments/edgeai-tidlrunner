@@ -44,6 +44,8 @@ from sklearn.neighbors import KDTree
 
 from ... import utils
 from . import dataset_base
+from . import dataloader_utils
+
 
 __all__ = ['YCBV', '_get_mapping_id_name']
 
@@ -68,8 +70,8 @@ def _get_mapping_id_name(imgs):
     return id2name, name2id
 
 
-class YCBV(dataset_base.DatasetBase):
-    def __init__(self, download=False, num_frames=None, name="ycbv", **kwargs):
+class YCBV(dataset_base.DatasetBaseWithUtils):
+    def __init__(self, download=False, num_frames=None, name="ycbv", backend='cv2', bgr_to_rgb=True, **kwargs):
         super().__init__(num_frames=num_frames, name=name, **kwargs)
         self.force_download = True if download == 'always' else False
         assert 'path' in self.kwargs and 'split' in self.kwargs, 'kwargs must have path and split'
@@ -131,6 +133,7 @@ class YCBV(dataset_base.DatasetBase):
             self.dataset_store = json.load(afp)
         #
         self.kwargs['dataset_info'] = self.get_dataset_info()
+        self.image_reader = dataloader_utils.ImageRead(backend=backend, bgr_to_rgb=bgr_to_rgb)
 
     def get_dataset_info(self):
         if 'dataset_info' in self.kwargs:
@@ -261,7 +264,8 @@ class YCBV(dataset_base.DatasetBase):
         img_id = self.img_ids[idx]
         img = self.coco_dataset.loadImgs([img_id])[0]
         image_path = os.path.join(self.image_dir,  img['image_folder'], 'rgb', img['file_name'])
-        return image_path, info_dict
+        image, info_dict = self.image_reader(image_path, info_dict)    
+        return image, info_dict
 
     def __len__(self):
         return self.num_frames
@@ -489,4 +493,4 @@ class CADModelsYCB():
 
 
 def ycbv_object_6d_pose_dataloader(settings, name, path, label_path=None, **kwargs):
-    return YCBV(path=path, **kwargs)
+    return YCBV(path=path, split='test', **kwargs)

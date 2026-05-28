@@ -246,7 +246,7 @@ from PIL import ImageDraw
 from munkres import Munkres
 from numpy.lib.stride_tricks import as_strided
 import math
-from ..datasets.ycbv import CADModelsYCB
+from ..dataloaders.ycbv import CADModelsYCB
 
 
 class BboxObject6dPoseReformat():

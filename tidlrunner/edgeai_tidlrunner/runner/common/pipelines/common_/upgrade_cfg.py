@@ -255,7 +255,14 @@ def upgrade_kwargs(**kwargs):
             #
             if kwargs_out.get('postprocess.name',None) is None:
                 kwargs_out['postprocess.name'] = 'keypoint_detection_postprocess'
-            #  
+            #
+        elif task_type == constants.TaskType.TASK_TYPE_OBJECT_6D_POSE_ESTIMATION:
+            if kwargs_out.get('preprocess.name',None) is None:
+                kwargs_out['preprocess.name'] = 'image_preprocess'
+            #
+            if kwargs_out.get('postprocess.name',None) is None:
+                kwargs_out['postprocess.name'] = 'yolo_6d_object_pose_postprocess'
+            #
         elif task_type == constants.TaskType.TASK_TYPE_AUDIO_CLASSIFICATION:
             if kwargs_out.get('preprocess.name',None) is None:
                 kwargs_out['preprocess.name'] = 'audio_preprocess'
