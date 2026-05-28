@@ -41,6 +41,10 @@ class PreProcessTransforms(transforms_base.TransformsCompose):
         super().__init__(transforms, **kwargs)
         self.settings = settings
 
+    def __call__(self, tensor, info_dict):
+        tensor, info_dict = super().__call__(tensor, info_dict)
+        return tensor, info_dict
+    
     @classmethod
     def from_kwargs(cls, settings, resize=256, crop=224, data_layout=presets.DataLayoutType.NCHW,
                          reverse_channels=False, backend='cv2', interpolation=None, resize_with_pad=False,

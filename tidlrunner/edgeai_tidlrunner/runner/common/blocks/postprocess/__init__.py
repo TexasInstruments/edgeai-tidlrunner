@@ -45,6 +45,10 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         super().__init__(transforms, **kwargs)
         self.settings = settings
 
+    def __call__(self, tensor, info_dict):
+        tensor, info_dict = super().__call__(tensor, info_dict)
+        return tensor, info_dict
+    
     @classmethod
     def from_kwargs(cls, settings, **kwargs):
         if isinstance(kwargs.get('formatter', None), str):

@@ -253,6 +253,9 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
         pipeline_type = kwargs_with_defaults.get('common.pipeline_type', None)
         if config_path:
             configs, is_aggregate_config_file = _get_configs(config_path, **kwargs_with_defaults)
+            if is_aggregate_config_file:
+                print(f'INFO: aggregate config file given - config_path: {config_path}')
+            #
         else:
             if model_id is None:
                 print('WARNING: model_id is not given, generating randomly')
@@ -267,7 +270,6 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
 
             if isinstance(config_entry, str):
                 if is_aggregate_config_file and not (config_entry.startswith('/') or config_entry.startswith('.')):
-                    print(f'INFO: config entry is not an absolute path, resolving relative to config_path: {config_entry}')
                     config_base_path = os.path.dirname(config_path)
                     config_entry = os.path.join(config_base_path, config_entry)
                 #
@@ -298,6 +300,10 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
             #
 
             if shortlisted_model and selected_model:
+                if isinstance(config_entry, str):
+                    print(f'INFO: config file: {config_entry}')
+                #
+
                 # now systematically create the final kwargs
                 kwargs_model = dict()
                 # set defaults+command line args - so that we have all the args required
