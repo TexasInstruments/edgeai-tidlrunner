@@ -54,4 +54,4 @@ class RobokitSegmentation(ImageSegmentation):
 
 
 def robokit_segmentation_dataloader(settings, name, path, label_path=None, **kwargs):
-    return RobokitSegmentation(path=path, **kwargs)
+    return RobokitSegmentation(path=path, split=os.path.join(path, 'val_img_gt_pair.txt'), num_classes=19, **kwargs)

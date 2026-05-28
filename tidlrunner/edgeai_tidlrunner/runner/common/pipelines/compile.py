@@ -32,6 +32,7 @@ import sys
 import shutil
 import copy
 import ast
+import traceback
 
 from edgeai_tidlrunner.rtwrapper.core import presets
 
@@ -162,6 +163,7 @@ class CompileModel(CompileModelBase):
                 raise RuntimeError(f'ERROR: dataloader has no data: len(self.dataloader)={len(self.dataloader)}, args: {dataloader_kwargs}')
             #
         except Exception as e:
+            traceback.print_exc()
             raise RuntimeError(f'ERROR: invalid dataloader args: {dataloader_kwargs}, Exception occurred: {e}')
         #
 

@@ -301,7 +301,7 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
 
             if shortlisted_model and selected_model:
                 if isinstance(config_entry, str):
-                    print(f'INFO: config file: {config_entry}')
+                    print(f'INFO: model_id: {model_id} config file: {config_entry}')
                 #
 
                 # now systematically create the final kwargs

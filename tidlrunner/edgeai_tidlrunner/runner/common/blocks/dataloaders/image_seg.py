@@ -46,18 +46,16 @@ class ImageSegmentation(ImagePixel2Pixel):
     def __call__(self, index, info_dict=None, **kwargs):
         return self.__getitem__(index, info_dict, **kwargs)
 
-    def evaluate(self, predictions, **kwargs):
+    def evaluate(self, run_data, **kwargs):
         cmatrix = None
-        for n in range(self.num_frames):
-            image_file, info_dict, label_file = self.__getitem__(n, with_label=True)
-            label_img = PIL.Image.open(label_file)
-            prediction = predictions[n]
-            prediction = prediction['output'] if isinstance(prediction, dict) and 'output' in prediction else prediction
+        for n, data in enumerate(run_data):
+            prediction = data['output']
+            image_data, info_dict, label_data = self.__getitem__(n, with_label=True)
             output = prediction
             output = output.astype(np.uint8)
             output = output[0] if (output.ndim > 2 and output.shape[0] == 1) else output
             output = output[:2] if (output.ndim > 2 and output.shape[2] == 1) else output
-            cmatrix = utils.confusion_matrix(cmatrix, output, label_img, self.num_classes)
+            cmatrix = utils.confusion_matrix(cmatrix, output, label_data, self.num_classes)
         #
         accuracy = utils.segmentation_accuracy(cmatrix)
         return accuracy

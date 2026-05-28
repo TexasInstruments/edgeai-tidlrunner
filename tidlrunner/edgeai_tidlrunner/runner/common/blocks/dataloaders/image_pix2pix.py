@@ -29,12 +29,15 @@
 
 import os
 import random
+import PIL.Image
+
 from ....common import utils
 from . import dataset_base
+from . import dataloader_utils
 
 
-class ImagePixel2Pixel(dataset_base.DatasetBase):
-    def __init__(self, download=False, dest_dir=None, num_frames=None, name=None, **kwargs):
+class ImagePixel2Pixel(dataset_base.DatasetBaseWithUtils):
+    def __init__(self, download=False, dest_dir=None, num_frames=None, name=None, backend='cv2', bgr_to_rgb=True, **kwargs):
         super().__init__(num_frames=num_frames, name=name, **kwargs)
         self.force_download = True if download == 'always' else False
         assert 'path' in self.kwargs and 'split' in self.kwargs, 'path and split must be provided in kwargs'
@@ -60,12 +63,13 @@ class ImagePixel2Pixel(dataset_base.DatasetBase):
             self.imgs = in_files
         #
 
-        self.num_frames = self.kwargs['num_frames'] = self.kwargs.get('num_frames', len(self.imgs))
+        self.num_frames = self.kwargs['num_frames'] = num_frames or self.kwargs.get('num_frames', None) or len(self.imgs)
         shuffle = self.kwargs.get('shuffle', False)
         if shuffle:
             random.seed(int(shuffle))
             random.shuffle(self.imgs)
         #
+        self.image_reader = dataloader_utils.ImageRead(backend=backend, bgr_to_rgb=bgr_to_rgb)
 
     def download(self, path, split_file):
         return None
@@ -74,13 +78,15 @@ class ImagePixel2Pixel(dataset_base.DatasetBase):
         info_dict = info_dict or dict()
         with_label = kwargs.get('with_label', False)
         words = self.imgs[index]
-        image_name = words[0]
+        image_path = words[0]
+        image, info_dict = self.image_reader(image_path, info_dict)      
         if with_label:
             assert len(words) > 0, f'ground truth requested, but missing at the dataset entry for {words}'
-            label_name = words[1]
-            return image_name, info_dict, label_name
+            label_path = words[1]
+            label_img = PIL.Image.open(label_path)  
+            return image, info_dict, label_img
         else:
-            return image_name, info_dict
+            return image, info_dict
         #
 
     def __len__(self):
