@@ -60,10 +60,10 @@ from .speech_enhancement import speech_enhancement_dataloader
 import warnings
 
 try:
-    from .ycbv import ycbv_dataloader
+    from .ycbv import ycbv_object_6d_pose_dataloader
 except (ImportError, ModuleNotFoundError) as e:
-    # warnings.warn(f'WARNING: ycbv dataloader could not be imported - {str(e)}')
-    ycbv_dataloader = None
+    # warnings.warn(f'WARNING: ycbv_object_6d_pose_dataloader could not be imported - {str(e)}')
+    ycbv_object_6d_pose_dataloader = None
 
 try:
     from .kitti_2015 import kitti_2015_dataloader

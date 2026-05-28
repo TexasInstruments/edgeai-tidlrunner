@@ -488,5 +488,5 @@ class CADModelsYCB():
         return class_to_sparse_model
 
 
-def ycbv_dataloader(settings, name, path, label_path=None, **kwargs):
+def ycbv_object_6d_pose_dataloader(settings, name, path, label_path=None, **kwargs):
     return YCBV(path=path, **kwargs)

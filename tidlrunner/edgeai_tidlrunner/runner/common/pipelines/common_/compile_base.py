@@ -281,7 +281,14 @@ class CompileModelBase(CommonPipelineBase):
                 #
                 if kwargs_out.get('dataloader.path', None) is None:
                     kwargs_out['dataloader.path'] = './data/datasets/widerface'
-                #               
+                #
+            elif input_dataset == 'ycbv':
+                if kwargs_out.get('dataloader.name', None) is None:
+                    kwargs_out['dataloader.name'] = 'ycbv_object_6d_pose_dataloader'
+                #
+                if kwargs_out.get('dataloader.path', None) is None:
+                    kwargs_out['dataloader.path'] = './data/datasets/ycbv'
+                # 
             # else:
             #     print(f'WARNING: {input_dataset} dataset is not supported - please use a supported dataset OR specify both dataloader.name and dataloader.path')  
             # #  
