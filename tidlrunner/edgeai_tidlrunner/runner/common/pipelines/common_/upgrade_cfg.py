@@ -96,9 +96,14 @@ def upgrade_kwargs(**kwargs):
     if preset_selection is None or preset_selection.lower() == constants.ModelCompilationPreset.PRESET_DEFAULT.lower():
         # SETTINGS_DEFAULT is already set up for DEFAULT preset - no changes needed
         pass
+    elif preset_selection.lower() == constants.ModelCompilationPreset.PRESET_SANITY.lower():
+        # very quick calibration and inference for faster compilation and testing - not for accuracy evaluation
+        kwargs_out['common.num_frames'] = 1
+        kwargs_out['session.runtime_options.advanced_options:calibration_frames'] = 1
+        kwargs_out['session.runtime_options.advanced_options:calibration_iterations'] = 1
     elif preset_selection.lower() == constants.ModelCompilationPreset.PRESET_QUICK.lower():
         # quick calibration and inference for faster compilation and testing - not for accuracy evaluation
-        kwargs_out['common.num_frames'] = 100
+        kwargs_out['common.num_frames'] = 5
         kwargs_out['session.runtime_options.advanced_options:calibration_frames'] = 5
         kwargs_out['session.runtime_options.advanced_options:calibration_iterations'] = 5
     elif preset_selection.lower() == constants.ModelCompilationPreset.PRESET_ACCURACY.lower():
@@ -227,60 +232,58 @@ def upgrade_kwargs(**kwargs):
     #
 
     ###################################################################################
-    if kwargs_out.get('dataloader.name',None) and kwargs_out.get('dataloader.path',None):
-        task_type = kwargs_out.get('common.task_type', None)
-        if kwargs_out.get('preprocess.name',None) and kwargs_out.get('postprocess.name',None):
-            pass
-        elif task_type == constants.TaskType.TASK_TYPE_CLASSIFICATION:
-            if kwargs_out.get('preprocess.name',None) is None:
-                kwargs_out['preprocess.name'] = 'image_preprocess'
-            #
-        elif task_type == constants.TaskType.TASK_TYPE_DETECTION:
-            if kwargs_out.get('preprocess.name',None) is None:
-                kwargs_out['preprocess.name'] = 'image_preprocess'
-            #
-            if kwargs_out.get('postprocess.name',None) is None:
-                kwargs_out['postprocess.name'] = 'object_detection_postprocess'
-            #
-        elif task_type == constants.TaskType.TASK_TYPE_SEGMENTATION:
-            if kwargs_out.get('preprocess.name',None) is None:
-                kwargs_out['preprocess.name'] = 'image_preprocess'
-            #
-            if kwargs_out.get('postprocess.name',None) is None:
-                kwargs_out['postprocess.name'] = 'segmentation_postprocess'
-            #   
-        elif task_type == constants.TaskType.TASK_TYPE_KEYPOINT_DETECTION:
-            if kwargs_out.get('preprocess.name',None) is None:
-                kwargs_out['preprocess.name'] = 'image_preprocess'
-            #
-            if kwargs_out.get('postprocess.name',None) is None:
-                kwargs_out['postprocess.name'] = 'keypoint_detection_postprocess'
-            #
-        elif task_type == constants.TaskType.TASK_TYPE_OBJECT_6D_POSE_ESTIMATION:
-            if kwargs_out.get('preprocess.name',None) is None:
-                kwargs_out['preprocess.name'] = 'image_preprocess'
-            #
-            if kwargs_out.get('postprocess.name',None) is None:
-                kwargs_out['postprocess.name'] = 'yolo_6d_object_pose_postprocess'
-            #
-        elif task_type == constants.TaskType.TASK_TYPE_AUDIO_CLASSIFICATION:
-            if kwargs_out.get('preprocess.name',None) is None:
-                kwargs_out['preprocess.name'] = 'audio_preprocess'
-            #
-            if kwargs_out.get('postprocess.name',None) is None:
-                kwargs_out['postprocess.name'] = 'audio_postprocess'
-            #
-        elif task_type == constants.TaskType.TASK_TYPE_AUDIO_SPEECHENHANCEMENT:
-            if kwargs_out.get('preprocess.name',None) is None:
-                kwargs_out['preprocess.name'] = 'audio_preprocess'
-            #
-            if kwargs_out.get('postprocess.name',None) is None:
-                kwargs_out['postprocess.name'] = 'audio_postprocess'
-            #
-        else:
-            print(f'WARNING: task_type {task_type} is not supported - please use a supported task_type OR specify both preprocess.name and postprocess.name')  
+    task_type = kwargs_out.get('common.task_type', None)
+    if kwargs_out.get('preprocess.name',None) and kwargs_out.get('postprocess.name',None):
+        pass
+    elif task_type == constants.TaskType.TASK_TYPE_CLASSIFICATION:
+        if kwargs_out.get('preprocess.name',None) is None:
+            kwargs_out['preprocess.name'] = 'image_preprocess'
         #
-    #
+    elif task_type == constants.TaskType.TASK_TYPE_DETECTION:
+        if kwargs_out.get('preprocess.name',None) is None:
+            kwargs_out['preprocess.name'] = 'image_preprocess'
+        #
+        if kwargs_out.get('postprocess.name',None) is None:
+            kwargs_out['postprocess.name'] = 'object_detection_postprocess'
+        #
+    elif task_type == constants.TaskType.TASK_TYPE_SEGMENTATION:
+        if kwargs_out.get('preprocess.name',None) is None:
+            kwargs_out['preprocess.name'] = 'image_preprocess'
+        #
+        if kwargs_out.get('postprocess.name',None) is None:
+            kwargs_out['postprocess.name'] = 'segmentation_postprocess'
+        #   
+    elif task_type == constants.TaskType.TASK_TYPE_KEYPOINT_DETECTION:
+        if kwargs_out.get('preprocess.name',None) is None:
+            kwargs_out['preprocess.name'] = 'image_preprocess'
+        #
+        if kwargs_out.get('postprocess.name',None) is None:
+            kwargs_out['postprocess.name'] = 'keypoint_detection_postprocess'
+        #
+    elif task_type == constants.TaskType.TASK_TYPE_OBJECT_6D_POSE_ESTIMATION:
+        if kwargs_out.get('preprocess.name',None) is None:
+            kwargs_out['preprocess.name'] = 'image_preprocess'
+        #
+        if kwargs_out.get('postprocess.name',None) is None:
+            kwargs_out['postprocess.name'] = 'yolo_6d_object_pose_postprocess'
+        #
+    elif task_type == constants.TaskType.TASK_TYPE_AUDIO_CLASSIFICATION:
+        if kwargs_out.get('preprocess.name',None) is None:
+            kwargs_out['preprocess.name'] = 'audio_classification_preprocess'
+        #
+        if kwargs_out.get('postprocess.name',None) is None:
+            kwargs_out['postprocess.name'] = 'audio_classification_postprocess'
+        #
+    elif task_type == constants.TaskType.TASK_TYPE_AUDIO_SPEECHENHANCEMENT:
+        if kwargs_out.get('preprocess.name',None) is None:
+            kwargs_out['preprocess.name'] = 'audio_speechenhancement_preprocess'
+        #
+        if kwargs_out.get('postprocess.name',None) is None:
+            kwargs_out['postprocess.name'] = 'audio_speechenhancement_postprocess'
+        #
+    # else:
+    #     print(f'WARNING: task_type {task_type} is not supported - please use a supported task_type OR specify both preprocess.name and postprocess.name')  
+    # #
 
     if model_path:
         if kwargs_out.get('preprocess.data_layout', None) is None:

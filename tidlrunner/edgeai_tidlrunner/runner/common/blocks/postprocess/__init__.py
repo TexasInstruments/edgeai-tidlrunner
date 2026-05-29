@@ -27,6 +27,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+
+import warnings
+
 from ....common.utils.config_utils import postprocess_utils
 from ....common import utils
 from ...settings import constants
@@ -34,6 +37,19 @@ from ...settings.constants import presets
 from .transforms import *
 from .keypoints import *
 from .object_6d_pose import *
+
+import warnings
+try:
+    from .bev_detection import *
+except ImportError as e:
+    warnings.warn(f'WARNING: bev_detection postprocessing could not be imported - {str(e)}')
+    bev_detection = None
+    BEVDetNMS = None
+    Bbox3d2result = None
+    BEVImageSave = None
+    MultiClassNMS = None
+    MultiClassScaleNMS = None
+
 from . import transforms as postprocess_transforms_types
 from .audio_transforms import SoundClassificationPostProcess, SpeechEnhancementPostProcess, GCRNSpeechEnhancementPostProcess
 from ....common.bases import transforms_base
@@ -49,39 +65,6 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         tensor, info_dict = super().__call__(tensor, info_dict)
         return tensor, info_dict
     
-    @classmethod
-    def from_kwargs(cls, settings, **kwargs):
-        if isinstance(kwargs.get('formatter', None), str):
-            kwargs['formatter'] = postprocess_utils.get_formatter(settings.common.task_type, kwargs['formatter'])
-        #
-        if settings.common.task_type == constants.TaskType.TASK_TYPE_CLASSIFICATION:
-            transforms, transforms_kwargs = cls.create_transforms_classification(settings, **kwargs)
-        elif settings.common.task_type == constants.TaskType.TASK_TYPE_DETECTION:
-            transforms, transforms_kwargs = cls.create_transforms_detection_base(settings, **kwargs)
-        elif settings.common.task_type == constants.TaskType.TASK_TYPE_SEGMENTATION:
-            transforms, transforms_kwargs = cls.create_transforms_segmentation_base(settings, **kwargs)
-        elif settings.common.task_type == constants.TaskType.TASK_TYPE_KEYPOINT_DETECTION:
-            transforms, transforms_kwargs = cls.create_transforms_detection_yolov5_pose_onnx(settings, **kwargs)
-        elif settings.common.task_type == constants.TaskType.TASK_TYPE_HUMAN_POSE_ESTIMATION:
-            transforms, transforms_kwargs = cls.create_transforms_human_pose_estimation_base(settings, **kwargs)
-        elif settings.common.task_type == constants.TaskType.TASK_TYPE_DEPTH_ESTIMATION:
-            transforms, transforms_kwargs = cls.create_transforms_depth_estimation_base(settings, **kwargs)
-        elif settings.common.task_type == constants.TaskType.TASK_TYPE_DISPARITY_ESTIMATION:
-            transforms, transforms_kwargs = cls.create_transforms_disparity_estimation_base(settings, **kwargs)
-        elif settings.common.task_type == constants.TaskType.TASK_TYPE_DETECTION_3DOD:
-            transforms, transforms_kwargs = cls.create_transforms_lidar_base(settings, **kwargs)
-        elif settings.common.task_type == constants.TaskType.TASK_TYPE_OBJECT_6D_POSE_ESTIMATION:
-            transforms, transforms_kwargs = cls.create_transforms_detection_yolo_6d_object_pose_onnx(settings, **kwargs)
-        elif settings.common.task_type == constants.TaskType.TASK_TYPE_AUDIO_CLASSIFICATION:
-            transforms, transforms_kwargs = cls.create_transforms_audio_classification(settings, **kwargs)
-        elif settings.common.task_type == constants.TaskType.TASK_TYPE_AUDIO_SPEECHENHANCEMENT:
-            transforms, transforms_kwargs = cls.create_transforms_audio_speechenhancement(settings, **kwargs)
-        else:
-            transforms, transforms_kwargs = cls.create_transforms_none(settings, **kwargs)
-        #
-        return cls(settings, transforms=transforms, **transforms_kwargs)
-        
-
     ###############################################################
     # post process transforms for none / passthrough
     ###############################################################
@@ -96,7 +79,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     @classmethod
     def create_transforms_audio_classification(cls, settings, **kwargs):
         transforms_list = [SoundClassificationPostProcess()]
-        return transforms_list, dict()
+        return transforms_list, dict(**kwargs)
 
     ###############################################################
     # post process transforms for speech enhancement
@@ -108,7 +91,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
             transforms_list = [GCRNSpeechEnhancementPostProcess()]
         else:
             transforms_list = [SpeechEnhancementPostProcess()]
-        return transforms_list, dict()
+        return transforms_list, dict(**kwargs)
 
     ###############################################################
     # post process transforms for classification
@@ -119,7 +102,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         if save_output:
             transforms_list += [ClassificationImageSave(save_output_frames)]
         #
-        return transforms_list, dict()
+        return transforms_list, dict(**kwargs)
 
     ###############################################################
     # post process transforms for detection
@@ -236,14 +219,14 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         if save_output:
             transforms_list += [SegmentationImageSave(save_output_frames)]
         #
-        return transforms_list, dict(data_layout=data_layout, with_argmax=with_argmax)
+        return transforms_list, dict(data_layout=data_layout, with_argmax=with_argmax, **kwargs)
 
     @classmethod
-    def create_transforms_segmentation_onnx(cls, data_layout=constants.presets.DataLayoutType.NCHW, with_argmax=True, **kwargs):
+    def create_transforms_segmentation_onnx(cls, data_layout=presets.DataLayoutType.NCHW, with_argmax=True, **kwargs):
         return cls.create_transforms_segmentation_base(data_layout=data_layout, with_argmax=with_argmax, **kwargs)
 
     @classmethod
-    def create_transforms_segmentation_tflite(cls, data_layout=constants.presets.DataLayoutType.NHWC, with_argmax=True, **kwargs):
+    def create_transforms_segmentation_tflite(cls, data_layout=presets.DataLayoutType.NHWC, with_argmax=True, **kwargs):
         return cls.create_transforms_segmentation_base(data_layout=data_layout, with_argmax=with_argmax, **kwargs)
 
     ###############################################################
@@ -251,7 +234,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     ###############################################################
     @classmethod
     def create_transforms_human_pose_estimation_base(cls, settings, data_layout=None, with_udp=True, save_output=False, save_output_frames=50, **kwargs):
-        # channel_axis = -1 if data_layout == constants.presets.NHWC else 1
+        # channel_axis = -1 if data_layout == presets.DataLayoutType.NHWC else 1
         # postprocess_human_pose_estimation = [SqueezeAxis()] #just removes the first axis from output list, final size (c,w,h)
         transforms_list = [HumanPoseHeatmapParser(use_udp=with_udp),
                            KeypointsProject2Image(use_udp=with_udp)]
@@ -259,10 +242,10 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         if save_output:
             transforms_list += [HumanPoseImageSave(save_output_frames)]
         #
-        return transforms_list, dict(data_layout=data_layout, with_udp=with_udp)
+        return transforms_list, dict(data_layout=data_layout, with_udp=with_udp, **kwargs)
 
     @classmethod
-    def create_transforms_human_pose_estimation_onnx(cls, settings, data_layout=constants.presets.DataLayoutType.NCHW, **kwargs):
+    def create_transforms_human_pose_estimation_onnx(cls, settings, data_layout=presets.DataLayoutType.NCHW, **kwargs):
         return cls.create_transforms_human_pose_estimation_base(data_layout=data_layout, with_udp=settings.with_udp, **kwargs)
 
     ###############################################################
@@ -276,10 +259,10 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         if save_output:
             transforms_list += [DepthImageSave(save_output_frames)]
         #
-        return transforms_list, dict(data_layout=data_layout)
+        return transforms_list, dict(data_layout=data_layout, **kwargs)
 
     @classmethod
-    def create_transforms_depth_estimation_onnx(cls, settings, data_layout=constants.presets.DataLayoutType.NCHW, **kwargs):
+    def create_transforms_depth_estimation_onnx(cls, settings, data_layout=presets.DataLayoutType.NCHW, **kwargs):
         return cls.create_transforms_depth_estimation_base(data_layout=data_layout, **kwargs)
 
     @classmethod
@@ -287,7 +270,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         transforms_list = [
             OD3DOutPutPorcess(settings.detection_threshold)
         ]
-        return transforms_list, dict(detection_threshold=settings.detection_threshold)
+        return transforms_list, dict(detection_threshold=settings.detection_threshold, **kwargs)
 
     ###############################################################
     # post process transforms for disparity estimation
@@ -300,39 +283,181 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         # To REVISIT!
         #if save_output:
         #    transforms_list += [DepthImageSave(save_output_frames)]
-        return transforms_list, dict(data_layout=data_layout)
+        return transforms_list, dict(data_layout=data_layout, **kwargs)
 
     @classmethod
-    def create_transforms_disparity_estimation_onnx(cls, settings, data_layout=constants.presets.DataLayoutType.NCHW, **kwargs):
+    def create_transforms_disparity_estimation_onnx(cls, settings, data_layout=presets.DataLayoutType.NCHW, **kwargs):
         return cls.create_transforms_disparity_estimation_base(data_layout=data_layout, **kwargs)
 
+    ###############################################################
+    # post process transforms for BEV detection
+    ###############################################################
+    # To REVISIT
+    # Any necessary visualization funtions will be addeed in bev_detection.py
+    def create_transforms_bev_detection_base(cls, settings, queue_length=0, data_layout=presets.DataLayoutType.NCHW, save_output=False, save_output_frames=50, **kwargs):
+        transforms = None
 
-def no_postprocess(settings, **kwargs):
-    return PostProcessTransforms(settings, transforms=[], **kwargs)
+        try:
+            if queue_length > 0:
+                postprocess_bev_detection_base = [UpdateTemporalQueue(queue_length=queue_length),
+                                                  Bbox3d2result()]
+            else:
+                postprocess_bev_detection_base = [Bbox3d2result()]
+        except Exception as message:
+            print(f'BEV postprocess could not be created: {message}')
+
+        if save_output:
+            # To be updated
+            try:
+                postprocess_bev_detection_base += [BEVImageSave(save_output_frames,
+                                                                score_threshold=0.5,
+                                                                mode='frame')]
+            except Exception as message:
+                print(f'BEV postprocess could not be created: {message}')
+
+        return postprocess_bev_detection_base, dict(data_layout=data_layout, **kwargs)
+
+    def create_transforms_bev_detection_bevdet(cls, settings, data_layout=presets.DataLayoutType.NCHW, save_output=False, save_output_frames=50, **kwargs):
+        transforms = None
+        # For bevDet_tiny_256x704_res50_parallel.onnx
+        #postprocess_bev_detection_bevdet = [GetBEVDetBBoxes(),
+        #                                    BEVDetNMS(),
+        #                                    Bbox3d2result()]
+
+        # For bevDet_tiny_256x704_res50_pp_parallel.onnx
+        try:
+            postprocess_bev_detection_bevdet = [BEVDetNMS(),
+                                                Bbox3d2result()]
+        except Exception as message:
+            print(f'BEV postprocess could not be created: {message}')
+
+        if save_output:
+            # To be updated
+            try:
+                postprocess_bev_detection_bevdet += [BEVImageSave(save_output_frames,
+                                                                score_threshold=0.5,
+                                                                mode='frame')]
+            except Exception as message:
+                print(f'BEV postprocess could not be created: {message}')              
+
+        return transforms, dict(data_layout=data_layout, **kwargs)
+
+    def create_transforms_fcos3d(cls, settings, data_layout=presets.DataLayoutType.NCHW, save_output=False, save_output_frames=50, **kwargs):
+        transforms = None
+        try:
+            postprocess_fcos3d = [MultiClassNMS(),
+                                  Bbox3d2result()]
+        except Exception as message:
+            print(f'BEV postprocess could not be created: {message}')
+
+        if save_output:
+            # To be updated
+            try:
+                postprocess_fcos3d += [BEVImageSave(save_output_frames,
+                                                    score_threshold=0.2,
+                                                    mode='mv_image')]
+            except Exception as message:
+                print(f'BEV postprocess could not be created: {message}')    
+
+        return postprocess_fcos3d, dict(data_layout=data_layout, **kwargs)
+
+    def create_transforms_bev_detection_fastbev(cls, settings, enable_nms=True, queue_length=0, data_layout=presets.DataLayoutType.NCHW, save_output=False, save_output_frames=50, **kwargs):
+        transforms = None
+
+        postprocess_bev_detection_fastbev = []
+        if enable_nms:
+            try:
+                postprocess_bev_detection_fastbev += [MultiClassScaleNMS()]
+            except Exception as message:
+                print(f'BEV postprocess could not be created: {message}')
+
+        if queue_length > 0:
+            try:
+                postprocess_bev_detection_fastbev += [UpdateTemporalQueue(queue_length=queue_length)]
+            except Exception as message:
+                print(f'BEV postprocess could not be created: {message}')
+
+        try:
+            postprocess_bev_detection_fastbev += [Bbox3d2result()]
+        except Exception as message:
+            print(f'BEV postprocess could not be created: {message}')
+
+        if save_output:
+            # To be updated
+            try:
+                postprocess_bev_detection_fastbev += [BEVImageSave(save_output_frames,
+                                                                    score_threshold=0.5,
+                                                                    mode='frame')]
+            except Exception as message:
+                print(f'BEV postprocess could not be created: {message}')    
+
+        return postprocess_bev_detection_fastbev, dict(data_layout=data_layout, **kwargs)
+
+
+def no_postprocess(settings, name='no_postprocess', **kwargs):
+    transforms_list, kwargs = PostProcessTransforms(settings, transforms=[], name=name, **kwargs)
+    return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
 
 def object_detection_postprocess(settings, name='object_detection_postprocess', **kwargs):
     assert settings.common.task_type == constants.TaskType.TASK_TYPE_DETECTION, \
         'object_detection_postprocess can only be used for object detection task type'
-    return PostProcessTransforms.from_kwargs(settings, **kwargs)
+    transforms_list, kwargs = PostProcessTransforms.create_transforms_detection_base(settings, **kwargs)
+    return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
 
 
 def segmentation_postprocess(settings, name='segmentation_postprocess', **kwargs):
     assert settings.common.task_type == constants.TaskType.TASK_TYPE_SEGMENTATION, \
         'segmentation_postprocess can only be used for segmentation task type'
-    return PostProcessTransforms.from_kwargs(settings, **kwargs)
+    transforms_list, kwargs = PostProcessTransforms.create_transforms_segmentation_base(settings, **kwargs)
+    return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
 
 
 def keypoint_detection_postprocess(settings, name='keypoint_detection_postprocess', **kwargs):
     assert settings.common.task_type == constants.TaskType.TASK_TYPE_KEYPOINT_DETECTION, \
         'keypoint_detection_postprocess can only be used for keypoint detection task type'
-    return PostProcessTransforms.from_kwargs(settings, **kwargs)
+    transforms_list, kwargs = PostProcessTransforms.create_transforms_detection_yolov5_pose_onnx(settings, **kwargs)
+    return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
+
+def human_pose_estimation_postprocess(settings, name='human_pose_estimation_postprocess', **kwargs):
+    assert settings.common.task_type == constants.TaskType.TASK_TYPE_KEYPOINT_DETECTION, \
+        'human_pose_estimation_postprocess can only be used for human pose estimation task type'
+    transforms_list, kwargs = PostProcessTransforms.create_transforms_disparity_estimation_base(settings, **kwargs)
+    return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
 
 
-def yolo_6d_object_pose_postprocess(settings, reshape_list=[(-1,15)], **kwargs):
+def yolo_6d_object_pose_postprocess(settings, reshape_list=[(-1,15)], name='yolo_6d_object_pose_postprocess', **kwargs):
     assert settings.common.task_type == constants.TaskType.TASK_TYPE_OBJECT_6D_POSE_ESTIMATION, \
-        'keypoint_detection_postprocess can only be used for keypoint detection task type'
-    return PostProcessTransforms.from_kwargs(settings, reshape_list=reshape_list, **kwargs)
+        'yolo_6d_object_pose_postprocess can only be used for 6D object pose estimation task type'
+    transforms_list, kwargs = PostProcessTransforms.create_transforms_detection_yolo_6d_object_pose_onnx(settings, reshape_list=reshape_list, **kwargs)
+    return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
 
 
-def audio_postprocess(settings, **kwargs):
-    return PostProcessTransforms.from_kwargs(settings, **kwargs)
+def audio_classification_postprocess(settings, name='audio_classification_postprocess', **kwargs):
+    transforms_list, kwargs = PostProcessTransforms.create_transforms_audio_classification(settings, **kwargs)
+    return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
+
+
+def audio_speechenhancement_postprocess(settings, name='audio_speechenhancement_postprocess', **kwargs):
+    transforms_list, kwargs = PostProcessTransforms.create_transforms_audio_speechenhancement(settings, **kwargs)
+    return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
+
+
+def bev_detection_postprocess(settings, name='bev_detection_postprocess', **kwargs):
+    transforms_list, kwargs =  PostProcessTransforms.create_transforms_bev_detection_base(settings, queue_length=1, **kwargs)
+    return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
+
+
+def bevdet_model_postprocess(settings, name='bevdet_model_postprocess', **kwargs):
+    transforms_list, kwargs = PostProcessTransforms.create_transforms_bev_detection_bevdet(settings, **kwargs)
+    return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
+
+
+def fcos3d_model_postprocess(settings, name='fcos3d_model_postprocess', **kwargs):
+    transforms_list, kwargs = PostProcessTransforms.create_transforms_bev_detection_fcos3d(settings, **kwargs)
+    return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
+
+
+def fastbev_model_postprocess(settings, name='fastbev_model_postprocess', **kwargs):
+    transforms_list, kwargs = PostProcessTransforms.create_transforms_bev_detection_fastbev(settings, **kwargs)
+    return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
+

@@ -44,6 +44,7 @@ class TaskType:
     TASK_TYPE_HUMAN_POSE_ESTIMATION = 'human_pose_estimation'
     TASK_TYPE_DEPTH_ESTIMATION = 'depth_estimation'
     TASK_TYPE_DETECTION_3DOD = 'detection_3d'
+    TASK_TYPE_BEV_DETECTION_3DOD = 'bev_detection'
     TASK_TYPE_OBJECT_6D_POSE_ESTIMATION = 'object_6d_pose_estimation'
     TASK_TYPE_VISUAL_LOCALIZATION = 'visual_localization'
     TASK_TYPE_DISPARITY_ESTIMATION = 'disparity_estimation'
@@ -67,6 +68,7 @@ TaskTypeShortNames = {
 
 
 class ModelCompilationPreset:
+    PRESET_SANITY = 'SANITY'
     PRESET_QUICK = 'QUICK'
     PRESET_DEFAULT = 'DEFAULT'
     PRESET_ACCURACY = 'ACCURACY'
