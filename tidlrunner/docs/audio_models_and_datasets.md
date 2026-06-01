@@ -31,9 +31,10 @@ pyenv activate tidlrunner
 
 ### 2. Install audio dependencies
 
+> **Note:** Complete the Python virtual environment setup described in [setup.md](setup.md) before running this step.
+
 ```bash
-cd tidlrunner
-pip install -e ".[audio]"
+pip install -e "tidlrunner[audio]"
 ```
 
 This installs: `librosa`, `soundfile`, `scipy`, `pesq`, `pystoi`, `scikit-learn`
@@ -62,13 +63,7 @@ data/datasets/UrbanSound8K/
 
 ### VoiceBank-DEMAND-16k (~2 GB) — speech enhancement
 
-Install the HuggingFace datasets library first (not included in pyproject.toml):
-
-```bash
-pip install datasets
-```
-
-Then download:
+To download the VoiceBank-DEMAND-16k dataset, run the script:
 
 ```bash
 python3 examples/audio/scripts/download_voicebank_demand.py
