@@ -52,6 +52,8 @@ class CompileModel(CompileModelBase):
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        if self.kwargs['session.model_path'] is None and self.kwargs['common.config_path'] is None:
+            raise RuntimeError(f'ERROR: model_path or config_path must be provided')
 
     def _prepare_model(self):
         print(f'INFO: running model surgery {self.model_path}')

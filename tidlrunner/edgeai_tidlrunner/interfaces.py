@@ -283,9 +283,12 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
             #
             kwargs_cfg.get('session', {}).pop('run_dir', None)
 
-            # create preliminary args (without upgrade) - for some basic checks
-            kwargs_before_upgrade = bases.pipeline_base.PipelineBase.process_args(**kwargs_cfg, **kwargs_with_defaults)
-
+            # create preliminary args (without upgrade) - for some basic checks - model_shortlist, model_selection
+            kwargs_before_upgrade = copy.deepcopy(kwargs_with_defaults)
+            kwargs_before_upgrade.update(kwargs_cfg)
+            kwargs_before_upgrade = bases.pipeline_base.PipelineBase.process_args(**kwargs_before_upgrade)
+            # now override with command line args that were provided - that has preferance over cfg
+            kwargs_before_upgrade.update(provided_kwargs)
             # selected_model, shortlisted_model
             verbose = kwargs_before_upgrade.get('common.verbose', 0)
             model_shortlist = kwargs_before_upgrade.get('common.model_shortlist', None)
