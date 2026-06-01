@@ -101,7 +101,7 @@ Downloads VGGish11, YAMNet, GTCRN, GCRN from TI model zoo.
 Target layout:
 
 ```
-data/configs/subset/models/audio/
+data/configs/samples/models/audio/
   audio_classification/
     urbansound8k/
       vggish11_20250324-1807.onnx
@@ -117,7 +117,7 @@ data/configs/subset/models/audio/
 Each model has a single config file used for all pipelines (compile, infer, evaluate):
 
 ```
-data/configs/subset/models/audio/
+data/configs/samples/models/audio/
   audio_classification/
     urbansound8k/
       vggish11_20250324-1807_config.yaml
@@ -135,33 +135,33 @@ All commands are run from the repo root (`edgeai-tidlrunner/`).
 ### VGGish11 — Sound Classification
 
 ```bash
-tidlrunner-cli compile --config_path data/configs/subset/models/audio/audio_classification/urbansound8k/vggish11_20250324-1807_config.yaml
-tidlrunner-cli infer --config_path data/configs/subset/models/audio/audio_classification/urbansound8k/vggish11_20250324-1807_config.yaml
-tidlrunner-cli evaluate --config_path data/configs/subset/models/audio/audio_classification/urbansound8k/vggish11_20250324-1807_config.yaml
+tidlrunner-cli compile --config_path data/configs/samples/models/audio/audio_classification/urbansound8k/vggish11_20250324-1807_config.yaml
+tidlrunner-cli infer --config_path data/configs/samples/models/audio/audio_classification/urbansound8k/vggish11_20250324-1807_config.yaml
+tidlrunner-cli evaluate --config_path data/configs/samples/models/audio/audio_classification/urbansound8k/vggish11_20250324-1807_config.yaml
 ```
 
 ### YAMNet — Sound Classification
 
 ```bash
-tidlrunner-cli compile --config_path data/configs/subset/models/audio/audio_classification/urbansound8k/yamnet_combined_config.yaml
-tidlrunner-cli infer --config_path data/configs/subset/models/audio/audio_classification/urbansound8k/yamnet_combined_config.yaml
-tidlrunner-cli evaluate --config_path data/configs/subset/models/audio/audio_classification/urbansound8k/yamnet_combined_config.yaml
+tidlrunner-cli compile --config_path data/configs/samples/models/audio/audio_classification/urbansound8k/yamnet_combined_config.yaml
+tidlrunner-cli infer --config_path data/configs/samples/models/audio/audio_classification/urbansound8k/yamnet_combined_config.yaml
+tidlrunner-cli evaluate --config_path data/configs/samples/models/audio/audio_classification/urbansound8k/yamnet_combined_config.yaml
 ```
 
 ### GTCRN — Speech Enhancement
 
 ```bash
-tidlrunner-cli compile --config_path data/configs/subset/models/audio/speech_enhancement/voicebank_demand_16k/gtcrn_dns3_config.yaml
-tidlrunner-cli infer --config_path data/configs/subset/models/audio/speech_enhancement/voicebank_demand_16k/gtcrn_dns3_config.yaml
-tidlrunner-cli evaluate --config_path data/configs/subset/models/audio/speech_enhancement/voicebank_demand_16k/gtcrn_dns3_config.yaml
+tidlrunner-cli compile --config_path data/configs/samples/models/audio/speech_enhancement/voicebank_demand_16k/gtcrn_dns3_config.yaml
+tidlrunner-cli infer --config_path data/configs/samples/models/audio/speech_enhancement/voicebank_demand_16k/gtcrn_dns3_config.yaml
+tidlrunner-cli evaluate --config_path data/configs/samples/models/audio/speech_enhancement/voicebank_demand_16k/gtcrn_dns3_config.yaml
 ```
 
 ### GCRN — Speech Enhancement
 
 ```bash
-tidlrunner-cli compile --config_path data/configs/subset/models/audio/speech_enhancement/voicebank_demand_16k/gcrn_fixed_4sec_config.yaml
-tidlrunner-cli infer --config_path data/configs/subset/models/audio/speech_enhancement/voicebank_demand_16k/gcrn_fixed_4sec_config.yaml
-tidlrunner-cli evaluate --config_path data/configs/subset/models/audio/speech_enhancement/voicebank_demand_16k/gcrn_fixed_4sec_config.yaml
+tidlrunner-cli compile --config_path data/configs/samples/models/audio/speech_enhancement/voicebank_demand_16k/gcrn_fixed_4sec_config.yaml
+tidlrunner-cli infer --config_path data/configs/samples/models/audio/speech_enhancement/voicebank_demand_16k/gcrn_fixed_4sec_config.yaml
+tidlrunner-cli evaluate --config_path data/configs/samples/models/audio/speech_enhancement/voicebank_demand_16k/gcrn_fixed_4sec_config.yaml
 ```
 
 ## Audio-Specific Settings

@@ -28,7 +28,7 @@ The arguments can be provided as Shortcut Style Names in a Dictionary, Explicit 
 ```
 kwargs = {
     'session': {
-        'model_path': './data/configs/subset/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx',
+        'model_path': './data/configs/samples/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx',
     },
     'dataloader': {
         'name': 'image_classification_dataloader',

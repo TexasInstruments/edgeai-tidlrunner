@@ -13,7 +13,7 @@ The commandline options supported for each command are listed [here](./command_l
 #### Example - compile model with random inputs
 Compile is one of the most basic and necessary commands - it needs only the model path to be provided. The given model will be compiled with TIDL using random inputs for fixed-point calibration (i.e. quantization). It can be used to quickly check whether a model works in TIDL or not. 
 ```
-tidlrunner-cli compile --model_path=./data/configs/subset/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx --target_device AM62A
+tidlrunner-cli compile --model_path=./data/configs/samples/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx --target_device AM62A
 ```
 The compiled artifacts will be placed under [../work_dirs/](../work_dirs/) in a folder with the model name.
 
@@ -22,19 +22,19 @@ There are several options can be specified to configure the run when running wit
 
 This is the example for an image classification model:
 ```
-tidlrunner-cli compile --model_path=./data/configs/subset/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx   --target_device AM62A --data_name image_classification_dataloader --data_path=./data/datasets/imagenetv2c/val --preprocess_name image_preprocess 
+tidlrunner-cli compile --model_path=./data/configs/samples/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx   --target_device AM62A --data_name image_classification_dataloader --data_path=./data/datasets/imagenetv2c/val --preprocess_name image_preprocess 
 
 ```
 
 This is the example for an object detection model:
 ```
-tidlrunner-cli compile --model_path=./data/configs/subset/models/vision/detection/coco/edgeai-mmdet/ssd_mobilenetv2_lite_512x512_20201214_model.onnx --target_device AM62A --data_name coco_detection_dataloader --data_path=./data/datasets/coco --preprocess_name image_preprocess --meta_arch_type 3 --meta_arch_file_path=./data/configs/subset/models/vision/detection/coco/edgeai-mmdet/ssd_mobilenetv2_lite_512x512_20201214_model.prototxt
+tidlrunner-cli compile --model_path=./data/configs/samples/models/vision/detection/coco/edgeai-mmdet/ssd_mobilenetv2_lite_512x512_20201214_model.onnx --target_device AM62A --data_name coco_detection_dataloader --data_path=./data/datasets/coco --preprocess_name image_preprocess --meta_arch_type 3 --meta_arch_file_path=./data/configs/samples/models/vision/detection/coco/edgeai-mmdet/ssd_mobilenetv2_lite_512x512_20201214_model.prototxt
 ```
 * Note the additional arguments for 'meta_arch'. These are an important argument for accelerating SSD and object detection heads. See the relevant [edgeai-tidl-tools document](https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/od_meta_arch.md) for more information. 
 
 This is the example for a semantic segmentation model:
 ```
-tidlrunner-cli compile --model_path=./data/configs/subset/models/vision/segmentation/cocoseg21/edgeai-tv/deeplabv3plus_mobilenetv2_edgeailite_512x512_20210405.onnx --target_device AM62A --data_name coco_segmentation_dataloader --data_path=./data/datasets/coco --preprocess_name image_preprocess 
+tidlrunner-cli compile --model_path=./data/configs/samples/models/vision/segmentation/cocoseg21/edgeai-tv/deeplabv3plus_mobilenetv2_edgeailite_512x512_20210405.onnx --target_device AM62A --data_name coco_segmentation_dataloader --data_path=./data/datasets/coco --preprocess_name image_preprocess 
 ```
 * Note: Model simplification with onnxsim may fail on this model for the latest onnxsim installation, but this call to onnxsim can be disabled with the --simplify-model argument as shown.
 
