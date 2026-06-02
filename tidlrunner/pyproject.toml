@@ -37,7 +37,8 @@ dependencies = [
     "librosa",
     "soundfile",
     "scipy",
-    "plyfile"
+    "plyfile",
+    "h5py"
 ]
 
 [project.urls]

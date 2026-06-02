@@ -37,10 +37,11 @@ from colorama import Fore
 
 from ....common import utils
 from . import dataset_base
+from . import dataloader_utils
 
 
-class NYUDepthV2(dataset_base.DatasetBase):
-    def __init__(self, num_classes=151, ignore_label=None, download=False, num_frames=None, name='nyudepthv2', **kwargs):
+class NYUDepthV2(dataset_base.DatasetBaseWithUtils):
+    def __init__(self, num_classes=151, ignore_label=None, download=False, num_frames=None, name='nyudepthv2',  backend='cv2', bgr_to_rgb=True, **kwargs):
         super().__init__(num_classes=num_classes, num_frames=num_frames, name=name, **kwargs)
 
         try:
@@ -75,6 +76,7 @@ class NYUDepthV2(dataset_base.DatasetBase):
 
         self.num_frames = self.kwargs['num_frames'] = min(self.kwargs['num_frames'], len(self.imgs)) \
             if (self.kwargs['num_frames'] is not None) else len(self.imgs)
+        self.image_reader = dataloader_utils.ImageRead(backend=backend, bgr_to_rgb=bgr_to_rgb)
 
     def download(self, path, split):
         import scipy.io
@@ -159,9 +161,13 @@ class NYUDepthV2(dataset_base.DatasetBase):
         if with_label:
             image_file = self.imgs[idx]
             label_file = self.labels[idx]
-            return image_file, info_dict, label_file
+            img, info_dict = self.image_reader(image_file, info_dict)
+            label_img = PIL.Image.open(label_file)  
+            return img, info_dict, label_img
         else:
-            return self.imgs[idx], info_dict
+            image_file = self.imgs[idx]
+            img, info_dict = self.image_reader(image_file, info_dict)
+            return img, info_dict
         #
 
     def __call__(self, index, info_dict=None):
@@ -184,17 +190,16 @@ class NYUDepthV2(dataset_base.DatasetBase):
             x_1 = (-a_01 * b_0 + a_00 * b_1) / det
             return x_0, x_1
 
-    def evaluate(self, predictions, threshold=1.25, depth_cap_max=80, depth_cap_min=1e-3, **kwargs):
+    def evaluate(self, run_data, threshold=1.25, depth_cap_max=80, depth_cap_min=1e-3, **kwargs):
         disparity = kwargs.get('disparity')
         scale_and_shift_needed = kwargs.get('scale_shift')
 
         delta_1 = 0.0
-        num_frames = min(self.num_frames, len(predictions))
-        for n in range(num_frames):
-            image_file, info_dict, label_file = self.__getitem__(n, with_label=True)
-            label_img = PIL.Image.open(label_file)
+        num_frames = min(self.num_frames, len(run_data))
+        for n, data in enumerate(run_data):
+            prediction = data['output']
+            image_data, info_dict, label_img = self.__getitem__(n, with_label=True)
             label_img = np.array(label_img, dtype=np.float32) / self.depth_label_scale
-            prediction = predictions[n]
             prediction = prediction['output'] if isinstance(prediction, dict) and 'output' in prediction else prediction
             if scale_and_shift_needed:
                 mask = label_img != 0
@@ -231,5 +236,5 @@ class NYUDepthV2(dataset_base.DatasetBase):
         return metric
 
 
-def nyudepthv2_dataloader(settings, name, path, label_path=None, **kwargs):
-    return NYUDepthV2(path=path, **kwargs)
+def nyudepthv2_dataloader(settings, name, path, label_path=None, split='val', **kwargs):
+    return NYUDepthV2(path=path, split=split, **kwargs)

@@ -252,7 +252,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     # post process transforms for depth estimation
     ###############################################################
     @classmethod
-    def create_transforms_depth_estimation_base(cls, settings, data_layout=None, save_output=False, save_output_frames=50, **kwargs):
+    def create_transforms_depth_estimation_base(cls, settings, data_layout=presets.DataLayoutType.NCHW, save_output=False, save_output_frames=50, **kwargs):
         transforms_list = [SqueezeAxis(),
                            NPTensorToImage(data_layout=data_layout),
                            DepthImageResize()]
@@ -260,10 +260,6 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
             transforms_list += [DepthImageSave(save_output_frames)]
         #
         return transforms_list, dict(data_layout=data_layout, **kwargs)
-
-    @classmethod
-    def create_transforms_depth_estimation_onnx(cls, settings, data_layout=presets.DataLayoutType.NCHW, **kwargs):
-        return cls.create_transforms_depth_estimation_base(data_layout=data_layout, **kwargs)
 
     @classmethod
     def create_transforms_lidar_base(cls, settings, **kwargs):
@@ -459,5 +455,9 @@ def fcos3d_model_postprocess(settings, name='fcos3d_model_postprocess', **kwargs
 
 def fastbev_model_postprocess(settings, name='fastbev_model_postprocess', **kwargs):
     transforms_list, kwargs = PostProcessTransforms.create_transforms_bev_detection_fastbev(settings, **kwargs)
+    return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
+
+def depth_estimation_postprocess(settings, name='depth_estimation_postprocess', **kwargs):
+    transforms_list, kwargs = PostProcessTransforms.create_transforms_depth_estimation_base(settings, **kwargs)
     return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
 

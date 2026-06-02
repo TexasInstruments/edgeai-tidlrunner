@@ -197,11 +197,11 @@ class CompileModel(CompileModelBase):
         # postprocess
         if self.pipeline_config and 'postprocess' in self.pipeline_config:
             self.postprocess = self.pipeline_config['postprocess']
-        elif self.kwargs['common.postprocess_enable']:
+        elif self.kwargs['common.postprocess_enable'] and postprocess_kwargs['name']:
             if callable(postprocess_kwargs['name']):
                 postprocess_method = postprocess_kwargs['name']
                 self.postprocess = postprocess_method()
-            elif postprocess_kwargs['name'] and hasattr(blocks.postprocess, postprocess_kwargs['name']):
+            elif hasattr(blocks.postprocess, postprocess_kwargs['name']):
                 postprocess_method = getattr(blocks.postprocess, postprocess_kwargs['name'])
                 self.postprocess = postprocess_method(self.settings, **postprocess_kwargs)
             else:

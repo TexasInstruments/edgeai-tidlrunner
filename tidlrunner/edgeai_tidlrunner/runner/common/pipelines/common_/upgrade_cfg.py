@@ -212,12 +212,12 @@ def upgrade_kwargs(**kwargs):
             if kwargs_out.get('dataloader.path', None) is None:
                 kwargs_out['dataloader.path'] = './data/datasets/ycbv'
             # 
-        elif input_dataset == 'ycbv':
+        elif input_dataset == 'nyudepthv2':
             if kwargs_out.get('dataloader.name', None) is None:
-                kwargs_out['dataloader.name'] = 'ycbv_object_6d_pose_dataloader'
+                kwargs_out['dataloader.name'] = 'nyudepthv2_dataloader'
             #
             if kwargs_out.get('dataloader.path', None) is None:
-                kwargs_out['dataloader.path'] = './data/datasets/ycbv'
+                kwargs_out['dataloader.path'] = './data/datasets/nyudepthv2'
             # 
         elif input_dataset == 'ti-robokit_semseg_zed1hd':
             if kwargs_out.get('dataloader.name', None) is None:
