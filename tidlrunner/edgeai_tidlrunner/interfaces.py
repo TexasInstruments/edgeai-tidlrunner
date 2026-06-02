@@ -129,7 +129,7 @@ def _model_selection(model_selection, *args):
 
 def _model_shortlist(model_shortlist, model_shortlist_for_model):
     if model_shortlist:
-        shortlisted_model = model_shortlist_for_model and int(model_shortlist_for_model) <= int(model_shortlist)
+        shortlisted_model = model_shortlist_for_model is None or int(model_shortlist_for_model) <= int(model_shortlist)
     else:
         shortlisted_model = True
     #
