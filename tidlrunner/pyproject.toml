@@ -70,7 +70,8 @@ audio = [
     "scipy",
     "pesq",
     "pystoi",
-    "scikit-learn"
+    "scikit-learn",
+    "datasets",
 ]
 
 [project.scripts]
