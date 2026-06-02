@@ -395,6 +395,17 @@ def no_postprocess(settings, name='no_postprocess', **kwargs):
     return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
 
 
+def image_classification_postprocess(settings, name='image_classification_postprocess', **kwargs):
+    assert settings.common.task_type == constants.TaskType.TASK_TYPE_CLASSIFICATION, \
+        f'image_classification_postprocess can only be used for image classification task type. given task_type is: {settings.common.task_type}'
+    transforms_list, kwargs = PostProcessTransforms.create_transforms_classification(settings, **kwargs)
+    return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
+
+
+def classification_postprocess(settings, *args, **kwargs):
+    return image_classification_postprocess(settings, *args, **kwargs)
+
+
 def object_detection_postprocess(settings, name='object_detection_postprocess', **kwargs):
     assert settings.common.task_type in (constants.TaskType.TASK_TYPE_DETECTION, constants.TaskType.TASK_TYPE_KEYPOINT_DETECTION), \
         f'object_detection_postprocess can only be used for object detection task type. given task_type is: {settings.common.task_type}'
