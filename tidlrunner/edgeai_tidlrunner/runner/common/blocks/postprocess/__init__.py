@@ -394,11 +394,16 @@ def no_postprocess(settings, name='no_postprocess', **kwargs):
     transforms_list, kwargs = PostProcessTransforms(settings, transforms=[], name=name, **kwargs)
     return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
 
+
 def object_detection_postprocess(settings, name='object_detection_postprocess', **kwargs):
-    assert settings.common.task_type == constants.TaskType.TASK_TYPE_DETECTION, \
-        'object_detection_postprocess can only be used for object detection task type'
+    assert settings.common.task_type in (constants.TaskType.TASK_TYPE_DETECTION, constants.TaskType.TASK_TYPE_KEYPOINT_DETECTION), \
+        f'object_detection_postprocess can only be used for object detection task type. given task_type is: {settings.common.task_type}'
     transforms_list, kwargs = PostProcessTransforms.create_transforms_detection_base(settings, **kwargs)
     return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
+
+
+def detection_postprocess(settings, *args, **kwargs):
+    return object_detection_postprocess(settings, *args, **kwargs)
 
 
 def segmentation_postprocess(settings, name='segmentation_postprocess', **kwargs):
@@ -413,6 +418,7 @@ def keypoint_detection_postprocess(settings, name='keypoint_detection_postproces
         'keypoint_detection_postprocess can only be used for keypoint detection task type'
     transforms_list, kwargs = PostProcessTransforms.create_transforms_detection_yolov5_pose_onnx(settings, **kwargs)
     return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
+
 
 def human_pose_estimation_postprocess(settings, name='human_pose_estimation_postprocess', **kwargs):
     assert settings.common.task_type == constants.TaskType.TASK_TYPE_KEYPOINT_DETECTION, \
