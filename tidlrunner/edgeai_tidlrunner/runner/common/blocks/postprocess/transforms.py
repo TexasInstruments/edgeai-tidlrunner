@@ -43,6 +43,8 @@ import math
 import warnings
 
 from ...settings.constants import presets
+from ....common import utils
+
 from .keypoints import *
 
 try:
@@ -245,7 +247,11 @@ class ClassificationImageSave():
             return output, info_dict
         #
         if self.color_map is None:
-            self.color_map = info_dict['dataset_info']['color_map']
+            if info_dict.get('dataset_info', None) and 'color_map' in info_dict['dataset_info']:
+                self.color_map = info_dict['dataset_info']['color_map']
+            else:
+                self.color_map = utils.get_color_palette(self.kwargs.get('num_classes', None) or 32)
+            #
         #
         data_path = info_dict['data_path']
         img_data = info_dict['data']

@@ -38,7 +38,7 @@ from . import dataloader_utils
 
 
 #######################################################################
-class ImageListDataLoader(dataset_base.DatasetBase):
+class ImageListDataLoader(dataset_base.DatasetBaseWithUtils):
     def __init__(self, files, labels=None, file_types=None, shuffle=False, backend='pil', bgr_to_rgb=True):
         super().__init__()
         self.files = copy.deepcopy(files)
@@ -53,6 +53,10 @@ class ImageListDataLoader(dataset_base.DatasetBase):
         #
         self.file_types = file_types
         self.image_reader = dataloader_utils.ImageRead(backend=backend, bgr_to_rgb=bgr_to_rgb)
+        if self.labels:
+            self.kwargs['num_classes'] = len(set(self.labels))
+            self.kwargs['dataset_info'] = self.make_dataset_info(self.kwargs['num_classes'], description=f'ImageListDataLoader with {self.kwargs["num_classes"]} classes')
+        #
 
     def __getitem__(self, index, info_dict=None):
         input_img_file = self.files[index]
@@ -137,7 +141,7 @@ class ImageFilesDataLoader(ImageListDataLoader):
             prediction = list(prediction.values())[0] if isinstance(prediction, dict) else prediction
             pred = np.argmax(prediction, axis=1) if prediction.ndim > 1 else np.argmax(prediction)
             correctly_classified += int(int(pred) == int(label))
-            num_frames += len(pred)
+            num_frames += len(pred) if isinstance(pred, (list,tuple)) else 1
         #
         accuracy_percentage = correctly_classified * 100 / num_frames
         return {'accuracy_top1%': accuracy_percentage}

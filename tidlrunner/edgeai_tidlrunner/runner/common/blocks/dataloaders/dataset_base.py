@@ -133,4 +133,11 @@ class DatasetBaseWithUtils(DatasetBase):
         color_map_mid_len = len(color_map)//2
         color_map = color_map[color_map_mid_len:] + color_map[:color_map_mid_len]
         return color_map
+
+    def make_dataset_info(self, num_classes, description='Dataset Description'):
+        dataset_info = dict()
+        dataset_info['info'] = {'description': description}
+        dataset_info['categories'] = [{'id': k, 'name': str(k), 'supercategory': k} for k in range(num_classes)]
+        dataset_info.update(dict(color_map=utils.get_color_palette(num_classes)))
+        return dataset_info
     
