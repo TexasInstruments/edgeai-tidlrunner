@@ -1,0 +1,45 @@
+task_type: bev_detection
+input_dataset: nuscenes_frame
+preprocess:
+  resize:
+  - 450
+  - 800
+  crop:
+  - 0
+  - 130
+  - 800
+  - 320
+  data_layout: NCHW
+  reverse_channels: false
+  backend: cv2
+  interpolation: 2
+  resize_with_pad: false
+  pad_color: 0
+  name: petr_model_preprocess
+session:
+  input_optimization: false
+  input_data_layout: NCHW
+  input_mean:
+  - - 103.53
+    - 116.28
+    - 123.675
+  input_scale:
+  - - 0.017429
+    - 0.017507
+    - 0.017125
+  runtime_options:
+    advanced_options:output_feature_16bit_names_list: ''
+    advanced_options:params_16bit_names_list: ''
+    object_detection:meta_arch_type: 10
+  model_path: petrv2_mod_vovnet_320x800_20260407_opt.onnx
+  model_id: 3dod-7121
+  input_details: null
+  output_details: null
+  num_inputs: 1
+postprocess:
+  data_layout: NCHW
+  save_output: false
+  name: bev_detection_postprocess
+metric: {}
+model_info:
+  metric_reference: {}

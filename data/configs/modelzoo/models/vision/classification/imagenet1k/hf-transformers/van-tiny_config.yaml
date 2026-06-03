@@ -1,0 +1,39 @@
+task_type: classification
+input_dataset: imagenet
+postprocess:
+  name: classification_postprocess
+preprocess:
+  resize: 224
+  crop: 224
+  data_layout: NCHW
+  reverse_channels: false
+  backend: pil
+  interpolation: null
+  resize_with_pad: false
+  pad_color: 0
+  name: image_preprocess
+session:
+  input_optimization: false
+  input_data_layout: NCHW
+  input_mean:
+  - 123.675
+  - 116.28
+  - 103.53
+  input_scale:
+  - 0.017125
+  - 0.017507
+  - 0.017429
+  runtime_options:
+    advanced_options:output_feature_16bit_names_list: ''
+    advanced_options:params_16bit_names_list: ''
+  model_path: van-tiny.onnx
+  model_id: cl-6810
+  input_details: null
+  output_details: null
+  num_inputs: 1
+model_info:
+  metric_reference:
+    accuracy_top1%: 70.44
+  model_shortlist: 120
+  compact_name: VAN-tiny
+  shortlisted: false

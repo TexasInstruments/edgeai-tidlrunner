@@ -1,0 +1,39 @@
+task_type: bev_detection
+input_dataset: nuscenes_mv_image
+preprocess:
+  resize:
+  - 900
+  - 1600
+  data_layout: NCHW
+  reverse_channels: false
+  backend: cv2
+  interpolation: 2
+  resize_with_pad: false
+  pad_color: 0
+  name: fcos3d_model_preprocess
+session:
+  input_optimization: false
+  input_data_layout: NCHW
+  input_mean:
+  - - 103.53
+    - 116.28
+    - 123.675
+  input_scale:
+  - - 1.0
+    - 1.0
+    - 1.0
+  runtime_options:
+    advanced_options:output_feature_16bit_names_list: ''
+    advanced_options:params_16bit_names_list: ''
+  model_path: fcos3d_mod_r101_928x1600_20250402.onnx
+  model_id: 3dod-7150
+  input_details: null
+  output_details: null
+  num_inputs: 1
+postprocess:
+  data_layout: NCHW
+  save_output: false
+  name: fcos3d_model_postprocess
+metric: {}
+model_info:
+  metric_reference: {}

@@ -1,0 +1,44 @@
+task_type: bev_detection
+input_dataset: nuscenes_frame
+preprocess:
+  resize:
+  - 396
+  - 704
+  crop:
+  - 0
+  - 140
+  - 704
+  - 256
+  data_layout: NCHW
+  reverse_channels: false
+  backend: cv2
+  interpolation: 2
+  resize_with_pad: false
+  pad_color: 0
+  name: sparse4d_model_preprocess
+session:
+  input_optimization: false
+  input_data_layout: NCHW
+  input_mean:
+  - - 123.675
+    - 116.28
+    - 103.53
+  input_scale:
+  - - 0.017125
+    - 0.017507
+    - 0.017429
+  runtime_options:
+    advanced_options:output_feature_16bit_names_list: ''
+    advanced_options:params_16bit_names_list: ''
+  model_path: sparse4d_mod_r50_256x704_20251215.onnx
+  model_id: 3dod-7190
+  input_details: null
+  output_details: null
+  num_inputs: 1
+postprocess:
+  data_layout: NCHW
+  save_output: false
+  name: bev_detection_postprocess
+metric: {}
+model_info:
+  metric_reference: {}
