@@ -47,7 +47,7 @@ Setup the tool:
 This runs:
 ```bash
 pip3 install -e ./tidlrunner[evm]
-
+```
 
 ### Copy the compiled artifacts and models
 

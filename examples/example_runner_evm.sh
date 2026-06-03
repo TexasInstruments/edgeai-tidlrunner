@@ -35,10 +35,10 @@ TARGET_DEVICE="AM62A"
 
 ##################################################################
 # Example 1 - infer using compiled artifacts given a model
-# tidlrunner-cli infer --model_path ./data/configs/subset/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx --target_device ${TARGET_DEVICE}
+# tidlrunner-cli infer --model_path ./data/configs/samples/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx --target_device ${TARGET_DEVICE}
 
 ##################################################################
-# Exampe 2: infer using compiled artifacts and a config file
+# Example 2: infer using compiled artifacts and a config file
 #----------------------------------------------------------------
-# tidlrunner-cli infer --config_path ./data/configs/subset/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml --target_device ${TARGET_DEVICE}
+# tidlrunner-cli infer --config_path ./data/configs/samples/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml --target_device ${TARGET_DEVICE}
 

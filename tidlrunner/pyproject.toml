@@ -57,7 +57,8 @@ pc = [
     "nuscenes-devkit", ## nuscenes-devkit needs to be moved to main requirements after figuring out on how to install on evm
 ]
 evm = [
-    "pycocotools"
+    "pycocotools",
+    "numpy<2"
 ]
 dev = [
     "pytest",

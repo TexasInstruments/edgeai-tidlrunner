@@ -29,7 +29,8 @@
 
 import json
 
-from huggingface_hub import dataset_info
+# huggingface_hub is not installed on EVM; uncomment when needed
+# from huggingface_hub import dataset_info
 
 from ....common import utils
 
