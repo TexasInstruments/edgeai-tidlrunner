@@ -30,6 +30,13 @@
 
 
 ##################################################################
-# compile and evaluate accuracy using aggregate configs file
+# Note - this is not a complete test script, but a sample to show how to run the runner benchmark for EVM. 
+# If a model inference crashes, leaving the EVM in a bad state, you may need to reboot the EVM before running the next model inference - this script currently does not include that feature. 
+# You can also run the runner benchmark for each model config separately, instead of using the aggregate configs file, which will allow you to easily identify which model inference is crashing and causing the EVM to be in a bad state. 
+# Please refer to the documentation for more details on how to use the runner benchmark and the various options available.
+
+
+##################################################################
+# evaluate accuracy using aggregate configs file
 #----------------------------------------------------------------
-$(dirname "$0")/_run_benchmark_pc.sh --preset_selection ACCURACY "$@"
+$(dirname "$0")/_run_benchmark_evm.sh --preset_selection QUICK "$@"

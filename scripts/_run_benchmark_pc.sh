@@ -32,4 +32,4 @@
 ##################################################################
 # compile and evaluate accuracy using aggregate configs file
 #----------------------------------------------------------------
-$(dirname "$0")/_run_benchmark_pc.sh --preset_selection ACCURACY "$@"
+tidlrunner-cli compile+evaluate --config_path ./data/configs/modelzoo/configs.yaml --model_shortlist 100 "$@"

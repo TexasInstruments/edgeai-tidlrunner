@@ -32,4 +32,4 @@
 ##################################################################
 # compile and evaluate accuracy using aggregate configs file
 #----------------------------------------------------------------
-$(dirname "$0")/_run_benchmark_pc.sh --preset_selection ACCURACY "$@"
+$(dirname "$0")/_run_benchmark_pc.sh --preset_selection QUICK "$@"
