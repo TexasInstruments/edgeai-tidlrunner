@@ -103,7 +103,7 @@ def upgrade_kwargs(**kwargs):
         kwargs_out['session.runtime_options.advanced_options:calibration_iterations'] = 1
     elif preset_selection.lower() == constants.ModelCompilationPreset.PRESET_QUICK.lower():
         # quick calibration and inference for faster compilation and testing - not for accuracy evaluation
-        kwargs_out['common.num_frames'] = 5
+        kwargs_out['common.num_frames'] = 100
         kwargs_out['session.runtime_options.advanced_options:calibration_frames'] = 5
         kwargs_out['session.runtime_options.advanced_options:calibration_iterations'] = 5
     elif preset_selection.lower() == constants.ModelCompilationPreset.PRESET_ACCURACY.lower():

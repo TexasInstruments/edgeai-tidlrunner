@@ -134,7 +134,7 @@ class ParallelRunner:
                 err_code = proc.wait(timeout=self.epsinterval) if hasattr(proc, 'wait') else None
                 if err_code:
                     # raise subprocess.CalledProcessError(err_code, "Error occurred")
-                    print(log_color("\nERROR", f"Error occurred: {running_proc_name}", f"Error Code: {err_code} at {__file__}"))
+                    print(log_color("\nERROR", f"Error occurred: {running_proc_name} Details: {proc_dict}", f"ERROR: Error Code: {err_code} at {__file__}"))
                     if hasattr(proc, 'terminate'):
                         proc.terminate()
                     #
@@ -150,7 +150,7 @@ class ParallelRunner:
                 if hasattr(proc, 'terminate'):
                     proc.terminate()
                 #
-                print(log_color("\nERROR", f"Error occurred: {running_proc_name}", f"Error Code: {ex} at {__file__}"))
+                print(log_color("\nERROR", f"Error occurred: {running_proc_name} Details: {proc_dict}", f"\nERROR Error Code: {ex} at {__file__}"))
             else:
                 out_ret, err_ret = proc.communicate(timeout=self.epsinterval) if hasattr(proc, 'communicate') else None, None
                 completed = True

@@ -1,11 +1,12 @@
 task_type: detection
-dataset_category: coco  # Optional
-calibration_dataset:    # Optional
-  num_classes: 90       # Optional
+#dataset_category: coco  # Optional
+#calibration_dataset:    # Optional
+#  num_classes: 90       # Optional
 input_dataset:
-  num_classes: 90
+  num_classes: null
   # dataset_info: yolox_nano_lite_416x416_20220214_model_dataset.yaml
 preprocess:
+  name: null
   resize: 416
   crop: 416
   data_layout: NCHW
@@ -21,8 +22,9 @@ preprocess:
   - 114
   - 114
 session:
-  session_name: onnxrt
-  target_device: null
+  name: null
+  session_name: null
+  #target_device: null
   input_optimization: false
   input_data_layout: NCHW
   input_mean:
@@ -35,7 +37,7 @@ session:
   - 1.0
   runtime_options:
     platform: J7
-    version: 11.1.0
+    version: 11.2.0
     object_detection:meta_arch_type: 6
     object_detection:meta_layers_names_list: yolox_nano_lite_416x416_20220214_model.prototxt
     advanced_options:output_feature_16bit_names_list: ''
@@ -89,6 +91,8 @@ session:
   num_inputs: 1
   # artifacts_folder: artifacts
 postprocess:
+  name: null
+  data_layout: null
   reshape_list: null
   # detection_threshold: 0.3
   save_output: false
@@ -105,6 +109,7 @@ postprocess:
   shuffle_indices: null
   squeeze_axis: null
   ignore_index: null
+  with_argmax: false
   logits_bbox_to_bbox_ls: false
   keypoint: false
   object6dpose: false  

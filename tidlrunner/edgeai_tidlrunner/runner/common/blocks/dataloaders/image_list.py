@@ -134,18 +134,24 @@ class ImageFilesDataLoader(ImageListDataLoader):
             predictions.append(output)
             inputs.append(data['input'])
         #
-        correctly_classified = 0
+        accuracy = 0
         num_frames = 0
         for prediction, label in zip(predictions, self.labels):
             prediction = prediction[0] if isinstance(prediction, list) else prediction
             prediction = list(prediction.values())[0] if isinstance(prediction, dict) else prediction
-            pred = np.argmax(prediction, axis=1) if prediction.ndim > 1 else np.argmax(prediction)
-            correctly_classified += int(int(pred) == int(label))
+            pred = np.argmax(prediction, axis=1) if prediction.ndim > 1 else prediction
+            accuracy += self.classification_accuracy(int(pred), int(label), **kwargs)
             num_frames += len(pred) if isinstance(pred, (list,tuple)) else 1
         #
-        accuracy_percentage = correctly_classified * 100 / num_frames
+        accuracy_percentage = accuracy * 100 / num_frames
         return {'accuracy_top1%': accuracy_percentage}
 
+    def classification_accuracy(self, prediction, target, label_offset_pred=0, label_offset_gt=0, **kwargs):
+        prediction = prediction + label_offset_pred
+        target = target + label_offset_gt
+        accuracy = 1.0 if (prediction == target) else 0.0
+        return accuracy
+    
 
 def image_files_dataloader(settings, name, path, label_path=None, **kwargs):
     return ImageFilesDataLoader(path, label_path, **kwargs)
