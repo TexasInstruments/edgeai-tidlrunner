@@ -1573,8 +1573,19 @@ class ONNXParser:
                     attrs[key] = list(val)
                 elif isinstance(val, bytes):
                     attrs[key] = val.decode('utf-8')
-                else:
+                elif isinstance(val, gs.Constant):
+                    shape = list(val.values.shape) if val.values is not None else []
+                    attrs[key] = f"Constant({shape})"
+                elif isinstance(val, gs.Variable):
+                    attrs[key] = f"Variable({val.name})"
+                elif isinstance(val, gs.Node):
+                    attrs[key] = f"Node({val.op})"
+                elif isinstance(val, gs.Graph):
+                    attrs[key] = f"Graph({len(val.nodes)} nodes)"
+                elif isinstance(val, (int, float, str, bool)):
                     attrs[key] = val
+                else:
+                    attrs[key] = str(val)
             return attrs
         else:
             attrs = {}
@@ -2576,24 +2587,27 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
 
     discovered = discover_files_from_workdir(model_dir_path)
 
-    required_keys = ['onnx', 'graphviz', 'allowednode', 'subgraph_dir']
-    missing = [key for key in required_keys if key not in discovered]
-    if missing:
-        print(f"\nERROR: Required files not found: {', '.join(missing)}")
+    if 'onnx' not in discovered:
+        print("\nERROR: Required file not found: onnx model")
         sys.exit(1)
 
+    tidl_available = all(k in discovered for k in ['graphviz', 'allowednode', 'subgraph_dir'])
+    if not tidl_available:
+        print("\nINFO: TIDL artifacts not found (tidl_offload may be disabled)")
+        print("INFO: Generating ONNX-only model inspector (no TIDL subgraph data)")
+
     onnx_path = discovered['onnx']
-    graphviz_path = discovered['graphviz']
-    allowednode_path = discovered['allowednode']
-    subgraph_dir = discovered['subgraph_dir']
+    graphviz_path = discovered.get('graphviz', '')
+    allowednode_path = discovered.get('allowednode', '')
+    subgraph_dir = discovered.get('subgraph_dir', '')
 
     print("\n" + "=" * 70)
     print("Data Extractor - Parsing Artifacts")
     print("=" * 70)
     print(f"ONNX Model:      {onnx_path}")
-    print(f"GraphViz Info:   {graphviz_path}")
-    print(f"Allowed Nodes:   {allowednode_path}")
-    print(f"Subgraph Dir:    {subgraph_dir}")
+    print(f"GraphViz Info:   {graphviz_path or '(not available)'}")
+    print(f"Allowed Nodes:   {allowednode_path or '(not available)'}")
+    print(f"Subgraph Dir:    {subgraph_dir or '(not available)'}")
     print(f"Output JSON:     {output_json_path}")
     print("=" * 70)
 
@@ -2628,18 +2642,22 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
             print(f"WARNING: {allowednode_path} not found")
 
         print("\n[4/8] Parsing TIDL subgraph HTML files...")
-        # Build tensor name → ONNX node index map for TIDL-to-ONNX mapping
-        tensor_to_node_map = {}
-        for idx, (layer_name, layer_info) in enumerate(model_data.get('layer_details', {}).items()):
-            for out_tensor in layer_info.get('output', []):
-                tensor_to_node_map[out_tensor] = idx
-        # Build ordered list of ONNX layer names for ONNX name lookup
-        onnx_layer_names = list(model_data.get('layer_details', {}).keys())
+        tidl_data = {}
+        if tidl_available:
+            # Build tensor name → ONNX node index map for TIDL-to-ONNX mapping
+            tensor_to_node_map = {}
+            for idx, (layer_name, layer_info) in enumerate(model_data.get('layer_details', {}).items()):
+                for out_tensor in layer_info.get('output', []):
+                    tensor_to_node_map[out_tensor] = idx
+            # Build ordered list of ONNX layer names for ONNX name lookup
+            onnx_layer_names = list(model_data.get('layer_details', {}).keys())
 
-        tidl_parser = TIDLSubgraphParser(subgraph_dir, subgraph_data['node_support'])
-        tidl_parser.tensor_to_node_map = tensor_to_node_map
-        tidl_parser.onnx_layer_names = onnx_layer_names
-        tidl_data = tidl_parser.parse_all_subgraphs()
+            tidl_parser = TIDLSubgraphParser(subgraph_dir, subgraph_data['node_support'])
+            tidl_parser.tensor_to_node_map = tensor_to_node_map
+            tidl_parser.onnx_layer_names = onnx_layer_names
+            tidl_data = tidl_parser.parse_all_subgraphs()
+        else:
+            print("  Skipped (no TIDL artifacts)")
 
         print("\n[5/8] Parsing activation data...")
         activation_data = {}
