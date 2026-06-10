@@ -190,6 +190,11 @@ class CompileModel(CompileModelBase):
                 #
             #
             self.preprocess = preprocess_method(self.settings, **preprocess_kwargs)
+            # Set input names for multi-modal models to help identify text vs image inputs
+            if self.session and hasattr(self.preprocess, 'set_input_names'):
+                input_details, _ = self.session.get_input_output_details()
+                input_names = [inp['name'] for inp in input_details]
+                self.preprocess.set_input_names(input_names)
         else:
             raise RuntimeError(f'ERROR: invalid preprocess args: {preprocess_kwargs}')
         #

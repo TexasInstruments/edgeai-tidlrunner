@@ -69,12 +69,27 @@ class ONNXRuntimeSession(rtwrapper.core.ONNXRuntimeWrapper):
         #
         super().__init__(**kwargs)
         self.input_normalizer = create_input_normalizer(**self.kwargs)
+        self._input_names_set = False
 
     def run_import(self, input_data, output_keys=None):
+        # Set input names on normalizer once after start_import (when input_details are available)
+        if self.input_normalizer and not self._input_names_set and hasattr(self.input_normalizer, 'set_input_names'):
+            if 'input_details' in self.kwargs:
+                input_names = [inp['name'] for inp in self.kwargs['input_details']]
+                self.input_normalizer.set_input_names(input_names)
+                self._input_names_set = True
+
         input_data, info_dict = self.input_normalizer(input_data, info_dict={}) if self.input_normalizer else (input_data, {})
         return super().run_import(input_data, output_keys)
 
     def run_inference(self, input_data, output_keys=None):
+        # Set input names on normalizer once after start_inference (when input_details are available)
+        if self.input_normalizer and not self._input_names_set and hasattr(self.input_normalizer, 'set_input_names'):
+            if 'input_details' in self.kwargs:
+                input_names = [inp['name'] for inp in self.kwargs['input_details']]
+                self.input_normalizer.set_input_names(input_names)
+                self._input_names_set = True
+
         input_data, info_dict = self.input_normalizer(input_data, info_dict={}) if self.input_normalizer else (input_data, {})
         return super().run_inference(input_data, output_keys)
 
