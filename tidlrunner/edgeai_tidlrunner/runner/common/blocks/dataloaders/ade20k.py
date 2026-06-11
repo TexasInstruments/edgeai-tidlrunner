@@ -226,8 +226,8 @@ class ADE20KSegmentation(dataset_base.DatasetBaseWithUtils):
         #
 
 
-def ade20k_segmentation_dataloader(settings, name, path, label_path=None, **kwargs):
-    return ADE20KSegmentation(path=path, **kwargs)
+def ade20k_segmentation_dataloader(settings, name, path, label_path=None, split='val', **kwargs):
+    return ADE20KSegmentation(path=path, split=('validation' if split == 'val' else 'training'), **kwargs)
 
 
 def ade20k32_segmentation_dataloader(settings, name, path, label_path=None, split='val', num_classes=32, **kwargs):
