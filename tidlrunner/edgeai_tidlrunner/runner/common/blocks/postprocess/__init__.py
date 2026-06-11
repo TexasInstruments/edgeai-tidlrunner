@@ -391,7 +391,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
 
 
 def no_postprocess(settings, name='no_postprocess', **kwargs):
-    transforms_list, kwargs = PostProcessTransforms(settings, transforms=[], name=name, **kwargs)
+    transforms_list, kwargs = PostProcessTransforms.create_transforms_none(settings, name=name, **kwargs)
     return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
 
 
