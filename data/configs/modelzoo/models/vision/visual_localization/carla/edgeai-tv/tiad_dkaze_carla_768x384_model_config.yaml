@@ -33,7 +33,8 @@ session:
   input_details: null
   output_details: null
   num_inputs: 1
-postprocess: {}
+postprocess:
+  name: no_postprocess
 model_info:
   metric_reference: {}
   model_shortlist: 10
