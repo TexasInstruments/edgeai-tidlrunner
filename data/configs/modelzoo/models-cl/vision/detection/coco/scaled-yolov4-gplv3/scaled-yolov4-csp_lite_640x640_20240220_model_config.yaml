@@ -13,14 +13,8 @@ preprocess:
 session:
   input_optimization: false
   input_data_layout: NCHW
-  input_mean:
-  - 0.0
-  - 0.0
-  - 0.0
-  input_scale:
-  - 0.003922
-  - 0.003922
-  - 0.003922
+  input_mean: null
+  input_scale: null
   runtime_options:
     advanced_options:output_feature_16bit_names_list: /module_list.143/Conv2d/Conv_output_0
     advanced_options:params_16bit_names_list: ''

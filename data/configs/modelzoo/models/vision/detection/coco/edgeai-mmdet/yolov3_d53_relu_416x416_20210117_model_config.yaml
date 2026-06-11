@@ -15,7 +15,7 @@ preprocess:
   pad_color: 0
   name: image_preprocess
 session:
-  input_optimization: false
+  input_optimization: true
   input_data_layout: NCHW
   input_mean:
   - 123.675
