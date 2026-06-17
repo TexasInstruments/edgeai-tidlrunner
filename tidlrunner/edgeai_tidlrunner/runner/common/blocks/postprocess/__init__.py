@@ -290,6 +290,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     ###############################################################
     # To REVISIT
     # Any necessary visualization funtions will be addeed in bev_detection.py
+    @classmethod
     def create_transforms_bev_detection_base(cls, settings, queue_length=0, data_layout=presets.DataLayoutType.NCHW, save_output=False, save_output_frames=50, **kwargs):
 
         try:
@@ -312,6 +313,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
 
         return postprocess_bev_detection_base, dict(data_layout=data_layout, **kwargs)
 
+    @classmethod
     def create_transforms_bev_detection_bevdet(cls, settings, data_layout=presets.DataLayoutType.NCHW, save_output=False, save_output_frames=50, **kwargs):
         # For bevDet_tiny_256x704_res50_parallel.onnx
         #postprocess_bev_detection_bevdet = [GetBEVDetBBoxes(),
@@ -336,6 +338,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
 
         return postprocess_bev_detection_bevdet, dict(data_layout=data_layout, **kwargs)
 
+    @classmethod
     def create_transforms_fcos3d(cls, settings, data_layout=presets.DataLayoutType.NCHW, save_output=False, save_output_frames=50, **kwargs):
         try:
             postprocess_fcos3d = [MultiClassNMS(),
@@ -354,6 +357,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
 
         return postprocess_fcos3d, dict(data_layout=data_layout, **kwargs)
 
+    @classmethod
     def create_transforms_bev_detection_fastbev(cls, settings, enable_nms=True, queue_length=0, data_layout=presets.DataLayoutType.NCHW, save_output=False, save_output_frames=50, **kwargs):
 
         postprocess_bev_detection_fastbev = []
@@ -387,15 +391,15 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
 
 
 def no_postprocess(settings, name='no_postprocess', **kwargs):
-    transforms_list, kwargs = PostProcessTransforms.create_transforms_none(settings, name=name, **kwargs)
-    return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
+    transforms_list, transforms_kwargs = PostProcessTransforms.create_transforms_none(settings, name=name, **kwargs)
+    return PostProcessTransforms(settings, transforms_list, name=name, **transforms_kwargs)
 
 
 def image_classification_postprocess(settings, name='image_classification_postprocess', **kwargs):
     assert settings.common.task_type == constants.TaskType.TASK_TYPE_CLASSIFICATION, \
         f'image_classification_postprocess can only be used for image classification task type. given task_type is: {settings.common.task_type}'
-    transforms_list, kwargs = PostProcessTransforms.create_transforms_classification(settings, **kwargs)
-    return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
+    transforms_list, transforms_kwargs = PostProcessTransforms.create_transforms_classification(settings, **kwargs)
+    return PostProcessTransforms(settings, transforms_list, name=name, **transforms_kwargs)
 
 
 def classification_postprocess(settings, *args, **kwargs):
@@ -405,8 +409,8 @@ def classification_postprocess(settings, *args, **kwargs):
 def object_detection_postprocess(settings, name='object_detection_postprocess', **kwargs):
     assert settings.common.task_type in (constants.TaskType.TASK_TYPE_DETECTION, constants.TaskType.TASK_TYPE_KEYPOINT_DETECTION), \
         f'object_detection_postprocess can only be used for object detection task type. given task_type is: {settings.common.task_type}'
-    transforms_list, kwargs = PostProcessTransforms.create_transforms_detection_base(settings, **kwargs)
-    return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
+    transforms_list, transforms_kwargs = PostProcessTransforms.create_transforms_detection_base(settings, **kwargs)
+    return PostProcessTransforms(settings, transforms_list, name=name, **transforms_kwargs)
 
 
 def detection_postprocess(settings, *args, **kwargs):
@@ -416,61 +420,60 @@ def detection_postprocess(settings, *args, **kwargs):
 def segmentation_postprocess(settings, name='segmentation_postprocess', **kwargs):
     assert settings.common.task_type == constants.TaskType.TASK_TYPE_SEGMENTATION, \
         'segmentation_postprocess can only be used for segmentation task type'
-    transforms_list, kwargs = PostProcessTransforms.create_transforms_segmentation_base(settings, **kwargs)
-    return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
+    transforms_list, transforms_kwargs = PostProcessTransforms.create_transforms_segmentation_base(settings, **kwargs)
+    return PostProcessTransforms(settings, transforms_list, name=name, **transforms_kwargs)
 
 
 def keypoint_detection_postprocess(settings, name='keypoint_detection_postprocess', **kwargs):
     assert settings.common.task_type == constants.TaskType.TASK_TYPE_KEYPOINT_DETECTION, \
         'keypoint_detection_postprocess can only be used for keypoint detection task type'
-    transforms_list, kwargs = PostProcessTransforms.create_transforms_detection_yolov5_pose_onnx(settings, **kwargs)
-    return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
+    transforms_list, transforms_kwargs = PostProcessTransforms.create_transforms_detection_yolov5_pose_onnx(settings, **kwargs)
+    return PostProcessTransforms(settings, transforms_list, name=name, **transforms_kwargs)
 
 
 def human_pose_estimation_postprocess(settings, name='human_pose_estimation_postprocess', **kwargs):
     assert settings.common.task_type == constants.TaskType.TASK_TYPE_KEYPOINT_DETECTION, \
         'human_pose_estimation_postprocess can only be used for human pose estimation task type'
-    transforms_list, kwargs = PostProcessTransforms.create_transforms_disparity_estimation_base(settings, **kwargs)
-    return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
+    transforms_list, transforms_kwargs = PostProcessTransforms.create_transforms_disparity_estimation_base(settings, **kwargs)
+    return PostProcessTransforms(settings, transforms_list, name=name, **transforms_kwargs)
 
 
 def yolo_6d_object_pose_postprocess(settings, reshape_list=[(-1,15)], name='yolo_6d_object_pose_postprocess', **kwargs):
     assert settings.common.task_type == constants.TaskType.TASK_TYPE_OBJECT_6D_POSE_ESTIMATION, \
         'yolo_6d_object_pose_postprocess can only be used for 6D object pose estimation task type'
-    transforms_list, kwargs = PostProcessTransforms.create_transforms_detection_yolo_6d_object_pose_onnx(settings, reshape_list=reshape_list, **kwargs)
-    return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
+    transforms_list, transforms_kwargs = PostProcessTransforms.create_transforms_detection_yolo_6d_object_pose_onnx(settings, reshape_list=reshape_list, **kwargs)
+    return PostProcessTransforms(settings, transforms_list, name=name, **transforms_kwargs)
 
 
 def audio_classification_postprocess(settings, name='audio_classification_postprocess', **kwargs):
-    transforms_list, kwargs = PostProcessTransforms.create_transforms_audio_classification(settings, **kwargs)
-    return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
+    transforms_list, transforms_kwargs = PostProcessTransforms.create_transforms_audio_classification(settings, **kwargs)
+    return PostProcessTransforms(settings, transforms_list, name=name, **transforms_kwargs)
 
 
 def audio_speechenhancement_postprocess(settings, name='audio_speechenhancement_postprocess', **kwargs):
-    transforms_list, kwargs = PostProcessTransforms.create_transforms_audio_speechenhancement(settings, **kwargs)
-    return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
+    transforms_list, transforms_kwargs = PostProcessTransforms.create_transforms_audio_speechenhancement(settings, **kwargs)
+    return PostProcessTransforms(settings, transforms_list, name=name, **transforms_kwargs)
 
 
 def bev_detection_postprocess(settings, name='bev_detection_postprocess', **kwargs):
-    transforms_list, kwargs =  PostProcessTransforms.create_transforms_bev_detection_base(settings, queue_length=1, **kwargs)
-    return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
+    transforms_list, transforms_kwargs =  PostProcessTransforms.create_transforms_bev_detection_base(settings, queue_length=1, **kwargs)
+    return PostProcessTransforms(settings, transforms_list, name=name, **transforms_kwargs)
 
 
 def bevdet_model_postprocess(settings, name='bevdet_model_postprocess', **kwargs):
-    transforms_list, kwargs = PostProcessTransforms.create_transforms_bev_detection_bevdet(settings, **kwargs)
-    return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
+    transforms_list, transforms_kwargs = PostProcessTransforms.create_transforms_bev_detection_bevdet(settings, **kwargs)
+    return PostProcessTransforms(settings, transforms_list, name=name, **transforms_kwargs)
 
 
 def fcos3d_model_postprocess(settings, name='fcos3d_model_postprocess', **kwargs):
-    transforms_list, kwargs = PostProcessTransforms.create_transforms_bev_detection_fcos3d(settings, **kwargs)
-    return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
+    transforms_list, transforms_kwargs = PostProcessTransforms.create_transforms_bev_detection_fcos3d(settings, **kwargs)
+    return PostProcessTransforms(settings, transforms_list, name=name, **transforms_kwargs)
 
 
 def fastbev_model_postprocess(settings, name='fastbev_model_postprocess', **kwargs):
-    transforms_list, kwargs = PostProcessTransforms.create_transforms_bev_detection_fastbev(settings, **kwargs)
-    return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
+    transforms_list, transforms_kwargs = PostProcessTransforms.create_transforms_bev_detection_fastbev(settings, **kwargs)
+    return PostProcessTransforms(settings, transforms_list, name=name, **transforms_kwargs)
 
 def depth_estimation_postprocess(settings, name='depth_estimation_postprocess', **kwargs):
-    transforms_list, kwargs = PostProcessTransforms.create_transforms_depth_estimation_base(settings, **kwargs)
-    return PostProcessTransforms(settings, transforms_list, name=name, **kwargs)
-
+    transforms_list, transforms_kwargs = PostProcessTransforms.create_transforms_depth_estimation_base(settings, **kwargs)
+    return PostProcessTransforms(settings, transforms_list, name=name, **transforms_kwargs)

@@ -43,6 +43,8 @@ postprocess:
   data_layout: NCHW
   save_output: false
   name: fastbev_model_postprocess
+  enable_nms: true
+  queue_length: 0
 metric: {}
 model_info:
   metric_reference: {}
