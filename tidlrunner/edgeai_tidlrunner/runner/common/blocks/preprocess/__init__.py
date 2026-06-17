@@ -33,6 +33,7 @@ from ...settings import constants
 from ...settings.constants import presets
 from .transforms import *
 from .audio_transforms import AudioLoadAndResample, VGGishMelSpectrogram, YAMNetMelSpectrogram, STFTTransform, GCRNSTFTTransform
+from .bev_detection import *
 
 
 class PreProcessTransforms(transforms_base.TransformsCompose):
@@ -137,6 +138,200 @@ class PreProcessTransforms(transforms_base.TransformsCompose):
                                     add_flip_image=add_flip_image, resize_with_pad=resize_with_pad, pad_color=pad_color, **kwargs)
         return transforms_list, transforms_kwargs
 
+    @classmethod
+    def create_transform_bev_petr(cls, settings, imsize=256, resize=256, crop=224, featsize=(20, 50), queue_length=0,
+                        data_layout=presets.DataLayoutType.NCHW, reverse_channels=False,
+                        backend='cv2', interpolation=cv2.INTER_AREA, resize_with_pad=False, pad_color=0,
+                        name='petr_model_preprocess', **kwargs):
+        transforms_list = [
+            BEVSensorsRead(imsize, resize, crop),
+            ImageRead(backend=backend, bgr_to_rgb=False),
+            ImageResize(resize, interpolation=interpolation, resize_with_pad=resize_with_pad, pad_color=pad_color),
+            ImageCrop(crop),
+            ImageToNPTensor4D(data_layout=data_layout),
+        ]
+
+        if queue_length > 0:
+            transforms_list += [SetupTemporalQueue(queue_length=queue_length)]
+        
+        transforms_list += [
+            GetPETRGeometry(crop, featsize),
+        ]
+
+        transforms_kwargs = dict(imsize=imsize, resize=resize, crop=crop,
+                                          data_layout=data_layout, reverse_channels=reverse_channels,
+                                          backend=backend, interpolation=interpolation,
+                                          resize_with_pad=resize_with_pad, pad_color=pad_color, name=name, **kwargs)
+        return transforms_list, transforms_kwargs
+
+    @classmethod
+    def create_transform_bev_bevdet(cls, settings, imsize=256, resize=256, crop=224, data_layout=presets.DataLayoutType.NCHW, reverse_channels=False,
+                        backend='cv2', interpolation=cv2.INTER_AREA, resize_with_pad=False, pad_color=0,
+                        name='bevdet_model_preprocess', **kwargs):
+        transforms_list = [
+            BEVSensorsRead(imsize, resize, crop),
+            ImageRead(backend=backend, bgr_to_rgb=False),
+            ImageResize(resize, interpolation=interpolation, resize_with_pad=resize_with_pad, pad_color=pad_color),
+            ImageCrop(crop),
+            ImageToNPTensor4D(data_layout=data_layout),
+            GetBEVDetGeometry(crop)
+        ]
+
+        transforms_kwargs = dict(imsize=imsize, resize=resize, crop=crop,
+                                          data_layout=data_layout, reverse_channels=reverse_channels,
+                                          backend=backend, interpolation=interpolation,
+                                          resize_with_pad=resize_with_pad, pad_color=pad_color, name=name, **kwargs)
+        return transforms_list, transforms_kwargs
+
+    @classmethod
+    def create_transform_bev_bevformer(cls, settings, imsize=256, resize=256, pad=224, bev_size=(50, 50), pc_range=(-51.2, -51.2, -5.0, 51.2, 51.2, 3.0),
+                        queue_length=0, data_layout=presets.DataLayoutType.NCHW, reverse_channels=False,
+                        backend='cv2', interpolation=cv2.INTER_AREA, resize_with_pad=False, pad_color=0,
+                        name='bevformer_model_preprocess', **kwargs):
+        transforms_list = [
+            BEVSensorsRead(imsize, resize, (0, 0, resize[1]+pad[2], resize[0]+pad[3])),
+            ImageRead(backend=backend, bgr_to_rgb=True),
+            ImageResize(resize, interpolation=interpolation, resize_with_pad=resize_with_pad, pad_color=pad_color),
+            ImagePad(pad),
+            ImageToNPTensor4D(data_layout=data_layout),
+        ]
+
+        if queue_length > 0:
+            transforms_list += [SetupTemporalQueue(queue_length=queue_length)]
+
+        transforms_list += [
+            GetBEVFormerGeometry(bev_size, pc_range),
+        ]
+
+        transforms_kwargs = dict(imsize=imsize, resize=resize, pad=pad,
+                                          data_layout=data_layout, reverse_channels=reverse_channels,
+                                          backend=backend, interpolation=interpolation,
+                                          resize_with_pad=resize_with_pad, pad_color=pad_color, name=name, **kwargs)
+        return transforms_list, transforms_kwargs
+
+    @classmethod
+    def create_transform_fcos3d(cls, settings, imsize=256, resize=256, pad=224, data_layout=presets.DataLayoutType.NCHW, reverse_channels=False,
+                        backend='cv2', interpolation=cv2.INTER_AREA, resize_with_pad=False, pad_color=0,
+                        name='fcos3d_model_preprocess', **kwargs):
+
+        transforms_list = [
+            BEVSensorsRead(imsize, resize, (0, 0, resize[1]+pad[2], resize[0]+pad[3]), load_type='mv_image_based'),
+            ImageRead(backend=backend, bgr_to_rgb=False),
+            ImagePad(pad),
+            ImageToNPTensor4D(data_layout=data_layout),
+            GetFCOS3DGeometry()
+        ]
+
+        transforms_kwargs = dict(imsize=imsize, resize=resize, pad=pad,
+                                          data_layout=data_layout, reverse_channels=reverse_channels,
+                                          backend=backend, interpolation=interpolation,
+                                          resize_with_pad=resize_with_pad, pad_color=pad_color, name=name, **kwargs)
+        return transforms_list, transforms_kwargs
+
+    @classmethod
+    def create_transform_bev_fastbev(cls, settings, imsize=256, resize=256, crop=224, queue_length=0,
+                        data_layout=presets.DataLayoutType.NCHW, reverse_channels=False,
+                        backend='cv2', interpolation=cv2.INTER_AREA, resize_with_pad=False, pad_color=0,
+                        name='fastbev_model_preprocess', **kwargs):
+        transforms_list = [
+            BEVSensorsRead(imsize, resize, crop),
+            ImageRead(backend=backend, bgr_to_rgb=True),
+            ImageResize(resize, interpolation=interpolation, resize_with_pad=resize_with_pad, pad_color=pad_color),
+            ImageCrop(crop),
+            ImageToNPTensor4D(data_layout=data_layout),
+        ]
+
+        if queue_length > 0:
+            transforms_list += [SetupTemporalQueue(queue_length=queue_length)]
+
+        transforms_list += [
+            GetFastBEVGeometry(crop)
+        ]
+
+        transforms_kwargs = dict(imsize=imsize, resize=resize, crop=crop,
+                                          data_layout=data_layout, reverse_channels=reverse_channels,
+                                          backend=backend, interpolation=interpolation,
+                                          resize_with_pad=resize_with_pad, pad_color=pad_color, name=name, **kwargs)
+        return transforms_list, transforms_kwargs
+
+    @classmethod
+    def create_transform_bev_streampetr(cls, settings, imsize=256, resize=256, crop=224, queue_length=0,
+                        data_layout=presets.DataLayoutType.NCHW, reverse_channels=False,
+                        backend='cv2', interpolation=cv2.INTER_AREA, resize_with_pad=False, pad_color=0,
+                        name='streampetr_model_preprocess', **kwargs):
+        transforms_list = [
+            BEVSensorsRead(imsize, resize, crop),
+            ImageRead(backend=backend, bgr_to_rgb=True),
+            ImageResize(resize, interpolation=interpolation, resize_with_pad=resize_with_pad, pad_color=pad_color),
+            ImageCrop(crop),
+            ImageToNPTensor4D(data_layout=data_layout),
+        ]
+
+        if queue_length > 0:
+            transforms_list += [SetupTemporalQueue(queue_length=queue_length)]
+
+        transforms_list += [
+            GetStreamPETRGeometry()
+        ]
+
+        transforms_kwargs = dict(imsize=imsize, resize=resize, crop=crop,
+                                          data_layout=data_layout, reverse_channels=reverse_channels,
+                                          backend=backend, interpolation=interpolation,
+                                          resize_with_pad=resize_with_pad, pad_color=pad_color, name=name, **kwargs)
+        return transforms_list, transforms_kwargs
+
+    @classmethod
+    def create_transform_bev_far3d(cls, settings, imsize=256, resize=256, crop=224, queue_length=0,
+                        data_layout=presets.DataLayoutType.NCHW, reverse_channels=False,
+                        backend='cv2', interpolation=cv2.INTER_AREA, resize_with_pad=False, pad_color=0,
+                        name='far3d_model_preprocess', **kwargs):
+        transforms_list = [
+            BEVSensorsRead(imsize, resize, crop),
+            ImageRead(backend=backend, bgr_to_rgb=False),
+            ImageResize(resize, interpolation=interpolation, resize_with_pad=resize_with_pad, pad_color=pad_color),
+            ImageCrop(crop),
+            ImageToNPTensor4D(data_layout=data_layout),
+        ]
+
+        if queue_length > 0:
+            transforms_list += [SetupTemporalQueue(queue_length=queue_length)]
+
+        transforms_list += [
+            GetFar3DGeometry()
+        ]
+
+        transforms_kwargs = dict(imsize=imsize, resize=resize, crop=crop,
+                                          data_layout=data_layout, reverse_channels=reverse_channels,
+                                          backend=backend, interpolation=interpolation,
+                                          resize_with_pad=resize_with_pad, pad_color=pad_color, name=name, **kwargs)
+        return transforms_list, transforms_kwargs
+
+    @classmethod
+    def create_transform_bev_sparse4d(cls, settings, imsize=256, resize=256, crop=224, queue_length=0,
+                        data_layout=presets.DataLayoutType.NCHW, reverse_channels=False,
+                        backend='cv2', interpolation=cv2.INTER_AREA, resize_with_pad=False, pad_color=0,
+                        name='sparse4d_model_preprocess', **kwargs):
+        transforms_list = [
+            BEVSensorsRead(imsize, resize, crop),
+            ImageRead(backend=backend, bgr_to_rgb=True),
+            ImageResize(resize, interpolation=interpolation, resize_with_pad=resize_with_pad, pad_color=pad_color),
+            ImageCrop(crop),
+            ImageToNPTensor4D(data_layout=data_layout),
+        ]
+
+        if queue_length > 0:
+            transforms_list += [SetupTemporalQueue(queue_length=queue_length)]
+
+        transforms_list += [
+            GetSparse4DHistory()
+        ]
+
+        kwargs = dict(imsize=imsize, resize=resize, crop=crop,
+                                          data_layout=data_layout, reverse_channels=reverse_channels,
+                                          backend=backend, interpolation=interpolation,
+                                          resize_with_pad=resize_with_pad, pad_color=pad_color, name=name, **kwargs)
+        return transforms_list, kwargs
+
     ###############################################################
     # audio preprocessing classmethods
     ###############################################################
@@ -193,12 +388,17 @@ def semantic_segmentation_preprocess(settings, name='semantic_segmentation_prepr
     return image_preprocess(settings, name=name, resize=resize, crop=crop, **kwargs)
 
 
+def fastbev_model_preprocess(settings, name='fastbev_model_preprocess', **kwargs):
+    transforms_list, transforms_kwargs = PreProcessTransforms.create_transform_bev_fastbev(settings, name=name, **kwargs)
+    return PreProcessTransforms(settings, transforms_list, **transforms_kwargs)
+
+
 def audio_classification_preprocess(settings, name='audio_classification_preprocess', **kwargs):
-    transforms_list, kwargs = PreProcessTransforms.create_transforms_audio_classification(settings, name=name, **kwargs)
-    return PreProcessTransforms(settings, transforms_list, **kwargs)
+    transforms_list, transforms_kwargs = PreProcessTransforms.create_transforms_audio_classification(settings, name=name, **kwargs)
+    return PreProcessTransforms(settings, transforms_list, **transforms_kwargs)
 
 
 def audio_speechenhancement_preprocess(settings, name='audio_speechenhancement_preprocess', **kwargs):
-    transforms_list, kwargs = PreProcessTransforms.create_transforms_audio_speechenhancement(settings, name=name, **kwargs)
-    return PreProcessTransforms(settings, transforms_list, **kwargs)
+    transforms_list, transforms_kwargs = PreProcessTransforms.create_transforms_audio_speechenhancement(settings, name=name, **kwargs)
+    return PreProcessTransforms(settings, transforms_list, **transforms_kwargs)
 

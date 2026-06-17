@@ -256,8 +256,8 @@ from .pandaset_object_eval_python.format_bbox import *
 from .pandaset_object_eval_python.eval import *
 from .pandaset_object_eval_python.utils import *
 
-from edgeai_benchmark.postprocess.bev_detection import box3d_multiclass_nms
-from edgeai_benchmark import datasets
+from ..postprocess.bev_detection import box3d_multiclass_nms
+
 
 # Full_Val_Scene_List is the smae as test_scenes_const
 # in pandaset_converter.py in edgeai-mmdetection3d
@@ -589,17 +589,16 @@ def _fill_trainval_infos_mv_image(ps: PandasetDatasetBase,
 
 
 class PandaSetDataset(DatasetBase):
-    def __init__(self, ps=None,
-                 download=False, read_anno=True, **kwargs):
+    def __init__(self, download=False, read_anno=True, **kwargs):
         super().__init__(**kwargs)
         self.force_download = True if download == 'always' else False
         assert 'path' in self.kwargs and 'split' in self.kwargs, 'path and split must be provided in kwargs'
         
         path = self.kwargs['path']
         split_folder = self.kwargs['split']
-        self.version = self.kwargs['version']
+        self.version = self.kwargs.get('version', 'v1.0-mini')
         # load_type: frame_based, mv_image_based, fov_image_based
-        self.load_type = self.kwargs['load_type']
+        self.load_type = self.kwargs.get('load_type', 'frame_based')
 
         # download the data if needed
         if download:
@@ -609,13 +608,14 @@ class PandaSetDataset(DatasetBase):
         #    utils.log_color('\nERROR', 'dataset path is empty', path)
 
         # pandaset dataset
-        assert ps is not None, '\nERROR, nucenes dataset is None'
+        ps = load_pandaset(path, self.version)
+        assert ps is not None, '\nERROR, pandaset dataset was not leaded correctly'
         self.ps = ps
 
         # create list of images and classes
         self.num_frames = self.kwargs['num_frames']
-        shuffle = self.kwargs.get('shuffle', False)
-        assert shuffle is False, 'Shuffling is not supported for PandaSet Dataset'
+        self.kwargs.pop('shuffle', False)
+        # assert shuffle is False, 'Shuffling is not supported for PandaSet Dataset'
 
         self.num_classes = kwargs['num_classes']
         self.data_infos, self.data_scene_infos = self.create_pandaset_infos(read_anno, split_folder, self.version)
@@ -1041,5 +1041,8 @@ class PandaSetDataset(DatasetBase):
         return gt_bboxes
 
 
-def pandaset_dataloader(settings, name, path, **kwargs):
-    return PandaSetDataset(path=path, **kwargs)
+def pandaset_dataloader(settings, name, path, version='v1.0-mini', **kwargs):
+    num_frames = 80 if version == 'v1.0-mini' else 1680
+    return PandaSetDataset(path=path, split='val', num_frames=num_frames, num_classes=3, **kwargs)
+
+
