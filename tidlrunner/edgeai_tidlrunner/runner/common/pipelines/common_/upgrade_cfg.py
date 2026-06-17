@@ -84,6 +84,8 @@ def upgrade_kwargs(**kwargs):
             pass
         elif k == 'task_type' or k == 'common.task_type':
             kwargs_out['common.task_type'] = v
+        elif k == 'task_name' or k == 'common.task_name':
+            kwargs_out['common.task_name'] = v
         elif k == 'input_dataset' or k == 'dataloader.input_dataset':
             kwargs_out['common.input_dataset'] = v
         else:

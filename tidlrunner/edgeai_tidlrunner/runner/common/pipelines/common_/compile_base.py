@@ -148,9 +148,11 @@ class CompileModelBase(CommonPipelineBase):
     def get_info_dict(self, input_index):
         if isinstance(self.pipeline_config, dict):
             label_offset_pred = self.pipeline_config.get('metric',{}).get('label_offset_pred',None)
-            task_name = self.pipeline_config.get('task_name',{})
+            task_type = self.pipeline_config.get('task_type', None)
+            task_name = self.pipeline_config.get('task_name', None)
         else:
             label_offset_pred = self.kwargs.get('label_offset_pred', None)
+            task_type = self.kwargs.get('common.task_type', None)
             task_name = self.kwargs.get('common.task_name', None)
         #
         dataset_info = self.dataloader.peek_param('dataset_info', None)
@@ -158,6 +160,7 @@ class CompileModelBase(CommonPipelineBase):
         info_dict = {'dataset_info': dataset_info,
                      'label_offset_pred': label_offset_pred,
                      'sample_idx': input_index,
+                     'task_type': task_type,
                      'task_name': task_name,
                      'run_dir': self.run_dir,
                      'label_offset_pred': label_offset_pred,
