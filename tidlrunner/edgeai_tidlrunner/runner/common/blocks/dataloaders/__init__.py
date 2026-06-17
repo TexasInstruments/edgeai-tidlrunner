@@ -85,7 +85,8 @@ except (ImportError, ModuleNotFoundError) as e:
     nuscenes_dataloader = None
 
 try:
-    from .pandaset_dataset import pandaset_dataloader
+    from .pandaset_dataset import pandaset_frame_dataloader, pandaset_mv_image_dataloader
 except (ImportError, ModuleNotFoundError) as e:
     # warnings.warn(f'WARNING: pandaset_dataset dataloader could not be imported - {str(e)}')
-    pandaset_dataloader = None
+    pandaset_frame_dataloader = None
+    pandaset_mv_image_dataloader = None

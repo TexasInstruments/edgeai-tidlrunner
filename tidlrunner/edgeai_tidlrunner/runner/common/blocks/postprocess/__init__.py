@@ -291,7 +291,6 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     # To REVISIT
     # Any necessary visualization funtions will be addeed in bev_detection.py
     def create_transforms_bev_detection_base(cls, settings, queue_length=0, data_layout=presets.DataLayoutType.NCHW, save_output=False, save_output_frames=50, **kwargs):
-        transforms = None
 
         try:
             if queue_length > 0:
@@ -314,7 +313,6 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         return postprocess_bev_detection_base, dict(data_layout=data_layout, **kwargs)
 
     def create_transforms_bev_detection_bevdet(cls, settings, data_layout=presets.DataLayoutType.NCHW, save_output=False, save_output_frames=50, **kwargs):
-        transforms = None
         # For bevDet_tiny_256x704_res50_parallel.onnx
         #postprocess_bev_detection_bevdet = [GetBEVDetBBoxes(),
         #                                    BEVDetNMS(),
@@ -336,10 +334,9 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
             except Exception as message:
                 print(f'BEV postprocess could not be created: {message}')              
 
-        return transforms, dict(data_layout=data_layout, **kwargs)
+        return postprocess_bev_detection_bevdet, dict(data_layout=data_layout, **kwargs)
 
     def create_transforms_fcos3d(cls, settings, data_layout=presets.DataLayoutType.NCHW, save_output=False, save_output_frames=50, **kwargs):
-        transforms = None
         try:
             postprocess_fcos3d = [MultiClassNMS(),
                                   Bbox3d2result()]
@@ -358,7 +355,6 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         return postprocess_fcos3d, dict(data_layout=data_layout, **kwargs)
 
     def create_transforms_bev_detection_fastbev(cls, settings, enable_nms=True, queue_length=0, data_layout=presets.DataLayoutType.NCHW, save_output=False, save_output_frames=50, **kwargs):
-        transforms = None
 
         postprocess_bev_detection_fastbev = []
         if enable_nms:

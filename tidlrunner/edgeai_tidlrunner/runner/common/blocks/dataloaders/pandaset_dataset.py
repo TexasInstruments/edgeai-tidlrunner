@@ -915,7 +915,7 @@ class PandaSetDataset(DatasetBase):
         class_to_name = class_to_name_type
         det_classes = [class_to_name[i] for i in range(self.num_classes)]
 
-        if kwargs['dataset_category'] == datasets.DATASET_CATEGORY_PANDASET_FRAME:
+        if self.load_type == 'frame_based':
             result_dict['pred_instances_3d'] = \
                 self.format_results_lidar_bbox(predictions, det_classes, **kwargs)
         else:
@@ -1041,8 +1041,15 @@ class PandaSetDataset(DatasetBase):
         return gt_bboxes
 
 
-def pandaset_dataloader(settings, name, path, version='v1.0-mini', **kwargs):
+def _pandaset_dataloader(settings, name, path, version='v1.0-mini', **kwargs):
     num_frames = 80 if version == 'v1.0-mini' else 1680
     return PandaSetDataset(path=path, split='val', num_frames=num_frames, num_classes=3, **kwargs)
 
+
+def pandaset_frame_dataloader(settings, name, path, version='v1.0-mini', load_type='frame_based', **kwargs):
+    return _pandaset_dataloader(settings, name, path, version, load_type=load_type, **kwargs)
+
+
+def pandaset_mv_image_dataloader(settings, name, path, version='v1.0-mini', load_type='mv_image_based', **kwargs):
+    return _pandaset_dataloader(settings, name, path, version, load_type=load_type, **kwargs)
 

@@ -237,7 +237,14 @@ def upgrade_kwargs(**kwargs):
             # 
         elif input_dataset == 'pandaset_frame':
             if kwargs_out.get('dataloader.name', None) is None:
-                kwargs_out['dataloader.name'] = 'pandaset_dataloader'
+                kwargs_out['dataloader.name'] = 'pandaset_frame_dataloader'
+            #
+            if kwargs_out.get('dataloader.path', None) is None:
+                kwargs_out['dataloader.path'] = './data/datasets/pandaset'
+            # 
+        elif input_dataset == 'pandaset_mv_image':
+            if kwargs_out.get('dataloader.name', None) is None:
+                kwargs_out['dataloader.name'] = 'pandaset_mv_image_dataloader'
             #
             if kwargs_out.get('dataloader.path', None) is None:
                 kwargs_out['dataloader.path'] = './data/datasets/pandaset'

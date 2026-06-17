@@ -1,5 +1,6 @@
 task_type: bev_detection
 input_dataset: nuscenes_mv_image
+task_name: FCOS3D
 preprocess:
   imsize:
   - 900

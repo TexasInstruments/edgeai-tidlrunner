@@ -1,5 +1,6 @@
 task_type: bev_detection
 input_dataset: pandaset_frame
+task_name: FastBEV_f1
 preprocess:
   imsize:
   - 1080
