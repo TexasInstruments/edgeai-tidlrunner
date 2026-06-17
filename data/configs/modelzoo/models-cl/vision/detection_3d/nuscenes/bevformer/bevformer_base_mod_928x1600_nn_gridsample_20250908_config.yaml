@@ -1,6 +1,9 @@
 task_type: bev_detection
 input_dataset: nuscenes_frame
 preprocess:
+  imsize:
+  - 900
+  - 1600
   resize:
   - 900
   - 1600

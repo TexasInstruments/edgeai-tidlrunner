@@ -1,6 +1,9 @@
 task_type: bev_detection
 input_dataset: pandaset_frame
 preprocess:
+  imsize:
+  - 1080
+  - 1920
   resize:
   - 396
   - 704
