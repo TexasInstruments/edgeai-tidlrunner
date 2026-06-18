@@ -27,6 +27,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+import traceback
+
 from .random_data import random_dataloader
 from .image_list import image_list_dataloader, image_files_dataloader
 from .image_cls import image_classification_dataloader
@@ -81,13 +83,15 @@ except (ImportError, ModuleNotFoundError) as e:
 try:
     from .nuscenes_dataset import nuscenes_frame_dataloader, nuscenes_mv_image_dataloader
 except (ImportError, ModuleNotFoundError) as e:
-    # warnings.warn(f'WARNING: nuscenes_dataset dataloader could not be imported - {str(e)}')
+    warnings.warn(f'WARNING: nuscenes dataloader could not be imported - setup using setup_runner_extra sh file - {str(e)}')
+    # traceback.print_exc()
     nuscenes_frame_dataloader = None
     nuscenes_mv_image_dataloader = None
 
 try:
     from .pandaset_dataset import pandaset_frame_dataloader, pandaset_mv_image_dataloader
 except (ImportError, ModuleNotFoundError) as e:
-    # warnings.warn(f'WARNING: pandaset_dataset dataloader could not be imported - {str(e)}')
+    warnings.warn(f'WARNING: pandaset dataloader could not be imported - setup using setup_runner_extra sh file - {str(e)}')
+    # traceback.print_exc()
     pandaset_frame_dataloader = None
     pandaset_mv_image_dataloader = None
