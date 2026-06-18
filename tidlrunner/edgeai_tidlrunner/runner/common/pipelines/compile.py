@@ -57,9 +57,7 @@ class CompileModel(CompileModelBase):
 
     def _prepare_model(self):
         print(f'INFO: running model surgery {self.model_path}')
-        common_kwargs = self.settings[self.common_prefix]
-        surgery_kwargs = common_kwargs['surgery']
-        surgery.ModelSurgery._run_func(self.settings, self.model_path, self.model_path, **surgery_kwargs)
+        surgery.ModelSurgery._run_func(self.settings, self.model_path, self.model_path)
     
     def _prepare_runtime_settings(self):
         session_kwargs = self.settings[self.session_prefix]
@@ -178,7 +176,7 @@ class CompileModel(CompileModelBase):
         elif hasattr(blocks.preprocess, preprocess_kwargs['name']):
             preprocess_method = getattr(blocks.preprocess, preprocess_kwargs['name'])
             is_audio_task = (common_kwargs.get('task_type') or '').startswith('audio')
-            if self.session and not is_audio_task and not (preprocess_kwargs.get('resize', None) and preprocess_kwargs.get('crop', None)):
+            if self.session and not is_audio_task and not (preprocess_kwargs.get('resize', None) or preprocess_kwargs.get('crop', None)):
                 # input shape was not provided - use the model input size
                 input_details, output_details = self.session.get_input_output_details()
                 if preprocess_kwargs.get('data_layout') == presets.DataLayoutType.NCHW:

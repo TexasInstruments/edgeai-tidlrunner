@@ -86,6 +86,13 @@ class ModelSurgery(common_base.CommonPipelineBase):
 
         kwargs = copy.deepcopy(kwargs)
 
+        common_kwargs = settings['common']
+        session_kwargs = settings['session']
+        surgery_kwargs = session_kwargs['model_surgery']
+        model_surgery = isinstance(surgery_kwargs, dict) or bool(surgery_kwargs)
+        surgery_kwargs = surgery_kwargs if isinstance(surgery_kwargs, dict) else {}
+        kwargs.update(surgery_kwargs)
+
         input_optimization = settings['session'].get('input_optimization', False)
         model_ext = os.path.splitext(model_path)[1].lower()
 
