@@ -266,7 +266,14 @@ class CompileModel(CompileModelBase):
         info_dict = self.get_info_dict(input_index)
         input_data, info_dict = self.dataloader(input_index, info_dict)
         input_data, info_dict = self.preprocess(input_data, info_dict=info_dict) if self.preprocess else (input_data, info_dict)
+
+        # run the underlying runtime session to import the model
         output_dict = self.session.run_import(input_data)
+
+        # Update temporal queue for temporal detection (BEV) models 
+        if hasattr(self.dataloader, 'update_queue_mem'):
+            output_dict, info_dict = self.dataloader.update_queue_mem(output_dict, info_dict)
+
         if self.postprocess:
             outputs = list(output_dict.values())
             outputs, info_dict = self.postprocess(outputs, info_dict=info_dict) 

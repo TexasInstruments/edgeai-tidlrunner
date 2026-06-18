@@ -79,10 +79,11 @@ except (ImportError, ModuleNotFoundError) as e:
     kitti_lidar_det_dataloader = None
 
 try:
-    from .nuscenes_dataset import nuscenes_dataloader
+    from .nuscenes_dataset import nuscenes_frame_dataloader, nuscenes_mv_image_dataloader
 except (ImportError, ModuleNotFoundError) as e:
     # warnings.warn(f'WARNING: nuscenes_dataset dataloader could not be imported - {str(e)}')
-    nuscenes_dataloader = None
+    nuscenes_frame_dataloader = None
+    nuscenes_mv_image_dataloader = None
 
 try:
     from .pandaset_dataset import pandaset_frame_dataloader, pandaset_mv_image_dataloader

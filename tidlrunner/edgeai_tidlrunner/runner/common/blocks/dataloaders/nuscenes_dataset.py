@@ -1380,5 +1380,57 @@ class NuScenesDataset(DatasetBase):
         return nusc_annos
 
 
-def nuscenes_dataloader(settings, name, path, **kwargs):
-    return NuScenesDataset(path=path, **kwargs)
+    # Update temporal queue for temporal BEV models (e.g. StreamPETR, Far3D, Sparse4D, BEVFormer, etc.)
+    def update_queue_mem(self, bbox_list, info_dict):
+        # Do nothing for non-temporal models
+        if 'num_bev_temporal_frames' not in info_dict or 'queue_mem' not in info_dict:
+            return bbox_list, info_dict
+
+        queue_length = info_dict['num_bev_temporal_frames']
+        queue_mem = info_dict['queue_mem']
+
+        # if queue is full, pop the first one
+        if len(queue_mem) >= queue_length:
+            first_key = next(iter(queue_mem))
+            queue_mem.pop(first_key)
+
+        if info_dict['task_name'] == 'StreamPETR':
+            history_start_idx = 3
+            queue_mem[info_dict['sample_idx']] = \
+                dict(feature_map=bbox_list[3:], img_meta=info_dict) # do we need to save img_meta?
+            # Update memory_timestamp
+            rec_timestamp = np.zeros((1, 128, 1), dtype=np.float64)
+            memory_timestamp = np.concatenate([rec_timestamp, info_dict['memory_timestamp']], axis=1)
+            memory_timestamp -= np.asarray(info_dict['timestamp']*1e-6).reshape(-1, 1, 1) 
+            queue_mem[info_dict['sample_idx']].update(dict(memory_timestamp=memory_timestamp))
+
+        elif info_dict['task_name'] == 'Far3D':
+            history_start_idx = 3
+            queue_mem[info_dict['sample_idx']] = \
+                dict(feature_map=bbox_list[3:], img_meta=info_dict) # do we need to save img_meta?
+        elif info_dict['task_name'] == 'Sparse4D':
+            history_start_idx = 5
+            queue_mem[info_dict['sample_idx']] = \
+                dict(det_history=bbox_list[5:], his_timestamp=info_dict['his_timestamp'], his_T_global=info_dict['his_T_global'])
+        else:
+            history_start_idx = -1
+            queue_mem[info_dict['sample_idx']] = \
+                dict(feature_map=bbox_list[-1], img_meta=info_dict)
+
+        return bbox_list[:history_start_idx], info_dict
+
+
+def _nuscenes_dataloader(settings, name, path, num_classes=10, version='v1.0-mini', **kwargs):
+    num_frames = 81 if version == 'v1.0-mini' else 6019
+    return NuScenesDataset(path=path, split='val', num_frames=num_frames, num_classes=num_classes, **kwargs)
+
+
+def nuscenes_frame_dataloader(settings, name, path, version='v1.0-mini', load_type='frame_based', **kwargs):
+    return _pandaset_dataloader(settings, name, path, version, load_type=load_type, **kwargs)
+
+
+def nuscenes_mv_image_dataloader(settings, name, path, version='v1.0-mini', load_type='mv_image_based', **kwargs):
+    return _pandaset_dataloader(settings, name, path, version, load_type=load_type, **kwargs)
+
+
+

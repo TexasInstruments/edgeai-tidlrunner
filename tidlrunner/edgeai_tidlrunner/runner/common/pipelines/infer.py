@@ -228,7 +228,12 @@ class InferModel(CompileModelBase):
         if common_kwargs.get('save_input', True):
             self._save_input_to_npz(input_data)
 
+        # run the underlying runtime session to infer the model
         output_dict = self.session.run_inference(input_data)
+
+        # Update temporal queue for temporal detection (BEV) models 
+        if hasattr(self.dataloader, 'update_queue_mem'):
+            output_dict, info_dict = self.dataloader.update_queue_mem(output_dict, info_dict)
 
         if self.postprocess:
             outputs = list(output_dict.values())
