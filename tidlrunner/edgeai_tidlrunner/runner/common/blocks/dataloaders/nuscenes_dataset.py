@@ -249,8 +249,7 @@ from pyquaternion import Quaternion
 from nuscenes.eval.detection.config import config_factory
 from nuscenes.eval.common.config import config_factory as track_configs
 
-from edgeai_benchmark.postprocess.bev_detection import box3d_multiclass_nms
-from edgeai_benchmark import datasets
+from ..postprocess.bev_detection import box3d_multiclass_nms
 
 from nuscenes.nuscenes import NuScenes
 from nuscenes.can_bus.can_bus_api import NuScenesCanBus
@@ -981,7 +980,7 @@ class NuScenesDataset(DatasetBase):
         classes = [class_to_name[i] for i in range(self.num_classes)]
 
         """
-        if kwargs['dataset_category'] == datasets.DATASET_CATEGORY_NUSCENES_FRAME:
+        if self.load_type == 'frame_based':
             result_dict['pred_instances_3d'] = \
                 self.format_results_lidar_bbox(predictions, det_classes, **kwargs)
         else:
@@ -1000,7 +999,7 @@ class NuScenesDataset(DatasetBase):
             #if tracking and not self.tracking:
             #    continue
 
-            if kwargs['dataset_category'] == datasets.DATASET_CATEGORY_NUSCENES_FRAME:
+            if self.load_type == 'frame_based':
                 result_dict['pred_instances_3d'] = \
                     self.format_results_lidar_bbox(predictions, classes,
                                                    tracking=tracking,

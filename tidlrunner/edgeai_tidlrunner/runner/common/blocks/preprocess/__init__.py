@@ -393,6 +393,11 @@ def fastbev_model_preprocess(settings, name='fastbev_model_preprocess', **kwargs
     return PreProcessTransforms(settings, transforms_list, **transforms_kwargs)
 
 
+def bevformer_model_preprocess(settings, name='bevformer_model_preprocess', **kwargs):
+    transforms_list, transforms_kwargs = PreProcessTransforms.create_transform_bev_bevformer(settings, name=name, **kwargs)
+    return PreProcessTransforms(settings, transforms_list, **transforms_kwargs)
+
+
 def audio_classification_preprocess(settings, name='audio_classification_preprocess', **kwargs):
     transforms_list, transforms_kwargs = PreProcessTransforms.create_transforms_audio_classification(settings, name=name, **kwargs)
     return PreProcessTransforms(settings, transforms_list, **transforms_kwargs)
