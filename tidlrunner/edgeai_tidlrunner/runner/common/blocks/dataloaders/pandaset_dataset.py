@@ -1087,9 +1087,9 @@ def _pandaset_dataloader(settings, name, path, num_classes=3, version='v1.0-mini
 
 
 def pandaset_frame_dataloader(settings, name, path, version='v1.0-mini', load_type='frame_based', **kwargs):
-    return _pandaset_dataloader(settings, name, path, version, load_type=load_type, **kwargs)
+    return _pandaset_dataloader(settings, name=name, path=path, version=version, load_type=load_type, **kwargs)
 
 
 def pandaset_mv_image_dataloader(settings, name, path, version='v1.0-mini', load_type='mv_image_based', **kwargs):
-    return _pandaset_dataloader(settings, name, path, version, load_type=load_type, **kwargs)
+    return _pandaset_dataloader(settings, name=name, path=path, version=version, load_type=load_type, **kwargs)
 
