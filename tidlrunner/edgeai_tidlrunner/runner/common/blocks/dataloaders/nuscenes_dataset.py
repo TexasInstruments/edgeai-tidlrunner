@@ -1380,7 +1380,9 @@ class NuScenesDataset(DatasetBase):
 
 
     # Update temporal queue for temporal BEV models (e.g. StreamPETR, Far3D, Sparse4D, BEVFormer, etc.)
-    def update_queue_mem(self, bbox_list, info_dict):
+    def update_queue_mem(self, predictions, info_dict):
+        bbox_list = list(predictions.keys()) if isinstance(predictions, dict) else predictions
+
         # Do nothing for non-temporal models
         if 'num_bev_temporal_frames' not in info_dict or 'queue_mem' not in info_dict:
             return bbox_list, info_dict
@@ -1416,7 +1418,7 @@ class NuScenesDataset(DatasetBase):
             queue_mem[info_dict['sample_idx']] = \
                 dict(feature_map=bbox_list[-1], img_meta=info_dict)
 
-        return bbox_list[:history_start_idx], info_dict
+        return predictions, info_dict
 
 
 def _nuscenes_dataloader(settings, name, path, num_classes=10, version='v1.0-mini', **kwargs):
