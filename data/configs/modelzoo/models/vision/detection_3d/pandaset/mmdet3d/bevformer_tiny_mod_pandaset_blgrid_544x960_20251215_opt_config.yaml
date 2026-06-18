@@ -1,6 +1,6 @@
 task_type: bev_detection
 input_dataset: pandaset_frame
-task_name: BEVFormer
+task_name: BEVFormer_tiny
 preprocess:
   imsize:
   - 1080
@@ -8,6 +8,22 @@ preprocess:
   resize:
   - 540
   - 960
+  pad:
+  - 0
+  - 0
+  - 0
+  - 4
+  bev_size:
+  - 50
+  - 50
+  pc_range:
+  - -51.2
+  - -51.2
+  - -5.0
+  - 51.2
+  - 51.2
+  - 3.0
+  queue_length: 1
   data_layout: NCHW
   reverse_channels: false
   backend: cv2
@@ -39,6 +55,7 @@ session:
   input_details: null
   output_details: null
   num_inputs: 1
+  model_surgery: false
 postprocess:
   data_layout: NCHW
   save_output: false

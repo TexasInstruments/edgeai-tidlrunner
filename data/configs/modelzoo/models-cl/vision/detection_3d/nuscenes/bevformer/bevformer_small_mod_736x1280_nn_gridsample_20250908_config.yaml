@@ -8,6 +8,22 @@ preprocess:
   resize:
   - 720
   - 1280
+  pad:
+  - 0
+  - 0
+  - 0
+  - 16
+  bev_size:
+  - 150
+  - 150
+  pc_range:
+  - -51.2
+  - -51.2
+  - -5.0
+  - 51.2
+  - 51.2
+  - 3.0
+  queue_length: 1
   data_layout: NCHW
   reverse_channels: false
   backend: cv2

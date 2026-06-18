@@ -33,6 +33,8 @@ session:
   input_details: null
   output_details: null
   num_inputs: 1
+  model_surgery:
+    convert_conv_7x7_stride4_to_stride1: true
 postprocess:
   data_layout: NCHW
   save_output: false

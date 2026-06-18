@@ -33,6 +33,7 @@ session:
   input_details: null
   output_details: null
   num_inputs: 1
+  model_surgery: false
 postprocess:
   reshape_list:
   - - -1

@@ -31,6 +31,8 @@ session:
   input_details: null
   output_details: null
   num_inputs: 1
+  model_surgery:
+    hf_attention_block_optimization: true
 model_info:
   metric_reference:
     accuracy_top1%: 81.59

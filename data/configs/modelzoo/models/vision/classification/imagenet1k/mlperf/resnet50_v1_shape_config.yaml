@@ -31,6 +31,9 @@ session:
   input_details: null
   output_details: null
   num_inputs: 1
+  model_surgery:
+    expand_multiaxes_reducemean_to_single_axis_reducemeans: true
+    apply_default_optimizers: false
 metric:
   label_offset_pred: -1
 model_info:

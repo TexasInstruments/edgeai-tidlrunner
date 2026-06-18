@@ -8,6 +8,11 @@ preprocess:
   resize:
   - 900
   - 1600
+  pad:
+  - 0
+  - 0
+  - 0
+  - 28
   data_layout: NCHW
   reverse_channels: false
   backend: cv2

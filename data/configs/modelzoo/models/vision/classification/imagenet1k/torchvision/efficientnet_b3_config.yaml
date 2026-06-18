@@ -31,6 +31,7 @@ session:
   input_details: null
   output_details: null
   num_inputs: 1
+  model_surgery: true
 model_info:
   metric_reference:
     accuracy_top1%: 82.008
