@@ -292,14 +292,10 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     # To REVISIT
     # Any necessary visualization funtions will be addeed in bev_detection.py
     @classmethod
-    def create_transforms_bev_detection_base(cls, settings, queue_length=0, data_layout=presets.DataLayoutType.NCHW, save_output=False, save_output_frames=50, **kwargs):
+    def create_transforms_bev_detection_base(cls, settings, data_layout=presets.DataLayoutType.NCHW, save_output=False, save_output_frames=50, **kwargs):
 
         try:
-            if queue_length > 0:
-                postprocess_bev_detection_base = [UpdateTemporalQueue(queue_length=queue_length),
-                                                  Bbox3d2result()]
-            else:
-                postprocess_bev_detection_base = [Bbox3d2result()]
+            postprocess_bev_detection_base = [Bbox3d2result()]
         except Exception as message:
             print(f'BEV postprocess could not be created: {message}')
 
@@ -359,18 +355,12 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         return postprocess_fcos3d, dict(data_layout=data_layout, **kwargs)
 
     @classmethod
-    def create_transforms_bev_detection_fastbev(cls, settings, enable_nms=True, queue_length=0, data_layout=presets.DataLayoutType.NCHW, save_output=False, save_output_frames=50, **kwargs):
+    def create_transforms_bev_detection_fastbev(cls, settings, enable_nms=True, data_layout=presets.DataLayoutType.NCHW, save_output=False, save_output_frames=50, **kwargs):
 
         postprocess_bev_detection_fastbev = []
         if enable_nms:
             try:
                 postprocess_bev_detection_fastbev += [MultiClassScaleNMS()]
-            except Exception as message:
-                print(f'BEV postprocess could not be created: {message}')
-
-        if queue_length > 0:
-            try:
-                postprocess_bev_detection_fastbev += [UpdateTemporalQueue(queue_length=queue_length)]
             except Exception as message:
                 print(f'BEV postprocess could not be created: {message}')
 
