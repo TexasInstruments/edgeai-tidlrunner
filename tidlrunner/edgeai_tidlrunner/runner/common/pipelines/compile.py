@@ -273,8 +273,7 @@ class CompileModel(CompileModelBase):
             output_dict, info_dict = self.dataloader.update_queue_mem(output_dict, info_dict)
 
         if self.postprocess:
-            outputs = list(output_dict.values())
-            outputs, info_dict = self.postprocess(outputs, info_dict=info_dict) 
+            outputs, info_dict = self.postprocess(output_dict, info_dict=info_dict) 
             run_data = {'input':input_data, 'output':outputs, 'info_dict':info_dict}
         else:
             run_data = {'input':input_data, 'output':output_dict, 'info_dict':info_dict}
