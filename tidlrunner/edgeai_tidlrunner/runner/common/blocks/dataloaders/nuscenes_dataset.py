@@ -1385,7 +1385,7 @@ class NuScenesDataset(DatasetBase):
 
         # Do nothing for non-temporal models
         if 'num_bev_temporal_frames' not in info_dict or 'queue_mem' not in info_dict:
-            return bbox_list, info_dict
+            return predictions, info_dict
 
         queue_length = info_dict['num_bev_temporal_frames']
         queue_mem = info_dict['queue_mem']
