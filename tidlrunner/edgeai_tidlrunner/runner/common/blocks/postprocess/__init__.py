@@ -61,7 +61,8 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         super().__init__(transforms, **kwargs)
         self.settings = settings
 
-    def __call__(self, tensor, info_dict):
+    def __call__(self, predictions, info_dict):
+        tensor = list(predictions.values()) if isinstance(predictions, dict) else predictions
         tensor, info_dict = super().__call__(tensor, info_dict)
         return tensor, info_dict
     
