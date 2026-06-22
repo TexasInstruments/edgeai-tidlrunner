@@ -83,7 +83,7 @@ except (ImportError, ModuleNotFoundError) as e:
 try:
     from .nuscenes_dataset import nuscenes_frame_dataloader, nuscenes_mv_image_dataloader
 except (ImportError, ModuleNotFoundError) as e:
-    warnings.warn(f'WARNING: nuscenes dataloader could not be imported - setup using setup_runner_extra sh file - {str(e)}')
+    # warnings.warn(f'WARNING: nuscenes dataloader could not be imported - setup using setup_runner_extra sh file - {str(e)}')
     # traceback.print_exc()
     nuscenes_frame_dataloader = None
     nuscenes_mv_image_dataloader = None
@@ -91,7 +91,7 @@ except (ImportError, ModuleNotFoundError) as e:
 try:
     from .pandaset_dataset import pandaset_frame_dataloader, pandaset_mv_image_dataloader
 except (ImportError, ModuleNotFoundError) as e:
-    warnings.warn(f'WARNING: pandaset dataloader could not be imported - setup using setup_runner_extra sh file - {str(e)}')
+    # warnings.warn(f'WARNING: pandaset dataloader could not be imported - setup using setup_runner_extra sh file - {str(e)}')
     # traceback.print_exc()
     pandaset_frame_dataloader = None
     pandaset_mv_image_dataloader = None
