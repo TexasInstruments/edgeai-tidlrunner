@@ -87,6 +87,7 @@ class CommonPipelineBase(bases.PipelineBase):
         utils.download_file(model_source, dest_dir, source_dir)
 
     def _build_run_dir(self, run_dir):
+        run_label = self.kwargs.get('common.run_label', '')
         pipeline_type = self.kwargs.get('common.pipeline_type', 'compile')
         task_type = self.kwargs.get('common.task_type', None) or None
     
@@ -119,15 +120,17 @@ class CommonPipelineBase(bases.PipelineBase):
 
         run_dir = run_dir.replace('{work_path}', self.work_path) if self.work_path else run_dir
         run_dir = run_dir.replace('{pipeline_type}', pipeline_type)
-        run_dir = run_dir.replace('{model_id}_', model_id_underscore)
-        run_dir = run_dir.replace('{model_id}', model_id)
-        run_dir = run_dir.replace('{runtime_name}', runtime_name)        
-        run_dir = run_dir.replace('{model_ext}', model_ext)        
-        run_dir = run_dir.replace('{tensor_bits}/', tensor_bits_slash)
-        run_dir = run_dir.replace('{tensor_bits}', tensor_bits_str)
+        run_dir = run_dir.replace('{run_label}', run_label)
         run_dir = run_dir.replace('{target_device}/', target_device_slash)
         run_dir = run_dir.replace('{target_device}', target_device_str)
+        run_dir = run_dir.replace('{tensor_bits}/', tensor_bits_slash)
+        run_dir = run_dir.replace('{tensor_bits}', tensor_bits_str)
+        run_dir = run_dir.replace('{model_id}_', model_id_underscore)
+        run_dir = run_dir.replace('{model_id}', model_id)
+        run_dir = run_dir.replace('{runtime_name}', runtime_name)
+        run_dir = run_dir.replace('{model_ext}', model_ext)
         run_dir = run_dir.replace('{model_name}', model_basename_wo_ext)
+        run_dir = run_dir.replace('//', '/')
         if self.model_source:
             run_dir = self._replace_model_path(run_dir, '{model_path}', run_dir_tree_depth=3)
         #
