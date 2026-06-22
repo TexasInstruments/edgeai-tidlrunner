@@ -95,7 +95,7 @@ Chart.defaults.color = '#495057';
     /* ===== CARD & LAYOUT ===== */
     --card-padding: 24px;
     --card-gap: 24px;
-    --section-margin: 48px;
+    --section-margin: 24px;
 
     /* ===== TYPOGRAPHY ===== */
     --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
@@ -846,7 +846,7 @@ header.scrolled {
 main {
     flex: 1;
     width: 100%;
-    padding: var(--space-8) var(--space-6);
+    padding: var(--card-gap);   /* uniform 24px on all sides */
     display: flex;
     flex-direction: column;
 }
@@ -956,6 +956,7 @@ main {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: var(--card-gap);
+    align-items: stretch;
 }
 
 @media (max-width: 1024px) {
@@ -1002,19 +1003,21 @@ main {
 
 .hero-card-title {
     font-size: var(--font-size-sm);
-    font-weight: 500;
+    font-weight: 600;
     color: var(--text-secondary);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
+    font-family: var(--font-sans);
 }
 
 .hero-card-value {
-    font-size: var(--font-size-3xl);
-    font-weight: 400;
-    font-family: var(--font-mono);
+    font-size: var(--font-size-2xl);
+    font-weight: 600;
+    font-family: var(--font-sans);
     color: var(--text-primary);
-    line-height: var(--line-height-tight);
-    overflow: hidden;
+    line-height: 1.4;           /* enough room for descenders */
+    padding-bottom: 2px;        /* prevent clipping on last baseline */
+    overflow: visible;          /* don't clip tall/descending glyphs */
     text-overflow: ellipsis;
     white-space: nowrap;
     max-width: 100%;
@@ -1034,6 +1037,7 @@ main {
     font-size: var(--font-size-sm);
     color: var(--text-muted);
     font-weight: 400;
+    font-family: var(--font-sans);
 }
 
 /* Specification Cards Grid (2 columns) */
@@ -1073,14 +1077,25 @@ main {
 }
 
 .spec-card-icon {
-    font-size: var(--font-size-xl);
+    width: 36px;
+    height: 36px;
+    background: var(--ti-red-10);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-lg);
     color: var(--ti-red);
+    flex-shrink: 0;
 }
 
 .spec-card-title {
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-sm);
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-family: var(--font-sans);
 }
 
 .spec-card-content {
@@ -1104,7 +1119,7 @@ main {
 
 .spec-item-value {
     font-size: var(--font-size-sm);
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     color: var(--text-primary);
     font-weight: 600;
 }
@@ -1127,7 +1142,7 @@ main {
 /* Architecture card: side-by-side layers + acceleration */
 .arch-accel-layout {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: var(--space-4);
 }
 
@@ -1909,7 +1924,7 @@ main {
     overflow: hidden;
     font-family: var(--font-mono);
     flex: 1;
-    contain: layout style paint;
+    contain: layout style;
     transition: transform 0.4s cubic-bezier(0.4, 0.0, 0.2, 1),
                 opacity 0.3s ease,
                 box-shadow 0.4s ease;
@@ -2052,8 +2067,8 @@ main {
     fill: #E8F5F0;
     stroke: #00A651;
     stroke-width: 2;
-    rx: 8;
-    transition: all 0.2s ease;
+    /* Only transition fill/stroke — geometry (width, height, x, y) is handled by D3 transitions */
+    transition: fill 0.2s ease, stroke 0.2s ease, stroke-width 0.2s ease, filter 0.2s ease;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
@@ -2074,7 +2089,7 @@ main {
     stroke: #990000;
     stroke-width: 3;
     filter: drop-shadow(0 0 10px rgba(204, 0, 0, 0.4));
-    transition: all 0.3s ease;
+    transition: fill 0.3s ease, stroke 0.3s ease, filter 0.3s ease;
 }
 
 .graph-node:active .node-rect {
@@ -2094,12 +2109,17 @@ main {
 .graph-node:active .node-icon-path {
     stroke: white !important;
 }
+/* IO node label turns white when selected (same as other node text) */
+.graph-node.selected .io-label,
+.graph-node:active .io-label {
+    fill: white !important;
+}
 
 /* Selected node name label */
 .selected-node-name {
     fill: white;
     font-family: var(--font-sans);
-    font-size: 14px;
+    font-size: 18px;
     font-weight: 600;
     text-anchor: middle;
     pointer-events: none;
@@ -2108,7 +2128,7 @@ main {
 .node-type-label {
     fill: #1a1a1a;
     font-family: var(--font-sans);
-    font-size: 15px;
+    font-size: 20px;
     font-weight: 700;
     text-anchor: start;
     pointer-events: none;
@@ -2118,7 +2138,7 @@ main {
 .node-index-label {
     fill: var(--text-muted);
     font-family: var(--font-sans);
-    font-size: 12px;
+    font-size: 16px;
     font-weight: 600;
     text-anchor: middle;
     pointer-events: none;
@@ -2139,7 +2159,7 @@ main {
 .edge-label {
     fill: var(--text-primary);
     font-family: var(--font-sans);
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 500;
     text-anchor: middle;
     pointer-events: none;
@@ -2178,6 +2198,58 @@ main {
 .graph-control-btn i {
     font-size: 18px;
 }
+/* ==================== SG FLOATING NAV ==================== */
+.sg-nav-btn {
+    padding: 5px 13px;
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 6px;
+    background: rgba(255,255,255,0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--text-primary, #333);
+    font-size: 0.78rem;
+    font-family: var(--font-sans);
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+    transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+    white-space: nowrap;
+}
+.sg-nav-btn:hover {
+    background: rgba(255,255,255,0.92);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    color: var(--ti-red);
+}
+.sg-nav-btn.active {
+    background: var(--ti-red);
+    border-color: var(--ti-red);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(227,30,36,0.35);
+}
+
+/* Floating subgraph selector — transparent glass style */
+.sg-subgraph-select {
+    padding: 4px 28px 4px 10px;
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 6px;
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--text-primary, #333);
+    font-size: 0.78rem;
+    font-family: var(--font-sans);
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+    appearance: auto;
+    outline: none;
+    transition: box-shadow 0.15s, background 0.15s;
+}
+.sg-subgraph-select:hover, .sg-subgraph-select:focus {
+    background: rgba(255,255,255,0.9);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+}
+
 /* ==================== SUBGRAPH SELECTOR ==================== */
 .subgraph-selector-container {
     position: absolute;
@@ -2353,14 +2425,14 @@ main {
     color: #c53030;
 }
 .node-tooltip {
-    position: absolute;
+    position: fixed;
     background: rgba(26, 32, 44, 0.98);
     color: #fffffb;
     padding: 12px 16px;
     border-radius: 8px;
     font-size: 13px;
     pointer-events: none;
-    z-index: 1000;
+    z-index: 99999;
     opacity: 0;
     transition: opacity 0.2s ease;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
@@ -3175,7 +3247,7 @@ main {
     margin-top: 10px;
 }
 .subgraph-chart-canvas-wrapper canvas {
-    width: 100% !important;
+    display: block;
 }
 /* D3 Tooltip styles */
 .d3-tooltip {
@@ -3757,8 +3829,6 @@ main {
         <div class="model-info">
             <span class="model-label">Target Device:</span>
             <span class="model-name" id="target-device">Loading...</span>
-            <span class="model-label" style="margin-left: 20px;">Compiler Version:</span>
-            <span class="model-name">11.02</span>
         </div>
     </div>
 </header>
@@ -3787,7 +3857,7 @@ main {
             <!-- Hero Cards (3-column grid) -->
             <div class="hero-cards-grid">
                 <!-- Model Info Card -->
-                <div class="hero-card" title="Model name and task type (classification, detection, etc.)">
+                <div class="hero-card" title="Model name, task type, and total trainable parameters">
                     <div class="hero-card-header">
                         <div class="hero-card-icon">
                             <i class="fas fa-brain"></i>
@@ -3795,7 +3865,25 @@ main {
                         <div class="hero-card-title">Model Info</div>
                     </div>
                     <div class="hero-card-value" id="model-name" title="">-</div>
-                    <div class="hero-card-label"><span id="task-type">-</span></div>
+                    <div class="hero-card-label" data-task-row style="display:none;margin-top:2px;">
+                        <span id="task-type"></span>
+                        <span id="task-type-spec" style="display:none;"></span>
+                    </div>
+                    <!-- Compact 3-stat row: Parameters | Opset | IR Version -->
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;text-align:center;">
+                        <div style="padding:8px 4px;border-radius:8px;background:rgba(227,30,36,0.08);border:1px solid rgba(227,30,36,0.25);">
+                            <div style="font-size:1rem;font-weight:700;color:var(--ti-red);font-family:var(--font-sans);line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><span id="parameters">-</span></div>
+                            <div style="font-size:0.68rem;color:var(--text-secondary);margin-top:4px;font-family:var(--font-sans);font-weight:500;">Parameters</div>
+                        </div>
+                        <div style="padding:8px 4px;border-radius:8px;background:rgba(67,160,71,0.08);border:1px solid rgba(67,160,71,0.25);">
+                            <div style="font-size:1rem;font-weight:700;color:#43a047;font-family:var(--font-sans);line-height:1;"><span id="opset-version">-</span></div>
+                            <div style="font-size:0.68rem;color:var(--text-secondary);margin-top:4px;font-family:var(--font-sans);font-weight:500;">Opset</div>
+                        </div>
+                        <div style="padding:8px 4px;border-radius:8px;background:rgba(245,124,0,0.08);border:1px solid rgba(245,124,0,0.25);">
+                            <div style="font-size:1rem;font-weight:700;color:#f57c00;font-family:var(--font-sans);line-height:1;"><span id="ir-version">-</span></div>
+                            <div style="font-size:0.68rem;color:var(--text-secondary);margin-top:4px;font-family:var(--font-sans);font-weight:500;">IR Version</div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Architecture & Acceleration Card -->
@@ -3806,22 +3894,29 @@ main {
                         </div>
                         <div class="hero-card-title">Architecture</div>
                     </div>
-                    <div class="arch-accel-layout">
-                        <div class="arch-layers-side">
-                            <div class="hero-card-value" id="layers">-</div>
-                            <div class="hero-card-label">Total Layers</div>
+                    <!-- Segmented bar full width -->
+                    <div id="acceleration-progress" style="display:flex;height:18px;border-radius:6px;overflow:hidden;width:100%;margin-bottom:16px;background:var(--border-color,#e2e8f0);">
+                        <div id="seg-tidl" style="background:#43a047;height:100%;transition:width 0.4s ease;" title="With TIDL"></div>
+                        <div id="seg-tvm"  style="background:#0072ce;height:100%;transition:width 0.4s ease;" title="Without TIDL"></div>
+                        <div id="seg-arm"  style="background:#c62828;height:100%;transition:width 0.4s ease;" title="ARM"></div>
+                    </div>
+                    <!-- 3-column stats with counts -->
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
+                        <div style="padding:8px 4px;border-radius:8px;background:rgba(67,160,71,0.08);border:1px solid rgba(67,160,71,0.25);">
+                            <div style="font-size:1.3rem;font-weight:700;color:#43a047;line-height:1;font-family:var(--font-sans);"><span id="accelerated-count">0</span></div>
+                            <div style="font-size:0.68rem;color:var(--text-secondary);margin-top:4px;font-weight:500;font-family:var(--font-sans);">C7x with TIDL</div>
                         </div>
-                        <div class="arch-accel-side">
-                            <div class="acceleration-progress-bar" style="height: 24px; margin-bottom: 6px;">
-                                <div class="acceleration-progress-fill" id="acceleration-progress" style="width: 0%;">
-                                    <span class="acceleration-progress-text" id="acceleration-percentage">0%</span>
-                                </div>
-                            </div>
-                            <div class="acceleration-stats-inline">
-                                <span class="accel-stat-inline success" title="Layers running on TIDL hardware accelerator (fast)"><span id="accelerated-count">0</span> Accelerated</span>
-                                <span class="accel-stat-inline error" title="Layers running on ARM CPU (slower, not supported by TIDL)"><span id="cpu-count">0</span> CPU Fallback</span>
-                            </div>
+                        <div style="padding:8px 4px;border-radius:8px;background:rgba(0,114,206,0.08);border:1px solid rgba(0,114,206,0.25);">
+                            <div style="font-size:1.3rem;font-weight:700;color:#0072ce;line-height:1;font-family:var(--font-sans);"><span id="tvm-count">0</span></div>
+                            <div style="font-size:0.68rem;color:var(--text-secondary);margin-top:4px;font-weight:500;font-family:var(--font-sans);">C7x without TIDL</div>
                         </div>
+                        <div style="padding:8px 4px;border-radius:8px;background:rgba(198,40,40,0.08);border:1px solid rgba(198,40,40,0.25);">
+                            <div style="font-size:1.3rem;font-weight:700;color:#c62828;line-height:1;font-family:var(--font-sans);"><span id="cpu-count">0</span></div>
+                            <div style="font-size:0.68rem;color:var(--text-secondary);margin-top:4px;font-weight:500;font-family:var(--font-sans);">ARM</div>
+                        </div>
+                    </div>
+                    <div style="text-align:center;margin-top:10px;font-size:0.85rem;color:var(--text-secondary);font-family:var(--font-sans);">
+                        Total <span id="layers" style="font-weight:700;font-size:1rem;color:var(--text-primary);">-</span> layers
                     </div>
                 </div>
             </div>
@@ -3829,7 +3924,7 @@ main {
             <!-- Specification Cards (2-column grid) -->
             <div class="spec-cards-grid">
                 <!-- Input Specification Card -->
-                <div class="spec-card" title="Model input tensor shape, quantization precision, and total trainable parameters">
+                <div class="spec-card" title="Model input tensor shapes">
                     <div class="spec-card-header">
                         <div class="spec-card-icon">
                             <i class="fas fa-download"></i>
@@ -3842,14 +3937,6 @@ main {
                                 <span class="spec-item-label">Input Shape</span>
                                 <span class="spec-item-value" id="input-shape">-</span>
                             </div>
-                        </div>
-                        <div class="spec-item" title="Quantization bit-width for tensors (8-bit = INT8, 16-bit = INT16, 32-bit = FP32)">
-                            <span class="spec-item-label">Tensor Bits</span>
-                            <span class="spec-item-value" id="tensor-bits">-</span>
-                        </div>
-                        <div class="spec-item" title="Total number of trainable weights and biases in the model">
-                            <span class="spec-item-label">Parameters</span>
-                            <span class="spec-item-value" id="parameters">-</span>
                         </div>
                     </div>
                 </div>
@@ -3869,10 +3956,6 @@ main {
                                 <span class="spec-item-value" id="output-shape">-</span>
                             </div>
                         </div>
-                        <div class="spec-item">
-                            <span class="spec-item-label">Task Type</span>
-                            <span class="spec-item-value" id="task-type-spec">-</span>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -3889,9 +3972,10 @@ main {
                                 <tr>
                                     <th class="sortable" data-column="type" style="text-align: center;" title="ONNX operator type (Conv, Relu, Add, etc.)">Operator Type <i class="fas fa-sort"></i></th>
                                     <th class="sortable" data-column="total" style="text-align: center;" title="Total number of this operator in the model">Total <i class="fas fa-sort"></i></th>
-                                    <th class="sortable" data-column="accelerated" style="text-align: center;" title="Layers running on TIDL hardware accelerator">Accelerated <i class="fas fa-sort"></i></th>
-                                    <th class="sortable" data-column="cpuFallback" style="text-align: center;" title="Layers falling back to CPU (not supported by TIDL)">CPU Fallback <i class="fas fa-sort"></i></th>
-                                    <th class="sortable" data-column="pctAccelerated" style="text-align: center;" title="Percentage of this operator type running on TIDL">% Accelerated <i class="fas fa-sort"></i></th>
+                                    <th class="sortable" data-column="tidl" style="text-align: center;" title="Layers running on C7x DSP via TIDL">C7x with TIDL <i class="fas fa-sort"></i></th>
+                                    <th class="sortable" data-column="tvm" style="text-align: center;" title="Layers running on C7x DSP via TVM (without TIDL)">C7x without TIDL <i class="fas fa-sort"></i></th>
+                                    <th class="sortable" data-column="arm" style="text-align: center;" title="Layers running on ARM CPU (not accelerated)">ARM <i class="fas fa-sort"></i></th>
+                                    <th class="sortable" data-column="pctAccelerated" style="text-align: center;" title="Percentage running on DSP (TIDL + TVM)">% On DSP <i class="fas fa-sort"></i></th>
                                 </tr>
                             </thead>
                             <tbody id="operator-summary-table-body"></tbody>
@@ -3953,14 +4037,15 @@ main {
                                     </button>
                                     <div class="search-dropdown" id="searchDropdown"></div>
                                 </div>
+                                <!-- Layer filter dropdowns — class names required by JS visibility logic -->
                                 <div class="accelerated-layers-dropdown">
                                     <select id="accelerated-layers-select">
-                                        <option value="">Accelerated Layers (0)</option>
+                                        <option value="">C7x</option>
                                     </select>
                                 </div>
                                 <div class="non-accelerated-layers-dropdown">
                                     <select id="non-accelerated-layers-select">
-                                        <option value="">Non-accelerated Layers (0)</option>
+                                        <option value="">ARM</option>
                                     </select>
                                 </div>
 
@@ -4015,21 +4100,27 @@ main {
                     <div id="subgraph-perf-table-container" style="margin-top: 1rem;">
                         <!-- Dynamically populated per-subgraph summary table -->
                     </div>
-                    <!-- Separator between summary metrics and detailed charts -->
-                    <div style="margin: 2.5rem 0 1.5rem; display: flex; align-items: center; gap: 1rem;">
+                    <!-- Separator + unified subgraph selector for all per-layer charts -->
+                    <div id="per-layer-separator" style="margin: 2.5rem 0 1.5rem; display: flex; align-items: center; gap: 1rem;">
                         <div style="flex: 1; height: 2px; background: linear-gradient(to right, rgba(128, 128, 128, 0.3), rgba(128, 128, 128, 0.15));"></div>
                         <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); letter-spacing: 0.1em; white-space: nowrap;">PER-LAYER ANALYSIS</span>
                         <div style="flex: 1; height: 2px; background: linear-gradient(to left, rgba(128, 128, 128, 0.3), rgba(128, 128, 128, 0.15));"></div>
                     </div>
+                    <!-- Single shared subgraph selector for all charts below -->
+                    <div id="per-layer-selector-row" style="display:flex; align-items:center; gap:10px; margin-bottom:1.5rem;">
+                        <span style="font-size:0.82rem; font-weight:600; color:var(--text-secondary); font-family:var(--font-sans);">Subgraph</span>
+                        <select id="perf-subgraph-selector" class="perf-select" style="min-width:160px;">
+                            <option value="">No data</option>
+                        </select>
+                    </div>
+                    <!-- Hidden mirrors for backward-compat with existing chart JS -->
+                    <select id="proctime-subgraph-selector" style="display:none;"></select>
+                    <select id="cycles-subgraph-selector"  style="display:none;"></select>
+                    <select id="memory-subgraph-selector"  style="display:none;"></select>
+                    <select id="metrics-subgraph-selector" style="display:none;"></select>
                     <div class="proctime-chart-section">
                         <div class="perf-chart-header">
                             <h3 title="Estimated processing time per TIDL layer in microseconds. Based on offline simulation.">Layer Processing Time (Estimated)</h3>
-                            <div class="perf-chart-controls">
-
-                                <select id="proctime-subgraph-selector" class="perf-select">
-                                    <option value="">No data</option>
-                                </select>
-                            </div>
                         </div>
                         <div class="chart-scroll-wrapper" id="proctime-scroll-wrapper">
                             <div class="chart-scroll-inner">
@@ -4047,9 +4138,6 @@ main {
                                     <button class="memory-toggle-btn active" data-cycles="io" title="IO Cycles">IO</button>
                                     <button class="memory-toggle-btn active" data-cycles="kernel" title="Kernel Only Cycles">Kernel</button>
                                 </div>
-                                <select id="cycles-subgraph-selector" class="perf-select">
-                                    <option value="">No data</option>
-                                </select>
                             </div>
                         </div>
                         <div class="chart-scroll-wrapper" id="cycles-scroll-wrapper">
@@ -4068,10 +4156,6 @@ main {
                                     <button class="memory-toggle-btn active" data-memory="l2" title="L2 = fastest on-chip cache">L2</button>
                                     <button class="memory-toggle-btn active" data-memory="msmc" title="MSMC = shared memory">MSMC</button>
                                 </div>
-                                <select id="memory-subgraph-selector" class="perf-select">
-                                    <option value="">No data</option>
-                                </select>
-
                             </div>
                         </div>
                         <div class="chart-scroll-wrapper" id="memory-scroll-wrapper">
@@ -4091,16 +4175,12 @@ main {
                                     <option value="median_abs_diff">Median Absolute Difference</option>
                                     <option value="max_abs_diff">Max Absolute Difference</option>
                                 </select>
-                                <select id="metrics-subgraph-selector" class="perf-select">
-                                    <option value="">No data</option>
-                                </select>
-
                             </div>
                         </div>
                         <div class="chart-scroll-wrapper" id="metrics-scroll-wrapper">
-                        <div class="metrics-charts-container chart-scroll-inner" id="metrics-charts-container" style="padding: 0; height: auto;">
-                            <!-- Subgraph charts will be dynamically inserted here -->
-                        </div>
+                            <div class="chart-scroll-inner" id="metrics-charts-container">
+                                <canvas id="metrics-chart"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -4112,12 +4192,19 @@ main {
     <div class="visualization-container" style="height: calc(100vh - 140px); min-height: 300px;">
         <div class="canvas-wrapper">
             <div class="graph-canvas" id="tidl-canvas">
-                <!-- Subgraph Selector - Top Left -->
-                <div class="subgraph-selector-container">
-                    <select class="subgraph-selector" id="subgraph-selector">
-                        <option value="" disabled selected>Select a subgraph...</option>
-                    </select>
+                <!-- Floating nav group — top-left over canvas: buttons + selector inline -->
+                <div style="position:absolute;top:12px;left:12px;z-index:20;display:flex;align-items:center;gap:5px;">
+                    <button id="btn-view-overview" class="sg-nav-btn active" onclick="_sgNavClick('overview')">Overview</button>
+                    <button id="btn-view-tidl"     class="sg-nav-btn"        onclick="_sgNavClick('tidl')">TIDL/TVM</button>
+                    <button id="btn-view-onnx"     class="sg-nav-btn"        onclick="_sgNavClick('onnx')">ONNX</button>
+                    <!-- Divider + selector — only visible in TIDL/ONNX mode -->
+                    <div id="subgraph-selector-bar" style="display:none;align-items:center;gap:5px;">
+                        <span style="width:1px;height:18px;background:rgba(0,0,0,0.15);display:inline-block;margin:0 2px;"></span>
+                        <select id="subgraph-selector" class="sg-subgraph-select"></select>
+                    </div>
                 </div>
+                <!-- Hidden legacy bar -->
+                <div id="subgraph-drilldown-bar" style="display:none;"></div>
                 <svg id="tidl-graph-svg"></svg>
                 <div class="graph-controls">
                     <button class="graph-control-btn tidl-zoom-in" title="Zoom In">
@@ -4164,7 +4251,7 @@ main {
                     <i class="fas fa-layer-group"></i>
                     <span>Layer Details</span>
                 </button>
-                <button class="tab-btn" data-panel-tab="tidl">
+                <button class="tab-btn" data-panel-tab="tidl" style="display:none;">
                     <i class="fas fa-chart-line"></i>
                     <span>Analysis</span>
                 </button>
@@ -4217,6 +4304,7 @@ console.log('========================');
 
 const SUBGRAPH_DATA = {{SUBGRAPH_DATA}};
 const TIDL_LAYER_DATA = {{TIDL_LAYER_DATA}};
+const OVERVIEW_DATA = {{OVERVIEW_DATA}};
 const METRICS_DATA = {{METRICS_DATA}};
 const CONFIG_DATA = {{CONFIG_DATA}};
 const PROCTIME_DATA = {{PROCTIME_DATA}};
@@ -4241,7 +4329,12 @@ if (CONFIG_DATA) {
     // Model Overview
     if (CONFIG_DATA.task_type) {
         const taskTypeEl = document.getElementById('task-type');
-        if (taskTypeEl) taskTypeEl.textContent = CONFIG_DATA.task_type;
+        if (taskTypeEl) {
+            taskTypeEl.textContent = CONFIG_DATA.task_type;
+            // Show the task type row only when value is meaningful
+            const taskRow = taskTypeEl.closest('[data-task-row]') || taskTypeEl.parentElement;
+            if (taskRow) taskRow.style.display = '';
+        }
     }
     // Accuracy card removed from UI
     // if (CONFIG_DATA.accuracy) {
@@ -4279,7 +4372,9 @@ function buildSubgraphPerfTable() {
         Object.keys(TIDL_LAYER_DATA).forEach(k => sgIds.add(k));
     }
 
-    const sortedIds = [...sgIds].sort((a, b) => parseInt(a) - parseInt(b));
+    // Sort by trailing numeric index (handles 'tidl_0', '0', 'tidl_1' etc.)
+    const sgIndex = (id) => { const m = String(id).match(/(\d+)$/); return m ? parseInt(m[1]) : 0; };
+    const sortedIds = [...sgIds].sort((a, b) => sgIndex(a) - sgIndex(b));
     if (sortedIds.length === 0) {
         container.innerHTML = '<div style="text-align: center; padding: 1rem; color: var(--text-muted); font-size: 0.85rem;">No per-subgraph performance data available.</div>';
         return;
@@ -4300,7 +4395,11 @@ function buildSubgraphPerfTable() {
         }
 
         const numLayers = Math.max(proctimeArr.length, cyclesArr.length);
-        sgPerfData.push({ sgId: parseInt(sgId), numLayers, estTime, totalLayerCycles, gmacs, isAccelerated: true });
+        // Build a readable label: "TIDL — Subgraph 0", "TVM — Subgraph 1", etc.
+        const sgInfo = (typeof TIDL_LAYER_DATA !== 'undefined' && TIDL_LAYER_DATA?.[sgId]) || {};
+        const rt = (sgInfo.runtime || 'tidl_rt') === 'tvm_rt' ? 'TVM' : 'TIDL';
+        const label = `${rt} — Subgraph ${sgIndex(sgId)}`;
+        sgPerfData.push({ sgId, label, sortKey: sgIndex(sgId), numLayers, estTime, totalLayerCycles, gmacs, isAccelerated: true });
     }
 
     // Collect non-accelerated layers (shown after subgraph rows)
@@ -4337,8 +4436,10 @@ function renderSgPerfTable() {
 
     // Sort
     const sorted = [...sgPerfData].sort((a, b) => {
-        const aVal = a[sgPerfSortCol];
-        const bVal = b[sgPerfSortCol];
+        // 'sgId' column sorts by numeric sortKey, not the string id
+        const col = sgPerfSortCol === 'sgId' ? 'sortKey' : sgPerfSortCol;
+        const aVal = a[col];
+        const bVal = b[col];
         if (sgPerfSortDir === 'asc') return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
         return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
     });
@@ -4347,7 +4448,7 @@ function renderSgPerfTable() {
     sorted.forEach(r => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td style="font-weight: 600; text-align: center;">Subgraph ${r.sgId}</td>
+            <td style="font-weight: 600; text-align: center;">${r.label || r.sgId}</td>
             <td style="text-align: center;"><span class="badge-accelerated">Accelerated</span></td>
             <td style="text-align: center;"><span class="badge-total">${r.numLayers}</span></td>
             <td style="text-align: center; font-variant-numeric: tabular-nums;">${r.gmacs > 0 ? r.gmacs.toFixed(4) : '-'}</td>
@@ -4441,6 +4542,78 @@ function buildLayerLookups(subgraphNum) {
 }
 
 // Initialize Proctime Chart
+// ── Unified subgraph selector for all per-layer charts ────────────
+function initPerfSubgraphSelector() {
+    // Helper: true if a data object has at least one subgraph with real entries
+    const hasData = (dataObj) => {
+        if (!dataObj) return false;
+        return Object.values(dataObj).some(v => Array.isArray(v) ? v.length > 0 : !!v);
+    };
+
+    // Show/hide each section based on data availability
+    const hasProctime = hasData(PROCTIME_DATA);
+    const hasCycles   = hasData(CYCLES_DATA);
+    const hasMemory   = hasData(MEMORY_DATA);
+    const hasMetrics  = hasData(METRICS_DATA);
+
+    const show = (sel, visible) => {
+        const el = typeof sel === 'string' ? document.querySelector(sel) : sel;
+        if (el) el.style.display = visible ? '' : 'none';
+    };
+
+    show('.proctime-chart-section', hasProctime);
+    show('.cycles-chart-section',   hasCycles);
+    show('.memory-chart-section',   hasMemory);
+    show('.metrics-graph-section',  hasMetrics);
+
+    const anyCharts = hasProctime || hasCycles || hasMemory;
+    show('#per-layer-separator',    anyCharts);
+    show('#per-layer-selector-row', anyCharts);
+    if (!anyCharts && !hasMetrics) return;  // nothing to wire
+
+    const unified = document.getElementById('perf-subgraph-selector');
+    if (!unified) return;
+
+    // Collect all available subgraph keys across visible data sources
+    const allKeys = new Set([
+        ...(hasProctime ? Object.keys(PROCTIME_DATA) : []),
+        ...(hasCycles   ? Object.keys(CYCLES_DATA)   : []),
+        ...(hasMemory   ? Object.keys(MEMORY_DATA)   : []),
+        ...(hasMetrics  ? Object.keys(METRICS_DATA)  : []),
+    ]);
+    const sortedKeys = [...allKeys].sort((a, b) => parseInt(a) - parseInt(b));
+    if (sortedKeys.length === 0) {
+        show('#per-layer-separator',    false);
+        show('#per-layer-selector-row', false);
+        return;
+    }
+
+    unified.innerHTML = sortedKeys.map((k, i) => {
+        const sg = TIDL_LAYER_DATA?.[k] || {};
+        const rt = (sg.runtime || 'tidl_rt') === 'tvm_rt' ? 'TVM' : 'TIDL';
+        return `<option value="${k}">${rt} — Subgraph ${i}</option>`;
+    }).join('');
+
+    // Sync all hidden mirrors and re-render all charts
+    const syncAll = (key) => {
+        ['proctime','cycles','memory','metrics'].forEach(id => {
+            const el = document.getElementById(id + '-subgraph-selector');
+            if (el) el.value = key;
+        });
+        if (hasProctime && typeof updateProctimeChart === 'function') updateProctimeChart(key);
+        if (hasCycles   && typeof updateCyclesChart   === 'function') updateCyclesChart(key);
+        if (hasMemory   && typeof updateMemoryChart   === 'function') updateMemoryChart(key);
+        if (hasMetrics  && typeof updateMetricsChart  === 'function') {
+            const metric = document.getElementById('metric-selector');
+            updateMetricsChart(key, metric?.value || 'snr_db');
+        }
+    };
+
+    unified.value = sortedKeys[0];
+    unified.addEventListener('change', e => syncAll(e.target.value));
+    syncAll(sortedKeys[0]);
+}
+
 let proctimeChart = null;
 
 function initProctimeChart() {
@@ -5416,9 +5589,14 @@ function transformData(data) {
             layer_data: layerData,
             tidl_supported: supportInfo.supported,
             tidl_diagInfo: supportInfo.diagInfo,
+            assigned_runtime: supportInfo.assigned_runtime || (supportInfo.supported ? 'tidl_rt' : 'arm'),
             subgraph_index: subgraphIndex,
-            subgraph_color: getSubgraphColor(subgraphIndex),
-            subgraph_border_color: getSubgraphBorderColor(subgraphIndex),
+            subgraph_color: supportInfo.assigned_runtime === 'tvm_rt'
+                ? '#2e7d32'  // green for TVM
+                : getSubgraphColor(subgraphIndex),
+            subgraph_border_color: supportInfo.assigned_runtime === 'tvm_rt'
+                ? '#1b5e20'
+                : getSubgraphBorderColor(subgraphIndex),
             layerdetails: {
                 name: layerData.layer_name || layerName,
                 type: layerData.type || 'N/A',
@@ -5486,17 +5664,22 @@ function populateUI(data) {
     // Browser tab title – TI logo already set as favicon
     document.title = `${modelName} — Model Inspector`;
 
-    // Hero card – show full name, auto-shrink font via CSS class
+    // Hero card – capitalize first letter, show full name, auto-shrink font via CSS class
+    const displayModelName = modelName.charAt(0).toUpperCase() + modelName.slice(1);
     const heroNameEl = document.getElementById('model-name');
-    heroNameEl.textContent = modelName;
-    heroNameEl.title = modelName;
-    if (modelName.length > 40) {
+    heroNameEl.textContent = displayModelName;
+    heroNameEl.title = displayModelName;
+    if (displayModelName.length > 40) {
         heroNameEl.classList.add('name-very-long');
-    } else if (modelName.length > 22) {
+    } else if (displayModelName.length > 22) {
         heroNameEl.classList.add('name-long');
     }
     document.getElementById('parameters').textContent = formatNumber(data.model_details.weights);
     document.getElementById('layers').textContent = data.model_details.no_of_layers;
+    const opsetEl = document.getElementById('opset-version');
+    if (opsetEl) opsetEl.textContent = data.model_details.opset_version || '-';
+    const irEl = document.getElementById('ir-version');
+    if (irEl) irEl.textContent = data.model_details.ir_version || '-';
 
     // Input/Output specification cards – handle multiple inputs/outputs
     const inputs = data.model_details.input_shape || [];
@@ -5529,28 +5712,15 @@ function populateIOShapes(containerId, items, prefix) {
         return;
     }
 
-    if (items.length === 1) {
-        // Single input/output – keep it simple
-        const shapeStr = items[0].shape ? items[0].shape.join(' \u00d7 ') : '-';
-        const nameStr = items[0].name || '';
-        container.innerHTML = `
-            <div class="spec-item">
-                <span class="spec-item-label">${prefix} Shape</span>
-                <span class="spec-item-value" title="${nameStr}">${shapeStr}</span>
-            </div>`;
-        return;
-    }
-
-    // Multiple inputs/outputs – show each with its name
+    // Always show tensor name as label — single or multiple inputs/outputs
     let html = '';
     items.forEach((item, idx) => {
-        const shapeStr = item.shape ? item.shape.join(' \u00d7 ') : '-';
+        const shapeStr = item.shape ? item.shape.filter(v => v > 0).join(' \u00d7 ') : '-';
         const name = item.name || `${prefix} ${idx + 1}`;
-        // Truncate long tensor names for display
-        const displayName = name.length > 28 ? name.substring(0, 25) + '...' : name;
+        const displayName = name.length > 30 ? name.substring(0, 27) + '\u2026' : name;
         html += `
-            <div class="spec-item spec-item-multi">
-                <span class="spec-item-label" title="${name}">${displayName}</span>
+            <div class="spec-item ${items.length > 1 ? 'spec-item-multi' : ''}">
+                <span class="spec-item-label" title="${name}" style="font-family:var(--font-mono);font-size:0.78rem;">${displayName}</span>
                 <span class="spec-item-value">${shapeStr}</span>
             </div>`;
     });
@@ -5561,33 +5731,41 @@ function populateIOShapes(containerId, items, prefix) {
 function populateAccelerationStatus(nodes) {
     if (!nodes || nodes.length === 0) return;
 
-    // Count acceleration status
-    let acceleratedCount = 0;
-    let cpuCount = 0;
+    // Exclude virtual boundary nodes (Input/Output added for graph display)
+    const realNodes = nodes.filter(n => n.type !== 'Input' && n.type !== 'Output');
 
-    nodes.forEach(node => {
-        if (node.tidl_supported) {
-            acceleratedCount++;
-        } else {
-            cpuCount++;
-        }
+    let tidlCount = 0, tvmCount = 0, armCount = 0;
+    realNodes.forEach(node => {
+        const rt = node.assigned_runtime || (node.tidl_supported ? 'tidl_rt' : 'arm');
+        if (rt === 'tidl_rt')     tidlCount++;
+        else if (rt === 'tvm_rt') tvmCount++;
+        else                      armCount++;
     });
 
-    const totalNodes = nodes.length;
-    const accelerationPercentage = totalNodes > 0 ? Math.round((acceleratedCount / totalNodes) * 100) : 0;
+    const totalNodes = realNodes.length;
+    const tidlPct = totalNodes > 0 ? (tidlCount / totalNodes * 100).toFixed(1) : 0;
+    const tvmPct  = totalNodes > 0 ? (tvmCount  / totalNodes * 100).toFixed(1) : 0;
+    const armPct  = totalNodes > 0 ? (armCount   / totalNodes * 100).toFixed(1) : 0;
 
-    // Update DOM
-    document.getElementById('accelerated-count').textContent = acceleratedCount;
-    document.getElementById('cpu-count').textContent = cpuCount;
-    document.getElementById('acceleration-percentage').textContent = accelerationPercentage + '%';
+    // Update stat boxes
+    document.getElementById('accelerated-count').textContent = tidlCount;
+    const tvmEl = document.getElementById('tvm-count');
+    if (tvmEl) tvmEl.textContent = tvmCount;
+    document.getElementById('cpu-count').textContent = armCount;
 
-    // Update progress bar
-    const progressFill = document.getElementById('acceleration-progress');
-    if (progressFill) {
-        progressFill.style.width = accelerationPercentage + '%';
-    }
+    // Drive the three bar segments + hover tooltips
+    const segTidl = document.getElementById('seg-tidl');
+    const segTvm  = document.getElementById('seg-tvm');
+    const segArm  = document.getElementById('seg-arm');
+    if (segTidl) { segTidl.style.width = tidlPct + '%'; segTidl.title = `C7x with TIDL: ${tidlCount} layers (${tidlPct}%)`; }
+    if (segTvm)  { segTvm.style.width  = tvmPct  + '%'; segTvm.title  = `C7x without TIDL: ${tvmCount} layers (${tvmPct}%)`; }
+    if (segArm)  { segArm.style.width  = armPct  + '%'; segArm.title  = `ARM: ${armCount} layers (${armPct}%)`; }
 
-    console.log(`Acceleration Status: ${acceleratedCount} accelerated, ${cpuCount} CPU (${accelerationPercentage}%)`);
+    // Update total layers display
+    const layersEl = document.getElementById('layers');
+    if (layersEl) layersEl.textContent = totalNodes;
+
+    console.log(`Acceleration: ${tidlCount} DSP(TIDL) + ${tvmCount} DSP(TVM) + ${armCount} ARM = ${totalNodes} total`);
 }
 // ==================== LAYER BREAKDOWN TABLE ====================
 let layerTableData = [];
@@ -5692,29 +5870,29 @@ let opSummarySortColumn = 'total';
 let opSummarySortDirection = 'desc';
 
 function populateOperatorSummary(nodes) {
-    // Count accelerated vs CPU fallback per operator type
+    // Count per-runtime per operator type (exclude virtual Input/Output nodes)
     const opStats = {};
-    nodes.forEach(node => {
+    nodes.filter(n => n.type !== 'Input' && n.type !== 'Output').forEach(node => {
         const type = node.type || 'Unknown';
-        if (!opStats[type]) {
-            opStats[type] = { accelerated: 0, cpuFallback: 0 };
-        }
-        if (node.tidl_supported) {
-            opStats[type].accelerated++;
-        } else {
-            opStats[type].cpuFallback++;
-        }
+        if (!opStats[type]) opStats[type] = { tidl: 0, tvm: 0, arm: 0 };
+        const rt = node.assigned_runtime || (node.tidl_supported ? 'tidl_rt' : 'arm');
+        if (rt === 'tidl_rt')     opStats[type].tidl++;
+        else if (rt === 'tvm_rt') opStats[type].tvm++;
+        else                      opStats[type].arm++;
     });
 
-    // Build data array sorted by total descending
     operatorSummaryData = Object.entries(opStats).map(([type, stats]) => {
-        const total = stats.accelerated + stats.cpuFallback;
+        const total = stats.tidl + stats.tvm + stats.arm;
+        const dsp   = stats.tidl + stats.tvm;
         return {
-            type,
-            total,
-            accelerated: stats.accelerated,
-            cpuFallback: stats.cpuFallback,
-            pctAccelerated: total > 0 ? parseFloat(((stats.accelerated / total) * 100).toFixed(1)) : 0
+            type, total,
+            tidl: stats.tidl,
+            tvm:  stats.tvm,
+            arm:  stats.arm,
+            // keep legacy keys so sort still works
+            accelerated:   dsp,
+            cpuFallback:   stats.arm,
+            pctAccelerated: total > 0 ? parseFloat((dsp / total * 100).toFixed(1)) : 0
         };
     });
 
@@ -5749,8 +5927,9 @@ function renderOperatorSummaryTable() {
         tr.innerHTML = `
             <td>${row.type}</td>
             <td><span class="badge-total">${row.total}</span></td>
-            <td><span class="badge-accelerated">${row.accelerated}</span></td>
-            <td><span class="badge-cpu">${row.cpuFallback}</span></td>
+            <td><span class="${row.tidl > 0 ? 'badge-accelerated' : 'badge-total'}" style="${row.tidl > 0 ? 'background:rgba(67,160,71,0.12);color:#2e7d32;' : 'opacity:0.4;'}">${row.tidl}</span></td>
+            <td><span class="${row.tvm  > 0 ? 'badge-accelerated' : 'badge-total'}" style="${row.tvm  > 0 ? 'background:rgba(0,114,206,0.12);color:#0072ce;' : 'opacity:0.4;'}">${row.tvm}</span></td>
+            <td><span class="${row.arm  > 0 ? 'badge-cpu'         : 'badge-total'}" style="${row.arm  > 0 ? ''                                    : 'opacity:0.4;'}">${row.arm}</span></td>
             <td>${row.pctAccelerated}%</td>
         `;
         tbody.appendChild(tr);
@@ -5782,6 +5961,7 @@ function attachOperatorSummarySortHandlers() {
 // ==================== CHART.JS METRICS VISUALIZATIONS ====================
 // Global state for metrics charts
 let metricsChartInstances = {};
+let metricsBarChart = null;
 let currentSelectedNode = null;
 let currentMetric = 'snr_db';
 let currentChartType = 'stem';
@@ -5814,7 +5994,7 @@ function renderChartJSBar(canvasId, data, subgraphId) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
 
-    const wrapper = canvas.closest('.subgraph-chart-canvas-wrapper');
+    const wrapper = canvas.closest('.subgraph-chart-canvas-wrapper') || canvas.parentElement;
     const isSnr = (currentMetric === 'snr_db');
 
     if (isSnr) {
@@ -5832,18 +6012,18 @@ function renderChartJSBar(canvasId, data, subgraphId) {
     if (existingDash) existingDash.remove();
 
     const ctx = canvas.getContext('2d');
-    if (metricsChartInstances[subgraphId]) {
-        metricsChartInstances[subgraphId].destroy();
+    if (metricsBarChart) {
+        metricsBarChart.destroy();
+        metricsBarChart = null;
     }
 
-    const labels = data.map(d => d.label.length > 20 ? d.label.substring(0, 18) + '...' : d.label);
-    const fullLabels = data.map(d => d.label);
+    const labels = data.map(d => d.label);
     const values = data.map(d => d.value);
 
-    const backgroundColors = data.map(d => d.isSelected ? 'rgba(204, 0, 0, 0.8)' : 'rgba(33, 150, 243, 0.8)');
-    const borderColors = data.map(d => d.isSelected ? 'rgba(204, 0, 0, 1)' : 'rgba(33, 150, 243, 1)');
+    const backgroundColors = data.map(() => 'rgba(33, 150, 243, 0.8)');
+    const borderColors = data.map(() => 'rgba(33, 150, 243, 1)');
 
-    metricsChartInstances[subgraphId] = new Chart(ctx, {
+    metricsBarChart = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: labels,
@@ -5856,28 +6036,59 @@ function renderChartJSBar(canvasId, data, subgraphId) {
             }]
         },
         options: {
-            responsive: true, maintainAspectRatio: false,
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
             plugins: {
                 legend: { display: false },
                 tooltip: {
                     callbacks: {
-                        title: function(context) { return fullLabels[context[0].dataIndex]; },
-                        label: function(context) { return `${METRIC_LABELS[currentMetric]}: ${formatWithPrefix(context.parsed.y)}`; }
+                        title: function(context) {
+                            const idx = context[0].dataIndex;
+                            const d = data[idx];
+                            return [
+                                `Layer ID: ${d.layerId}`,
+                                `Layer Name: ${d.tensorName || '-'}`,
+                                `Layer Type: ${d.layerType || '-'}`
+                            ];
+                        },
+                        label: function(context) {
+                            return `${METRIC_LABELS[currentMetric]}: ${formatWithPrefix(context.parsed.y)}`;
+                        }
                     },
-                    backgroundColor: 'rgba(0, 0, 0, 0.85)', padding: 12, cornerRadius: 6
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: 'rgba(33, 150, 243, 1)',
+                    borderWidth: 1,
+                    padding: 10,
+                    displayColors: false
                 }
             },
             scales: {
-                y: {
-                    type: 'logarithmic',
-                    ticks: { callback: function(value) { const log = Math.log10(value); if (Math.abs(log - Math.round(log)) < 0.01) return formatWithPrefix(value); return ''; }, maxTicksLimit: 8, font: { size: 11 } },
-                    title: { display: true, text: METRIC_LABELS[currentMetric], font: { size: 13, weight: 'bold' } },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Layer [ID] Type',
+                        font: { size: 13, weight: 'bold' }
+                    },
+                    ticks: { maxRotation: 45, minRotation: 45, font: { size: 10 } },
                     grid: { color: 'rgba(128,128,128,0.1)' }
                 },
-                x: {
-                    title: { display: true, text: 'Layer Name', font: { size: 12, weight: 'bold' } },
-                    ticks: { maxRotation: 45, minRotation: 45, font: { size: 10 } },
-                    grid: { display: false }
+                y: {
+                    title: {
+                        display: true,
+                        text: METRIC_LABELS[currentMetric],
+                        font: { size: 13, weight: 'bold' }
+                    },
+                    ticks: {
+                        callback: function(value) { return formatWithPrefix(value); }
+                    },
+                    grid: { color: 'rgba(128,128,128,0.1)' },
+                    beginAtZero: true
                 }
             }
         }
@@ -5937,7 +6148,7 @@ function renderSnrDashboard(container, data, subgraphId) {
 
             html += `<tr>
                 <td style="text-align: center; font-weight: 600; color: var(--text-secondary);">${d.layerId}</td>
-                <td style="font-family: monospace; font-size: 0.82rem; text-align: center;" title="${d.layerType || ''}">${d.layerType || '-'}</td>
+                <td style="font-family: var(--font-mono); font-size: 0.82rem; text-align: center;" title="${d.layerType || ''}">${d.layerType || '-'}</td>
                 <td style="font-size: 0.82rem; text-align: center; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${d.label}">${d.label}</td>
                 <td style="text-align: center; font-weight: 700;">${v.toFixed(1)}</td>
             </tr>`;
@@ -5989,9 +6200,9 @@ function renderChartJSMetricsScatter(canvasId, data, subgraphId) {
         isSelected: d.isSelected
     }));
 
-    const pointBg = data.map(d => d.isSelected ? 'rgba(198, 40, 40, 0.85)' : 'rgba(33, 150, 243, 0.6)');
-    const pointBorder = data.map(d => d.isSelected ? 'rgba(198, 40, 40, 1)' : 'rgba(21, 101, 192, 0.8)');
-    const pointRadius = data.map(d => d.isSelected ? 7 : 3.5);
+    const pointBg = data.map(() => 'rgba(33, 150, 243, 0.6)');
+    const pointBorder = data.map(() => 'rgba(21, 101, 192, 0.8)');
+    const pointRadius = data.map(() => 3.5);
 
     metricsChartInstances[subgraphId] = new Chart(ctx, {
         type: 'scatter',
@@ -6616,18 +6827,16 @@ function renderMetricsCharts() {
         initMetricsSubgraphSelector();
     }
 
-    // Clear existing charts
-    Object.values(metricsChartInstances).forEach(chart => {
-        if (chart) chart.destroy();
-    });
+    // Destroy existing chart if any
+    if (metricsBarChart) { metricsBarChart.destroy(); metricsBarChart = null; }
     metricsChartInstances = {};
-    container.innerHTML = '';
 
     // Render selected subgraph only
     const subgraphId = currentMetricsSubgraph;
     const subgraphMetrics = METRICS_DATA[subgraphId];
     if (!Array.isArray(subgraphMetrics) || subgraphMetrics.length === 0) {
-        container.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;">No metrics for this subgraph</div>';
+        const canvas = document.getElementById('metrics-chart');
+        if (canvas && canvas.parentElement) canvas.parentElement.innerHTML = '<canvas id="metrics-chart"></canvas><div style="text-align:center;padding:20px;color:#999;">No metrics for this subgraph</div>';
         return;
     }
 
@@ -6654,33 +6863,24 @@ function renderMetricsCharts() {
     sgProctime.forEach(d => { if (!layerTypeLookup[d.layer_num]) layerTypeLookup[d.layer_num] = d.layer_type; });
     sgCycles.forEach(d => { if (!layerTypeLookup[d.layer_num]) layerTypeLookup[d.layer_num] = d.layer_type; });
 
-    const chartData = subgraphMetrics.map((m, idx) => ({
-        label: m.onnx_layer || `Layer ${idx}`,
-        layerId: m.tidl_layer_id !== undefined ? m.tidl_layer_id : idx,
-        layerType: layerTypeLookup[m.tidl_layer_id] || '',
-        value: m[effectiveMetric] || 0,
-        isSelected: currentSelectedNode && m.onnx_layer === currentSelectedNode
-    }));
+    const chartData = subgraphMetrics.map((m, idx) => {
+        const lid = m.tidl_layer_id !== undefined ? m.tidl_layer_id : idx;
+        const ltype = layerTypeLookup[lid] || layerTypeLookup[String(lid)] || '';
+        // Short type: strip 'TIDL_' prefix and 'Layer' suffix → e.g. 'Convolution'
+        const shortType = ltype.replace('TIDL_', '').replace('Layer', '').trim() || 'Layer';
+        return {
+            label: `[${lid}] ${shortType}`,     // X-axis: [2] Convolution
+            tensorName: m.onnx_layer || '',      // for tooltip
+            layerId: lid,
+            layerType: ltype,
+            value: m[effectiveMetric] || 0,
+            isSelected: currentSelectedNode && m.onnx_layer === currentSelectedNode
+        };
+    });
 
-    const wrapper = document.createElement('div');
-    wrapper.className = 'subgraph-chart-wrapper';
-    wrapper.innerHTML = `
-        <div class="subgraph-chart-canvas-wrapper chart-scroll-inner">
-            <canvas id="chart-${subgraphId}"></canvas>
-        </div>
-    `;
-    container.appendChild(wrapper);
-
-    // Apply scroll for metrics container
-    const numLayers = chartData.length;
-    const minWidth = numLayers * 15 + 100;
-    const canvasWrapper = wrapper.querySelector('.subgraph-chart-canvas-wrapper');
-    if (canvasWrapper && minWidth > container.clientWidth) {
-        canvasWrapper.style.width = minWidth + 'px';
-    }
-
-    const canvasId = `chart-${subgraphId}`;
-    renderChartJSBar(canvasId, chartData, subgraphId);
+    // Use the static canvas — same approach as memory/proctime/cycles charts
+    applyChartScroll('metrics-scroll-wrapper', chartData.length, 1, 18);
+    renderChartJSBar('metrics-chart', chartData, subgraphId);
 }
 
 function updateMetricsCharts(selectedMetric) {
@@ -6691,6 +6891,428 @@ function updateMetricsCharts(selectedMetric) {
 function highlightNodeInMetrics(nodeName) {
     currentSelectedNode = nodeName;
     renderMetricsCharts();
+}
+
+// ==================== SUBGRAPH NAVIGATION STATE ====================
+
+let _sgViewMode = 'overview';   // 'overview' | 'subgraph'
+let _sgCurrentId = null;        // active subgraph id (string key in TIDL_LAYER_DATA)
+let _sgCurrentView = 'tidl';    // 'tidl' | 'onnx'
+
+function drillIntoSubgraph(subgraphId) {
+    // Double-click on overview node → switch to TIDL/TVM view for that subgraph
+    // Button highlight switches from Overview → TIDL/TVM
+    _sgCurrentId = String(subgraphId);
+    _sgNavClick('tidl');
+    // Ensure the selector reflects the clicked subgraph (not just first)
+    _sgCurrentId = String(subgraphId);
+    const sel = document.getElementById('subgraph-selector');
+    if (sel) sel.value = _sgCurrentId;
+    _setViewToggle('tidl');
+    if (window.tidlGraph) window.tidlGraph.filterBySubgraph(_sgCurrentId);
+}
+
+// ── 3-button nav handler ────────────────────────────────────────
+function _sgNavClick(view) {
+    // Highlight the active button
+    ['overview','tidl','onnx'].forEach(v => {
+        const btn = document.getElementById('btn-view-' + v);
+        if (btn) btn.classList.toggle('active', v === view);
+    });
+
+    const selectorBar = document.getElementById('subgraph-selector-bar');
+
+    if (view === 'overview') {
+        _sgViewMode = 'overview';
+        _sgCurrentId = null;
+        _sgCurrentView = null;
+        selectorBar.style.display = 'none';
+        _updateSearchPlaceholder();
+        renderOverview();
+
+    } else {
+        // TIDL or ONNX — go to subgraph view
+        // If no subgraph selected yet, pick the first one
+        if (!_sgCurrentId) {
+            _sgCurrentId = String(Object.keys(TIDL_LAYER_DATA || {})[0] || '');
+        }
+        if (!_sgCurrentId) {
+            console.warn('No subgraph available');
+            return;
+        }
+        _sgViewMode = 'subgraph';
+        _sgCurrentView = view;
+        selectorBar.style.display = 'flex';
+        _populateSubgraphSelector(_sgCurrentId);
+        _updateSearchPlaceholder();
+
+        if (view === 'onnx') {
+            renderSubgraphONNX(_sgCurrentId);
+        } else {
+            // TIDL/TVM
+            if (window.tidlGraph) window.tidlGraph.filterBySubgraph(_sgCurrentId);
+        }
+    }
+}
+
+// Populate the subgraph selector dropdown and wire its onChange
+function _populateSubgraphSelector(activeId) {
+    const sel = document.getElementById('subgraph-selector');
+    if (!sel) return;
+    const ids = Object.keys(TIDL_LAYER_DATA || {});
+    sel.innerHTML = ids.map((id, i) => {
+        const sg = TIDL_LAYER_DATA[id] || {};
+        const rt = (sg.runtime || 'tidl_rt') === 'tvm_rt' ? 'TVM' : 'TIDL';
+        return `<option value="${id}" ${id === String(activeId) ? 'selected' : ''}>${rt} — Subgraph ${i}</option>`;
+    }).join('');
+    sel.onchange = () => {
+        _sgCurrentId = sel.value;
+        const breadcrumb = document.getElementById('breadcrumb-label');
+        if (breadcrumb) breadcrumb.textContent = sel.value;
+        if (_sgCurrentView === 'onnx') {
+            renderSubgraphONNX(_sgCurrentId);
+        } else {
+            if (window.tidlGraph) window.tidlGraph.filterBySubgraph(_sgCurrentId);
+        }
+    };
+}
+
+function _updateSearchPlaceholder() {
+    const input = document.getElementById('tidlLayerSearch');
+    if (!input) return;
+    if (_sgViewMode === 'overview') {
+        input.placeholder = 'Search subgraphs...';
+    } else if (_sgCurrentView === 'onnx') {
+        input.placeholder = 'Search ONNX nodes...';
+    } else {
+        input.placeholder = 'Search TIDL layers...';
+    }
+}
+
+function _setViewToggle(view) {
+    _sgCurrentView = view;
+    _updateSearchPlaceholder();
+    // Use classList.active (CSS handles colours) — clear any old inline styles first
+    ['overview','tidl','onnx'].forEach(v => {
+        const btn = document.getElementById('btn-view-' + v);
+        if (!btn) return;
+        btn.style.cssText = '';                          // wipe all inline overrides
+        btn.classList.toggle('active', v === view);
+    });
+}
+
+function switchToONNXViewAndHighlight(onnxNodeName) {
+    if (_sgViewMode !== 'subgraph' || !_sgCurrentId) return;
+    _setViewToggle('onnx');
+    if (window.tidlGraph) window.tidlGraph._pendingHighlight = 'onnx_' + onnxNodeName;
+    renderSubgraphONNX(_sgCurrentId);
+}
+
+function switchToTIDLViewAndHighlight(layerId) {
+    if (_sgViewMode !== 'subgraph' || !_sgCurrentId) return;
+    _setViewToggle('tidl');
+    if (window.tidlGraph) window.tidlGraph._pendingHighlight = 'tidl_layer_' + layerId;
+    if (window.tidlGraph) window.tidlGraph.filterBySubgraph(_sgCurrentId);
+}
+
+function _highlightNodeById(nodeId) {
+    if (!window.tidlGraph || !window.tidlGraph.nodeG) return;
+
+    let targetNode = null;
+    let targetEl = null;
+
+    // Find the node data and element
+    window.tidlGraph.nodeG.each(function(d) {
+        if (d && d.id === nodeId) {
+            targetNode = d;
+            targetEl = d3.select(this);
+        }
+    });
+
+    if (!targetNode || !targetEl) return;
+
+    // Apply visual selection: deselect all, select this one
+    window.tidlGraph.nodeG.classed('selected', false);
+    window.tidlGraph.nodeG.each(function(nd) {
+        const el = d3.select(this);
+        el.select('.selected-node-name').remove();
+        if (nd.type === 'Input' || nd.type === 'Output') {
+            el.select('.node-rect').attr('width', 110).attr('height', 28).attr('x', -55).attr('y', -14).attr('rx', 14).attr('ry', 14);
+        } else {
+            el.select('.node-rect').attr('width', 100).attr('height', 100).attr('x', -50).attr('y', -50).attr('rx', 16);
+        }
+        el.select('.node-icon-path').attr('transform', '');
+        el.select('.node-type-label').style('opacity', 1);
+    });
+
+    targetEl.classed('selected', true);
+    window.tidlGraph.selectedNode = targetNode;
+
+    // Expand the selected node visually
+    const nodeName = targetNode.full_name || targetNode.name || targetNode.type;
+    const expandedW = Math.max(120, Math.min(nodeName.length, 18) * 7 + 40);
+    if (targetNode.type === 'Input' || targetNode.type === 'Output' || targetNode.type === 'Tensor' || targetNode.type === 'ARM') {
+        targetEl.select('.node-rect').attr('width', 120).attr('height', 32).attr('x', -60).attr('y', -16).attr('rx', 16).attr('ry', 16);
+    } else {
+        targetEl.select('.node-rect').attr('width', expandedW).attr('height', 110).attr('x', -expandedW / 2).attr('y', -55).attr('rx', 12);
+    }
+    targetEl.select('.node-icon-path').attr('transform', 'translate(0, -10)');
+    targetEl.select('.node-type-label').style('opacity', 0);
+    const displayName = nodeName.length > 18 ? nodeName.substring(0, 16) + '..' : nodeName;
+    targetEl.select('.selected-node-name').remove();
+    targetEl.append('text').attr('class', 'selected-node-name').attr('y', 30).text(displayName);
+
+    // Scroll/pan to the node
+    if (window.tidlGraph.zoom && window.tidlGraph.svg) {
+        const canvasW = window.tidlGraph.canvas.clientWidth;
+        const canvasH = window.tidlGraph.canvas.clientHeight;
+        window.tidlGraph.svg.transition().duration(400).call(
+            window.tidlGraph.zoom.transform,
+            d3.zoomIdentity.translate(canvasW / 2 - targetNode.x, canvasH / 2 - targetNode.y)
+        );
+    }
+
+    // Show details in the panel
+    window.tidlGraph.showDetails(targetNode);
+}
+
+function findTIDLLayersForONNX(onnxName, subgraphId) {
+    const sg = TIDL_LAYER_DATA[String(subgraphId)];
+    if (!sg) return [];
+    return (sg.layers || []).filter(l =>
+        (l.layer_data?.onnx_node_names || []).includes(onnxName)
+    ).map(l => ({ layer_id: l.layer_index, layer_name: l.layer_name, layer_type: l.layer_type }));
+}
+
+function renderSubgraphONNX(subgraphId) {
+    const sg = TIDL_LAYER_DATA[String(subgraphId)];
+    if (!sg || !window.tidlGraph) return;
+    const onnxNodes = sg.onnx_nodes || [];
+    const onnxNameSet = new Set(onnxNodes.map(n => n.name));
+
+    // Build nodes from ONNX layer details
+    const nodes = onnxNodes.map((n) => {
+        const detail = (INJECTED_MODEL_DATA.layer_details || {})[n.name] || {};
+        // Get output shape string for edge labels (e.g. "1,64,112,112")
+        const outMeta = detail.output_metadata || [];
+        const outShape = outMeta.length > 0 && outMeta[0].shape
+            ? outMeta[0].shape.filter(v => v > 0).join(', ')
+            : 'N/A';
+        const inMeta = detail.input_metadata || [];
+        const inShape = inMeta.filter(i => !i.is_constant).length > 0
+            ? (inMeta.find(i => !i.is_constant)?.shape || []).filter(v => v > 0).join(', ')
+            : 'N/A';
+        return {
+            id: 'onnx_' + n.name,
+            index: n.name,
+            name: n.name.length > 20 ? n.name.slice(-20) : n.name,
+            full_name: n.name,
+            type: n.type,
+            tidl_supported: true,
+            inputshape: inShape,
+            outputshape: outShape,
+            onnx_name: n.name,
+            is_onnx_view: true,
+            layer_data: {
+                raw_text: '',
+                layer_name: n.name,
+                layer_type: n.type,
+                onnx_node_names: [n.name],
+                onnx_node_indices: [],
+                gmacs: 0,
+                runtime_assignment: n.runtime_assignment || {},
+                input_metadata: inMeta,
+                output_metadata: outMeta,
+                attributes: detail.attributes || {},
+            }
+        };
+    });
+
+    // Build edges: filter MODEL_DATA edges to only nodes in this subgraph
+    const edges = [];
+    const edgesSet = new Set();
+    (INJECTED_MODEL_DATA.edges || []).forEach(e => {
+        const srcName = e.source_node_name;
+        const tgtName = e.target_node_name;
+        if (onnxNameSet.has(srcName) && onnxNameSet.has(tgtName)) {
+            const key = srcName + '|' + tgtName;
+            if (!edgesSet.has(key)) {
+                edgesSet.add(key);
+                edges.push({ source: 'onnx_' + srcName, target: 'onnx_' + tgtName });
+            }
+        }
+    });
+
+    // ── Boundary Input / Output nodes ──────────────────────────────────────
+    // Data-flow analysis: find tensors entering/leaving THIS subgraph.
+    // Works for model-level I/O AND intermediate tensors crossing ARM nodes or other subgraphs.
+
+    const makeIONode = (tensorName, nodeType, shape, dtype) => ({
+        id: `io_${nodeType}_${tensorName}`,
+        index: `io_${tensorName}`,
+        name: tensorName.length > 18 ? tensorName.slice(-18) : tensorName,
+        full_name: tensorName,
+        type: nodeType,
+        tidl_supported: true,
+        inputshape:  (nodeType === 'Output' || nodeType === 'Tensor') ? (shape || 'N/A') : 'N/A',
+        outputshape: (nodeType === 'Input'  || nodeType === 'Tensor') ? (shape || 'N/A') : 'N/A',
+        onnx_name: tensorName,
+        is_onnx_view: true,
+        layer_data: {
+            raw_text: '', layer_name: tensorName, layer_type: nodeType,
+            onnx_node_names: [], onnx_node_indices: [], gmacs: 0,
+            attributes: { shape, dtype }
+        }
+    });
+
+    // Collect tensors produced/consumed within this subgraph
+    const sgProduced = new Set();
+    const sgConsumed = new Map();  // tensor → [op names]
+    onnxNodes.forEach(op => {
+        const d = (INJECTED_MODEL_DATA.layer_details || {})[op.name] || {};
+        (d.output || []).forEach(t => { if (t) sgProduced.add(t); });
+        (d.input_metadata || []).forEach(m => {
+            if (!m.is_constant) {
+                const t = m.tensor_name || m.name || '';
+                if (t) {
+                    if (!sgConsumed.has(t)) sgConsumed.set(t, []);
+                    sgConsumed.get(t).push(op.name);
+                }
+            }
+        });
+    });
+
+    // Complete tensor → shape map: model-level I/O + all ONNX layer outputs
+    const tensorShapeMap = {};
+    (INJECTED_MODEL_DATA.model_details?.input_shape  || []).forEach(i => { tensorShapeMap[i.name] = (i.shape||[]).filter(v=>v>0).join(', '); });
+    (INJECTED_MODEL_DATA.model_details?.output_shape || []).forEach(o => { tensorShapeMap[o.name] = (o.shape||[]).filter(v=>v>0).join(', '); });
+    Object.values(INJECTED_MODEL_DATA.layer_details || {}).forEach(detail => {
+        (detail.output_metadata || []).forEach(m => {
+            const t = m.tensor_name || m.name || '';
+            if (t && !tensorShapeMap[t]) {
+                const shp = (m.shape || []).filter(v => v > 0).join(', ');
+                if (shp) tensorShapeMap[t] = shp;
+            }
+        });
+    });
+
+    const modelInputTensorSet  = new Set((INJECTED_MODEL_DATA.model_details?.input_shape  || []).map(i => i.name));
+    const modelOutputTensorSet = new Set((INJECTED_MODEL_DATA.model_details?.output_shape || []).map(o => o.name));
+
+    // INPUT boundary nodes: consumed here but produced elsewhere
+    sgConsumed.forEach((opNames, tensor) => {
+        if (!sgProduced.has(tensor)) {
+            const nodeType = modelInputTensorSet.has(tensor) ? 'Input' : 'Tensor';
+            const n = makeIONode(tensor, nodeType, tensorShapeMap[tensor] || '', 'float32');
+            nodes.unshift(n);
+            opNames.forEach(opName => edges.push({ source: n.id, target: 'onnx_' + opName }));
+        }
+    });
+
+    // OUTPUT boundary nodes: produced here and consumed outside (or model output)
+    sgProduced.forEach(tensor => {
+        const producerOps = onnxNodes.filter(op => {
+            const d = (INJECTED_MODEL_DATA.layer_details || {})[op.name] || {};
+            return (d.output || []).includes(tensor);
+        });
+        if (producerOps.length === 0) return;
+        const consumedInternally = sgConsumed.has(tensor);
+        const isModelOut = modelOutputTensorSet.has(tensor);
+        const isExternal = isModelOut ||
+            (INJECTED_MODEL_DATA.edges || []).some(e =>
+                producerOps.some(op => e.source_node_name === op.name) &&
+                !onnxNameSet.has(e.target_node_name)
+            );
+        if (isExternal || !consumedInternally) {
+            const nodeType = isModelOut ? 'Output' : 'Tensor';
+            const n = makeIONode(tensor, nodeType, tensorShapeMap[tensor] || '', 'float32');
+            nodes.push(n);
+            producerOps.forEach(op => edges.push({ source: 'onnx_' + op.name, target: n.id }));
+        }
+    });
+
+    window.tidlGraph.renderGraph(nodes, edges, false);
+}
+
+// Overview graph rendering (Level 1)
+function renderOverview() {
+    if (!window.tidlGraph || !OVERVIEW_DATA) return;
+    const nodes = (OVERVIEW_DATA.nodes || []).map(n => {
+        const isSubgraph = n.type === 'subgraph';
+        return {
+            id: n.id,
+            index: n.id,
+            name: n.label,
+            full_name: n.label,
+            type: isSubgraph ? 'Subgraph' : 'ARM',
+            tidl_supported: isSubgraph,
+            inputshape: 'N/A',
+            outputshape: 'N/A',
+            is_overview: true,
+            overview_data: n,
+            subgraph_color: isSubgraph ? (n.runtime === 'tvm_rt' ? '#2e7d32' : '#0072ce') : '#c62828',
+            subgraph_border_color: isSubgraph ? (n.runtime === 'tvm_rt' ? '#1b5e20' : '#004a99') : '#b71c1c',
+            layer_data: { raw_text: '', layer_name: n.label, layer_type: n.type, gmacs: n.total_gmacs || 0, overview_data: n }
+        };
+    });
+    // Use data-flow edges from OVERVIEW_DATA (follows ONNX topology)
+    const edges = (OVERVIEW_DATA.edges || []).map(e => ({ source: e.source, target: e.target }));
+
+    // ── Aggregated Input / Output nodes using edge topology ──────────────
+    // Use root/leaf detection on the overview graph — robust regardless of
+    // how complete the ONNX→TIDL layer mapping is.
+
+    const modelInputs  = INJECTED_MODEL_DATA.model_details?.input_shape  || [];
+    const modelOutputs = INJECTED_MODEL_DATA.model_details?.output_shape || [];
+
+    const makeOverviewIONode = (nodeType, allTensors) => ({
+        id: `overview_${nodeType}`,
+        index: `overview_${nodeType}`,
+        name: nodeType,
+        full_name: nodeType,
+        type: nodeType,
+        tidl_supported: true,
+        inputshape: 'N/A',
+        outputshape: 'N/A',
+        is_overview: true,
+        overview_data: { type: nodeType.toLowerCase(), tensors: allTensors },
+        layer_data: {
+            raw_text: '', layer_name: nodeType, layer_type: nodeType,
+            gmacs: 0,
+            input_metadata:  nodeType === 'Output' ? allTensors.map(t => ({ tensor_name: t.name, shape: t.shape, dtype: t.dtype || 'float32', is_constant: false })) : [],
+            output_metadata: nodeType === 'Input'  ? allTensors.map(t => ({ tensor_name: t.name, shape: t.shape, dtype: t.dtype || 'float32', is_constant: false })) : [],
+            attributes: {}
+        }
+    });
+
+    // Root nodes = overview nodes with no incoming edges (graph entry points)
+    const nodesWithIncoming = new Set(edges.map(e => e.target));
+    const rootNodes = nodes.filter(n => !nodesWithIncoming.has(n.id));
+
+    // Leaf nodes = overview nodes with no outgoing edges (graph exit points)
+    const nodesWithOutgoing = new Set(edges.map(e => e.source));
+    const leafNodes = nodes.filter(n => !nodesWithOutgoing.has(n.id));
+
+    if (rootNodes.length > 0 && modelInputs.length > 0) {
+        const inputNode = makeOverviewIONode('Input', modelInputs);
+        nodes.unshift(inputNode);
+        rootNodes.forEach(n => edges.push({ source: inputNode.id, target: n.id }));
+    }
+    if (leafNodes.length > 0 && modelOutputs.length > 0) {
+        const outputNode = makeOverviewIONode('Output', modelOutputs);
+        nodes.push(outputNode);
+        leafNodes.forEach(n => edges.push({ source: n.id, target: outputNode.id }));
+    }
+
+    window.tidlGraph.renderGraph(nodes, edges, false);
+}
+
+function _wireDrilldownControls() {
+    // Back button in the hidden legacy drilldown bar still wires to overview
+    const btnBack = document.getElementById('btn-back-overview');
+    if (btnBack) btnBack.onclick = () => { _sgNavClick('overview'); };
+    // btn-view-tidl and btn-view-onnx are now top-nav buttons with onclick attributes in HTML
+    // — do NOT overwrite their onclick here (that was blocking direct navigation from Overview)
 }
 
 // ==================== SUBGRAPH SELECTOR ====================
@@ -6738,31 +7360,15 @@ function initializeSubgraphSelector() {
         console.log(`Initialized subgraph selector with ${SUBGRAPH_DATA.subgraphs.length} subgraphs (no TIDL data)`);
     }
 
-    // Add change event listener
+    // Change event: only applies when in drilldown mode (not overview)
     selector.addEventListener('change', (e) => {
-        const selectedValue = parseInt(e.target.value);
-        console.log(`Subgraph selected: ${selectedValue}`);
-        if (window.tidlGraph && selectedValue !== null && selectedValue !== undefined) {
-            window.tidlGraph.filterBySubgraph(selectedValue);
+        if (_sgViewMode !== 'subgraph') return;
+        const selectedValue = e.target.value;
+        if (window.tidlGraph && selectedValue) {
+            drillIntoSubgraph(selectedValue);
         }
     });
-
-    // Auto-select the first subgraph if available (but don't trigger rendering yet)
-    const firstOption = selector.querySelector('option:not([disabled])');
-    if (firstOption) {
-        selector.value = firstOption.value;
-        console.log(`Auto-selecting first subgraph: ${firstOption.value}`);
-
-        // Only trigger graph rendering if TIDL tab is currently active
-        const tidlTab = document.querySelector('.tab-content.tidl-model');
-        if (tidlTab && tidlTab.classList.contains('active')) {
-            console.log('TIDL tab is active, triggering graph render');
-            const event = new Event('change');
-            selector.dispatchEvent(event);
-        } else {
-            console.log('TIDL tab not active yet, will render when tab is opened');
-        }
-    }
+    // Do NOT auto-select or auto-render — the overview graph is the entry point
 }
 function updateSubgraphInfo(subgraphIdx) {
     const subgraph = SUBGRAPH_DATA.subgraphs[subgraphIdx];
@@ -6865,6 +7471,10 @@ class Graph {
     }
 
     filterBySubgraph(subgraphIdx) {
+        // Guard: only render if we're in subgraph drilldown mode
+        // (drillIntoSubgraph sets _sgViewMode='subgraph' before calling this)
+        if (_sgViewMode !== 'subgraph') return;
+
         this.currentSubgraph = subgraphIdx;
         console.log(`V3: Rendering TIDL subgraph: ${subgraphIdx}`);
 
@@ -6982,10 +7592,11 @@ class Graph {
 
         // Add nodes to Dagre with dimensions
         Array.from(nodeMap.values()).forEach(node => {
+            const isIONode = node.type === 'Input' || node.type === 'Output' || node.type === 'Tensor' || node.type === 'ARM';
             g.setNode(node.id, {
                 label: node.name,
-                width: 160,     // Node width
-                height: 70      // Node height
+                width: isIONode ? 120 : 160,
+                height: isIONode ? 40  : 70
             });
         });
 
@@ -7021,6 +7632,12 @@ class Graph {
         // ========================================
         const markerId = this.isTIDL ? 'url(#arrowhead-tidl)' : 'url(#arrowhead)';
 
+        // Half-height per node type for edge anchor points
+        // Half-height used for edge endpoints — must match VISUAL rect half-height
+        // IO/Tensor/ARM pill: visual height=28 → half=14
+        // Regular node: visual height=100 → half=50
+        const nodeHalfH = n => (n.type === 'Input' || n.type === 'Output' || n.type === 'Tensor' || n.type === 'ARM') ? 14 : 50;
+
         // Helper function to generate curved path
         const generateCurvedPath = (d) => {
             const src = nodeMap.get(d.source.id || d.source);
@@ -7029,25 +7646,22 @@ class Graph {
             if (!src || !tgt) return '';
 
             const x1 = src.x;
-            const y1 = src.y + 50;  // Bottom edge of source node
+            const y1 = src.y + nodeHalfH(src);  // Bottom edge of source node
             const x2 = tgt.x;
-            const y2 = tgt.y - 50;  // Top edge of target node
+            const y2 = tgt.y - nodeHalfH(tgt);  // Top edge of target node
 
-            // Calculate control point for curve
             const dy = y2 - y1;
             const dx = x2 - x1;
 
-            // Use straight line for small vertical distances
-            if (Math.abs(dy) < 50) {
+            // Use straight line for tiny distances
+            if (Math.abs(dy) < 5 && Math.abs(dx) < 5) {
                 return `M ${x1},${y1} L ${x2},${y2}`;
             }
 
-            // For long vertical distances or skip connections, use curve
-            const curveFactor = Math.min(Math.abs(dy) * 0.3, 80);
-            const controlY = y1 + curveFactor;
-
-            // Quadratic Bezier curve: M x1,y1 Q controlX,controlY x2,y2
-            return `M ${x1},${y1} Q ${x1},${controlY} ${x2},${y2}`;
+            // Cubic Bezier: control points bend vertically at source and target,
+            // handling both purely vertical and diagonal/skip-connection edges cleanly.
+            const bend = Math.max(Math.abs(dy) * 0.45, Math.abs(dx) * 0.3, 40);
+            return `M ${x1},${y1} C ${x1},${y1 + bend} ${x2},${y2 - bend} ${x2},${y2}`;
         };
 
         const links = this.group.selectAll('.graph-edge')
@@ -7079,36 +7693,40 @@ class Graph {
                 return 'translate(0,0)';
             });
 
-        // Add background rectangle for edge labels
+        // Helper: get shape text for an edge's source node (empty string if N/A)
+        const getEdgeShape = d => {
+            const sourceNode = nodeMap.get(d.source.id || d.source);
+            const raw = sourceNode?.layerdetails?.outputshape || sourceNode?.outputshape || '';
+            const cleaned = raw.replace(/[\[\]]/g, '').trim();
+            return (cleaned === '' || cleaned === 'N/A') ? '' : cleaned;
+        };
+
+        // Add background rectangle for edge labels — horizontal pill shape
+        const edgeLabelW = d => Math.max(getEdgeShape(d).length * 6.5 + 16, 52);
         edgeLabelGroups.append('rect')
             .attr('class', 'edge-label-bg')
-            .attr('x', d => {
-                const sourceNode = nodeMap.get(d.source.id || d.source);
-                const shapeText = (sourceNode?.layerdetails?.outputshape || sourceNode?.outputshape || 'N/A').replace(/[\[\]]/g, '');
-                const textWidth = shapeText.length * 7 + 12;
-                return -textWidth / 2;
-            })
-            .attr('y', -12)
-            .attr('width', d => {
-                const sourceNode = nodeMap.get(d.source.id || d.source);
-                const shapeText = (sourceNode?.layerdetails?.outputshape || sourceNode?.outputshape || 'N/A').replace(/[\[\]]/g, '');
-                return shapeText.length * 7 + 12;
-            })
-            .attr('height', 22);
+            .attr('x', d => -edgeLabelW(d) / 2)
+            .attr('y', -9)
+            .attr('width', d => edgeLabelW(d))
+            .attr('height', 17)
+            .attr('rx', 4)
+            .attr('ry', 4)
+            .style('display', d => getEdgeShape(d) ? '' : 'none');
 
-        // Add text label showing output shape from source node (without brackets)
+        // Add text label showing output shape (hidden when no shape)
         edgeLabelGroups.append('text')
             .attr('class', 'edge-label')
-            .attr('dy', 5)
-            .text(d => {
-                const sourceNode = nodeMap.get(d.source.id || d.source);
-                const shape = sourceNode?.layerdetails?.outputshape || sourceNode?.outputshape || 'N/A';
-                return shape.replace(/[\[\]]/g, '');
-            });
+            .attr('dy', '0.35em')
+            .style('display', d => getEdgeShape(d) ? '' : 'none')
+            .text(d => getEdgeShape(d));
 
         // ========================================
         // RENDER NODES
         // ========================================
+        // Clear existing nodes — D3 join keeps same-ID elements in-place (update selection)
+        // which would cause duplicate rect/text/path children on every re-render.
+        this.group.selectAll('.graph-node').remove();
+
         const nodeG = this.group.selectAll('.graph-node')
             .data(Array.from(nodeMap.values()), d => d.id)
             .join('g')
@@ -7122,20 +7740,22 @@ class Graph {
 
                 // Restore previously selected node to normal
                 nodeG.classed('selected', false);
-                nodeG.each(function() {
+                nodeG.each(function(nd) {
                     const el = d3.select(this);
                     el.select('.selected-node-name').remove();
-                    el.select('.node-rect')
-                        .transition().duration(200)
-                        .attr('width', 100).attr('height', 100)
-                        .attr('x', -50).attr('y', -50)
-                        .attr('rx', 16);
-                    el.select('.node-icon-path')
-                        .transition().duration(200)
-                        .attr('transform', '');
-                    el.select('.node-type-label')
-                        .transition().duration(200)
-                        .style('opacity', 1);
+                    if (nd.type === 'Input' || nd.type === 'Output' || nd.type === 'Tensor' || nd.type === 'ARM') {
+                        el.select('.node-rect')
+                            .attr('width', 110).attr('height', 28)
+                            .attr('x', -55).attr('y', -14).attr('rx', 14).attr('ry', 14);
+                        if (self.links) self.updateEdges(nd, self.links, self.nodeMap);
+                    } else {
+                        el.select('.node-rect')
+                            .attr('width', 100).attr('height', 100)
+                            .attr('x', -50).attr('y', -50)
+                            .attr('rx', 16);
+                    }
+                    el.select('.node-icon-path').transition().duration(200).attr('transform', '');
+                    el.select('.node-type-label').transition().duration(200).style('opacity', 1);
                 });
 
                 // Select this node
@@ -7146,35 +7766,39 @@ class Graph {
                 // Update minimap to highlight selected node
                 self.updateMinimapSelection(d);
 
-                // Expand rect and shift icon up to make room for name
+                // Expand shape and shift icon up to make room for name
                 const nodeName = d.full_name || d.name || d.type;
                 const nameLen = Math.min(nodeName.length, 18);
                 const expandedW = Math.max(120, nameLen * 7 + 40);
 
-                thisNode.select('.node-rect')
-                    .transition().duration(300)
-                    .attr('width', expandedW).attr('height', 110)
-                    .attr('x', -expandedW / 2).attr('y', -55)
-                    .attr('rx', 12);
-
-                thisNode.select('.node-icon-path')
-                    .transition().duration(300)
-                    .attr('transform', 'translate(0, -10)');
-
-                // Hide type label — name is shown inside the node
-                thisNode.select('.node-type-label')
-                    .transition().duration(200)
-                    .style('opacity', 0);
-
-                // Add name label below icon
-                const displayName = nodeName.length > 18 ? nodeName.substring(0, 16) + '..' : nodeName;
-                thisNode.append('text')
-                    .attr('class', 'selected-node-name')
-                    .attr('y', 30)
-                    .text(displayName)
-                    .style('opacity', 0)
-                    .transition().duration(300)
-                    .style('opacity', 1);
+                if (d.type === 'Input' || d.type === 'Output' || d.type === 'Tensor' || d.type === 'ARM') {
+                    // Pill enlarges slightly on select — update edges to stay connected
+                    thisNode.select('.node-rect')
+                        .attr('width', 120).attr('height', 32)
+                        .attr('x', -60).attr('y', -16).attr('rx', 16).attr('ry', 16);
+                    if (self.links) self.updateEdges(d, self.links, self.nodeMap);
+                } else {
+                    thisNode.select('.node-rect')
+                        .transition().duration(300)
+                        .attr('width', expandedW).attr('height', 110)
+                        .attr('x', -expandedW / 2).attr('y', -55)
+                        .attr('rx', 12);
+                    thisNode.select('.node-icon-path')
+                        .transition().duration(300)
+                        .attr('transform', 'translate(0, -10)');
+                    // Hide type label and show name inside for regular nodes
+                    thisNode.select('.node-type-label')
+                        .transition().duration(200)
+                        .style('opacity', 0);
+                    const displayName = nodeName.length > 18 ? nodeName.substring(0, 16) + '..' : nodeName;
+                    thisNode.append('text')
+                        .attr('class', 'selected-node-name')
+                        .attr('y', 30)
+                        .text(displayName)
+                        .style('opacity', 0)
+                        .transition().duration(300)
+                        .style('opacity', 1);
+                }
 
                 // Remove highlight from all edges
                 links.classed('selected-edge', false);
@@ -7186,7 +7810,19 @@ class Graph {
                     return sourceId === d.id || targetId === d.id;
                 });
 
-                self.showDetails(d);
+                // Overview subgraph node: single click shows summary only
+                // (double-click drills into Level 2)
+                if (d.is_overview && d.overview_data && d.overview_data.type === 'subgraph') {
+                    self.showDetails(d);  // show summary in details panel
+                } else {
+                    self.showDetails(d);
+                }
+            })
+            .on('dblclick', function(e, d) {
+                e.stopPropagation();
+                if (d.is_overview && d.overview_data && d.overview_data.type === 'subgraph') {
+                    drillIntoSubgraph(d.overview_data.subgraph_id);
+                }
             })
             .on('mouseenter', (e, d) => showTooltip(d, e, self.isTIDL))
             .on('mousemove', (e, d) => updateTooltipPosition(e))
@@ -7196,42 +7832,56 @@ class Graph {
                     d.fx = d.x;
                     d.fy = d.y;
                 })
-                .on('drag', (e, d) => {
-                    requestAnimationFrame(() => {
-                        d.fx = e.x;
-                        d.fy = e.y;
-                        d.x = e.x;
-                        d.y = e.y;
-                        d3.select(e.sourceEvent.target.parentNode)
-                            .attr('transform', `translate(${d.x},${d.y})`);
-                        self.updateEdges(d, links, self.nodeMap);
-                    });
+                .on('drag', function(e, d) {
+                    d.fx = e.x;
+                    d.fy = e.y;
+                    d.x  = e.x;
+                    d.y  = e.y;
+                    // Move the node group directly — 'this' is the dragged <g> element
+                    d3.select(this).attr('transform', `translate(${d.x},${d.y})`);
+                    self.updateEdges(d, links, self.nodeMap);
                 })
                 .on('end', (e, d) => {}));
         
-        // V4: Add neomorphic rectangles with border coloring
-        nodeG.append('rect')
-            .attr('class', d => {
-                if (!d.tidl_supported) {
-                    return 'node-rect non-accelerated';
-                }
-                return 'node-rect';
-            })
+        // Pill shape for: Input, Output, Tensor (cross-boundary), and ARM overview nodes
+        const isIO = d => d.type === 'Input' || d.type === 'Output' || d.type === 'Tensor' || d.type === 'ARM';
+
+        // Pill/oval for Input/Output nodes — same style as other nodes
+        nodeG.filter(d => isIO(d))
+            .append('rect')
+            .attr('class', 'node-rect')
+            .attr('width', 110)
+            .attr('height', 28)
+            .attr('x', -55)
+            .attr('y', -14)
+            .attr('rx', 14)
+            .attr('ry', 14)
+            .style('stroke', d => d.subgraph_border_color || '#4a5568')
+            .style('stroke-width', '2px');
+
+        // Rectangle for regular nodes
+        nodeG.filter(d => !isIO(d))
+            .append('rect')
+            .attr('class', d => d.tidl_supported ? 'node-rect' : 'node-rect non-accelerated')
             .attr('width', 100)
             .attr('height', 100)
             .attr('x', -50)
             .attr('y', -50)
             .attr('rx', 16)
-            .style('stroke', d => {
-                if (!d.tidl_supported) {
-                    return '#808080';
-                }
-                return d.subgraph_border_color || '#4a5568';
-            });
+            .style('stroke', d => d.tidl_supported ? (d.subgraph_border_color || '#4a5568') : '#808080');
 
-        // V5: Node Icon – SVG mini-path representing the operator type
+        // Dummy icon-path for IO nodes so drag/selection transforms apply consistently
+        nodeG.filter(d => isIO(d))
+            .append('path')
+            .attr('class', 'node-icon-path')
+            .attr('d', 'M0,0')
+            .style('stroke', 'none')
+            .style('fill', 'none');
+
+        // Icon for regular nodes
         const filledIcons = ['conv', 'softmax', 'reduce', 'reshape', 'pad', 'pool', 'upsample', '_default'];
-        nodeG.append('path')
+        nodeG.filter(d => !isIO(d))
+            .append('path')
             .attr('class', 'node-icon-path')
             .attr('d', d => getLayerIconPath(d.type))
             .style('stroke', d => d.tidl_supported ? '#2c3e50' : '#999999')
@@ -7244,14 +7894,50 @@ class Graph {
             .style('stroke-linecap', 'round')
             .style('stroke-linejoin', 'round');
 
-        // V4: Layer Type Label (outside on the right)
-        nodeG.append('text')
+        // Node type label — right of node, same style for all nodes
+        // For overview subgraph nodes: show subgraph ID (e.g. "tidl_0") instead of "Subgraph"
+        nodeG.filter(d => !isIO(d))
+            .append('text')
             .attr('class', 'node-type-label')
             .attr('x', 60)
             .attr('y', 0)
             .attr('dominant-baseline', 'middle')
             .style('fill', d => d.tidl_supported ? '#1a202c' : '#666666')
-            .text(d => d.type);
+            .text(d => d.is_overview && d.overview_data?.subgraph_id
+                ? d.overview_data.subgraph_id
+                : d.type);
+
+        // Pill label: tensor name (Input/Output) or op_type (ARM) centered inside
+        nodeG.filter(d => isIO(d))
+            .append('text')
+            .attr('class', 'io-label')
+            .attr('x', 0)
+            .attr('y', 0)
+            .attr('dy', '.35em')
+            .attr('text-anchor', 'middle')
+            .style('font-size', '14px')
+            .style('pointer-events', 'none')
+            .text(d => {
+                // ARM nodes: show op type (e.g. "Resize")
+                const label = d.type === 'ARM'
+                    ? (d.overview_data?.op_type || d.name || d.type)
+                    : (d.full_name || d.name || '');
+                return label.length > 13 ? label.slice(-12) + '…' : label;
+            });
+
+        // Small sub-label below pill: "ARM" tag for ARM overview nodes
+        nodeG.filter(d => d.type === 'ARM')
+            .append('text')
+            .attr('class', 'node-type-label')
+            .attr('x', 0)
+            .attr('y', 30)
+            .attr('text-anchor', 'middle')
+            .attr('dominant-baseline', 'middle')
+            .style('font-size', '10px')
+            .style('fill', '#c62828')
+            .style('font-weight', '600')
+            .style('pointer-events', 'none')
+            .text('ARM');
 
         // Store references
         this.nodeG = nodeG;
@@ -7285,8 +7971,26 @@ class Graph {
             } else {
                 this.fitToView();
             }
-            // Auto-select the first node and show its details
-            this.selectFirstNode();
+
+            // Force correct pill dimensions immediately — prevents height=100 bleed-over
+            // from a previous regular-node render animating to height=28 (visible as "square" flash)
+            if (this.nodeG) {
+                this.nodeG.filter(d => d.type === 'Input' || d.type === 'Output' || d.type === 'Tensor' || d.type === 'ARM')
+                    .select('.node-rect')
+                    .attr('width', 110).attr('height', 28)
+                    .attr('x', -55).attr('y', -14)
+                    .attr('rx', 14).attr('ry', 14);
+            }
+
+            // If a specific node was requested (e.g. via mapping link), highlight it;
+            // otherwise auto-select the first node
+            if (this._pendingHighlight) {
+                const target = this._pendingHighlight;
+                this._pendingHighlight = null;
+                _highlightNodeById(target);
+            } else {
+                this.selectFirstNode();
+            }
             // Initialize minimap for navigation
             this.initMinimap();
         }, 100);
@@ -7298,9 +8002,23 @@ class Graph {
     selectFirstNode() {
         if (!this.nodes || this.nodes.length === 0) return;
 
-        // Find the node with the lowest index (first layer)
-        const firstNode = this.nodes.reduce((min, n) =>
-            (n.index < min.index) ? n : min, this.nodes[0]);
+        // Prefer the Input boundary node (model entry point) if present
+        const inputNode = this.nodes.find(n => n.type === 'Input');
+        if (inputNode) {
+            if (this.nodeG) {
+                const el = this.nodeG.filter(d => d.id === inputNode.id);
+                if (!el.empty()) { el.dispatch('click'); return; }
+            }
+            this.selectedNode = inputNode;
+            this.showDetails(inputNode);
+            return;
+        }
+
+        // Otherwise: for numeric indices use min; for string indices use position 0
+        const allNumeric = this.nodes.every(n => typeof n.index === 'number' || (typeof n.index === 'string' && !isNaN(Number(n.index))));
+        const firstNode = allNumeric
+            ? this.nodes.reduce((min, n) => (Number(n.index) < Number(min.index) ? n : min), this.nodes[0])
+            : this.nodes[0];  // ONNX/overview nodes: use first in render order
 
         if (!firstNode) return;
 
@@ -7368,22 +8086,19 @@ class Graph {
             if (!src || !tgt) return '';
 
             const x1 = src.x;
-            const y1 = src.y + 50;  // Bottom edge of source node
+            const y1 = src.y + ((src.type === 'Input' || src.type === 'Output' || src.type === 'Tensor' || src.type === 'ARM') ? 14 : 50);
             const x2 = tgt.x;
-            const y2 = tgt.y - 50;  // Top edge of target node
+            const y2 = tgt.y - ((tgt.type === 'Input' || tgt.type === 'Output' || tgt.type === 'Tensor' || tgt.type === 'ARM') ? 14 : 50);
 
             const dy = y2 - y1;
+            const dxU = x2 - x1;
 
-            // Use straight line for small vertical distances
-            if (Math.abs(dy) < 50) {
+            if (Math.abs(dy) < 5 && Math.abs(dxU) < 5) {
                 return `M ${x1},${y1} L ${x2},${y2}`;
             }
 
-            // For long vertical distances, use curve
-            const curveFactor = Math.min(Math.abs(dy) * 0.3, 80);
-            const controlY = y1 + curveFactor;
-
-            return `M ${x1},${y1} Q ${x1},${controlY} ${x2},${y2}`;
+            const bend = Math.max(Math.abs(dy) * 0.45, Math.abs(dxU) * 0.3, 40);
+            return `M ${x1},${y1} C ${x1},${y1 + bend} ${x2},${y2 - bend} ${x2},${y2}`;
         });
 
         // Update edge label positions
@@ -7402,6 +8117,51 @@ class Graph {
     }
 
     showDetails(node) {
+        // Overview node: show subgraph summary, no tabs
+        if (node.is_overview) {
+            const d = node.overview_data || {};
+            let html = '';
+            if (d.type === 'input' || d.type === 'output') {
+                // Aggregated Input/Output dummy node — show all tensor details
+                const tensors = d.tensors || [];
+                const tensorRows = tensors.map(t => {
+                    const shp = (t.shape || []).filter(v => v > 0).join(' × ') || '?';
+                    return `<div class="detail-row">
+                        <span class="detail-label mono-font" style="font-size:0.82rem;word-break:break-all;">${t.name}</span>
+                        <span class="detail-value mono-font" style="font-size:0.82rem;">[${shp}] ${t.dtype||'float32'}</span>
+                    </div>`;
+                }).join('');
+                html = `<div class="detail-section">
+                    <div class="detail-section-header">${d.type === 'input' ? 'Model Inputs' : 'Model Outputs'} (${tensors.length})</div>
+                    ${tensorRows || '<div class="detail-row"><span class="detail-label">—</span></div>'}
+                </div>`;
+            } else if (d.type === 'subgraph') {
+                const inputNames = (d.inputs || []).map(i => i.name || '').filter(Boolean).join(', ') || '—';
+                const outputNames = (d.outputs || []).map(o => o.name || '').filter(Boolean).join(', ') || '—';
+                html = `<div class="detail-section"><h4 style="margin-bottom:12px;">${d.label || d.id}</h4>
+                    <div class="detail-row"><span class="detail-label">Runtime</span><span class="detail-value">${d.runtime || '—'}</span></div>
+                    <div class="detail-row"><span class="detail-label">GMACs</span><span class="detail-value">${(d.total_gmacs||0).toFixed(4)}</span></div>
+                    <div class="detail-row"><span class="detail-label">TIDL Layers</span><span class="detail-value">${d.num_layers || 0}</span></div>
+                    <div class="detail-row"><span class="detail-label">ONNX Nodes</span><span class="detail-value">${d.num_onnx_nodes || 0}</span></div>
+                    <div class="detail-row"><span class="detail-label">Tensor Bits</span><span class="detail-value">${d.tensor_bits || 8}</span></div>
+                    <div class="detail-row"><span class="detail-label">Inputs</span><span class="detail-value mono-font" style="word-break:break-all;">${inputNames}</span></div>
+                    <div class="detail-row"><span class="detail-label">Outputs</span><span class="detail-value mono-font" style="word-break:break-all;">${outputNames}</span></div>
+                    <div style="margin-top:12px; padding:8px 12px; background:var(--ti-blue,#0072ce)20; border-radius:6px; font-size:0.82rem; color:var(--ti-blue,#0072ce); font-weight:500;">
+                        Double-click to explore layers inside this subgraph
+                    </div>
+                </div>`;
+            } else {
+                // ARM node
+                html = `<div class="detail-section"><h4>${d.label}</h4>
+                    <div class="detail-row"><span class="detail-label">Op Type</span><span class="detail-value">${d.op_type||'Unknown'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Runtime</span><span class="detail-value" style="color:#c62828;">ARM (unsupported)</span></div>
+                    ${d.reason ? `<div class="detail-row"><span class="detail-label">Reason</span><span class="detail-value" style="font-size:0.78rem;word-break:break-all;">${d.reason}</span></div>` : ''}
+                </div>`;
+            }
+            this.content.innerHTML = html;
+            return;
+        }
+
         const detailsPanel = this.content.closest('.details-panel');
         if (!detailsPanel) return;
 
@@ -7419,20 +8179,19 @@ class Graph {
             newTabs.push(newTab);
         });
 
-        // For TIDL graphs: hide Analysis tab for non-computational layers or if no activation data
+        // For TIDL graphs: show Analysis tab only when activation/trace data is present
         if (this.isTIDL) {
             const analysisTab = newTabs.find(t => t.getAttribute('data-panel-tab') === 'tidl');
             if (analysisTab) {
-                const isComputional = node.type !== 'TIDL_DataLayer';
-                let hasActivation = false;
-
-                if (isComputional && node.onnx_node_index !== undefined && node.onnx_node_index !== null) {
-                    const sg = this.currentSubgraph;
-                    const key = `${sg}_${node.onnx_node_index}`;
-                    hasActivation = typeof ACTIVATION_DATA_COMPRESSED !== 'undefined' &&
-                                    !!ACTIVATION_DATA_COMPRESSED[key];
-                }
-                analysisTab.style.display = hasActivation ? '' : 'none';
+                const nonComputationalTypes = ['TIDL_DataLayer', 'TIDL_DataConvertLayer'];
+                const nodeLayerType = node.layer_type || node.type || node.layer_data?.layer_type || '';
+                const isNonComputational = nonComputationalTypes.includes(nodeLayerType) || node.is_onnx_view || node.is_overview;
+                const sgNum = parseInt(String(this.currentSubgraph || '0').replace(/\D+/g, '')) || 0;
+                const activationKey = `${sgNum}_${node.index}`;
+                const hasActivationData = typeof ACTIVATION_DATA_COMPRESSED !== 'undefined' &&
+                    Object.keys(ACTIVATION_DATA_COMPRESSED).length > 0 &&
+                    !!ACTIVATION_DATA_COMPRESSED[activationKey];
+                analysisTab.style.display = (isNonComputational || !hasActivationData) ? 'none' : '';
             }
         }
 
@@ -7596,8 +8355,11 @@ class Graph {
                     <div class="detail-row">
                         <span class="detail-label">Acceleration</span>
                         <span class="detail-value">
-                            <span class="support-badge ${node.tidl_supported ? 'supported' : 'non-accelerated'}">
-                                ${node.tidl_supported ? 'Accelerated' : 'Non-accelerated'}
+                            <span class="support-badge ${(node.assigned_runtime || (node.tidl_supported ? 'tidl_rt' : 'arm')) === 'arm' ? 'non-accelerated' : 'supported'}">
+                                ${node.assigned_runtime === 'tidl_rt' ? 'DSP Accelerated (TIDL)'
+                                : node.assigned_runtime === 'tvm_rt'  ? 'DSP Accelerated (TVM)'
+                                : node.tidl_supported                 ? 'DSP Accelerated (TIDL)'
+                                :                                        'ARM (Not Accelerated)'}
                             </span>
                         </span>
                     </div>
@@ -7667,8 +8429,12 @@ class Graph {
                 // --- Build tidlDetailsHTML from raw_text with 3 sections ---
                 const rawText = layerData.raw_text || '';
 
-                // Get ONNX Node Name — prefer direct onnx_name from data extractor
+                // Get ONNX Node Names — prefer arrays from data extractor for fusion support
+                const onnxNames = layerData.onnx_node_names || [];
                 let onnxNodeName = node.onnx_name || '';
+                if (!onnxNodeName && onnxNames.length > 0) {
+                    onnxNodeName = onnxNames[0];
+                }
                 if (!onnxNodeName) {
                     const onnxIdx = node.onnx_node_index !== undefined ? node.onnx_node_index : layerData.onnx_node_index;
                     if (onnxIdx !== undefined && SUBGRAPH_DATA && SUBGRAPH_DATA.node_support) {
@@ -7683,8 +8449,83 @@ class Graph {
                 const outputShapeStr = dimsMatches.length > 0 ? dimsMatches.map(m => m.replace('dims=', '')).join(', ') : '';
 
                 // Section 1: Layer Info rows
-                if (onnxNodeName) {
-                    infoRows.push(`<div class="detail-row"><span class="detail-label">ONNX Name</span><span class="detail-value onnx-node-name" title="Click to copy for --deny_list_layer_name" style="word-break:break-all;cursor:pointer;">${onnxNodeName}</span></div>`);
+                // Display ONNX mapping — clickable navigation links to ONNX view
+                if (node.is_onnx_view) {
+                    const onnxName = node.onnx_name || node.full_name || '';
+                    const inMeta  = layerData.input_metadata  || [];
+                    const outMeta = layerData.output_metadata || [];
+                    const attrs   = layerData.attributes      || {};
+                    const attrKeys = Object.keys(attrs).filter(k => attrs[k] !== null && attrs[k] !== undefined);
+
+                    // TIDL mapping — skip for boundary nodes (Input/Output/Tensor have no TIDL layer)
+                    let tidlMappingHtml = '';
+                    const isBoundaryNode = node.type === 'Input' || node.type === 'Output' || node.type === 'Tensor';
+                    if (!isBoundaryNode && _sgCurrentId !== null) {
+                        const tidlMappings = findTIDLLayersForONNX(onnxName, _sgCurrentId);
+                        if (tidlMappings.length > 0) {
+                            const links = tidlMappings.map(t =>
+                                `<span class="tidl-nav-link" data-tidl-layer="${t.layer_id}"
+                                  style="cursor:pointer;color:var(--ti-red,#c00);text-decoration:underline;margin-right:6px;"
+                                  title="Navigate to TIDL layer">${t.layer_name} (${t.layer_type.replace('TIDL_','')})</span>`
+                            ).join('');
+                            tidlMappingHtml = `<div class="detail-row"><span class="detail-label">TIDL Layer</span><span class="detail-value">${links}</span></div>`;
+                        } else {
+                            tidlMappingHtml = `<div class="detail-row"><span class="detail-label">TIDL Layer</span><span class="detail-value" style="color:var(--text-secondary);font-style:italic;">Fused into another layer</span></div>`;
+                        }
+                    }
+
+                    // Build tensor rows helper
+                    const tensorRow = (t) => {
+                        const shp = (t.shape || []).filter(v => v > 0).join(' × ') || '?';
+                        const name = t.tensor_name || t.name || '-';
+                        const dtype = t.dtype ? `<span style="color:var(--text-secondary);margin-left:4px;">${t.dtype}</span>` : '';
+                        const badge = t.is_constant
+                            ? `<span style="font-size:0.7rem;background:var(--surface-secondary,#eee);border-radius:3px;padding:1px 5px;margin-left:4px;color:var(--text-secondary);">weight</span>`
+                            : '';
+                        return `<div class="detail-row">
+                            <span class="detail-label mono-font" style="font-size:0.78rem;word-break:break-all;">${name}${badge}</span>
+                            <span class="detail-value mono-font" style="font-size:0.78rem;">[${shp}]${dtype}</span>
+                        </div>`;
+                    };
+
+                    // Assemble sectioned HTML directly (bypass infoRows for this node type)
+                    html = `
+                    <div class="detail-section">
+                        <div class="detail-section-header">Node Info</div>
+                        <div class="detail-row"><span class="detail-label">Name</span><span class="detail-value mono-font" style="word-break:break-all;">${onnxName}</span></div>
+                        <div class="detail-row"><span class="detail-label">Op Type</span><span class="detail-value">${node.type || '-'}</span></div>
+                        ${tidlMappingHtml}
+                    </div>
+                    ${inMeta.length > 0 ? `
+                    <div class="detail-section">
+                        <div class="detail-section-header">Inputs (${inMeta.length})</div>
+                        ${inMeta.map(tensorRow).join('')}
+                    </div>` : ''}
+                    ${outMeta.length > 0 ? `
+                    <div class="detail-section">
+                        <div class="detail-section-header">Outputs (${outMeta.length})</div>
+                        ${outMeta.map(tensorRow).join('')}
+                    </div>` : ''}
+                    ${attrKeys.length > 0 ? `
+                    <div class="detail-section">
+                        <div class="detail-section-header">Attributes</div>
+                        ${attrKeys.map(k => `
+                        <div class="detail-row">
+                            <span class="detail-label">${k}</span>
+                            <span class="detail-value mono-font" style="word-break:break-all;">${JSON.stringify(attrs[k])}</span>
+                        </div>`).join('')}
+                    </div>` : ''}
+                    `;
+                    // html is now set — skip the normal section assembly below
+                } else if (onnxNames.length > 0) {
+                    const labelText = onnxNames.length > 1 ? 'ONNX Fusion' : 'ONNX Mapping';
+                    const linksHtml = onnxNames.map(name =>
+                        `<span class="onnx-nav-link" data-onnx-name="${name}" style="cursor:pointer;color:var(--ti-blue,#0072ce);text-decoration:underline;margin-right:6px;" title="Navigate to ONNX node">${name}</span>`
+                    ).join(onnxNames.length > 1 ? ' <span style="color:var(--ti-red,#c00);font-weight:600;">+</span> ' : '');
+                    const valueStyle = onnxNames.length > 1 ? 'color:var(--ti-red,#c00);font-weight:600;' : '';
+                    infoRows.push(`<div class="detail-row"><span class="detail-label">${labelText}</span><span class="detail-value" style="${valueStyle}word-break:break-all;">${linksHtml}</span></div>`);
+                } else if (onnxNodeName) {
+                    infoRows.push(`<div class="detail-row"><span class="detail-label">ONNX Name</span><span class="detail-value onnx-nav-link" data-onnx-name="${onnxNodeName}" style="word-break:break-all;cursor:pointer;color:var(--ti-blue,#0072ce);text-decoration:underline;">${onnxNodeName}</span></div>`);
                 }
                 if (inputShapeStr) {
                     infoRows.push(`<div class="detail-row"><span class="detail-label">Input Shape</span><span class="detail-value mono-font">${inputShapeStr}</span></div>`);
@@ -7872,8 +8713,8 @@ class Graph {
                         ${attrsHTML}
                     </div>` : ''}
                 `;
-            } else {
-                // For TIDL subgraph: 3-section layout
+            } else if (!node.is_onnx_view) {
+                // For TIDL subgraph layers: 3-section layout
                 html = `
                     <div class="detail-section">
                         <div class="detail-section-header">Layer Identity</div>
@@ -7910,38 +8751,63 @@ class Graph {
             }
         } else if (this.activeTab === 'tidl') {
             // Analysis tab: Activation plots only (memory is in Performance tab)
-            html = `
-                ${this.isTIDL && this.currentSubgraph !== null ? `
-                <div class="detail-section" id="histogram-section-${node.index}">
-                    <h4><i class="fas fa-chart-bar"></i> Activation Histogram</h4>
-                    <div class="chart-container-wrapper">
-                        <div class="chart-btn-group">
-                            <button class="chart-ctrl-btn" onclick="const c=document.getElementById('activation-histogram-${node.index}');if(c._chartjs)c._chartjs.resetZoom();" title="Reset Zoom">
-                                <i class="fas fa-crosshairs"></i>
-                            </button>
-                            <button class="chart-ctrl-btn" onclick="toggleChartFullscreen('histogram-section-${node.index}')" title="Fullscreen">
-                                <i class="fas fa-expand"></i>
-                            </button>
+            const layerData = node.layer_data || {};
+            const isLastExpanded = layerData.is_last_expanded !== false;  // Default true
+            const onnxNames = layerData.onnx_node_names || [];
+
+            if (!isLastExpanded && onnxNames.length > 0) {
+                // Show expansion message instead of activation plots
+                const onnxNodeName = onnxNames.join(', ');
+                html = `
+                    <div class="detail-section" style="padding: 2rem; text-align: center; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color);">
+                        <div style="font-size: 3rem; color: var(--ti-orange); margin-bottom: 1rem;">
+                            <i class="fas fa-layer-group"></i>
                         </div>
-                        <canvas id="activation-histogram-${node.index}" style="width: 100%; height: 200px;"></canvas>
+                        <h4 style="color: var(--text-primary); margin-bottom: 1rem;">Layer Expansion</h4>
+                        <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">
+                            This layer is part of an expansion from ONNX node: <strong style="color: var(--ti-red);">${onnxNodeName}</strong>
+                        </p>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                            Activation analysis is available on the last expanded TIDL layer for this ONNX node.
+                        </p>
                     </div>
-                </div>
-                <div class="detail-section" id="scatter-section-${node.index}">
-                    <h4><i class="fas fa-chart-line"></i> Activation Scatter Plot</h4>
-                    <div class="chart-container-wrapper">
-                        <div class="chart-btn-group">
-                            <button class="chart-ctrl-btn" onclick="const c=document.getElementById('activation-scatter-${node.index}');if(c._chartjs)c._chartjs.resetZoom();" title="Reset Zoom">
-                                <i class="fas fa-crosshairs"></i>
-                            </button>
-                            <button class="chart-ctrl-btn" onclick="toggleChartFullscreen('scatter-section-${node.index}')" title="Fullscreen">
-                                <i class="fas fa-expand"></i>
-                            </button>
+                `;
+            } else {
+                if (this.isTIDL && this.currentSubgraph !== null) {
+                    // Always render canvases — renderActivationPlots will fill or show no-data message
+                    html = `
+                    <div class="detail-section" id="histogram-section-${node.index}">
+                        <h4><i class="fas fa-chart-bar"></i> Activation Histogram</h4>
+                        <div class="chart-container-wrapper">
+                            <div class="chart-btn-group">
+                                <button class="chart-ctrl-btn" onclick="const c=document.getElementById('activation-histogram-${node.index}');if(c._chartjs)c._chartjs.resetZoom();" title="Reset Zoom">
+                                    <i class="fas fa-crosshairs"></i>
+                                </button>
+                                <button class="chart-ctrl-btn" onclick="toggleChartFullscreen('histogram-section-${node.index}')" title="Fullscreen">
+                                    <i class="fas fa-expand"></i>
+                                </button>
+                            </div>
+                            <canvas id="activation-histogram-${node.index}" style="width: 100%; height: 200px;"></canvas>
                         </div>
-                        <canvas id="activation-scatter-${node.index}" style="width: 100%; height: 200px;"></canvas>
                     </div>
-                </div>
-                ` : '<div class="no-selection-message"><i class="fas fa-chart-area"></i><p>Select a node in the subgraph view to see analysis</p></div>'}
-            `;
+                    <div class="detail-section" id="scatter-section-${node.index}">
+                        <h4><i class="fas fa-chart-line"></i> Activation Scatter Plot</h4>
+                        <div class="chart-container-wrapper">
+                            <div class="chart-btn-group">
+                                <button class="chart-ctrl-btn" onclick="const c=document.getElementById('activation-scatter-${node.index}');if(c._chartjs)c._chartjs.resetZoom();" title="Reset Zoom">
+                                    <i class="fas fa-crosshairs"></i>
+                                </button>
+                                <button class="chart-ctrl-btn" onclick="toggleChartFullscreen('scatter-section-${node.index}')" title="Fullscreen">
+                                    <i class="fas fa-expand"></i>
+                                </button>
+                            </div>
+                            <canvas id="activation-scatter-${node.index}" style="width: 100%; height: 200px;"></canvas>
+                        </div>
+                    </div>`;
+                } else {
+                    html = '<div class="no-selection-message"><i class="fas fa-chart-area"></i><p>Select a node in the subgraph view to see analysis</p></div>';
+                }
+            }
         }
         
         this.content.innerHTML = html;
@@ -7959,13 +8825,37 @@ class Graph {
             });
         });
 
+        // Navigate to ONNX view when clicking ONNX node name in TIDL details
+        this.content.querySelectorAll('.onnx-nav-link').forEach(el => {
+            el.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const onnxName = this.dataset.onnxName;
+                if (onnxName && _sgViewMode === 'subgraph') {
+                    switchToONNXViewAndHighlight(onnxName);
+                }
+            });
+        });
+
+        // Navigate to TIDL view when clicking TIDL layer name in ONNX details
+        this.content.querySelectorAll('.tidl-nav-link').forEach(el => {
+            el.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const layerId = this.dataset.tidlLayer;
+                if (layerId !== undefined && _sgViewMode === 'subgraph') {
+                    switchToTIDLViewAndHighlight(parseInt(layerId));
+                }
+            });
+        });
+
         if (this.activeTab === 'tidl' && this.isTIDL && this.currentSubgraph !== null) {
             setTimeout(() => {
-                // Render activation plots
                 if (typeof renderActivationPlots === 'function') {
-                    // Use onnx_node_index for activation data lookup
-                    if (node.onnx_node_index !== undefined && node.onnx_node_index !== null) {
-                        renderActivationPlots(node.index, this.currentSubgraph, node.onnx_node_index);
+                    // Skip non-computational layers — no activation data
+                    const skipTypes = ['TIDL_DataLayer', 'TIDL_DataConvertLayer'];
+                    if (!skipTypes.includes(node.layer_type)) {
+                        // Key: {sgNum}_{layer_index} — same as stored in ACTIVATION_DATA_COMPRESSED
+                        const sgNum = parseInt(String(this.currentSubgraph).replace(/\D+/g, '')) || 0;
+                        renderActivationPlots(node.index, sgNum, node.index);
                     }
                 }
             }, 100);
@@ -8558,19 +9448,24 @@ function renderActivationPlots(nodeIndex, subgraphId, dataKeyIndex) {
 
     if (!data) {
         console.warn('[V5 Plot] No activation data for key:', key);
+        // Replace canvas sections with a no-data message inside each section
         const histSection = document.getElementById(`histogram-section-${nodeIndex}`);
         const scatterSection = document.getElementById(`scatter-section-${nodeIndex}`);
-        if (histSection) histSection.style.display = 'none';
-        if (scatterSection) scatterSection.style.display = 'none';
+        const noDataHtml = `<div style="text-align:center;padding:1.5rem;color:var(--text-secondary,#888);">
+            <i class="fas fa-ban" style="font-size:1.5rem;margin-bottom:0.5rem;display:block;"></i>
+            <p style="margin:0;font-size:0.85rem;">No activation data available</p>
+        </div>`;
+        if (histSection) histSection.innerHTML = `<h4><i class="fas fa-chart-bar"></i> Activation Histogram</h4>${noDataHtml}`;
+        if (scatterSection) scatterSection.innerHTML = `<h4><i class="fas fa-chart-line"></i> Activation Scatter Plot</h4>${noDataHtml}`;
         return;
     }
 
     console.log('[V5 Plot] Successfully loaded activation data for key:', key);
     console.log('[V5 Plot] Data structure:', {
-        hasStats: !!data.stats,
+        hasMetrics: !!(data.metrics || data.stats),
         hasHistogram: !!data.histogram,
         hasScatter: !!data.scatter,
-        statsKeys: data.stats ? Object.keys(data.stats) : [],
+        metricsKeys: (data.metrics || data.stats) ? Object.keys(data.metrics || data.stats) : [],
         histogramKeys: data.histogram ? Object.keys(data.histogram) : [],
         scatterKeys: data.scatter ? Object.keys(data.scatter) : []
     });
@@ -8585,26 +9480,40 @@ function renderActivationPlots(nodeIndex, subgraphId, dataKeyIndex) {
     if (scatterSection) scatterSection.style.display = '';
 
     // Render histogram with Chart.js
-    // Support both new format {notidl, tidl} and old Plotly format {traces}
+    // Support schema format {tidl_bins, tidl_counts, notidl_bins, notidl_counts}
+    // and legacy formats {notidl: {centers, counts}, tidl: {centers, counts}} or {traces}
     let histData = data.histogram;
-    if (histData && histData.traces && !histData.notidl) {
-        // Convert old Plotly format to new Chart.js format
-        const notidlTrace = histData.traces.find(t => t.name && (t.name.includes('No-TIDL') || t.name.includes('NxRDL')));
-        const tidlTrace = histData.traces.find(t => t.name && !t.name.includes('No-TIDL') && !t.name.includes('NxRDL'));
-        if (notidlTrace && tidlTrace) {
-            histData = {
-                notidl: { centers: notidlTrace.x, counts: notidlTrace.y },
-                tidl: { centers: tidlTrace.x, counts: tidlTrace.y }
-            };
+    let notidlBins = [], notidlCounts = [], tidlBins = [], tidlCounts = [];
+    if (histData) {
+        if (histData.tidl_bins && histData.notidl_bins) {
+            // Schema format
+            tidlBins = histData.tidl_bins;
+            tidlCounts = histData.tidl_counts;
+            notidlBins = histData.notidl_bins;
+            notidlCounts = histData.notidl_counts;
+        } else if (histData.notidl && histData.tidl) {
+            // Legacy format
+            notidlBins = histData.notidl.centers || [];
+            notidlCounts = histData.notidl.counts || [];
+            tidlBins = histData.tidl.centers || [];
+            tidlCounts = histData.tidl.counts || [];
+        } else if (histData.traces) {
+            // Old Plotly format
+            const notidlTrace = histData.traces.find(t => t.name && (t.name.includes('No-TIDL') || t.name.includes('NxRDL')));
+            const tidlTrace = histData.traces.find(t => t.name && !t.name.includes('No-TIDL') && !t.name.includes('NxRDL'));
+            if (notidlTrace && tidlTrace) {
+                notidlBins = notidlTrace.x || []; notidlCounts = notidlTrace.y || [];
+                tidlBins = tidlTrace.x || []; tidlCounts = tidlTrace.y || [];
+            }
         }
     }
-    if (histData && histData.notidl && histData.tidl) {
+    if (notidlBins.length > 0 && tidlBins.length > 0) {
         const histCanvas = document.getElementById(histId);
         if (histCanvas) {
             // Destroy existing chart
             if (histCanvas._chartjs) { histCanvas._chartjs.destroy(); }
 
-            const labels = histData.notidl.centers.map(v => formatWithPrefix(v));
+            const labels = notidlBins.map(v => formatWithPrefix(v));
             histCanvas._chartjs = new Chart(histCanvas, {
                 type: 'bar',
                 data: {
@@ -8612,7 +9521,7 @@ function renderActivationPlots(nodeIndex, subgraphId, dataKeyIndex) {
                     datasets: [
                         {
                             label: 'No-TIDL (FP32)',
-                            data: histData.notidl.counts,
+                            data: notidlCounts,
                             backgroundColor: 'rgba(239, 83, 80, 0.5)',
                             borderColor: 'rgba(198, 40, 40, 0.8)',
                             borderWidth: 1,
@@ -8623,7 +9532,7 @@ function renderActivationPlots(nodeIndex, subgraphId, dataKeyIndex) {
                         },
                         {
                             label: 'TIDL (INT8)',
-                            data: histData.tidl.counts,
+                            data: tidlCounts,
                             backgroundColor: 'rgba(66, 165, 245, 0.5)',
                             borderColor: 'rgba(21, 101, 192, 0.8)',
                             borderWidth: 1,
@@ -8655,7 +9564,7 @@ function renderActivationPlots(nodeIndex, subgraphId, dataKeyIndex) {
                             callbacks: {
                                 title: function(items) {
                                     const idx = items[0].dataIndex;
-                                    return `Value: ${histData.notidl.centers[idx].toFixed(4)}`;
+                                    return `Value: ${(notidlBins[idx] || 0).toFixed(4)}`;
                                 },
                                 label: function(context) {
                                     return `${context.dataset.label}: ${formatWithPrefix(context.parsed.y)}`;
@@ -8706,13 +9615,23 @@ function renderActivationPlots(nodeIndex, subgraphId, dataKeyIndex) {
     }
 
     // Render scatter plot with Chart.js
-    if (data.scatter && data.scatter.points && data.scatter.points.length > 0) {
+    // Support schema format {x: [...], y: [...]} and legacy {points: [{x,y}]}
+    let scatterPoints = [];
+    if (data.scatter) {
+        if (data.scatter.x && data.scatter.x.length > 0) {
+            // Schema format — x=notidl(reference), y=tidl
+            scatterPoints = data.scatter.x.map((v, i) => ({ x: v, y: data.scatter.y[i] }));
+        } else if (data.scatter.points && data.scatter.points.length > 0) {
+            scatterPoints = data.scatter.points;
+        }
+    }
+    if (scatterPoints.length > 0) {
         const scatterCanvas = document.getElementById(scatterId);
         if (scatterCanvas) {
             // Destroy existing chart
             if (scatterCanvas._chartjs) { scatterCanvas._chartjs.destroy(); }
 
-            const points = data.scatter.points;
+            const points = scatterPoints;
             const pointCount = points.length;
             const baseRadius = pointCount > 5000 ? 1.5 : pointCount > 2000 ? 2 : 2.5;
             const baseOpacity = pointCount > 10000 ? 0.3 : pointCount > 5000 ? 0.4 : 0.55;
@@ -8722,9 +9641,9 @@ function renderActivationPlots(nodeIndex, subgraphId, dataKeyIndex) {
             const yVals = points.map(p => p.y);
             const rSquared = calculateRSquared(xVals, yVals);
 
-            // Diagonal line data (y=x)
-            const axMin = data.scatter.axis.min;
-            const axMax = data.scatter.axis.max;
+            // Diagonal line data (y=x) — compute axis range from data if not provided
+            const axMin = (data.scatter.axis && data.scatter.axis.min != null) ? data.scatter.axis.min : Math.min(...xVals, ...yVals);
+            const axMax = (data.scatter.axis && data.scatter.axis.max != null) ? data.scatter.axis.max : Math.max(...xVals, ...yVals);
             const range = axMax - axMin;
 
             // Add error to each point for tooltip
@@ -9147,7 +10066,7 @@ function renderD3Scatter(containerId, scatterData) {
         .attr('x', width / 2)
         .attr('y', height + 55)
         .attr('text-anchor', 'middle')
-        .style('font-size', '11px')
+        .style('font-size', '14px')
         .style('fill', '#4caf50')
         .style('font-weight', 'bold')
         .text(statsText);
@@ -9253,7 +10172,7 @@ function initNonAcceleratedLayersDropdown(graph) {
         // All layers supported - Keep dropdown VISIBLE to show success status
         if (container) container.classList.remove('hidden');
         const option = document.createElement('option');
-        option.textContent = 'All Layers Accelerated';
+        option.textContent = 'C7x';
         option.style.color = '#2ecc71';
         option.style.fontWeight = '600';
         dropdown.appendChild(option);
@@ -9269,7 +10188,7 @@ function initNonAcceleratedLayersDropdown(graph) {
     // Add default option
     const defaultOption = document.createElement('option');
     defaultOption.value = '';
-    defaultOption.textContent = `Non-accelerated Layers (${nonAcceleratedNodes.length})`;
+    defaultOption.textContent = 'ARM';
     defaultOption.disabled = true;
     defaultOption.selected = true;
     dropdown.appendChild(defaultOption);
@@ -9377,7 +10296,7 @@ function initAcceleratedLayersDropdown(graph) {
     // Add default option
     const defaultOption = document.createElement('option');
     defaultOption.value = '';
-    defaultOption.textContent = `Accelerated Layers (${acceleratedNodes.length})`;
+    defaultOption.textContent = 'C7x';
     defaultOption.disabled = true;
     defaultOption.selected = true;
     dropdown.appendChild(defaultOption);
@@ -9583,31 +10502,48 @@ class LayerSearch {
     }
     
     searchTIDLLayers(query) {
-        console.log('Searching TIDL layers for:', query);
+        // Context-aware: delegate based on current view mode
+        if (_sgViewMode === 'overview') {
+            return this.searchOverviewNodes(query);
+        } else if (_sgViewMode === 'subgraph' && _sgCurrentView === 'onnx') {
+            return this.searchSubgraphONNXNodes(query);
+        } else {
+            return this.searchTIDLSubgraphNodes(query);
+        }
+    }
 
-        // V3: Search through TIDL graph_nodes instead of runtime nodes
+    searchOverviewNodes(query) {
+        if (!OVERVIEW_DATA || !OVERVIEW_DATA.nodes) return [];
+        return OVERVIEW_DATA.nodes
+            .filter(n => n.label.toLowerCase().includes(query) || n.runtime.toLowerCase().includes(query) || n.type.toLowerCase().includes(query))
+            .slice(0, 10)
+            .map(n => ({
+                node: { id: n.id, index: n.id, full_name: n.label, type: n.type, overview_data: n },
+                context: 'overview',
+                subgraph: null
+            }));
+    }
+
+    searchSubgraphONNXNodes(query) {
+        if (!_sgCurrentId || !TIDL_LAYER_DATA[_sgCurrentId]) return [];
+        const onnxNodes = TIDL_LAYER_DATA[_sgCurrentId].onnx_nodes || [];
+        return onnxNodes
+            .filter(n => n.name.toLowerCase().includes(query) || n.type.toLowerCase().includes(query))
+            .slice(0, 10)
+            .map(n => ({
+                node: { id: 'onnx_' + n.name, index: n.name, full_name: n.name, type: n.type },
+                context: 'onnx_subgraph',
+                subgraph: _sgCurrentId
+            }));
+    }
+
+    searchTIDLSubgraphNodes(query) {
         if (!TIDL_LAYER_DATA) return [];
-
-        // Get current TIDL subgraph
         const currentSubgraph = window.tidlGraph?.currentSubgraph;
-
-        console.log('Current TIDL subgraph:', currentSubgraph);
-
-        if (currentSubgraph === null || currentSubgraph === undefined) {
-            // No subgraph selected yet
-            return [];
-        }
-
-        // V3: Get TIDL graph nodes for current subgraph
+        if (currentSubgraph === null || currentSubgraph === undefined) return [];
         const tidlSubgraph = TIDL_LAYER_DATA[currentSubgraph];
-        if (!tidlSubgraph || !tidlSubgraph.graph_nodes) {
-            console.warn('TIDL subgraph data not found');
-            return [];
-        }
-
-        console.log('TIDL graph_nodes count:', tidlSubgraph.graph_nodes.length);
-
-        const results = tidlSubgraph.graph_nodes
+        if (!tidlSubgraph || !tidlSubgraph.graph_nodes) return [];
+        return tidlSubgraph.graph_nodes
             .filter(node => {
                 const nameMatch = node.full_name.toLowerCase().includes(query);
                 const typeMatch = node.type.toLowerCase().includes(query);
@@ -9620,9 +10556,6 @@ class LayerSearch {
                 context: 'tidl',
                 subgraph: currentSubgraph
             }));
-
-        console.log('TIDL search results:', results);
-        return results;
     }
     
     searchAllLayers(query) {
@@ -9716,39 +10649,37 @@ class LayerSearch {
         this.searchDropdown.classList.remove('show');
         this.searchInput.value = '';
 
-        // Find the node from the appropriate data source
-        let node = null;
-        if (context === 'tidl') {
-            // V3: For TIDL context, search in TIDL graph_nodes
-            const currentSubgraph = window.tidlGraph?.currentSubgraph;
-            if (currentSubgraph !== null && currentSubgraph !== undefined && TIDL_LAYER_DATA[currentSubgraph]) {
-                node = TIDL_LAYER_DATA[currentSubgraph].graph_nodes.find(n => n.id === nodeId);
-            }
-        } else {
-            // For runtime context, search in graphData
-            node = graphData.nodes.find(n => n.id === nodeId);
-        }
-
-        if (!node) {
-            console.error('Node not found:', nodeId);
-            return;
-        }
-
-        console.log('Found node:', node);
-
-        // Navigate based on context — 'all' defaults to runtime graph
+        // Navigate based on context — each context has its own lookup + navigate
         if (context === 'runtime' || context === 'all') {
-            if (!window.runtimeGraph || !window.runtimeGraph.nodeG) {
-                console.warn('Runtime graph not initialized');
-                return;
-            }
+            const node = graphData.nodes.find(n => n.id === nodeId);
+            if (!node) return;
+            if (!window.runtimeGraph || !window.runtimeGraph.nodeG) return;
             this.navigateToRuntimeNode(node);
+
         } else if (context === 'tidl') {
-            if (!window.tidlGraph || !window.tidlGraph.nodeG) {
-                console.warn('TIDL graph not initialized');
-                return;
-            }
+            const currentSubgraph = window.tidlGraph?.currentSubgraph;
+            if (currentSubgraph === null || currentSubgraph === undefined) return;
+            const node = (TIDL_LAYER_DATA[currentSubgraph]?.graph_nodes || []).find(n => n.id === nodeId);
+            if (!node) return;
+            if (!window.tidlGraph || !window.tidlGraph.nodeG) return;
             this.navigateToTIDLNode(node);
+
+        } else if (context === 'onnx_subgraph') {
+            // nodeId = 'onnx_Conv_0'; navigate directly using _highlightNodeById
+            // which finds the node in the rendered ONNX graph and calls showDetails
+            if (_sgCurrentView !== 'onnx') {
+                // Switch to ONNX view first, then highlight
+                const onnxName = nodeId.replace(/^onnx_/, '');
+                switchToONNXViewAndHighlight(onnxName);
+            } else {
+                _highlightNodeById(nodeId);
+            }
+
+        } else if (context === 'overview') {
+            // nodeId is the overview node id (e.g. 'subgraph_tidl_0')
+            if (_sgViewMode === 'overview') {
+                _highlightNodeById(nodeId);
+            }
         }
     }
     
@@ -9948,14 +10879,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Initialize proctime chart
+    // Initialize per-layer charts + unified subgraph selector
     initProctimeChart();
-
-    // Initialize cycles chart
     initCyclesChart();
-
-    // Initialize memory chart
     initMemoryChart();
+    initPerfSubgraphSelector();
 
     // Initialize layer index toggle
     const layerIndexToggle = document.querySelector('.layer-index-toggle');
@@ -10331,11 +11259,14 @@ function showTooltip(node, event, isTIDL = false) {
         `;
     }
 
-    const supportClass = node.tidl_supported ? 'supported' : 'non-accelerated';
-    const supportText = node.tidl_supported ? 'Supported' : 'Non-accelerated';
+    const rt = node.assigned_runtime || (node.tidl_supported ? 'tidl_rt' : 'arm');
+    const supportClass = rt === 'arm' ? 'non-accelerated' : 'supported';
+    const supportText = rt === 'tidl_rt' ? 'DSP Accelerated (TIDL)'
+                      : rt === 'tvm_rt'  ? 'DSP Accelerated (TVM)'
+                      :                    'ARM (Not Accelerated)';
     tooltipContent += `
         <div class="tooltip-support-status ${supportClass}">
-            TIDL: ${supportText}
+            ${supportText}
         </div>
     `;
 
@@ -10349,16 +11280,31 @@ function showTooltip(node, event, isTIDL = false) {
     }
 
     tooltip.innerHTML = tooltipContent;
-    tooltip.style.left = (event.pageX + 15) + 'px';
-    tooltip.style.top = (event.pageY + 15) + 'px';
+    // position: fixed uses viewport coordinates (clientX/clientY)
+    const vw = window.innerWidth;
+    const th = tooltip.offsetHeight || 120;
+    const tw = tooltip.offsetWidth || 300;
+    let left = event.clientX + 15;
+    let top = event.clientY + 15;
+    if (left + tw > vw - 10) left = event.clientX - tw - 10;
+    if (top + th > window.innerHeight - 10) top = event.clientY - th - 10;
+    tooltip.style.left = left + 'px';
+    tooltip.style.top = top + 'px';
     tooltip.classList.add('show');
 }
 function hideTooltip() {
     tooltip.classList.remove('show');
 }
 function updateTooltipPosition(event) {
-    tooltip.style.left = (event.pageX + 15) + 'px';
-    tooltip.style.top = (event.pageY + 15) + 'px';
+    const vw = window.innerWidth;
+    const th = tooltip.offsetHeight || 120;
+    const tw = tooltip.offsetWidth || 300;
+    let left = event.clientX + 15;
+    let top = event.clientY + 15;
+    if (left + tw > vw - 10) left = event.clientX - tw - 10;
+    if (top + th > window.innerHeight - 10) top = event.clientY - th - 10;
+    tooltip.style.left = left + 'px';
+    tooltip.style.top = top + 'px';
 }
 // ==================== INITIALIZATION ====================
 // Remove async if loadModelData() is synchronous
@@ -10444,31 +11390,24 @@ function init() {
 
             // Lazy load graphs
             setTimeout(() => {
-                if (targetTab === 'tidl-model' && !window.tidlGraph) {
-                    console.log('Creating TIDL graph...');
-                    window.tidlGraph = new Graph('tidl-graph-svg', 'tidl-node-details', 'tidl-canvas', true);
-                    window.tidlGraph.render(graphData.nodes, graphData.edges);
-
-                    // After TIDL graph is created, trigger subgraph selection if one is selected
-                    setTimeout(() => {
-                        const selector = document.getElementById('subgraph-selector');
-                        if (selector && selector.value) {
-                            console.log(`TIDL graph created, filtering by subgraph: ${selector.value}`);
-                            const event = new Event('change');
-                            selector.dispatchEvent(event);
-                        }
-                    }, 100);
+                if (targetTab === 'tidl-model') {
+                    if (!window.tidlGraph) {
+                        window.tidlGraph = new Graph('tidl-graph-svg', 'tidl-node-details', 'tidl-canvas', true);
+                        _wireDrilldownControls();
+                    }
+                    // Default to Overview view on first open
+                    _sgNavClick('overview');
                 }
 
                 // Re-render all performance charts when tab becomes visible
                 // Chart.js cannot calculate dimensions on hidden canvases
                 if (targetTab === 'performance') {
-                    console.log('Performance tab activated, re-rendering all charts...');
                     setTimeout(() => {
                         initProctimeChart();
                         initCyclesChart();
                         initMemoryChart();
                         renderMetricsCharts();
+                        initPerfSubgraphSelector(); // unified selector wires & re-renders all
                     }, 100);
                 }
             }, 50);

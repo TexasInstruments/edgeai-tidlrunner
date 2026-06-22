@@ -160,16 +160,23 @@ class ActivationDataParser:
     def _find_notidl_outputs(self) -> Optional[str]:
         """Find NotIDL outputs directory"""
         import glob
-        pattern = os.path.join(self.model_dir, f'notidl/outputs_/{self.frame_idx}')
-        matches = glob.glob(pattern, recursive=False)
-        return matches[0] if matches else None
+        for subdir in ['notidl', 'notidl32']:
+            pattern = os.path.join(self.model_dir, f'{subdir}/outputs_/{self.frame_idx}')
+            matches = glob.glob(pattern, recursive=False)
+            if matches:
+                return matches[0]
+        return None
 
     def _find_tidl_traces(self) -> Optional[str]:
-        """Find TIDL traces directory"""
+        """Find TIDL traces directory — checks both tidl/ and tidl32/"""
         import glob
-        pattern = os.path.join(self.model_dir, f'tidl/traces_/{self.frame_idx}')
-        matches = glob.glob(pattern, recursive=False)
-        return matches[0] if matches else None
+        for subdir in ['tidl', 'tidl32']:
+            pattern = os.path.join(self.model_dir, f'{subdir}/traces_/{self.frame_idx}')
+            matches = glob.glob(pattern, recursive=False)
+            if matches:
+                print(f"  Found TIDL traces in {subdir}/traces_/{self.frame_idx}")
+                return matches[0]
+        return None
 
     def _build_notidl_path(self, notidl_dir: str, onnx_layer_name: str) -> Optional[str]:
         """Build path to NotIDL output file"""
@@ -214,7 +221,7 @@ class ActivationDataParser:
             return None
 
     def _smart_sample_scatter_points(self, tidl_data: np.ndarray, notidl_data: np.ndarray,
-                                      max_points: int = 4000) -> Tuple[np.ndarray, np.ndarray]:
+                                      max_points: int = 2000) -> Tuple[np.ndarray, np.ndarray]:
         """Smart sampling using best-fit line as reference to preserve outliers
 
         Args:
@@ -437,8 +444,10 @@ class ActivationDataParser:
             return {'traces': [], 'layout': {}}
 
         return {
-            'notidl': {'centers': notidl_centers_list, 'counts': notidl_counts_list},
-            'tidl': {'centers': tidl_centers_list, 'counts': tidl_counts_list}
+            'tidl_bins': tidl_centers_list,
+            'tidl_counts': tidl_counts_list,
+            'notidl_bins': notidl_centers_list,
+            'notidl_counts': notidl_counts_list,
         }
 
     def _generate_scatter_plot_d3(self, notidl_data: np.ndarray, tidl_data: np.ndarray,
@@ -446,18 +455,31 @@ class ActivationDataParser:
         """Generate scatter plot data for D3 visualization"""
 
         try:
-            notidl_flat = np.asarray(notidl_data).flatten()
-            tidl_flat = np.asarray(tidl_data).flatten()
+            notidl_flat = np.asarray(notidl_data, dtype=np.float64).flatten()
+            tidl_flat = np.asarray(tidl_data, dtype=np.float64).flatten()
 
             total_points = len(notidl_flat)
+
+            # Filter out corrupted values: NaN, Inf, or extreme outliers
+            # These appear in layers like GlobalAveragePool when TIDL output is misread
+            valid_mask = (
+                np.isfinite(notidl_flat) & np.isfinite(tidl_flat) &
+                (np.abs(notidl_flat) < 1e10) & (np.abs(tidl_flat) < 1e10)
+            )
+            if valid_mask.sum() == 0:
+                # All values corrupted — return empty scatter with warning
+                return {'points': [], 'stats': {'total_points': total_points, 'displayed_points': 0,
+                                                'warning': 'Corrupted activation data'}}
+            notidl_flat = notidl_flat[valid_mask]
+            tidl_flat = tidl_flat[valid_mask]
 
             notidl_rounded = np.round(notidl_flat, 4)
             tidl_rounded = np.round(tidl_flat, 4)
 
             # Apply smart sampling if too many points
-            if total_points > 4000:
+            if total_points > 2000:
                 tidl_sampled, notidl_sampled = self._smart_sample_scatter_points(
-                    tidl_rounded, notidl_rounded, max_points=4000
+                    tidl_rounded, notidl_rounded, max_points=2000
                 )
                 tidl_rounded = tidl_sampled
                 notidl_rounded = notidl_sampled
@@ -471,22 +493,14 @@ class ActivationDataParser:
             axis_max = max_val + padding
 
             scatter_data = {
-                'points': [
-                    {'x': float(tidl_rounded[i]), 'y': float(notidl_rounded[i])}
-                    for i in range(len(tidl_rounded))
-                ],
-                'diagonal': {
-                    'start': {'x': axis_min, 'y': axis_min},
-                    'end': {'x': axis_max, 'y': axis_max}
-                },
+                'x': [float(notidl_rounded[i]) for i in range(len(notidl_rounded))],
+                'y': [float(tidl_rounded[i]) for i in range(len(tidl_rounded))],
+                'sample_size': len(tidl_rounded),
+                'total_points': total_points,
                 'axis': {
                     'min': axis_min,
                     'max': axis_max
                 },
-                'stats': {
-                    'total_points': total_points,
-                    'displayed_points': len(tidl_rounded)
-                }
             }
 
             return scatter_data
@@ -495,7 +509,7 @@ class ActivationDataParser:
             print(f"    Error generating D3 scatter plot: {e}")
             import traceback
             traceback.print_exc()
-            return {'points': [], 'stats': {}}
+            return {'x': [], 'y': [], 'sample_size': 0, 'total_points': 0}
 
     def process_layer(self, subgraph_id: int, tidl_layer_id: str) -> Optional[Dict[str, Any]]:
         """Process a single layer and generate plot data
@@ -543,9 +557,13 @@ class ActivationDataParser:
         del notidl_data, tidl_data
 
         return {
-            'stats': stats,
             'histogram': histogram_data,
-            'scatter': scatter_data
+            'scatter': scatter_data,
+            'metrics': stats,
+            'bin_files': {
+                'tidl': tidl_path,
+                'notidl': notidl_path
+            }
         }
 
     def process_all_layers(self, subgraph_node_mapping: Dict[int, List[int]] = None) -> Dict[str, Any]:
@@ -573,20 +591,18 @@ class ActivationDataParser:
         subgraph_stats = {}
 
         for subgraph_id in sorted(self.mapping.keys()):
-            layer_count = len(self.mapping[subgraph_id])
+            sorted_tidl_ids = sorted(self.mapping[subgraph_id].keys(), key=lambda x: int(x))
+            layer_count = len(sorted_tidl_ids)
             print(f"\n  Subgraph {subgraph_id}: Processing {layer_count} layers")
 
-            for tidl_layer_id in sorted(self.mapping[subgraph_id].keys()):
+            for tidl_layer_id in sorted_tidl_ids:
                 result = self.process_layer(subgraph_id, tidl_layer_id)
 
                 if result:
-                    # Use onnx_node_index as key if available, otherwise fall back to tidl_layer_id
-                    lookup_key = (subgraph_id, tidl_layer_id)
-                    onnx_node_idx = self.layer_to_onnx_node.get(lookup_key, tidl_layer_id)
-                    key = f"{subgraph_id}_{onnx_node_idx}"
+                    # Key matches JSON layer_id (HTML layer_index = TIDL net layer number)
+                    key = f"{subgraph_id}_{tidl_layer_id}"
                     activation_data[key] = result
                     total_processed += 1
-
                     subgraph_stats[subgraph_id] = subgraph_stats.get(subgraph_id, 0) + 1
 
                     if total_processed <= 10 or total_processed % 10 == 0:
@@ -733,9 +749,15 @@ class TIDLNetLogParser:
                     if len(parts) >= 11:
                         try:
                             layer_num = int(parts[0])
-                            layer_name = parts[1]
-                            output_name = parts[2]
-                            macs_str = parts[-1]
+                            layer_name = parts[1].strip()
+                            output_name = parts[2].strip()
+                            inbuf_str = parts[6].strip()
+                            outbuf_str = parts[7].strip()
+                            macs_str = parts[-2]  # trailing | creates empty last element
+
+                            # Parse inbuf IDs (non-'x' values are real buffer IDs)
+                            inbuf_ids = [int(x) for x in inbuf_str.split() if x != 'x']
+                            outbuf_id = int(outbuf_str.split()[0]) if outbuf_str else layer_num
 
                             macs = int(macs_str) if macs_str.isdigit() else 0
                             gmacs = macs / 1_000_000_000.0
@@ -743,6 +765,8 @@ class TIDLNetLogParser:
                             layer_macs[layer_num] = {
                                 'layer_name': layer_name,
                                 'output_name': output_name,
+                                'inbuf_ids': inbuf_ids,
+                                'outbuf_id': outbuf_id,
                                 'macs': macs,
                                 'gmacs': gmacs
                             }
@@ -883,6 +907,213 @@ class TIDLSubgraphParser:
             paren_key = paren_match.group(1)
             paren_val = paren_match.group(2)
             output_dict[paren_key] = f"({paren_val})"
+
+    def _build_reverse_onnx_mapping(self, tidl_layers: List[Dict]) -> Dict[int, List[int]]:
+        """
+        Build reverse mapping: onnx_node_index -> [list of tidl_layer_indices]
+
+        Returns:
+            Dict mapping ONNX node indices to lists of TIDL layer indices
+            Example: {1: [2], 48: [33, 34, 35]}  # 48 is expanded into 3 TIDL layers
+        """
+        from collections import defaultdict
+        reverse_map = defaultdict(list)
+        for tidl_idx, layer in enumerate(tidl_layers):
+            onnx_idx = layer.get('onnx_node_index')
+            if onnx_idx is not None:
+                reverse_map[onnx_idx].append(tidl_idx)
+        return dict(reverse_map)
+
+    def _detect_layer_expansion(self, reverse_map: Dict[int, List[int]],
+                               tidl_layers: List[Dict]) -> Dict[int, Dict]:
+        """
+        Detect when one ONNX layer expands into multiple TIDL layers.
+
+        Strategy: If one onnx_node_index maps to multiple TIDL layers, it's expansion.
+        Only the LAST computational (non-DataConvert) TIDL layer should show activation.
+
+        Returns:
+            Dict mapping ONNX node index to expansion info:
+            {
+                48: {
+                    'expanded_tidl_indices': [33, 34],
+                    'primary_tidl_index': 33,  # Computational layer (InnerProduct)
+                    'last_tidl_index': 33      # Shows activation (primary computational)
+                }
+            }
+        """
+        expansion_map = {}
+
+        for onnx_idx, tidl_indices in reverse_map.items():
+            if len(tidl_indices) > 1:
+                # Expansion detected
+                # Find the primary computational layer (not DataLayer/DataConvert)
+                primary_idx = None
+                last_computational_idx = None
+
+                for tidl_idx in tidl_indices:
+                    layer_type = tidl_layers[tidl_idx].get('layer_type', '')
+
+                    # Skip non-computational layers
+                    if layer_type in ['TIDL_DataLayer', 'TIDL_DataConvertLayer']:
+                        continue
+
+                    if primary_idx is None:
+                        primary_idx = tidl_idx
+
+                    last_computational_idx = tidl_idx  # Keep updating to get the last
+
+                expansion_map[onnx_idx] = {
+                    'expanded_tidl_indices': tidl_indices,
+                    'primary_tidl_index': primary_idx or tidl_indices[0],
+                    # Show activation on the last computational layer, not DataConvert
+                    'last_tidl_index': last_computational_idx or max(tidl_indices)
+                }
+
+        return expansion_map
+
+    def _build_onnx_graph(self):
+        """Build ONNX graph structure: node inputs and outputs from layer_details"""
+        onnx_graph = {}
+
+        if not hasattr(self, 'onnx_layer_details'):
+            return onnx_graph
+
+        for layer_name, layer_info in self.onnx_layer_details.items():
+            node_idx = layer_info.get('node_index')
+            if node_idx is None:
+                continue
+            onnx_graph[node_idx] = {
+                'name': layer_name,
+                'inputs': layer_info.get('input', []),
+                'outputs': layer_info.get('output', [])
+            }
+
+        return onnx_graph
+
+    def _detect_layer_fusion(self, tidl_layers: List[Dict], subgraph_id: int) -> Dict[int, Dict]:
+        """
+        Detect when multiple ONNX layers are fused into one TIDL layer.
+
+        Strategy:
+        1. Build map of which TIDL layer produces which tensor
+        2. Build ONNX graph structure (node inputs/outputs)
+        3. For each TIDL layer, trace backwards from output tensor through ONNX graph
+        4. Stop when we reach a tensor that's produced by another TIDL layer
+        5. All ONNX nodes in between are fused into this TIDL layer
+
+        Returns:
+            Dict mapping TIDL layer index to fusion info with ALL fused ONNX nodes
+        """
+        fusion_map = {}
+
+        # Parse layer_info.txt to get TIDL layer → output tensor mapping
+        layer_info_mapping = self._parse_layer_info_file(subgraph_id)
+
+        # Build reverse map: tensor → TIDL layer that produces it
+        tidl_tensor_map = {}
+        for tidl_idx, tensor_name in layer_info_mapping.items():
+            if tensor_name:
+                tidl_tensor_map[tensor_name] = tidl_idx
+
+        # Build ONNX graph structure
+        onnx_graph = self._build_onnx_graph()
+
+        # Check if we have necessary data
+        if not hasattr(self, 'tensor_to_node_map') or not hasattr(self, 'onnx_layer_names'):
+            return fusion_map
+
+        # For each TIDL layer, find all ONNX nodes that are fused into it
+        for tidl_idx, layer in enumerate(tidl_layers):
+            # Get the output tensor for this TIDL layer
+            output_tensor = layer_info_mapping.get(tidl_idx)
+            if not output_tensor:
+                continue
+
+            # Skip non-computational layers
+            if layer.get('layer_type') in ['TIDL_DataLayer', 'TIDL_DataConvertLayer']:
+                continue
+
+            # Find which ONNX node produces this output tensor
+            output_onnx_idx = self.tensor_to_node_map.get(output_tensor)
+            if output_onnx_idx is None:
+                continue
+
+            # Determine the starting runtime (TIDL or TVM/ARM)
+            # supported=True → TIDL, supported=False → TVM/ARM
+            start_runtime = self.node_support.get(output_onnx_idx, {}).get('supported', True)
+
+            # Trace backwards through ONNX graph to find all fused nodes
+            fused_onnx_nodes = set()
+            visited = set()
+
+            def trace_backwards(onnx_node_idx):
+                """Recursively trace backwards, stopping when runtime changes"""
+                if onnx_node_idx in visited:
+                    return
+                visited.add(onnx_node_idx)
+
+                fused_onnx_nodes.add(onnx_node_idx)
+
+                if onnx_node_idx not in onnx_graph:
+                    return
+
+                input_tensors = onnx_graph[onnx_node_idx].get('inputs', [])
+
+                for input_tensor in input_tensors:
+                    # Stop: tensor is output of another TIDL layer in this subgraph
+                    if input_tensor in tidl_tensor_map:
+                        continue
+
+                    # Stop: model input or constant (no producer node)
+                    producer_node_idx = self.tensor_to_node_map.get(input_tensor)
+                    if producer_node_idx is None:
+                        continue
+
+                    # Stop: runtime changes (TIDL→TVM, TVM→TIDL, TVM→ARM, etc.)
+                    producer_runtime = self.node_support.get(producer_node_idx, {}).get('supported', True)
+                    if producer_runtime != start_runtime:
+                        continue
+
+                    trace_backwards(producer_node_idx)
+
+            # Start tracing from the output node
+            trace_backwards(output_onnx_idx)
+
+            # Convert set to sorted list
+            fused_indices = sorted(list(fused_onnx_nodes))
+
+            # Get ONNX node names
+            fused_names = []
+            for idx in fused_indices:
+                if idx < len(self.onnx_layer_names):
+                    fused_names.append(self.onnx_layer_names[idx])
+                elif idx in self.node_support:
+                    fused_names.append(self.node_support[idx].get('node_name', f'Node_{idx}'))
+                else:
+                    fused_names.append(f'Node_{idx}')
+
+            # Only add to fusion_map if more than 1 ONNX node
+            if len(fused_indices) > 1:
+                fusion_map[tidl_idx] = {
+                    'fused_onnx_indices': fused_indices,
+                    'fused_onnx_names': fused_names,
+                    'fusion_type': self._classify_fusion_type(fused_names)
+                }
+
+        return fusion_map
+
+    def _classify_fusion_type(self, onnx_names: List[str]) -> str:
+        """Classify the type of fusion based on ONNX layer names"""
+        types = []
+        for name in onnx_names:
+            # Extract operation type from node name (e.g., "Conv_0" -> "CONV")
+            if '_' in name:
+                op_type = name.split('_')[0].upper()
+            else:
+                op_type = name.upper()
+            types.append(op_type)
+        return '_'.join(types)
 
     def parse_layer_info(self, title_text: str) -> Dict[str, Any]:
         """Parse TIDL layer information from SVG node title"""
@@ -1046,9 +1277,24 @@ class TIDLSubgraphParser:
             onnx_node_index = None
             onnx_name = ''
             if onnx_tensor_name and hasattr(self, 'tensor_to_node_map'):
-                onnx_node_index = self.tensor_to_node_map.get(onnx_tensor_name)
-                if onnx_node_index is not None and hasattr(self, 'onnx_layer_names'):
-                    onnx_name = self.onnx_layer_names[onnx_node_index] if onnx_node_index < len(self.onnx_layer_names) else ''
+                # Get the node that produces this output tensor
+                output_node_idx = self.tensor_to_node_map.get(onnx_tensor_name)
+                if output_node_idx is not None:
+                    # For fused layers, trace back to find the first computational node
+                    # by checking if the previous node's output is the current node's input
+                    onnx_node_index = output_node_idx
+
+                    # Trace backwards to find the first node in a potential fusion chain
+                    # For Conv+Relu fusion, we want Conv (the earlier node)
+                    if output_node_idx > 0 and hasattr(self, 'onnx_layer_names'):
+                        # Check if this could be a fused activation (Relu, Clip, etc.)
+                        current_name = self.onnx_layer_names[output_node_idx] if output_node_idx < len(self.onnx_layer_names) else ''
+                        if 'Relu' in current_name or 'Clip' in current_name:
+                            # Likely a fused activation, map to the previous computational node
+                            onnx_node_index = output_node_idx - 1
+
+                    if hasattr(self, 'onnx_layer_names'):
+                        onnx_name = self.onnx_layer_names[onnx_node_index] if onnx_node_index < len(self.onnx_layer_names) else ''
 
             node = {
                 'id': f"tidl_layer_{layer_idx}",
@@ -1169,16 +1415,31 @@ class TIDLSubgraphParser:
 
             for layer in layers:
                 layer_idx = layer['layer_index']
+                layer_type = layer.get('layer_type', '')
+
                 if layer_idx in macs_data['layer_macs']:
                     layer['macs'] = macs_data['layer_macs'][layer_idx]['macs']
                     layer['gmacs'] = macs_data['layer_macs'][layer_idx]['gmacs']
 
-                    tidl_output_name = macs_data['layer_macs'][layer_idx].get('output_name', '')
-                    onnx_node_idx = self._map_tidl_to_onnx_node(tidl_output_name)
-                    if onnx_node_idx is not None:
-                        layer['onnx_node_index'] = onnx_node_idx
+                    # Only map to ONNX nodes for computational layers
+                    # DataLayer/DataConvertLayer don't correspond to ONNX nodes
+                    if layer_type not in ['TIDL_DataLayer', 'TIDL_DataConvertLayer']:
+                        tidl_output_name = macs_data['layer_macs'][layer_idx].get('output_name', '')
+                        onnx_node_idx = self._map_tidl_to_onnx_node(tidl_output_name)
+                        if onnx_node_idx is not None:
+                            layer['onnx_node_index'] = onnx_node_idx
 
         # Note: ONNX mapping is now done in _extract_graph_structure using layer_info.txt
+
+        # Detect fusion and expansion patterns
+        reverse_map = self._build_reverse_onnx_mapping(layers)
+        expansion_map = self._detect_layer_expansion(reverse_map, layers)
+        fusion_map = self._detect_layer_fusion(layers, subgraph_id)
+
+        if fusion_map:
+            print(f"    Detected {len(fusion_map)} fused layers")
+        if expansion_map:
+            print(f"    Detected {len(expansion_map)} expanded ONNX nodes")
 
         graph_nodes, graph_edges = self._extract_graph_structure(soup, layers, subgraph_id)
 
@@ -1190,8 +1451,11 @@ class TIDLSubgraphParser:
             'num_layers': len(layers),
             'layers': layers,
             'total_gmacs': macs_data['total_gmacs'],
+            'netlog_layer_macs': macs_data['layer_macs'],
             'graph_nodes': graph_nodes,
-            'graph_edges': graph_edges
+            'graph_edges': graph_edges,
+            'fusion_map': fusion_map,
+            'expansion_map': expansion_map
         }
 
     def parse_all_subgraphs(self) -> Dict[int, Dict[str, Any]]:
@@ -1774,7 +2038,7 @@ class ONNXParser:
             for inp_idx, inp_name in enumerate(input_names):
                 meta = tensor_metadata.get(inp_name, {})
                 input_metadata.append({
-                    'name': inp_name,
+                    'tensor_name': inp_name,
                     'param_name': param_names[inp_idx] if inp_idx < len(param_names) else f'input_{inp_idx}',
                     'shape': meta.get('shape', []),
                     'dtype': meta.get('dtype', 'unknown'),
@@ -1785,7 +2049,7 @@ class ONNXParser:
             for out_name in output_names:
                 meta = tensor_metadata.get(out_name, {})
                 output_metadata.append({
-                    'name': out_name,
+                    'tensor_name': out_name,
                     'shape': meta.get('shape', []),
                     'dtype': meta.get('dtype', 'unknown'),
                     'is_constant': False
@@ -1793,6 +2057,7 @@ class ONNXParser:
 
             layer_details[node_name] = {
                 'layer_name': node_name,
+                'node_index': idx,  # Add node index for TIDL support matching
                 'type': node.op,
                 'input': input_names,
                 'output': output_names,
@@ -1983,7 +2248,7 @@ class ONNXParser:
             for inp_idx, inp_name in enumerate(node.input):
                 meta = tensor_metadata.get(inp_name, {})
                 input_metadata.append({
-                    'name': inp_name,
+                    'tensor_name': inp_name,
                     'param_name': param_names[inp_idx] if inp_idx < len(param_names) else f'input_{inp_idx}',
                     'shape': meta.get('shape', []),
                     'dtype': meta.get('dtype', 'unknown'),
@@ -1994,7 +2259,7 @@ class ONNXParser:
             for out_name in node.output:
                 meta = tensor_metadata.get(out_name, {})
                 output_metadata.append({
-                    'name': out_name,
+                    'tensor_name': out_name,
                     'shape': meta.get('shape', []),
                     'dtype': meta.get('dtype', 'unknown'),
                     'is_constant': False
@@ -2002,6 +2267,7 @@ class ONNXParser:
 
             layer_details[node_name] = {
                 'layer_name': node_name,
+                'node_index': idx,  # Add node index for TIDL support matching
                 'type': node.op_type,
                 'input': list(node.input),
                 'output': list(node.output),
@@ -2577,6 +2843,19 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
     model_dir_path = work_dirs_path
     # output_json_path already set from parameter
 
+    # Check if intermediate JSON already exists
+    if os.path.exists(output_json_path):
+        file_size = os.path.getsize(output_json_path) / (1024 * 1024)
+        print("=" * 70)
+        print("Intermediate JSON already exists")
+        print("=" * 70)
+        print(f"File: {output_json_path} ({file_size:.2f} MB)")
+        print("Skipping data extraction (file already present)")
+        print("\nTo regenerate, delete the existing file and run again:")
+        print(f"  rm {output_json_path}")
+        print("=" * 70)
+        return
+
     if not os.path.exists(model_dir_path):
         print(f"ERROR: Model directory not found: {model_dir_path}")
         sys.exit(1)
@@ -2663,14 +2942,18 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
         activation_data = {}
         if extract_activations:
             try:
-                activation_parser = ActivationDataParser(model_dir_path, frame_idx=0, tidl_data=tidl_data)
+                activation_parser = ActivationDataParser(
+                    model_dir=work_dirs_path,
+                    frame_idx=0,
+                    tidl_data=tidl_data
+                )
                 activation_data = activation_parser.process_all_layers()
+                print(f"  Loaded activation data for {len(activation_data)} layers")
             except Exception as e:
-                print(f"WARNING: Failed to parse activation data: {e}")
-                import traceback
-                traceback.print_exc()
+                print(f"  WARNING: Could not load activation data: {e}")
+                activation_data = {}
         else:
-            print("  Skipping activation data extraction (disabled with --act_data=false)")
+            print("  Skipping activation data - JSON contains only model structure")
 
         print("\n[6/8] Parsing metrics data...")
         metrics_data = {}
@@ -2731,13 +3014,11 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
 
         enhanced_tidl_data = {}
 
-        onnx_nodes_by_subgraph = {}
-        for subgraph_info in subgraph_data.get('subgraphs', []):
-            sg_id = subgraph_info.get('id')
-            onnx_nodes_by_subgraph[sg_id] = subgraph_info.get('nodes', [])
+        # Get node_support for lookups
+        node_support = subgraph_data.get('node_support', {})
 
         for subgraph_id, tidl_info in tidl_data.items():
-            enhanced_layers = []
+            enhanced_layers = {}  # Changed from list to dict
 
             subgraph_metrics = metrics_data.get(str(subgraph_id), [])
             metrics_lookup = {m['tidl_layer_id']: m for m in subgraph_metrics if m.get('tidl_layer_id')}
@@ -2745,163 +3026,378 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
             subgraph_perf = performance_data.get(subgraph_id, [])
             perf_lookup = {p['layer_num']: p for p in subgraph_perf}
 
+            # Get fusion and expansion maps for this subgraph
+            fusion_map = tidl_info.get('fusion_map', {})
+            expansion_map = tidl_info.get('expansion_map', {})
+
+            # Build buffer→layer registry from netLog data for node-reference inputs/outputs
+            netlog_lm = tidl_info.get('netlog_layer_macs', {})
+
+            # buffer_id → {node_id, name, type, tensor_name, shape}
+            # First writer wins — do NOT overwrite (prevents buffer-reuse layers like the
+            # output DataLayer from stealing ownership of buffer 0 from the input DataLayer)
+            buf_to_layer = {}
+            for lyr in tidl_info.get('layers', []):
+                li = lyr['layer_index']
+                lm = netlog_lm.get(li, {})
+                ob = lm.get('outbuf_id', li)
+                if ob in buf_to_layer:
+                    continue  # buffer already claimed by an earlier layer
+                out_shape = []
+                for o in lyr.get('parameters', {}).get('outputs', []):
+                    if 'dims' in o:
+                        out_shape = o['dims']
+                        break
+                buf_to_layer[ob] = {
+                    'node_id': li,
+                    'name': lyr['layer_name'],
+                    'type': lyr['layer_type'],
+                    'tensor_name': lm.get('output_name', lyr['layer_name']),
+                    'shape': out_shape
+                }
+
             for layer in tidl_info.get('layers', []):
                 layer_idx = layer['layer_index']
                 tidl_layer_id = str(layer_idx)
 
+                params = layer.get('parameters', {})
+                lm = netlog_lm.get(layer_idx, {})
+
+                # Build inputs: each inbuf_id → node reference + tensor_name + shape
+                inbuf_ids = lm.get('inbuf_ids', [])
+                inputs_list = []
+                for bid in inbuf_ids:
+                    if bid in buf_to_layer:
+                        src = buf_to_layer[bid]
+                        inputs_list.append({
+                            'node_id': src['node_id'],
+                            'name': src['name'],
+                            'type': src['type'],
+                            'tensor_name': src['tensor_name'],
+                            'shape': src['shape']
+                        })
+
+                # Build outputs: find all layers that consume this layer's output buffer
+                my_outbuf = lm.get('outbuf_id', layer_idx)
+                my_tensor_name = lm.get('output_name', layer['layer_name'])
+                my_shape = []
+                for o in params.get('outputs', []):
+                    if 'dims' in o:
+                        my_shape = o['dims']
+                        break
+                outputs_list = []
+                # Only emit outputs if this layer is the buffer owner (prevents reuse layers
+                # like the output DataLayer from generating spurious output connections)
+                is_buffer_owner = buf_to_layer.get(my_outbuf, {}).get('node_id') == layer_idx
+                if is_buffer_owner:
+                    for other_lyr in tidl_info.get('layers', []):
+                        other_li = other_lyr['layer_index']
+                        other_lm = netlog_lm.get(other_li, {})
+                        if my_outbuf in other_lm.get('inbuf_ids', []):
+                            outputs_list.append({
+                                'node_id': other_li,
+                                'name': other_lyr['layer_name'],
+                                'type': other_lyr['layer_type'],
+                                'tensor_name': my_tensor_name,
+                                'shape': my_shape
+                            })
+
+                # Get fusion info for this TIDL layer
+                fusion_info = fusion_map.get(layer_idx, None)
+                onnx_node_index = layer.get('onnx_node_index', None)
+                expansion_info = expansion_map.get(onnx_node_index, None) if onnx_node_index is not None else None
+
+                # Build onnx_node_indices and onnx_node_names as arrays
+                if fusion_info:
+                    onnx_indices = fusion_info['fused_onnx_indices']
+                    onnx_names = fusion_info['fused_onnx_names']
+                elif onnx_node_index is not None:
+                    onnx_indices = [onnx_node_index]
+                    onnx_node_name = layer.get('onnx_node_name')
+                    if not onnx_node_name and onnx_node_index in node_support:
+                        onnx_node_name = node_support[onnx_node_index].get('node_name')
+                    onnx_names = [onnx_node_name] if onnx_node_name else []
+                else:
+                    onnx_indices = []
+                    onnx_names = []
+
+                # Determine mapping_type for onnx_mapping
+                if layer['layer_type'] in ('TIDL_DataLayer',):
+                    mapping_type = 'data_input'
+                elif fusion_info and len(onnx_indices) > 1:
+                    mapping_type = 'fusion'
+                elif len(onnx_indices) == 1:
+                    mapping_type = '1-to-1'
+                else:
+                    mapping_type = 'none'
+
+                # Determine performance — all layers get the field (null if not available)
+                perf_value = perf_lookup.get(layer_idx, None)
+
+                # Determine activation data and bin_files
+                layer_type_str = layer.get('layer_type', '')
+                act_key = f"{subgraph_id}_{layer_idx}"
+                skip_activation = layer_type_str in ('TIDL_DataLayer', 'TIDL_DataConvertLayer')
+                if not skip_activation and activation_data and act_key in activation_data:
+                    act = activation_data[act_key]
+                    act_data = {
+                        'histogram': act.get('histogram', {'tidl_bins': [], 'tidl_counts': [], 'notidl_bins': [], 'notidl_counts': []}),
+                        'scatter': act.get('scatter', {'x': [], 'y': [], 'sample_size': 0, 'total_points': 0}),
+                        'metrics': act.get('metrics', None),
+                        'bin_files': act.get('bin_files', None),
+                    }
+                else:
+                    act_data = {
+                        'histogram': {'tidl_bins': [], 'tidl_counts': [], 'notidl_bins': [], 'notidl_counts': []},
+                        'scatter': {'x': [], 'y': [], 'sample_size': 0, 'total_points': 0},
+                        'metrics': None,
+                        'bin_files': None,
+                    }
+
                 enhanced_layer = {
-                    'index': layer_idx,
-                    'type': layer['layer_type'],
-                    'name': layer['layer_name'],
-                    'parameters': layer['parameters']
+                    'layer_id': layer_idx,
+                    'layer_type': layer['layer_type'],
+                    'layer_name': layer['layer_name'],
+                    'onnx_mapping': {
+                        'onnx_node_indices': onnx_indices,
+                        'onnx_node_names': onnx_names,
+                        'mapping_type': mapping_type,
+                    },
+                    'inputs': inputs_list,
+                    'outputs': outputs_list,
+                    'gmacs': layer.get('gmacs', 0.0),
+                    'parameters': layer['parameters'],
+                    'performance': perf_value,
+                    'activation_data': act_data,
                 }
 
-                if 'macs' in layer:
-                    enhanced_layer['macs'] = layer['macs']
-                if 'gmacs' in layer:
-                    enhanced_layer['gmacs'] = layer['gmacs']
+                # Use layer_id as key (like ONNX layers)
+                enhanced_layers[str(layer_idx)] = enhanced_layer
 
-                if 'onnx_node_index' in layer:
-                    enhanced_layer['onnx_node_index'] = layer['onnx_node_index']
 
-                if layer_idx in perf_lookup:
-                    enhanced_layer['performance'] = perf_lookup[layer_idx]
-
-                if tidl_layer_id in metrics_lookup:
-                    metric = metrics_lookup[tidl_layer_id]
-                    metrics_dict = {
-                        'mae': metric['mean_abs_diff'],
-                        'mean_abs_rel_diff': metric['mean_abs_rel_diff'],
-                        'median_abs_diff': metric['median_abs_diff'],
-                        'max_abs_diff': metric['max_abs_diff']
-                    }
-                    if 'snr_db' in metric:
-                        metrics_dict['snr_db'] = metric['snr_db']
-                    enhanced_layer['metrics'] = metrics_dict
-
-                # Activation data is stored separately (not embedded in layers) to avoid JSON bloat
-                # Keys are formatted as: f"{subgraph_id}_{onnx_node_idx}"
-
-                enhanced_layers.append(enhanced_layer)
+            # Convert enhanced_layers dict to array (sorted by layer_id)
+            layers_array = []
+            for layer_id in sorted(enhanced_layers.keys(), key=lambda x: int(x)):
+                layers_array.append(enhanced_layers[layer_id])
 
             enhanced_tidl_data[subgraph_id] = {
-                'id': subgraph_id,
-                'onnx_nodes': onnx_nodes_by_subgraph.get(subgraph_id, []),
-                'layers': enhanced_layers,
+                'subgraph_id': subgraph_id,
                 'total_gmacs': tidl_info.get('total_gmacs', 0.0),
-                'graph': {
-                    'nodes': tidl_info.get('graph_nodes', []),
-                    'edges': tidl_info.get('graph_edges', [])
-                }
+                'num_layers': len(layers_array),
+                'total_time_us': 0.0,  # Will be calculated later
+                'layers': layers_array  # Array format
             }
 
+        # Extract ONNX model inputs/outputs
+        from datetime import datetime
+
+        onnx_inputs = []
+        onnx_outputs = []
+        model_details = model_data.get('model_details', {})
+
+        # Extract inputs from 'input_shape' (not 'inputs')
+        for inp in model_details.get('input_shape', []):
+            onnx_inputs.append({
+                'name': inp.get('name', ''),
+                'shape': inp.get('shape', []),
+                'dtype': 'float32'  # Default, could be extracted if available
+            })
+
+        # Extract outputs from 'output_shape' (not 'outputs')
+        for out in model_details.get('output_shape', []):
+            onnx_outputs.append({
+                'name': out.get('name', ''),
+                'shape': out.get('shape', []),
+                'dtype': 'float32'  # Default, could be extracted if available
+            })
+
+        # Metadata with only essential fields (matching reference schema)
         metadata = {
-            'target_device': config_data.get('target_device', 'Unknown'),
+            'model_name': model_details.get('name', 'Unknown'),
             'task_type': config_data.get('task_type', 'Unknown'),
-            'tensor_bits': config_data.get('tensor_bits', 'Unknown'),
-            'model_accuracy': config_data.get('accuracy', 'N/A'),
-            'num_frames': config_data.get('num_frames', 'N/A'),
-            'num_subgraphs': config_data.get('num_subgraphs', 'N/A'),
-            'perfsim_gmacs': config_data.get('perfsim_gmacs', 'N/A'),
-            'perfsim_time_ms': config_data.get('perfsim_time_ms', 'N/A'),
-            'perfsim_ddr_transfer_mb': config_data.get('perfsim_ddr_transfer_mb', 'N/A')
+            'inputs': onnx_inputs,
+            'outputs': onnx_outputs
         }
 
+        # Store target_device and tensor_bits for use in each subgraph
+        target_device = config_data.get('target_device', 'Unknown')
+
+
+        # Restructure ONNX layers to match unified schema
+        node_support = subgraph_data.get('node_support', {})
+        onnx_layers_raw = model_data.get('layer_details', {})
+        onnx_layers = {}
+
+        for layer_name, layer_info in onnx_layers_raw.items():
+            # Filter inputs to only include non-constant tensors (actual data inputs)
+            input_metadata = layer_info.get('input_metadata', [])
+            data_inputs = [inp['tensor_name'] for inp in input_metadata if not inp.get('is_constant', False)]
+
+            # Restructure to unified schema format (no inputs/outputs, only input_details/output_details)
+            unified_layer = {
+                'name': layer_info.get('layer_name', layer_name),
+                'type': layer_info.get('type', 'Unknown'),
+                'input_details': input_metadata,
+                'output_details': layer_info.get('output_metadata', []),
+                'attributes': layer_info.get('attributes', {})
+            }
+
+            # Add runtime_assignment information
+            # Check if this ONNX node failed on any runtime
+            # assigned_runtime: "tidl_rt", "tvm_rt", or "arm"
+            # reason: failure reason(s) if failed, null if passed
+            node_idx = layer_info.get('node_index', None)
+            if node_idx is not None and node_idx in node_support:
+                support_info = node_support[node_idx]
+                is_supported = support_info.get('supported', False)
+
+                if is_supported:
+                    # Passed TIDL runtime
+                    unified_layer['runtime_assignment'] = {
+                        'assigned_runtime': 'tidl_rt',
+                        'reason': None
+                    }
+                else:
+                    # Failed on TIDL runtime - assume goes to ARM
+                    unified_layer['runtime_assignment'] = {
+                        'assigned_runtime': 'arm',
+                        'reason': support_info.get('diagInfo', 'TIDL runtime not supported')
+                    }
+            else:
+                # No support information - assume passed TIDL
+                unified_layer['runtime_assignment'] = {
+                    'assigned_runtime': 'tidl_rt',
+                    'reason': None
+                }
+
+            onnx_layers[layer_name] = unified_layer
+
+        # Calculate total_time_us for each TIDL subgraph
+        for subgraph_id, tidl_subgraph in enhanced_tidl_data.items():
+            total_time = 0.0
+            # layers is now an array
+            for layer in tidl_subgraph.get('layers', []):
+                if layer.get('performance') and 'proctime_us' in layer['performance']:
+                    total_time += layer['performance']['proctime_us']
+            tidl_subgraph['total_time_us'] = total_time
+
+        # Check for TVM artifacts (optional)
+        tvm_data = {}
+        tvm_artifacts_path = os.path.join(model_dir_path, 'tvm', 'artifacts')
+        tvmrt_artifacts_path = os.path.join(model_dir_path, 'tvmrt_artifacts')
+
+        if os.path.exists(tvm_artifacts_path) or os.path.exists(tvmrt_artifacts_path):
+            print("  TVM artifacts detected, parsing TVM data...")
+            # TODO: Parse TVM artifacts similar to TIDL
+            # For now, create placeholder structure
+            tvm_data = {
+                'subgraphs': {}
+            }
+        else:
+            print("  No TVM artifacts found, skipping TVM section")
+            tvm_data = {}
+
+        # Build subgraphs dict in the format: tidl_0, tidl_1, tvm_0, etc.
+        unified_subgraphs = {}
+
+        # Add TIDL subgraphs with correct field order
+        for subgraph_id, tidl_subgraph in enhanced_tidl_data.items():
+            subgraph_key = f'tidl_{subgraph_id}'
+
+            # Build TIDL subgraph with correct field order matching unified schema
+            ordered_tidl_subgraph = {
+                'runtime': 'tidl_rt',
+                'subgraph_id': tidl_subgraph['subgraph_id'],
+                'tidl_tool_version': config_data.get('tidl_tool_version', '9.0.0'),
+                'tensor_bits': config_data.get('tensor_bits', 8),
+                'total_gmacs': tidl_subgraph['total_gmacs'],
+                'num_layers': tidl_subgraph['num_layers'],
+                'inputs': [],
+                'outputs': [],
+                'layers': tidl_subgraph['layers'],
+                'target_device': target_device,
+            }
+
+            unified_subgraphs[subgraph_key] = ordered_tidl_subgraph
+
+        # Add TVM subgraphs if present
+        if tvm_data and 'subgraphs' in tvm_data:
+            for subgraph_id, tvm_subgraph in tvm_data['subgraphs'].items():
+                subgraph_key = f'tvm_{subgraph_id}'
+                # Add target_device to TVM subgraph
+                tvm_subgraph['target_device'] = target_device
+                unified_subgraphs[subgraph_key] = tvm_subgraph
+
+        # Unified JSON structure v1.0
         combined_data = {
             'metadata': metadata,
             'model': {
-                'details': model_data.get('model_details', {}),
-                'layers': model_data.get('layer_details', {}),
-                'tree_structure': model_data.get('tree_structure', {}),
-                'graph': {
-                    'edges': model_data.get('edges', [])
-                }
+                'onnx': {
+                    'total_weights': model_details.get('weights', 0),
+                    'num_layers': len(onnx_layers),
+                    'opset_version': onnx_parser.model.opset_import[0].version if hasattr(onnx_parser.model, 'opset_import') and len(onnx_parser.model.opset_import) > 0 else 0,
+                    'ir_version': onnx_parser.model.ir_version if hasattr(onnx_parser.model, 'ir_version') else 0,
+                    'layers': onnx_layers
+                },
+                'tflite': {}
             },
-            'compilation': {
-                'node_support': subgraph_data.get('node_support', {}),
-                'tidl_subgraphs': enhanced_tidl_data
+            'runtime': {
+                'subgraphs': unified_subgraphs
             }
         }
 
-        print(f"Writing compressed JSON to: {output_json_path}")
+        print(f"Writing unified JSON to: {output_json_path}")
 
-        if not output_json_path.endswith('.gz'):
-            output_json_path = output_json_path + '.gz'
-
-        # Write main JSON (without activation data)
-        print("  Serializing main data...")
-        with gzip.open(output_json_path, 'wt', encoding='utf-8') as f:
-            json.dump(combined_data, f)
+        # Write single unified JSON for inspection (activation data embedded in TIDL layers)
+        print("  Serializing unified data...")
+        with open(output_json_path, 'w', encoding='utf-8') as f:
+            json.dump(combined_data, f, indent=2)
 
         file_size = os.path.getsize(output_json_path) / (1024 * 1024)
-        print(f"Main JSON saved (compressed): {output_json_path} ({file_size:.2f} MB)")
-
-        # Write activation data to separate file if requested
-        if extract_activations and activation_data:
-            # Determine activation output path from main output path
-            activation_output_path = output_json_path.replace('.json.gz', '_activations.json.gz')
-            if activation_output_path == output_json_path:
-                # Fallback if pattern matching didn't work
-                activation_output_path = output_json_path.replace('.gz', '').replace('.json', '') + '_activations.json.gz'
-
-            print(f"\n  Writing activation data to: {activation_output_path}")
-            with gzip.open(activation_output_path, 'wt', encoding='utf-8') as f:
-                f.write('{')
-                print(f"  Writing {len(activation_data)} layers of activation data...")
-
-                first = True
-                for i, (key, value) in enumerate(activation_data.items()):
-                    if not first:
-                        f.write(',')
-                    f.write(f'"{key}":')
-                    f.write(json.dumps(value))
-                    first = False
-
-                    # Progress indicator
-                    if (i + 1) % 50 == 0:
-                        print(f"    Written {i + 1}/{len(activation_data)} layers...")
-
-                f.write('}')
-
-            activation_file_size = os.path.getsize(activation_output_path) / (1024 * 1024)
-            print(f"  Activation data saved: {activation_output_path} ({activation_file_size:.2f} MB)")
+        print(f"Unified JSON saved: {output_json_path} ({file_size:.2f} MB)")
+        print(f"  Model structure only (no activation data)")
 
         print("\n" + "=" * 70)
-        print("SUCCESS! Data extraction complete.")
+        print("SUCCESS! Data extraction complete - Unified Schema v1.0")
         print("=" * 70)
         print(f"\nExtracted data summary:")
-        print(f"  - ONNX layers: {len(combined_data['model']['layers'])}")
-        print(f"  - TIDL subgraphs: {len(combined_data['compilation']['tidl_subgraphs'])}")
+        print(f"  - ONNX layers: {len(combined_data['model']['onnx']['layers'])}")
+        tidl_subgraphs = combined_data.get('runtime', {}).get('subgraphs', {})
+        print(f"  - TIDL subgraphs: {len(tidl_subgraphs)}")
+        if tvm_data and 'subgraphs' in tvm_data:
+            print(f"  - TVM subgraphs: {len(tvm_data['subgraphs'])}")
 
-        if extract_activations:
-            total_activation_layers = len(activation_data)
-            print(f"  - Layers with activation data: {total_activation_layers}")
-        else:
-            print(f"  - Layers with activation data: 0 (disabled with --act_data=false)")
+        # Activation data not included in JSON - only model structure
 
-        total_metrics_layers = 0
-        for subgraph_id, subgraph in combined_data['compilation']['tidl_subgraphs'].items():
-            total_metrics_layers += sum(1 for layer in subgraph['layers'] if 'metrics' in layer)
-        print(f"  - Layers with metrics: {total_metrics_layers}")
+        # Note: metrics and activation_data are set to null
+        # They will be populated by html_generator based on --activation_data flag
+        print(f"  - Metrics: null (to be filled by html_generator)")
+        print(f"  - Activation data: null (to be filled by html_generator)")
 
         total_perf_layers = 0
-        for subgraph_id, subgraph in combined_data['compilation']['tidl_subgraphs'].items():
-            total_perf_layers += sum(1 for layer in subgraph['layers'] if 'performance' in layer)
+        for subgraph_id, subgraph in combined_data['runtime']['subgraphs'].items():
+            # layers is now a list, iterate through it
+            layers = subgraph.get('layers', [])
+            if isinstance(layers, list):
+                total_perf_layers += sum(1 for layer in layers if isinstance(layer, dict) and 'performance' in layer)
+            elif isinstance(layers, dict):
+                total_perf_layers += sum(1 for layer in layers.values() if 'performance' in layer)
         print(f"  - Layers with performance data: {total_perf_layers}")
 
         print(f"\nMetadata:")
-        print(f"  - Device: {combined_data['metadata']['target_device']}")
-        print(f"  - Precision: {combined_data['metadata']['tensor_bits']}")
+        print(f"  - Model: {combined_data['metadata']['model_name']}")
+        # Get device from first subgraph (moved from metadata to subgraph level)
+        first_sg = next(iter(combined_data['runtime']['subgraphs'].values()), {})
+        target_device = first_sg.get('target_device', 'Unknown')
+        tensor_bits = first_sg.get('tensor_bits', 'Unknown')
+        print(f"  - Device: {target_device}")
+        print(f"  - Precision: {tensor_bits}-bit")
         print(f"  - Task: {combined_data['metadata']['task_type']}")
+        print(f"  - Inputs: {len(combined_data['metadata']['inputs'])}")
+        print(f"  - Outputs: {len(combined_data['metadata']['outputs'])}")
 
         print(f"\nNext step:")
-        if extract_activations:
-            activation_output_path = output_json_path.replace('.json.gz', '_activations.json.gz')
-            if activation_output_path == output_json_path:
-                activation_output_path = output_json_path.replace('.gz', '').replace('.json', '') + '_activations.json.gz'
-            print(f"  python html_generator.py {output_json_path} template.html output.html --activations {activation_output_path}")
-        else:
-            print(f"  python html_generator.py {output_json_path} template.html output.html")
+        print(f"  python html_generator.py {output_json_path} template.html output.html")
 
     except Exception as e:
         print(f"\nERROR: {e}")

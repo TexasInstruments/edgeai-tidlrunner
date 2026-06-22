@@ -31,7 +31,7 @@ from .infer import InferModel
 from .compile import CompileModel
 from .evaluate import InferEvaluate
 from .analyze import CompileAnalyzeNoTIDL, InferAnalyzeNoTIDL, CompileAnalyzeTIDL32, InferAnalyzeTIDL32, CompileAnalyzeTIDL, InferAnalyzeTIDL, InferAnalyzeFinal
-from .report import GenReport 
+from .report import GenReport
 from .surgery import ModelSurgery
 from .extract import ExtractNodes
 from .package import PackageArtifacts
@@ -41,10 +41,10 @@ from .inspector import GenerateModelInspectorJSON, GenerateModelInspectorHTML
 def get_command_pipelines(**kwargs):
     command_module_name_dict = {
         # compile related
-        'compile':'CompileModel',
+        'compile': ['CompileModel', 'GenerateModelInspectorJSON', 'GenerateModelInspectorHTML'],
         'infer':'InferModel',
         'evaluate': ['InferEvaluate'],
-        'compile+infer': ['CompileModel', 'InferModel'],
+        'compile+infer': ['CompileModel', 'GenerateModelInspectorJSON', 'GenerateModelInspectorHTML', 'InferModel'],
         'compile+evaluate': ['CompileModel', 'InferEvaluate'],
         'analyze': ['CompileAnalyzeTIDL', 'InferAnalyzeTIDL', 'CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL32', 'InferAnalyzeTIDL32', 'InferAnalyzeFinal'],    
         'inspect': ['CompileAnalyzeTIDL', 'InferAnalyzeTIDL', 'CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL32', 'InferAnalyzeTIDL32', 'InferAnalyzeFinal','GenerateModelInspectorJSON', 'GenerateModelInspectorHTML'],

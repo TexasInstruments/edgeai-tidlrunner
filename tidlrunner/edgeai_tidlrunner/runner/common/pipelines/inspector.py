@@ -32,6 +32,20 @@ import shutil
 import yaml
 import json
 
+
+def _json_has_perfsim(json_path):
+    """Returns True if JSON already has perfsim (performance) data in any TIDL layer."""
+    try:
+        with open(json_path) as f:
+            d = json.load(f)
+        for sg in d.get('runtime', {}).get('subgraphs', {}).values():
+            for layer in sg.get('layers', []):
+                if layer.get('performance') is not None:
+                    return True
+    except Exception:
+        pass
+    return False
+
 from ..settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
 from .common_.common_base import CommonPipelineBase
 from .common_.compile_base import CompileModelBase
@@ -56,14 +70,28 @@ class GenerateModelInspectorJSON(CompileModelBase):
 
     def _run(self):
         print(f'INFO: Model Inspector - JSON generation')
+        graphviz_path = os.path.join(self.run_dir, 'artifacts', 'tempDir', 'graphvizInfo.txt')
+        if not os.path.exists(graphviz_path):
+            print(f'INFO: Model Inspector - JSON generation skipped: TIDL compile artifacts not found in {self.run_dir}')
+            return
+
         from ....modelinspector.data_extractor import main as gen_json
 
         inspector_base_path = os.path.join(self.run_dir, 'inspector')
         output_json_path = os.path.join(inspector_base_path, 'modelinspector.json')
         os.makedirs(inspector_base_path, exist_ok=True)
+
+        if os.path.exists(output_json_path) and _json_has_perfsim(output_json_path):
+            print(f'INFO: Model Inspector JSON already has perfsim data, skipping generation')
+            return
+
         common_kwargs = self.settings['common']
         extract_activations = common_kwargs.get('act_data', True)
-        gen_json(self.run_dir, output_json_path, extract_activations)
+        try:
+            gen_json(self.run_dir, output_json_path, extract_activations)
+            print(f'INFO: Model Inspector - JSON generation successful')
+        except Exception as e:
+            print(f'INFO: Model Inspector - JSON generation skipped due to missing compile artifacts: {e}')
 
 
 class GenerateModelInspectorHTML(CompileModelBase):
@@ -89,23 +117,17 @@ class GenerateModelInspectorHTML(CompileModelBase):
         from ....modelinspector.html_generator import main as gen_html
 
         inspector_base_path = os.path.join(self.run_dir, 'inspector')
-        output_json_path = os.path.join(inspector_base_path, 'modelinspector.json.gz')
+        output_json_path = os.path.join(inspector_base_path, 'modelinspector.json')
         output_html_path = os.path.join(inspector_base_path, 'modelinspector.html')
-        activations_json_path = os.path.join(inspector_base_path, 'modelinspector_activations.json.gz')
-        os.makedirs(inspector_base_path, exist_ok=True)
         template_file = os.path.join(os.path.dirname(modelinspector.__file__), 'template.html')
 
-        # Check the act_data flag from settings
-        common_kwargs = self.settings['common']
-        extract_activations = common_kwargs.get('act_data', True)
+        if not os.path.exists(output_json_path):
+            print(f'INFO: Model Inspector JSON not found, skipping HTML generation')
+            return
 
-        # Pass activations file ONLY if flag is set AND file exists
-        if extract_activations and os.path.exists(activations_json_path):
-            gen_html(output_json_path, template_file, output_html_path, activations_json_path)
-        else:
+        # Activation data is embedded in the JSON (no separate activations file needed)
+        try:
             gen_html(output_json_path, template_file, output_html_path)
-
-        # Clean up intermediate JSON files — data is now embedded in HTML
-        for json_file in [output_json_path, activations_json_path]:
-            if os.path.exists(json_file):
-                os.remove(json_file)
+            print(f'INFO: Model Inspector - HTML generation successful')
+        except Exception as e:
+            print(f'INFO: Model Inspector - HTML generation skipped due to missing compile artifacts: {e}')
