@@ -255,7 +255,9 @@ COPY_SETTINGS_DEFAULT['extract'] = COPY_SETTINGS_DEFAULT['basic'] | {
 SETTINGS_DEFAULT['report'] = SETTINGS_DEFAULT['basic'] | {
     'pipeline_type':          {'dest': 'common.pipeline_type', 'default': 'compile', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'}, 
     'report_mode':            {'dest': 'common.report.mode', 'default': 'detailed', 'type': str, 'metavar': 'value', 'choices': ['summary', 'detailed'], 'help': 'report generation mode (summary or detailed)'},
-    'report_path':            {'dest': 'common.report.path', 'default': './work_dirs/compile', 'type': str, 'metavar': 'value', 'help': 'path where reports will be generated'},    
+    'report_path':            {'dest': 'common.report.path', 'default': './work_dirs/{run_label}/{pipeline_type}', 'type': str, 'metavar': 'value', 'help': 'path where reports will be generated'},
+    'run_label':              {'dest': 'common.run_label', 'default': '', 'type': str, 'metavar': 'value', 'help': 'run_label to create run_dir'},
+    'report_perfsim':         {'dest': 'common.report_perfsim', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'include perfsim report'},
 }
 
 COPY_SETTINGS_DEFAULT['report'] = COPY_SETTINGS_DEFAULT['basic'] | {
@@ -269,7 +271,7 @@ SETTINGS_DEFAULT['package'] = SETTINGS_DEFAULT['basic'] | {
     'tensor_bits':          {'dest': 'session.runtime_options.tensor_bits', 'default': 8, 'type': int, 'metavar': 'value', 'help': 'quantization bit-width for tensors (8 or 16)'},
     'work_path':                {'dest': 'common.work_path', 'default':'./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'work path'},
     'run_label':            {'dest': 'common.run_label', 'default': '', 'type': str, 'metavar': 'value', 'help': 'run_label to create run_dir'},
-    'package_path':         {'dest': 'common.package_path', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'packaged path'},
+    'package_path':         {'dest': 'common.package_path', 'default':'./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'packaged path'},
     'param_template':       {'dest': 'common.param_template', 'default':'data/templates/configs/param_template_package.yaml', 'type':str, 'metavar':'value', 'help':'param template path'},
 }
 

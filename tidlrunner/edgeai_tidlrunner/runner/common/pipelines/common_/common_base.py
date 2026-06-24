@@ -86,9 +86,9 @@ class CommonPipelineBase(bases.PipelineBase):
     def download_file(self, model_source, dest_dir, source_dir=None):
         utils.download_file(model_source, dest_dir, source_dir)
 
-    def _build_run_dir(self, run_dir):
+    def _build_run_dir(self, run_dir, pipeline_type=None):
         run_label = self.kwargs.get('common.run_label', '')
-        pipeline_type = self.kwargs.get('common.pipeline_type', 'compile')
+        pipeline_type = pipeline_type or self.kwargs.get('common.pipeline_type', 'compile')
         task_type = self.kwargs.get('common.task_type', None) or None
     
         model_basename = os.path.basename(self.model_source) if self.model_source else ''

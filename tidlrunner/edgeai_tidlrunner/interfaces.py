@@ -374,8 +374,8 @@ def _run(model_command_dict):
             # while running multiple configs, it is better to use parallel processing
             parallel_processes = command_kwargs['common.parallel_processes']
             parallel_devices = command_kwargs['common.parallel_devices']
-            instance_timeout = command_kwargs['common.instance_timeout']
-            overall_timeout = command_kwargs['common.overall_timeout']
+            instance_timeout = command_kwargs.get('common.instance_timeout', None)
+            overall_timeout = command_kwargs.get('common.overall_timeout', None)
 
             if command_kwargs['common.capture_log'] == bases.settings_base.CaptureLogModes.CAPTURE_LOG_MODE_ADAPTIVE:
                 # CAPTURE_LOG_MODE_TEE is not working now - need to fix it before using here

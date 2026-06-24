@@ -34,9 +34,10 @@ import glob
 from ...common import utils
 from ...common import bases
 from ..settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
+from .common_.common_base import CommonPipelineBase
 
 
-class GenReport(bases.PipelineBase):
+class GenReport(CommonPipelineBase):
     ARGS_DICT=SETTINGS_DEFAULT['report']
     COPY_ARGS=COPY_SETTINGS_DEFAULT['report']
 
@@ -101,12 +102,13 @@ class GenReport(bases.PipelineBase):
         report_perfsim = kwargs['common']['report']['mode']
         report_path = kwargs['common']['report']['path']
         target_device = kwargs['session'].get('target_device', 'NONE')
+        self.work_path = self._build_run_dir(report_path)
 
         if target_device in (None, 'None', 'NONE'):
-            benchmark_dir = report_path
+            benchmark_dir = self.work_path
             target_device_dirs = [d for d in os.listdir(benchmark_dir) if os.path.isdir(os.path.join(benchmark_dir,d))]
         else:
-            benchmark_dir = report_path
+            benchmark_dir = self.work_path
             target_device_dirs = [target_device]
         #
 
