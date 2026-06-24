@@ -69,7 +69,8 @@ COPY_SETTINGS_DEFAULT['basic'] = {}
 SETTINGS_DEFAULT['surgery'] = SETTINGS_DEFAULT['basic'] | {
     'model_path':                       {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
     'config_path':                      {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'},    
-    'work_path':                        {'dest': 'common.work_path', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'work path'},   
+    'work_path':                {'dest': 'common.work_path', 'default':'./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'work path'},
+    'run_label':                {'dest': 'common.run_label', 'default': '', 'type': str, 'metavar': 'value', 'help': 'run_label to create run_dir'},
     'run_dir':                      {'dest': 'session.run_dir', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'run_dir'},
     'pipeline_type':                    {'dest': 'common.pipeline_type', 'default': 'optimize', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},    
     'model_surgery':                   {'dest': 'session.model_surgery', 'default': True, 'type': utils.str_to_bool_or_none_or_dict, 'metavar': 'value', 'help': 'enable model surgery optimizations'},
@@ -91,9 +92,9 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | SETTINGS_DEFAULT['surg
     'model_path':               {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
     'config_path':              {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'}, 
     'work_path':                {'dest': 'common.work_path', 'default':'./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'work path'},
+    'run_label':                {'dest': 'common.run_label', 'default': '', 'type': str, 'metavar': 'value', 'help': 'run_label to create run_dir'},
     'run_dir':                  {'dest': 'session.run_dir', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'run_dir'},
     'pipeline_type':            {'dest': 'common.pipeline_type', 'default': 'compile', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},
-    'run_label':                {'dest': 'common.run_label', 'default': '', 'type': str, 'metavar': 'value', 'help': 'run_label to create run_dir'},
     # common options
     'task_type':                {'dest': 'common.task_type', 'default': None, 'type': str, 'metavar': 'value', 'help': 'type of AI task (classification, detection, segmentation etc.)'},
     'task_name':                {'dest': 'common.task_name', 'default': None, 'type': str, 'metavar': 'value', 'help': 'specific name of the task (if any)'},
@@ -235,7 +236,8 @@ COPY_SETTINGS_DEFAULT['inspect'] = COPY_SETTINGS_DEFAULT['analyze'] | {
 SETTINGS_DEFAULT['extract'] = SETTINGS_DEFAULT['basic'] | {
     'model_path':             {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
     'config_path':            {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'},
-    'work_path':              {'dest': 'common.work_path', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'work path'},
+    'work_path':                {'dest': 'common.work_path', 'default':'./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'work path'},
+    'run_label':                {'dest': 'common.run_label', 'default': '', 'type': str, 'metavar': 'value', 'help': 'run_label to create run_dir'},
     'run_dir':            {'dest': 'session.run_dir', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'run_dir'},
     'pipeline_type':          {'dest': 'common.pipeline_type', 'default': 'extract', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'}, 
     'extract_mode':           {'dest': 'common.extract.mode', 'default': 'operators', 'type': str, 'metavar': 'value', 'choices': ['submodules', 'submodule', 'start2end', 'operators'], 'help': 'extraction mode (submodules, submodule, start2end, operators)'},
@@ -265,7 +267,8 @@ SETTINGS_DEFAULT['package'] = SETTINGS_DEFAULT['basic'] | {
     'pipeline_type':        {'dest': 'common.pipeline_type', 'default': 'package', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'}, 
     'target_device':        {'dest': 'session.target_device', 'default': presets.TargetDeviceType.TARGET_DEVICE_AM62A, 'type': str, 'metavar': 'value', 'help': 'target device for inference (AM68A, AM69A, etc.)'},
     'tensor_bits':          {'dest': 'session.runtime_options.tensor_bits', 'default': 8, 'type': int, 'metavar': 'value', 'help': 'quantization bit-width for tensors (8 or 16)'},
-    'work_path':            {'dest': 'common.work_path', 'default':'./work_dirs/compile/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'work path'},
+    'work_path':                {'dest': 'common.work_path', 'default':'./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'work path'},
+    'run_label':            {'dest': 'common.run_label', 'default': '', 'type': str, 'metavar': 'value', 'help': 'run_label to create run_dir'},
     'package_path':         {'dest': 'common.package_path', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'packaged path'},
     'param_template':       {'dest': 'common.param_template', 'default':'data/templates/configs/param_template_package.yaml', 'type':str, 'metavar':'value', 'help':'param template path'},
 }
