@@ -70,10 +70,6 @@ class GenerateModelInspectorJSON(CompileModelBase):
 
     def _run(self):
         print(f'INFO: Model Inspector - JSON generation')
-        graphviz_path = os.path.join(self.run_dir, 'artifacts', 'tempDir', 'graphvizInfo.txt')
-        if not os.path.exists(graphviz_path):
-            print(f'INFO: Model Inspector - JSON generation skipped: TIDL compile artifacts not found in {self.run_dir}')
-            return
 
         from ....modelinspector.data_extractor import main as gen_json
 
@@ -131,3 +127,43 @@ class GenerateModelInspectorHTML(CompileModelBase):
             print(f'INFO: Model Inspector - HTML generation successful')
         except Exception as e:
             print(f'INFO: Model Inspector - HTML generation skipped due to missing compile artifacts: {e}')
+
+
+class UpdateModelInspectorActivations(CompileModelBase):
+    """Update existing inspector JSON with activation/trace data after an analyze run."""
+    ARGS_DICT=SETTINGS_DEFAULT['analyze']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['analyze']
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def _prepare(self):
+        super()._prepare()
+
+    def info(self):
+        print(f'INFO: Model Inspector - {__file__}')
+
+    def _run(self):
+        print(f'INFO: Model Inspector - Updating JSON with activation data')
+
+        common_kwargs = self.settings['common']
+        if not common_kwargs.get('act_data', True):
+            print(f'INFO: Model Inspector - act_data=False, skipping activation update')
+            return
+
+        inspector_base_path = os.path.join(self.run_dir, 'inspector')
+        output_json_path = os.path.join(inspector_base_path, 'modelinspector.json')
+
+        if not os.path.exists(output_json_path):
+            print(f'INFO: Model Inspector JSON not found at {output_json_path}, skipping activation update')
+            return
+
+        from ....modelinspector.data_extractor import update_with_activations
+        try:
+            success = update_with_activations(self.run_dir, output_json_path)
+            if success:
+                print(f'INFO: Model Inspector - Activation update successful')
+            else:
+                print(f'INFO: Model Inspector - No activation data found, JSON unchanged')
+        except Exception as e:
+            print(f'INFO: Model Inspector - Activation update skipped: {e}')

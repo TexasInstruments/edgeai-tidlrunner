@@ -35,7 +35,7 @@ from .report import GenReport
 from .surgery import ModelSurgery
 from .extract import ExtractNodes
 from .package import PackageArtifacts
-from .inspector import GenerateModelInspectorJSON, GenerateModelInspectorHTML
+from .inspector import GenerateModelInspectorJSON, GenerateModelInspectorHTML, UpdateModelInspectorActivations
 
 
 def get_command_pipelines(**kwargs):

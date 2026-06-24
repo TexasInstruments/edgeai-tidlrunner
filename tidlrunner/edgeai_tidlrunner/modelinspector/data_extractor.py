@@ -1837,19 +1837,11 @@ class ONNXParser:
                     attrs[key] = list(val)
                 elif isinstance(val, bytes):
                     attrs[key] = val.decode('utf-8')
-                elif isinstance(val, gs.Constant):
-                    shape = list(val.values.shape) if val.values is not None else []
-                    attrs[key] = f"Constant({shape})"
-                elif isinstance(val, gs.Variable):
-                    attrs[key] = f"Variable({val.name})"
-                elif isinstance(val, gs.Node):
-                    attrs[key] = f"Node({val.op})"
-                elif isinstance(val, gs.Graph):
-                    attrs[key] = f"Graph({len(val.nodes)} nodes)"
-                elif isinstance(val, (int, float, str, bool)):
-                    attrs[key] = val
-                else:
+                elif self.use_gs and hasattr(val, '__class__') and 'gs' in str(type(val)).lower():
+                    # Convert GraphSurgeon objects to string representation to avoid JSON serialization issues
                     attrs[key] = str(val)
+                else:
+                    attrs[key] = val
             return attrs
         else:
             attrs = {}
@@ -2866,27 +2858,31 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
 
     discovered = discover_files_from_workdir(model_dir_path)
 
+    # ONNX model is required; TIDL artifacts are optional and skipped gracefully
     if 'onnx' not in discovered:
-        print("\nERROR: Required file not found: onnx model")
+        print(f"\nERROR: ONNX model not found")
         sys.exit(1)
 
-    tidl_available = all(k in discovered for k in ['graphviz', 'allowednode', 'subgraph_dir'])
-    if not tidl_available:
-        print("\nINFO: TIDL artifacts not found (tidl_offload may be disabled)")
-        print("INFO: Generating ONNX-only model inspector (no TIDL subgraph data)")
-
     onnx_path = discovered['onnx']
-    graphviz_path = discovered.get('graphviz', '')
-    allowednode_path = discovered.get('allowednode', '')
-    subgraph_dir = discovered.get('subgraph_dir', '')
+    graphviz_path = discovered.get('graphviz')
+    allowednode_path = discovered.get('allowednode')
+    subgraph_dir = discovered.get('subgraph_dir')
+
+    # Log missing optional TIDL artifacts as info (not error)
+    if not graphviz_path:
+        print("[INFO] GraphViz info not found (optional) - TIDL support info will be unavailable")
+    if not allowednode_path:
+        print("[INFO] allowedNode.txt not found (optional) - using all nodes as allowed")
+    if not subgraph_dir:
+        print("[INFO] Subgraph directory not found (optional) - assuming single subgraph")
 
     print("\n" + "=" * 70)
     print("Data Extractor - Parsing Artifacts")
     print("=" * 70)
     print(f"ONNX Model:      {onnx_path}")
-    print(f"GraphViz Info:   {graphviz_path or '(not available)'}")
-    print(f"Allowed Nodes:   {allowednode_path or '(not available)'}")
-    print(f"Subgraph Dir:    {subgraph_dir or '(not available)'}")
+    print(f"GraphViz Info:   {graphviz_path}")
+    print(f"Allowed Nodes:   {allowednode_path}")
+    print(f"Subgraph Dir:    {subgraph_dir}")
     print(f"Output JSON:     {output_json_path}")
     print("=" * 70)
 
@@ -2907,36 +2903,40 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
         }
 
         print("\n[2/8] Parsing GraphViz info...")
-        if os.path.exists(graphviz_path):
+        if graphviz_path and os.path.exists(graphviz_path):
             graphviz_parser = GraphVizParser(graphviz_path)
             subgraph_data['node_support'] = graphviz_parser.parse()
         else:
-            print(f"WARNING: {graphviz_path} not found")
+            print(f"WARNING: GraphViz info not found (optional)")
+            subgraph_data['node_support'] = {}
 
         print("\n[3/8] Parsing allowed nodes...")
-        if os.path.exists(allowednode_path):
+        if allowednode_path and os.path.exists(allowednode_path):
             allowednode_parser = AllowedNodeParser(allowednode_path)
             subgraph_data['subgraphs'] = allowednode_parser.parse()
         else:
-            print(f"WARNING: {allowednode_path} not found")
+            print(f"WARNING: allowedNode.txt not found (optional)")
+            subgraph_data['subgraphs'] = {}
 
         print("\n[4/8] Parsing TIDL subgraph HTML files...")
-        tidl_data = {}
-        if tidl_available:
-            # Build tensor name → ONNX node index map for TIDL-to-ONNX mapping
-            tensor_to_node_map = {}
-            for idx, (layer_name, layer_info) in enumerate(model_data.get('layer_details', {}).items()):
-                for out_tensor in layer_info.get('output', []):
-                    tensor_to_node_map[out_tensor] = idx
-            # Build ordered list of ONNX layer names for ONNX name lookup
-            onnx_layer_names = list(model_data.get('layer_details', {}).keys())
+        # Build tensor name → ONNX node index map for TIDL-to-ONNX mapping
+        tensor_to_node_map = {}
+        for idx, (layer_name, layer_info) in enumerate(model_data.get('layer_details', {}).items()):
+            for out_tensor in layer_info.get('output', []):
+                tensor_to_node_map[out_tensor] = idx
+        # Build ordered list of ONNX layer names for ONNX name lookup
+        onnx_layer_names = list(model_data.get('layer_details', {}).keys())
 
+        # Handle missing subgraph directory gracefully
+        if subgraph_dir is None:
+            print("[WARNING] Subgraph directory not found (optional) - no TIDL subgraph data available")
+            tidl_data = {}
+        else:
             tidl_parser = TIDLSubgraphParser(subgraph_dir, subgraph_data['node_support'])
             tidl_parser.tensor_to_node_map = tensor_to_node_map
             tidl_parser.onnx_layer_names = onnx_layer_names
+            tidl_parser.onnx_layer_details = model_data.get('layer_details', {})
             tidl_data = tidl_parser.parse_all_subgraphs()
-        else:
-            print("  Skipped (no TIDL artifacts)")
 
         print("\n[5/8] Parsing activation data...")
         activation_data = {}
@@ -3404,6 +3404,69 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
         import traceback
         traceback.print_exc()
         sys.exit(1)
+
+
+def update_with_activations(work_dirs_path, json_path):
+    """Patch an existing inspector JSON with activation/trace data from an analyze run.
+
+    Called after the analyze pipeline steps have generated tidl/notidl trace files.
+    Only the activation_data field of each TIDL layer is updated; everything else
+    (model structure, performance, etc.) is left unchanged.
+
+    Returns True if at least one layer was updated, False otherwise.
+    """
+    if not os.path.exists(json_path):
+        print(f'INFO: JSON not found, cannot update activations: {json_path}')
+        return False
+
+    print(f'INFO: Loading inspector JSON for activation update: {json_path}')
+    with open(json_path, encoding='utf-8') as f:
+        data = json.load(f)
+
+    try:
+        activation_parser = ActivationDataParser(model_dir=work_dirs_path, frame_idx=0)
+        activation_data = activation_parser.process_all_layers()
+    except Exception as e:
+        print(f'WARNING: Could not parse activation data: {e}')
+        return False
+
+    if not activation_data:
+        print('INFO: No activation data found, JSON not updated')
+        return False
+
+    skip_types = {'TIDL_DataLayer', 'TIDL_DataConvertLayer'}
+    updated_count = 0
+
+    for sg_key, sg_data in data.get('runtime', {}).get('subgraphs', {}).items():
+        if not sg_key.startswith('tidl_'):
+            continue
+        try:
+            sg_id = int(sg_key[len('tidl_'):])
+        except ValueError:
+            continue
+
+        for layer in sg_data.get('layers', []):
+            layer_id = layer.get('layer_id')
+            if layer_id is None or layer.get('layer_type', '') in skip_types:
+                continue
+            act_key = f'{sg_id}_{layer_id}'
+            if act_key in activation_data:
+                act = activation_data[act_key]
+                layer['activation_data'] = {
+                    'histogram': act.get('histogram', {'tidl_bins': [], 'tidl_counts': [], 'notidl_bins': [], 'notidl_counts': []}),
+                    'scatter': act.get('scatter', {'x': [], 'y': [], 'sample_size': 0, 'total_points': 0}),
+                    'metrics': act.get('metrics', None),
+                    'bin_files': act.get('bin_files', None),
+                }
+                updated_count += 1
+
+    print(f'INFO: Updated {updated_count} layers with activation data')
+
+    with open(json_path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2)
+
+    print(f'INFO: Saved updated JSON to: {json_path}')
+    return updated_count > 0
 
 
 if __name__ == "__main__":

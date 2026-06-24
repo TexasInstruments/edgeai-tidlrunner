@@ -5565,10 +5565,9 @@ function transformData(data) {
         // Use array index as the node_support key (matches ONNX graph node ordering)
         const onnxNodeId = arrayIndex.toString();
 
-        // Get TIDL support info — default to unsupported when no node_support data exists
-        const hasNodeSupport = SUBGRAPH_DATA && SUBGRAPH_DATA.node_support && Object.keys(SUBGRAPH_DATA.node_support).length > 0;
-        const supportInfo = (hasNodeSupport && SUBGRAPH_DATA.node_support[onnxNodeId])
-            || { supported: hasNodeSupport ? true : false, diagInfo: hasNodeSupport ? '' : 'No TIDL compilation' };
+        // Get TIDL support info
+        const supportInfo = (SUBGRAPH_DATA && SUBGRAPH_DATA.node_support && SUBGRAPH_DATA.node_support[onnxNodeId])
+            || { supported: false, diagInfo: 'No TIDL support data available - CPU fallback' };
 
         // Get subgraph membership using array index
         const subgraphIndex = getNodeSubgraph(arrayIndex);
