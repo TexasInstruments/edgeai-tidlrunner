@@ -35,7 +35,7 @@ from .report import GenReport
 from .surgery import ModelSurgery
 from .extract import ExtractNodes
 from .package import PackageArtifacts
-from .inspector import GenerateModelInspectorJSON, GenerateModelInspectorHTML
+from .inspector import GenerateModelInspectorJSON, GenerateModelInspectorHTML, UpdateModelInspectorActivations
 
 
 def get_command_pipelines(**kwargs):
@@ -46,7 +46,7 @@ def get_command_pipelines(**kwargs):
         'evaluate': ['InferEvaluate'],
         'compile+infer': ['CompileModel', 'GenerateModelInspectorJSON', 'GenerateModelInspectorHTML', 'InferModel'],
         'compile+evaluate': ['CompileModel', 'InferEvaluate'],
-        'analyze': ['CompileAnalyzeTIDL', 'InferAnalyzeTIDL', 'CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL32', 'InferAnalyzeTIDL32', 'InferAnalyzeFinal'],    
+        'analyze': ['CompileAnalyzeTIDL', 'InferAnalyzeTIDL', 'CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL32', 'InferAnalyzeTIDL32', 'InferAnalyzeFinal', 'GenerateModelInspectorJSON', 'UpdateModelInspectorActivations', 'GenerateModelInspectorHTML'],
         'inspect': ['CompileAnalyzeTIDL', 'InferAnalyzeTIDL', 'CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL32', 'InferAnalyzeTIDL32', 'InferAnalyzeFinal','GenerateModelInspectorJSON', 'GenerateModelInspectorHTML'],
         'report': ['GenReport'],   
         'package': ['PackageArtifacts'], 
