@@ -371,7 +371,9 @@ def download_tidl_tools(download_url, download_path, **tidl_version_dict):
             yaml.safe_dump(tidl_version_dict, fp)
     except Exception as e:
         print(f"ERROR: download_and_extract_archive: {download_url} - failed - {e}")
-    
+        traceback.print_exc()
+        raise
+
     try:
         download_tidl_tools_path_until_rel, tidl_tools_name = os.path.split(download_tidl_tools_path)
         download_tidl_tools_path_until_dev, rel_name = os.path.split(download_tidl_tools_path_until_rel)
@@ -382,7 +384,9 @@ def download_tidl_tools(download_url, download_path, **tidl_version_dict):
         os.symlink(download_tidl_tools_path_symlink_src, tidl_tools_name)
     except Exception as e:
         print(f"ERROR: symlink failed: {download_tidl_tools_path} to {download_tidl_tools_path_symlink_src} - {e}")
-    
+        traceback.print_exc()
+        raise
+
     os.chdir(cwd)
     return None
 
@@ -608,6 +612,7 @@ def setup_tidl_tools(install_path, tools_version, tools_type):
     except Exception as e:
         print(f"ERROR: download_tidl_tools_package failed for version: {tools_version} - {e}")
         traceback.print_exc()
+        raise
     
     # Use sys.executable to ensure we use the same Python interpreter
     try:
@@ -616,6 +621,7 @@ def setup_tidl_tools(install_path, tools_version, tools_type):
         print(f"WARNING: Failed to install requirements from {requirements_file}: {e}")
         print(f"Please manually run: {sys.executable} -m pip3 install -r {requirements_file}")
         traceback.print_exc()
+        raise
 
 
 ###############################################################################
@@ -679,13 +685,23 @@ def download():
     tools_version = os.environ.get("TIDL_TOOLS_VERSION", TIDL_TOOLS_VERSION_DEFAULT)
     tools_type = os.environ.get("TIDL_TOOLS_TYPE", TIDL_TOOLS_TYPE_DEFAULT)
 
-    print(f"INFO: cleaning up any old TIDL tools installation at {install_path}...")
-    cleanup_tidl_tools_old(install_path, TARGET_DEVICE_MAP)
-
-    print(f"INFO: running setup with TIDL_TOOLS_VERSION={tools_version} TIDL_TOOLS_TYPE={tools_type}")
-    print(f"INFO: tidl-tools will be installed in {os.path.join(install_path, 'bin')}")
-    setup_tidl_tools(install_path, tools_version, tools_type)
-
+    for num_tries in range(1):
+        try:
+            print(f"INFO: cleaning up any old TIDL tools installation at {install_path}...")
+            cleanup_tidl_tools_old(install_path, TARGET_DEVICE_MAP)
+            print(f"INFO: running setup with TIDL_TOOLS_VERSION={tools_version} TIDL_TOOLS_TYPE={tools_type}")
+            print(f"INFO: tidl-tools will be installed in {os.path.join(install_path, 'bin')}")
+            setup_tidl_tools(install_path, tools_version, tools_type)
+            print(f"INFO: TIDL tools setup completed successfully.")
+            break
+        except Exception as e:
+            print(f"ERROR: TIDL tools setup failed on attempt {num_tries + 1}: {e}")
+            traceback.print_exc()
+            if num_tries < 2:
+                print("INFO: Retrying...")
+            else:
+                print("ERROR: All attempts to set up TIDL tools have failed.")
+                raise
 
 def main():
     download()
