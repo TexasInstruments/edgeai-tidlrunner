@@ -620,7 +620,7 @@ def setup_tidl_tools(install_path, tools_version, tools_type):
 
 ###############################################################################
 # this function is the entrypoint for download_tidlrunner_tools as specified in pyproject.toml
-def install_package(*install_args, install_cmd="install"):   
+def install_package(*install_args, install_cmd="install"):
     package_name = install_args[0].split('@')[0].split('==')[0]
     # Check if package is already installed
     if install_cmd == "install" and importlib.util.find_spec(package_name) is not None:

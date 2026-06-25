@@ -80,6 +80,11 @@ for package in "${packages[@]}"; do
 done
 
 
+######################################################################
+echo "INFO: installing extra/optional packages..."
+./setup_runner_extra_pc.sh
+
+
 #######################################################################
 pip3 install -e ./tools
 
@@ -98,12 +103,6 @@ TIDL_TOOLS_TYPE=${TIDL_TOOLS_TYPE} TIDL_TOOLS_VERSION=${TIDL_TOOLS_VERSION} tidl
 ######################################################################
 echo "INFO: installing edgeai_tidirunner package..."
 pip3 install -e ./tidlrunner[pc]
-
-
-######################################################################
-echo "INFO: installing extra/optional packages..."
-./setup_runner_extra_pc.sh
-
 
 #######################################################################
 echo "INFO: completed installation."
