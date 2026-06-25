@@ -620,9 +620,7 @@ def setup_tidl_tools(install_path, tools_version, tools_type):
 
 ###############################################################################
 # this function is the entrypoint for download_tidlrunner_tools as specified in pyproject.toml
-def install_package(*install_args, install_cmd="install"):
-    """Install osrt_model_tools package."""
-    
+def install_package(*install_args, install_cmd="install"):   
     package_name = install_args[0].split('@')[0].split('==')[0]
     # Check if package is already installed
     if install_cmd == "install" and importlib.util.find_spec(package_name) is not None:
@@ -635,7 +633,7 @@ def install_package(*install_args, install_cmd="install"):
         print(f"INFO: {install_cmd} {package_name} using:", " ".join(install_cmd_list))
         result = subprocess.run(install_cmd_list, check=True, capture_output=True, text=True)
         
-        print(f"SUCCESS: {package_name} installed successfully")
+        print(f"SUCCESS: {package_name} {install_cmd} success")
         if result.stdout:
             print("STDOUT:", result.stdout)
         return True
