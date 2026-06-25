@@ -321,24 +321,25 @@ def download_and_extract_archive(
 
 
 ###############################################################################
-def download_arm_gcc(tidl_tools_package_bin_path):
+def download_arm_gcc(tidl_tools_package_bin_path, gcc_arm_download_base):
     """Download and install ARM GCC toolchain required for TVM."""
     print("INFO: installing gcc arm required for tvm...")
     GCC_ARM_AARCH64_NAME = "arm-gnu-toolchain-13.2.Rel1-x86_64-aarch64-none-linux-gnu"
     GCC_ARM_AARCH64_FILE = f"arm-gnu-toolchain-13.2.rel1-x86_64-aarch64-none-linux-gnu.tar.xz"
-    GCC_ARM_AARCH64_PATH = f"https://developer.arm.com/-/media/Files/downloads/gnu/13.2.rel1/binrel/{GCC_ARM_AARCH64_FILE}"
+    GCC_ARM_AARCH64_PATH = f"{gcc_arm_download_base}/{GCC_ARM_AARCH64_FILE}"
     print(f"INFO: installing {tidl_tools_package_bin_path}/{GCC_ARM_AARCH64_NAME}")
     if not os.path.exists(os.path.join(tidl_tools_package_bin_path, GCC_ARM_AARCH64_NAME)):
         if not os.path.exists(os.path.join(tidl_tools_package_bin_path, GCC_ARM_AARCH64_FILE)):
             download_url(GCC_ARM_AARCH64_PATH, tidl_tools_package_bin_path)
         extract_archive(os.path.join(tidl_tools_package_bin_path, GCC_ARM_AARCH64_FILE), tidl_tools_package_bin_path)
 
-def download_cgt_c7x(tidl_tools_package_bin_path, c7x_compiler_version):
+
+def download_cgt_c7x(tidl_tools_package_bin_path, c7x_compiler_version, c7x_compiler_download_base):
     """Download and install C7x CGT compiler for TVM."""
     print("INFO: installing C7x CGT compiler for tvm...")
     CGT7X_NAME = f"ti-cgt-c7000_{c7x_compiler_version}"
     CGT7X_FILE = f"ti_cgt_c7000_{c7x_compiler_version}_linux-x64_installer.bin"
-    CGT7X_PATH = f"https://dr-download.ti.com/software-development/ide-configuration-compiler-or-debugger/MD-707zYe3Rik/{c7x_compiler_version}/{CGT7X_FILE}"
+    CGT7X_PATH = f"{c7x_compiler_download_base}/{c7x_compiler_version}/{CGT7X_FILE}"
     print(f"INFO: installing {tidl_tools_package_bin_path}/{CGT7X_NAME}")
     if not os.path.exists(os.path.join(tidl_tools_package_bin_path, CGT7X_NAME)):
         if not os.path.exists(os.path.join(tidl_tools_package_bin_path, CGT7X_FILE)):
@@ -392,7 +393,7 @@ def download_tidl_tools(download_url, download_path, **tidl_version_dict):
 
 
 ###############################################################################
-def download_tidl_tools_package_11_02(install_path, tools_version, tools_type):
+def download_tidl_tools_package_11_02(install_path, tools_version, tools_type, tidl_tools_download_base, gcc_arm_download_base, c7x_compiler_download_base):
     """Download TIDL tools package version 11.02."""
     expected_tools_version = ("11.2",)
     assert tools_version in expected_tools_version, f"ERROR: incorrect tools_version passed:{tools_version} - expected:{expected_tools_version}"
@@ -408,17 +409,17 @@ def download_tidl_tools_package_11_02(install_path, tools_version, tools_type):
         print(f"INFO: for more info, see version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/version_compatibility_table.md")
 
     tidl_tools_package_bin_path = os.path.join(install_path, 'bin')
-    download_arm_gcc(tidl_tools_package_bin_path)
-    download_cgt_c7x(tidl_tools_package_bin_path, c7x_compiler_version)
+    download_arm_gcc(tidl_tools_package_bin_path, gcc_arm_download_base)
+    download_cgt_c7x(tidl_tools_package_bin_path, c7x_compiler_version, c7x_compiler_download_base)
     
     tidl_tools_type_suffix = ("_gpu" if isinstance(tools_type, str) and "gpu" in tools_type else "")
     target_soc_download_urls = {
-        "AM62A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM62A",
-        "J722S": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM67A",
-        "J721E": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/TDA4VM",
-        "J721S2": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM68A",
-        "J742S2": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
-        "J784S4": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
+        "AM62A": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM62A",
+        "J722S": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM67A",
+        "J721E": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/TDA4VM",
+        "J721S2": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM68A",
+        "J742S2": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
+        "J784S4": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
     }
     tidl_version_dict = dict(version=tidl_tools_version_name, release_label=tidl_tools_release_label,
                              release_id=tidl_tools_release_id, tools_type=tidl_tools_type_suffix,
@@ -435,7 +436,7 @@ def download_tidl_tools_package_11_02(install_path, tools_version, tools_type):
 
 
 ###############################################################################
-def download_tidl_tools_package_11_01(install_path, tools_version, tools_type):
+def download_tidl_tools_package_11_01(install_path, tools_version, tools_type, tidl_tools_download_base, gcc_arm_download_base, c7x_compiler_download_base):
     """Download TIDL tools package version 11.01."""
     expected_tools_version = ("11.1",)
     assert tools_version in expected_tools_version, f"ERROR: incorrect tools_version passed:{tools_version} - expected:{expected_tools_version}"
@@ -450,16 +451,16 @@ def download_tidl_tools_package_11_01(install_path, tools_version, tools_type):
         print(f"INFO: for more info, see version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/version_compatibility_table.md")
 
     tidl_tools_package_bin_path = os.path.join(install_path, 'bin')
-    download_arm_gcc(tidl_tools_package_bin_path)
+    download_arm_gcc(tidl_tools_package_bin_path, gcc_arm_download_base)
 
     tidl_tools_type_suffix = ("_gpu" if isinstance(tools_type, str) and "gpu" in tools_type else "")
     target_soc_download_urls = {
-        "AM62A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM62A",
-        "J722S": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM67A",
-        "J721E": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/TDA4VM",
-        "J721S2": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM68A",
-        "J742S2": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
-        "J784S4": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
+        "AM62A": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM62A",
+        "J722S": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM67A",
+        "J721E": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/TDA4VM",
+        "J721S2": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM68A",
+        "J742S2": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
+        "J784S4": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
     }
     tidl_version_dict = dict(version=tidl_tools_version_name, release_label=tidl_tools_release_label,
                              release_id=tidl_tools_release_id, tools_type=tidl_tools_type_suffix,
@@ -476,7 +477,7 @@ def download_tidl_tools_package_11_01(install_path, tools_version, tools_type):
 
 
 ###############################################################################
-def download_tidl_tools_package_11_00(install_path, tools_version, tools_type):
+def download_tidl_tools_package_11_00(install_path, tools_version, tools_type, tidl_tools_download_base, gcc_arm_download_base, c7x_compiler_download_base):
     """Download TIDL tools package version 11.00."""
     expected_tools_version = ("11.0",)
     assert tools_version in expected_tools_version, f"ERROR: incorrect tools_version passed:{tools_version} - expected:{expected_tools_version}"
@@ -495,12 +496,12 @@ def download_tidl_tools_package_11_00(install_path, tools_version, tools_type):
 
     tidl_tools_type_suffix = ("_gpu" if isinstance(tools_type, str) and "gpu" in tools_type else "")
     target_soc_download_urls = {
-        "AM62A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM62A", # no update for AM62A in 11.0
-        "AM67A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM67A",
-        "J721E": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/TDA4VM",
-        "J721S2": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM68A",
-        "J742S2": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
-        "J784S4": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
+        "AM62A": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM62A", # no update for AM62A in 11.0
+        "AM67A": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM67A",
+        "J721E": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/TDA4VM",
+        "J721S2": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM68A",
+        "J742S2": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
+        "J784S4": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
     }
     tidl_version_dict = dict(version=tidl_tools_version_name, release_label=tidl_tools_release_label,
                              release_id=tidl_tools_release_id, tools_type=tidl_tools_type_suffix,
@@ -517,7 +518,7 @@ def download_tidl_tools_package_11_00(install_path, tools_version, tools_type):
 
 
 ###############################################################################
-def download_tidl_tools_package_10_01(install_path, tools_version, tools_type):
+def download_tidl_tools_package_10_01(install_path, tools_version, tools_type, tidl_tools_download_base, gcc_arm_download_base, c7x_compiler_download_base):
     """Download TIDL tools package version 10.01."""
     expected_tools_version = ("10.1",)
     assert tools_version in expected_tools_version, f"ERROR: incorrect tools_version passed:{tools_version} - expected:{expected_tools_version}"
@@ -531,16 +532,16 @@ def download_tidl_tools_package_10_01(install_path, tools_version, tools_type):
     print(f"INFO: for more info, see version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/version_compatibility_table.md")
 
     tidl_tools_package_bin_path = os.path.join(install_path, 'bin')
-    download_arm_gcc(tidl_tools_package_bin_path)
+    download_arm_gcc(tidl_tools_package_bin_path, gcc_arm_download_base)
 
     tidl_tools_type_suffix = ("_gpu" if isinstance(tools_type, str) and "gpu" in tools_type else "")
     target_soc_download_urls = {
-        "AM62A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM62A",
-        "J722S": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM67A",
-        "J721E": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/TDA4VM",
-        "J721S2": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM68A",
-        "J742S2": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
-        "J784S4": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
+        "AM62A": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM62A",
+        "J722S": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM67A",
+        "J721E": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/TDA4VM",
+        "J721S2": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM68A",
+        "J742S2": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
+        "J784S4": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
     }
     tidl_version_dict = dict(version=tidl_tools_version_name, release_label=tidl_tools_release_label,
                              release_id=tidl_tools_release_id, tools_type=tidl_tools_type_suffix,
@@ -556,7 +557,7 @@ def download_tidl_tools_package_10_01(install_path, tools_version, tools_type):
     return requirements_file
 
 
-def download_tidl_tools_package_10_00(install_path, tools_version, tools_type):
+def download_tidl_tools_package_10_00(install_path, tools_version, tools_type, tidl_tools_download_base, gcc_arm_download_base, c7x_compiler_download_base):
     """Download TIDL tools package version 10.00."""
     expected_tools_version = ("10.0",)
     assert tools_version in expected_tools_version, f"ERROR: incorrect tools_version passed:{tools_version} - expected:{expected_tools_version}"
@@ -567,16 +568,16 @@ def download_tidl_tools_package_10_00(install_path, tools_version, tools_type):
     print(f"INFO: you have chosen to install tidl_tools version: {tidl_tools_release_id} with default SDK firmware version: {c7x_firmware_version}")
 
     tidl_tools_package_bin_path = os.path.join(install_path, 'bin')
-    download_arm_gcc(tidl_tools_package_bin_path)
+    download_arm_gcc(tidl_tools_package_bin_path, gcc_arm_download_base)
 
     tidl_tools_type_suffix = ("_gpu" if isinstance(tools_type, str) and "gpu" in tools_type else "")
     target_soc_download_urls = {
-        "AM62A": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM62A",
-        "J722S": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM67A",
-        "J721E": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/TDA4VM",
-        "J721S2": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM68A",
-        "J742S2": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
-        "J784S4": f"https://software-dl.ti.com/jacinto7/esd/tidl-tools/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
+        "AM62A": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM62A",
+        "J722S": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM67A",
+        "J721E": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/TDA4VM",
+        "J721S2": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM68A",
+        "J742S2": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
+        "J784S4": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
     }
     tidl_version_dict = dict(version=tidl_tools_version_name, release_label=tidl_tools_release_label,
                              release_id=tidl_tools_release_id, tools_type=tidl_tools_type_suffix,
@@ -602,13 +603,15 @@ down_tidl_tools_package_dict = {
 }
 
 
-def setup_tidl_tools(install_path, tools_version, tools_type):
+def setup_tidl_tools(install_path, tools_version, tools_type, **kwargs):
     """Set up TIDL tools with the specified version and type."""
+    print(f"INFO: setup_tidl_tools kwargs: {kwargs}")
+
     assert tools_version in down_tidl_tools_package_dict.keys(), f"ERROR: unknown tools_version provided: {tools_version} at {__file__}"
     down_tidl_tools_package_func = down_tidl_tools_package_dict[tools_version]
 
     try:
-        requirements_file = down_tidl_tools_package_func(install_path, tools_version, tools_type)
+        requirements_file = down_tidl_tools_package_func(install_path, tools_version, tools_type, **kwargs)
     except Exception as e:
         print(f"ERROR: download_tidl_tools_package failed for version: {tools_version} - {e}")
         traceback.print_exc()
@@ -682,8 +685,13 @@ def download():
     uninstall_package("osrt-model-tools")
 
     install_path = os.path.dirname(os.path.realpath(__file__))
-    tools_version = os.environ.get("TIDL_TOOLS_VERSION", TIDL_TOOLS_VERSION_DEFAULT)
-    tools_type = os.environ.get("TIDL_TOOLS_TYPE", TIDL_TOOLS_TYPE_DEFAULT)
+
+    tools_version = os.environ.get("TIDL_TOOLS_VERSION", "") or TIDL_TOOLS_VERSION_DEFAULT
+    tools_type = os.environ.get("TIDL_TOOLS_TYPE", "") or TIDL_TOOLS_TYPE_DEFAULT
+
+    tidl_tools_download_base = os.environ.get("TIDL_TOOLS_DOWNLOAD_LOCAL_SERVER", "") or "https://software-dl.ti.com/jacinto7/esd/tidl-tools"
+    gcc_arm_download_base = os.environ.get("TIDL_TOOLS_DOWNLOAD_LOCAL_SERVER", "") or "https://developer.arm.com/-/media/Files/downloads/gnu/13.2.rel1/binrel"
+    c7x_compiler_download_base = os.environ.get("TIDL_TOOLS_DOWNLOAD_LOCAL_SERVER", "") or "https://dr-download.ti.com/software-development/ide-configuration-compiler-or-debugger/MD-707zYe3Rik"
 
     for num_tries in range(1):
         try:
@@ -691,7 +699,10 @@ def download():
             cleanup_tidl_tools_old(install_path, TARGET_DEVICE_MAP)
             print(f"INFO: running setup with TIDL_TOOLS_VERSION={tools_version} TIDL_TOOLS_TYPE={tools_type}")
             print(f"INFO: tidl-tools will be installed in {os.path.join(install_path, 'bin')}")
-            setup_tidl_tools(install_path, tools_version, tools_type)
+            setup_tidl_tools(install_path, tools_version, tools_type, 
+                tidl_tools_download_base=tidl_tools_download_base, 
+                gcc_arm_download_base=gcc_arm_download_base, 
+                c7x_compiler_download_base=c7x_compiler_download_base)
             print(f"INFO: TIDL tools setup completed successfully.")
             break
         except Exception as e:
