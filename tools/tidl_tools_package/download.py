@@ -688,10 +688,17 @@ def download():
 
     tools_version = os.environ.get("TIDL_TOOLS_VERSION", "") or TIDL_TOOLS_VERSION_DEFAULT
     tools_type = os.environ.get("TIDL_TOOLS_TYPE", "") or TIDL_TOOLS_TYPE_DEFAULT
+    tidl_tools_download_local_server = os.environ.get("TIDL_TOOLS_DOWNLOAD_LOCAL_SERVER", "")
 
-    tidl_tools_download_base = os.environ.get("TIDL_TOOLS_DOWNLOAD_LOCAL_SERVER", "") or "https://software-dl.ti.com/jacinto7/esd/tidl-tools"
-    gcc_arm_download_base = os.environ.get("TIDL_TOOLS_DOWNLOAD_LOCAL_SERVER", "") or "https://developer.arm.com/-/media/Files/downloads/gnu/13.2.rel1/binrel"
-    c7x_compiler_download_base = os.environ.get("TIDL_TOOLS_DOWNLOAD_LOCAL_SERVER", "") or "https://dr-download.ti.com/software-development/ide-configuration-compiler-or-debugger/MD-707zYe3Rik"
+    if tidl_tools_download_local_server:
+        tidl_tools_download_base = os.path.join(tidl_tools_download_local_server, "tidl-tools")
+        gcc_arm_download_base = os.path.join(tidl_tools_download_local_server, "gnu-arm")
+        c7x_compiler_download_base = os.path.join(tidl_tools_download_local_server, "ti-cgt")
+    else:
+        tidl_tools_download_base = "https://software-dl.ti.com/jacinto7/esd/tidl-tools"
+        gcc_arm_download_base = "https://developer.arm.com/-/media/Files/downloads/gnu/13.2.rel1/binrel"
+        c7x_compiler_download_base = "https://dr-download.ti.com/software-development/ide-configuration-compiler-or-debugger/MD-707zYe3Rik"
+    #
 
     for num_tries in range(1):
         try:
