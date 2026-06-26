@@ -36,5 +36,5 @@ session:
 model_info:
   metric_reference:
     accuracy_top1%: 82.3
-  model_shortlist: 110
+  model_shortlist: 120
   shortlisted: false

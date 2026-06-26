@@ -35,6 +35,6 @@ session:
 model_info:
   metric_reference:
     accuracy_top1%: 79.41
-  model_shortlist: 130
+  model_shortlist: 140
   compact_name: EfficientVit_B1
   shortlisted: false

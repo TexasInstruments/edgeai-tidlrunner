@@ -34,6 +34,6 @@ session:
 model_info:
   metric_reference:
     accuracy_top1%: 84.228
-  model_shortlist: 120
+  model_shortlist: 130
   compact_name: EfficientNet-V2-S-384
   shortlisted: false

@@ -36,6 +36,6 @@ metric:
 model_info:
   metric_reference:
     accuracy_top1%: 72.3
-  model_shortlist: 120
+  model_shortlist: 130
   compact_name: mobv3-large-minimalistic
   shortlisted: false

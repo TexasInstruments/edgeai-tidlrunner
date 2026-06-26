@@ -35,6 +35,6 @@ session:
 model_info:
   metric_reference:
     accuracy_top1%: 83.24
-  model_shortlist: 130
+  model_shortlist: 140
   compact_name: InternImage-tiny
   shortlisted: false

@@ -47,7 +47,6 @@ postprocess:
   save_output: false
   name: fastbev_model_postprocess
   enable_nms: false
-  queue_length: 0
 metric: {}
 model_info:
   metric_reference: {}

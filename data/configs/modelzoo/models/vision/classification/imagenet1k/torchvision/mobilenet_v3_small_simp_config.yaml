@@ -35,6 +35,6 @@ session:
 model_info:
   metric_reference:
     accuracy_top1%: 67.668
-  model_shortlist: 120
+  model_shortlist: 130
   compact_name: mobilenetV3-small-224
   shortlisted: false
