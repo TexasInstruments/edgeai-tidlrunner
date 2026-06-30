@@ -46,3 +46,4 @@ postprocess:
 metric: {}
 model_info:
   metric_reference: {}
+  model_shortlist: 150

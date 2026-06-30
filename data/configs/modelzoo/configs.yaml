@@ -159,64 +159,21 @@ configs:
   cl-6832: models/vision/classification/imagenet1k/hf-transformers/efficientvit_b2.r224_in1k_config.yaml
   cl-6841: models/vision/classification/imagenet1k/hf-transformers/efficientvit_l1.r224_in1k_config.yaml
   cl-6842: models/vision/classification/imagenet1k/hf-transformers/efficientvit_l2.r224_in1k_config.yaml
-  ss-8770: models/vision/segmentation/ade20k/hf-transformers/segformer_b2_finetuned_ade_512_512_simp_config.yaml
-  cl-6061: models/vision/high_resolution/imagenet1k/edgeai-tv/mobilenet_v1_20190906_512x512_config.yaml
-  cl-6062: models/vision/high_resolution/imagenet1k/edgeai-tv/mobilenet_v1_20190906_1024x1024_config.yaml
-  cl-6091: models/vision/high_resolution/imagenet1k/torchvision/mobilenet_v2_tv_512x512_config.yaml
-  cl-6092: models/vision/high_resolution/imagenet1k/torchvision/mobilenet_v2_tv_1024x1024_config.yaml
-  cl-6151: models/vision/high_resolution/imagenet1k/edgeai-tv/mobilenet_v2_1p4_qat-p2_20210112_512x512_config.yaml
-  cl-6152: models/vision/high_resolution/imagenet1k/edgeai-tv/mobilenet_v2_1p4_qat-p2_20210112_1024x1024_config.yaml
-  cl-6101: models/vision/high_resolution/imagenet1k/torchvision/resnet18_512x512_config.yaml
-  cl-6102: models/vision/high_resolution/imagenet1k/torchvision/resnet18_1024x1024_config.yaml
-  cl-6111: models/vision/high_resolution/imagenet1k/torchvision/resnet50_512x512_config.yaml
-  cl-6112: models/vision/high_resolution/imagenet1k/torchvision/resnet50_1024x1024_config.yaml
-  cl-6121: models/vision/high_resolution/imagenet1k/torchvision/regnet_x_400mf_tv_512x512_config.yaml
-  cl-6122: models/vision/high_resolution/imagenet1k/torchvision/regnet_x_400mf_tv_1024x1024_config.yaml
-  cl-6131: models/vision/high_resolution/imagenet1k/torchvision/regnet_x_800mf_tv_512x512_config.yaml
-  cl-6132: models/vision/high_resolution/imagenet1k/torchvision/regnet_x_800mf_tv_1024x1024_config.yaml
-  cl-6141: models/vision/high_resolution/imagenet1k/torchvision/regnet_x_1_6gf_tv_512x512_config.yaml
-  cl-6142: models/vision/high_resolution/imagenet1k/torchvision/regnet_x_1_6gf_tv_1024x1024_config.yaml
   cl-6060: models/vision/classification/imagenet1k/edgeai-tv/mobilenet_v1_20190906_config.yaml
-  cl-6070: models/vision/classification/imagenet1k/edgeai-tv/mobilenet_v2_20191224_config.yaml
-  cl-6078: models/vision/classification/imagenet1k/edgeai-tv/mobilenet_v2_qat-p2_20201213_config.yaml
-  cl-6158: models/vision/classification/imagenet1k/edgeai-tv/mobilenet_v2_1p4_qat-p2_20210112_config.yaml
-  cl-6470: models/vision/classification/imagenet1k/pingolh-hardnet/hardnet39ds_config.yaml
-  cl-6460: models/vision/classification/imagenet1k/pingolh-hardnet/hardnet68ds_config.yaml
-  cl-6440: models/vision/classification/imagenet1k/pingolh-hardnet/hardnet68_config.yaml
-  cl-6450: models/vision/classification/imagenet1k/pingolh-hardnet/hardnet85_config.yaml
   cl-0218: models/vision/classification/imagenet1k/tf1-models/mobilenet_v1_1.0_224_quant_config.yaml
   cl-0020: models/vision/classification/imagenet1k/tf1-models/squeezenet_config.yaml
   cl-0070: models/vision/classification/imagenet1k/tf1-models/mnasnet_1.0_224_config.yaml
-  cl-0050: models/vision/classification/imagenet1k/tf1-models/resnet50_v1_config.yaml
   cl-0060: models/vision/classification/imagenet1k/tf1-models/resnet50_v2_config.yaml
-  cl-0190: models/vision/classification/imagenet1k/tf-tpu/efficientnet-edgetpu-L_float_config.yaml
-  cl-3098: models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_qat-p2_tvmrt_config.yaml
-  cl-3110: models/vision/classification/imagenet1k/torchvision/resnet50_tvmrt_config.yaml
-  cl-6507: models/vision/classification/imagenet1k/edgeai-tv2/mobilenet_v2_lite_wt-v2_qat-v2-wt8sp2-at8sp2_20231124_model_config.yaml
-  cl-6520: models/vision/classification/imagenet1k/edgeai-tv2/resnet18_lite_wt-v1_20230920_config.yaml
-  cl-6904: models/vision/classification/imagenet1k/torchvision/densenet121_tv_qdq-ptc_config.yaml
-  cl-6909: models/vision/classification/imagenet1k/torchvision/shufflenet_v2_x0_5_tv_qdq-ptc_config.yaml
-  od-8030: models/vision/detection/coco/edgeai-mmdet/ssd_mobilenetv2_fpn_lite_512x512_20201110_model_config.yaml
-  od-8050: models/vision/detection/coco/edgeai-mmdet/ssd_regnetx-800mf_fpn_bgr_lite_512x512_20200919_model_config.yaml
-  od-8060: models/vision/detection/coco/edgeai-mmdet/ssd_regnetx-1.6gf_fpn_bgr_lite_768x768_20200923_model_config.yaml
-  od-8070: models/vision/detection/coco/edgeai-mmdet/yolov3_d53_relu_416x416_20210117_model_config.yaml
-  od-8080: models/vision/detection/coco/edgeai-mmdet/yolov3_regnetx-1.6gf_bgr_lite_512x512_20210202_model_config.yaml
+  od-8070: models/vision/detection/coco/edgeai-mmdet/yolov3_d53_416x416_20210116_model_config.yaml
   od-8090: models/vision/detection/coco/edgeai-mmdet/retinanet_regnetx-800mf_fpn_bgr_lite_512x512_20200908_model_config.yaml
   od-8230: models/vision/detection/coco/edgeai-mmdet/yolox_m_lite_640x640_20220228_model_config.yaml
-  od-8260: models/vision/detection/coco/edgeai-mmdet/yolox_femto_lite_320x320_20230407_model_config.yaml
-  od-2060: models/vision/detection/coco/tf1-models/ssdlite_mobilenet_v2_coco_20180509_config.yaml
   od-2090: models/vision/detection/coco/tf2-models/ssd_mobilenet_v2_fpnlite_640x640_coco17_tpu-8_config.yaml
   od-2100: models/vision/detection/coco/tf2-models/ssd_resnet50_v1_fpn_640x640_coco17_tpu-8_config.yaml
   od-2110: models/vision/detection/coco/google-automl/efficientdet-lite0_bifpn_maxpool2x2_relu_ti-lite_config.yaml
-  od-2130: models/vision/detection/coco/tf2-models/ssd_mobilenet_v2_320x320_coco17_tpu-8_config.yaml
   od-2170: models/vision/detection/coco/google-automl/efficientdet_lite3_relu_config.yaml
   od-8921: models/vision/detection/coco/hf-transformers/deformable_detr_single_scale_no-mask-bn_simp_config.yaml
   od-8922: models/vision/detection/coco/hf-transformers/deformable_detr_multi_scale_no-mask-bn_simp_config.yaml
-  od-8421: models/vision/detection/widerface/edgeai-mmdet/yolox_s_lite_1024x1024_20220317_model_config.yaml
-  ss-2540: models/vision/segmentation/ade20k/tf1-models/deeplabv3_mnv2_ade20k_train_20181203_512x512_config.yaml
-  ss-2590: models/vision/segmentation/voc2012/tf1-models/deeplabv3_mnv2_dm05_pascal_trainaug_512x512_config.yaml
-  ss-2600: models/vision/segmentation/voc2012/tf1-models/deeplabv3_mnv2_pascal_trainaug_512x512_config.yaml
-  3dod-8160: models/vision/detection_3d/pandaset/mmdet3d/fastbev_mod_pandaset_r18_f1_256x704_20251215_config.yaml
+  ss-8770: models/vision/segmentation/ade20k/hf-transformers/segformer_b2_finetuned_ade_512_512_simp_config.yaml
   3dod-7120: models-cl/vision/detection_3d/nuscenes/petr/petrv1_mod_vovnet_320x800_20260407_opt_config.yaml
   3dod-7121: models-cl/vision/detection_3d/nuscenes/petrv2/petrv2_mod_vovnet_320x800_20260407_opt_config.yaml
   3dod-7130: models-cl/vision/detection_3d/nuscenes/bevdet/bevdet_r50_mod_256x704_20251215_config.yaml

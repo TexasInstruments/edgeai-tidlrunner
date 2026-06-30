@@ -2,11 +2,11 @@ task_type: detection
 input_dataset: coco
 preprocess:
   resize:
-  - 512
-  - 512
+  - 416
+  - 416
   crop:
-  - 512
-  - 512
+  - 416
+  - 416
   data_layout: NCHW
   reverse_channels: false
   backend: cv2
@@ -26,12 +26,12 @@ session:
   - 0.017507
   - 0.017429
   runtime_options:
-    advanced_options:output_feature_16bit_names_list: ''
+    advanced_options:output_feature_16bit_names_list: 694, 698, 702
     advanced_options:params_16bit_names_list: ''
-    object_detection:meta_arch_type: 3
-    object_detection:meta_layers_names_list: ssd_mobilenetv2_fpn_lite_512x512_20201110_model.prototxt
-  model_path: ssd_mobilenetv2_fpn_lite_512x512_20201110_model.onnx
-  model_id: od-8030
+    object_detection:meta_arch_type: 4
+    object_detection:meta_layers_names_list: yolov3_d53_416x416_20210116_model.prototxt
+  model_path: yolov3_d53_416x416_20210116_model.onnx
+  model_id: od-8070
   input_details: null
   output_details: null
   num_inputs: 1
@@ -143,7 +143,7 @@ metric:
     80: 91
 model_info:
   metric_reference:
-    accuracy_ap[.5:.95]%: 27.2
-  model_shortlist: null
-  compact_name: ssd-lite-mobv2-fpn-mmdet-coco-512x512
+    accuracy_ap[.5:.95]%: 30.7
+  model_shortlist: 150
+  compact_name: yolov3-d53-mmdet-coco-416x416
   shortlisted: false

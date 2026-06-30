@@ -159,6 +159,6 @@ metric:
 model_info:
   metric_reference:
     accuracy_ap[.5:.95]%: 33.61
-  model_shortlist: null
+  model_shortlist: 150
   compact_name: efficientDet-ti-lite0-coco-512x512
   shortlisted: false

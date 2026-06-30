@@ -153,6 +153,6 @@ metric:
 model_info:
   metric_reference:
     accuracy_ap[.5:.95]%: 34.3
-  model_shortlist: null
+  model_shortlist: 150
   compact_name: ssd-res50V1-fpn-coco-tpu-8-640x640
   shortlisted: false

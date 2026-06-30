@@ -144,6 +144,6 @@ metric:
 model_info:
   metric_reference:
     accuracy_ap[.5:.95]%: 33.0
-  model_shortlist: null
+  model_shortlist: 150
   compact_name: retina-lite-regNetX-800mf-fpn-bgr-mmdet-coco-512x512
   shortlisted: false

@@ -36,6 +36,6 @@ metric:
 model_info:
   metric_reference:
     accuracy_top1%: 57.5
-  model_shortlist: null
+  model_shortlist: 150
   compact_name: SqueezeNet
   shortlisted: false

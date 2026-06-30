@@ -45,6 +45,6 @@ metric:
 model_info:
   metric_reference:
     accuracy_mean_iou%: 46.5
-  model_shortlist: 200
+  model_shortlist: 150
   compact_name: segformerB2-transformer-ade-512x512
   shortlisted: false

@@ -36,6 +36,6 @@ metric:
 model_info:
   metric_reference:
     accuracy_top1%: 75.6
-  model_shortlist: null
+  model_shortlist: 150
   compact_name: resNet50V2
   shortlisted: false

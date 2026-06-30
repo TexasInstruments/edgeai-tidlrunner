@@ -34,6 +34,6 @@ session:
 model_info:
   metric_reference:
     accuracy_top1%: 71.82
-  model_shortlist: null
+  model_shortlist: 150
   compact_name: mobileNetV1
   shortlisted: false
