@@ -38,7 +38,12 @@ dependencies = [
     "soundfile",
     "scipy",
     "plyfile",
-    "h5py"
+    "h5py",
+    "numpy<2",
+    "opencv-python-headless<5",
+    "onnx==1.18.0",
+    "protobuf<5",
+    "tflite==2.18",
 ]
 
 [project.urls]
@@ -48,24 +53,21 @@ dependencies = [
 
 [project.optional-dependencies]
 pc = [
-    "opencv-python-headless",
-    "onnx==1.14.0",
-    "protobuf==3.20.3",
-    "numpy==1.23.0",
     "onnxsim==0.4.35", 
     "onnx-graphsurgeon==0.5.2",
     "nuscenes-devkit", ## nuscenes-devkit needs to be moved to main requirements after figuring out on how to install on evm
 ]
+
 evm = [
-    "pycocotools",
-    "numpy<2"
 ]
+
 dev = [
     "pytest",
     "black",
     "flake8",
     "mypy"
 ]
+
 audio = [
     "librosa",
     "soundfile",

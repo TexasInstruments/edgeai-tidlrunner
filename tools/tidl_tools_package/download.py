@@ -395,7 +395,7 @@ def download_tidl_tools(download_url, download_path, **tidl_version_dict):
 ###############################################################################
 def download_tidl_tools_package_11_02_01(install_path, tools_version, tools_type, tidl_tools_download_base, gcc_arm_download_base, c7x_compiler_download_base):
     """Download TIDL tools package version 11.2.1"""
-    expected_tools_version = ("11.2",)
+    expected_tools_version = ("11.2.1",)
     assert tools_version in expected_tools_version, f"ERROR: incorrect tools_version passed:{tools_version} - expected:{expected_tools_version}"
     tidl_tools_version_name = tools_version
     tidl_tools_release_label = "r11.2.1"
