@@ -45,12 +45,12 @@ This script installs the CUDA based tidl-tools and nvidia-hpc-sdk. It is up to t
 The version of tidl-tools can be specified in setup_runner_pc.sh - open this file and change the line that specifies TIDL_TOOLS_VERSION on top. Tt may also be specified from commandline
 
 ```
-TIDL_TOOLS_VERSION="11.2" ./setup_runner_pc.sh
+TIDL_TOOLS_VERSION="11.2.1" ./setup_runner_pc.sh
 ```
 
 OR for gpu based tidl-tools:
 ```
-TIDL_TOOLS_VERSION="11.2" ./setup_runner_pc_gpu.sh
+TIDL_TOOLS_VERSION="11.2.1" ./setup_runner_pc_gpu.sh
 ```
 
 
