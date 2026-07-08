@@ -303,10 +303,6 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
             #
 
             if shortlisted_model and selected_model:
-                if isinstance(config_entry, str):
-                    print(f'INFO: model_id: {model_id} config file: {config_entry}')
-                #
-
                 # now systematically create the final kwargs
                 kwargs_model = dict()
                 # set defaults+command line args - so that we have all the args required
@@ -330,7 +326,7 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
                 model_command_list.append((command,pipeline_name,kwargs_model))
                 run_dict[model_id] = model_command_list
                 selected_models.append(model_id)
-                print(f'INFO: shortlisted/selected: model_id: {kwargs_model.get("session.model_id",None)}, config_path: {kwargs_model.get("common.config_path",None)}, model_path: {kwargs_model.get("session.model_path",None)}')
+                print(f'INFO: shortlisted/selected - model_id: {kwargs_model.get("session.model_id",None)}, config_path: {kwargs_model.get("common.config_path",None)}, model_path: {kwargs_model.get("session.model_path",None)}')
             elif verbose > 0:
                 if config_entry_path:
                     print(f'INFO: skipping entry: {config_entry_path} - does not match model_shortlist: {model_shortlist}, model_selection: {model_selection}')
