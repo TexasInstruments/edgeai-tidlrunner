@@ -98,7 +98,7 @@ class TVMRuntimeWrapper(BaseRuntimeWrapper):
         elif len(self._input_list) > self._calibration_frames:
             print(f"WARNING: not need to call run_import more than calibration_frames = {self._calibration_frames}")
         #
-        return output
+        return input_data, output
 
     def start_inference(self):
         if self._start_inference_done:
@@ -133,9 +133,9 @@ class TVMRuntimeWrapper(BaseRuntimeWrapper):
         #
         input_data = self._format_input_data(input_data)
         super()._pre_inference(input_data, output_keys)
-        outputs = self._run(input_data, output_keys)
+        input_data, outputs = self._run(input_data, output_keys)
         super()._post_inference(input_data, output_keys)
-        return outputs
+        return input_data, outputs
 
     def _run(self, input_data, output_keys=None):
         # if model needs additional inputs given in extra_inputs
@@ -152,7 +152,7 @@ class TVMRuntimeWrapper(BaseRuntimeWrapper):
 
         output_keys = output_keys or [d_info['name'] for d_info in self.kwargs['output_details']]
         output_dict = {output_key:output for output_key, output in zip(output_keys, outputs)}
-        return output_dict
+        return input_data, output_dict
 
     def _create_interpreter_for_import(self, calib_list):
         # onnx and tvm are required only for model import

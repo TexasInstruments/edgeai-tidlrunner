@@ -203,6 +203,7 @@ class InferModel(CompileModelBase):
             if input_index % display_step == 0:
                 tqdm_obj.update(input_index - tqdm_obj.n)
             #
+            self._run_counter += 1
         #
         tqdm_obj.update(input_index + 1 - tqdm_obj.n)
         print(f'INFO: model infer done. output is in: {self.run_dir}')
@@ -224,12 +225,12 @@ class InferModel(CompileModelBase):
         input_data, info_dict = self.dataloader(input_index, info_dict)
         input_data, info_dict = self.preprocess(input_data, info_dict=info_dict) if self.preprocess else (input_data, info_dict)
 
-        # Dump inputs to NPZ file if enabled
-        if common_kwargs.get('save_input', True):
-            self._save_input_to_npz(input_data)
-
         # run the underlying runtime session to infer the model
-        output_dict = self.session.run_inference(input_data)
+        input_data, output_dict = self.session.run_inference(input_data)
+
+        # Dump inputs to NPZ file if enabled
+        if common_kwargs.get('save_input_tensors', False):
+            self._save_input_tensors(input_data, phase='infer')
 
         # Update temporal queue for temporal detection (BEV) models 
         if hasattr(self.dataloader, 'update_queue_mem'):

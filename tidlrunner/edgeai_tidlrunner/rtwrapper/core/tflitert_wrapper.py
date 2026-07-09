@@ -57,13 +57,13 @@ class TFLiteRuntimeWrapper(BaseRuntimeWrapper):
             self.start_import()
         #
         input_data = self._format_input_data(input_data)
-        output = self._run(input_data, output_keys)
+        input_data, output = self._run(input_data, output_keys)
 
         self._num_run_import += 1
         if self._num_run_import > self._calibration_frames:
             print(f"WARNING: not need to call run_import more than calibration_frames = {self._calibration_frames}")
         #
-        return output
+        return input_data, output
 
     def start_inference(self):
         if self._start_inference_done:
@@ -84,9 +84,9 @@ class TFLiteRuntimeWrapper(BaseRuntimeWrapper):
         #
         input_data = self._format_input_data(input_data)
         super()._pre_inference(input_data, output_keys)
-        outputs = self._run(input_data, output_keys)
+        input_data, outputs = self._run(input_data, output_keys)
         super()._post_inference(input_data, output_keys)
-        return outputs
+        return input_data, outputs
 
     def _run(self, input_data, output_keys=None):
         # if model needs additional inputs given in extra_inputs
@@ -105,7 +105,7 @@ class TFLiteRuntimeWrapper(BaseRuntimeWrapper):
         
         outputs = [self._get_tensor(output_detail) for output_detail in output_details]
         output_dict = {output_key:output for output_key, output in zip(output_keys, outputs)}
-        return output_dict
+        return input_data, output_dict
 
     def _create_interpreter(self, is_import):
         # move the import inside the function, so that tflite_runtime needs to be installed
