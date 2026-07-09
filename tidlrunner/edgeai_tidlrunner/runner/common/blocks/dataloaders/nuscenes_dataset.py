@@ -1381,7 +1381,7 @@ class NuScenesDataset(DatasetBase):
 
     # Update temporal queue for temporal BEV models (e.g. StreamPETR, Far3D, Sparse4D, BEVFormer, etc.)
     def update_queue_mem(self, predictions, info_dict):
-        bbox_list = list(predictions.keys()) if isinstance(predictions, dict) else predictions
+        bbox_list = list(predictions.values()) if isinstance(predictions, dict) else predictions
 
         # Do nothing for non-temporal models
         if 'num_bev_temporal_frames' not in info_dict or 'queue_mem' not in info_dict:
@@ -1396,7 +1396,7 @@ class NuScenesDataset(DatasetBase):
             queue_mem.pop(first_key)
 
         if info_dict['task_name'] == 'StreamPETR':
-            history_start_idx = 3
+            #history_start_idx = 3
             queue_mem[info_dict['sample_idx']] = \
                 dict(feature_map=bbox_list[3:], img_meta=info_dict) # do we need to save img_meta?
             # Update memory_timestamp
@@ -1406,15 +1406,15 @@ class NuScenesDataset(DatasetBase):
             queue_mem[info_dict['sample_idx']].update(dict(memory_timestamp=memory_timestamp))
 
         elif info_dict['task_name'] == 'Far3D':
-            history_start_idx = 3
+            #history_start_idx = 3
             queue_mem[info_dict['sample_idx']] = \
                 dict(feature_map=bbox_list[3:], img_meta=info_dict) # do we need to save img_meta?
         elif info_dict['task_name'] == 'Sparse4D':
-            history_start_idx = 5
+            #history_start_idx = 5
             queue_mem[info_dict['sample_idx']] = \
                 dict(det_history=bbox_list[5:], his_timestamp=info_dict['his_timestamp'], his_T_global=info_dict['his_T_global'])
         else:
-            history_start_idx = -1
+            #history_start_idx = -1
             queue_mem[info_dict['sample_idx']] = \
                 dict(feature_map=bbox_list[-1], img_meta=info_dict)
 

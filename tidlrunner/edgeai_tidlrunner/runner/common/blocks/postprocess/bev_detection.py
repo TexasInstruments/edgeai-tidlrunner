@@ -2062,8 +2062,12 @@ class Bbox3d2result(object):
             result_dict['instance_ids'] = bbox_list[4]
             if result_dict['labels_3d'].ndim == 2:
                 result_dict['labels_3d'] = result_dict['labels_3d'].reshape(-1)
-        elif len(bbox_list) == 4:
-            result_dict['attr_labels'] = bbox_list[3]
+        # Some models may have attr_labels as the 4th output,
+        # If we support such models in the future, we need to add the following code to save the attr_labels
+        # in the result_dict. And also need to modify update_queue_mem() in pandaset_dataset.py and nuscenes_dataset.py,
+        # e.g., return bbox_list[:history_start_idx], instead of return bbox_list
+        #elif len(bbox_list) == 4:
+        #    result_dict['attr_labels'] = bbox_list[3]
 
         return result_dict, info_dict
 
