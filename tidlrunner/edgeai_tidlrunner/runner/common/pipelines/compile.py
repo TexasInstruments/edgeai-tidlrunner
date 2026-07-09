@@ -252,6 +252,7 @@ class CompileModel(CompileModelBase):
             print(f'INFO: import frame: {input_index}')
             run_dict = self._run_frame(input_index)
             run_data.append(run_dict)
+            self._run_counter += 1
         #
         print(f'INFO: model import done. output is in: {self.run_dir}')
         self.run_data = run_data
@@ -261,12 +262,17 @@ class CompileModel(CompileModelBase):
         return run_data
     
     def _run_frame(self, input_index):
+        common_kwargs = self.settings[self.common_prefix]
         info_dict = self.get_info_dict(input_index)
         input_data, info_dict = self.dataloader(input_index, info_dict)
         input_data, info_dict = self.preprocess(input_data, info_dict=info_dict) if self.preprocess else (input_data, info_dict)
 
         # run the underlying runtime session to import the model
-        output_dict = self.session.run_import(input_data)
+        input_data, output_dict = self.session.run_import(input_data)
+
+        # Dump inputs to NPZ file if enabled
+        if common_kwargs.get('save_input_tensors', False):
+            self._save_input_tensors(input_data, phase='import')
 
         # Update temporal queue for temporal detection (BEV) models 
         if hasattr(self.dataloader, 'update_queue_mem'):
