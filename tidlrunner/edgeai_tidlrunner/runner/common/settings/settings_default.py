@@ -254,7 +254,8 @@ COPY_SETTINGS_DEFAULT['extract'] = COPY_SETTINGS_DEFAULT['basic'] | {
 
 ##########################################################################
 SETTINGS_DEFAULT['report'] = SETTINGS_DEFAULT['basic'] | {
-    'pipeline_type':          {'dest': 'common.pipeline_type', 'default': 'compile', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'}, 
+    'pipeline_type':          {'dest': 'common.pipeline_type', 'default': 'compile', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},
+    'target_device':          {'dest': 'session.target_device', 'default': None, 'type': str, 'metavar': 'value', 'help': 'target device for report (AM62A, AM69A, etc. None for all devices)'},
     'report_mode':            {'dest': 'common.report.mode', 'default': 'detailed', 'type': str, 'metavar': 'value', 'choices': ['summary', 'detailed'], 'help': 'report generation mode (summary or detailed)'},
     'report_path':            {'dest': 'common.report.path', 'default': './work_dirs/{run_label}/{pipeline_type}', 'type': str, 'metavar': 'value', 'help': 'path where reports will be generated'},
     'run_label':              {'dest': 'common.run_label', 'default': '', 'type': str, 'metavar': 'value', 'help': 'run_label to create run_dir'},
