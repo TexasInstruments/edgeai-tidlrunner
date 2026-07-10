@@ -350,12 +350,21 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
             raise RuntimeError(f'WARNING: unknown args found for command: {command} - {rest_args}')
         #
     #
+
+    if len(run_dict) == 0:
+        print(f'ERROR: no models selected for command: {command} - model_shortlist: {model_shortlist}, model_selection: {model_selection}')
+    #
+
     return run_dict
 
 
 def _run(model_command_dict):
-    assert isinstance(model_command_dict, dict) and \
-           isinstance(list(model_command_dict.values())[0],list) and \
+    assert isinstance(model_command_dict, dict), f'ERROR: {__file__} _run(): expecting a dict of list of tuples'
+    if len(model_command_dict) == 0:
+        print(f'ERROR: nothing to run - model_command_dict is empty')
+        return
+
+    assert isinstance(list(model_command_dict.values())[0],list) and \
             isinstance(list(model_command_dict.values())[0][0], tuple), 'expecting a dict of list of tuples'
 
     parallel_processes = None
