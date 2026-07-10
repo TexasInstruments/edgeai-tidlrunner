@@ -102,7 +102,7 @@ class GenReport(CommonPipelineBase):
         report_perfsim = kwargs['common']['report']['mode']
         report_path = kwargs['common']['report']['path']
         target_device = kwargs['session'].get('target_device', 'NONE')
-        self.work_path = self._build_run_dir(report_path)
+        self.work_path = self._build_run_dir(report_path, 'compile')
 
         if target_device in (None, 'None', 'NONE'):
             benchmark_dir = self.work_path
