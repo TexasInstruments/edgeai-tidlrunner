@@ -72,10 +72,10 @@ def uninstall_package(*install_args, install_cmd="uninstall"):
 
 
 def main():
+    # this is installed as part of tidlrunner package installation - so pass here
     # install_package("onnx-graphsurgeon==0.3.26", "--extra-index-url", "https://pypi.ngc.nvidia.com")
-    # install_package("onnx-graphsurgeon==0.5.8", "--extra-index-url", "https://pypi.ngc.nvidia.com")
-    # onnx-graphsurgeon 0.3.x link is not working anymore, moving to 0.5.x and it can be put in requiremens
-    # so moving this installaiton to requirements and removing this code
+    # install_package("onnx-graphsurgeon==0.5.2", "--extra-index-url", "https://pypi.ngc.nvidia.com")
+    # install_package("onnx-graphsurgeon==0.6.1", "--extra-index-url", "https://pypi.ngc.nvidia.com")
     pass
 
 if __name__ == '__main__':

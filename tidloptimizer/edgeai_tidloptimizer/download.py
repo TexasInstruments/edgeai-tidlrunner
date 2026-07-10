@@ -68,9 +68,10 @@ def install_package(*install_args):
 
 
 def main():
-    # this is installed as part of tidlrunner package installation (tidlrunner-tools-install in setup.sh) - so pass here
+    # this is installed as part of tidloptimizer package installation - so pass here
     # install_package("onnx-graphsurgeon==0.3.26", "--extra-index-url", "https://pypi.ngc.nvidia.com")
-    # install_package("onnx-graphsurgeon==0.5.8", "--extra-index-url", "https://pypi.ngc.nvidia.com")
+    # install_package("onnx-graphsurgeon==0.5.2", "--extra-index-url", "https://pypi.ngc.nvidia.com")
+    # install_package("onnx-graphsurgeon==0.6.1", "--extra-index-url", "https://pypi.ngc.nvidia.com")
     pass
 
 

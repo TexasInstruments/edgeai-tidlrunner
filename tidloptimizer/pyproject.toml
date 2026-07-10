@@ -22,6 +22,7 @@ classifiers = [
 dependencies = [
     #"edgeai_torchmodelopt @ git+ssh://git@bitbucket.itg.ti.com/edgeai-algo/edgeai-modeloptimization.git@develop#subdirectory=torchmodelopt",
     #"edgeai_onnx2torchmodel @ git+ssh://git@bitbucket.itg.ti.com/edgeai-algo/edgeai-modeloptimization.git@develop#subdirectory=onnx2torchmodel",
+    "onnx-graphsurgeon==0.6.1"
 ]
 
 [project.urls]

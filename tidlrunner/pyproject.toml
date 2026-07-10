@@ -54,7 +54,7 @@ dependencies = [
 [project.optional-dependencies]
 pc = [
     "onnxsim==0.4.35", 
-    "onnx-graphsurgeon==0.5.2",
+    "onnx-graphsurgeon==0.6.1",
     "nuscenes-devkit", ## nuscenes-devkit needs to be moved to main requirements after figuring out on how to install on evm
 ]
 
