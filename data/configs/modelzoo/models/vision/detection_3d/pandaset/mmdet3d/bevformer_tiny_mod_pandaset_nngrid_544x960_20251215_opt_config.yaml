@@ -62,5 +62,7 @@ postprocess:
   name: bev_detection_postprocess
 metric: {}
 model_info:
-  metric_reference: {}
+  metric_reference:
+    pred_instances_3d/mAP: 0.2079
+    pred_instances_3d/NDS: 0.2798
   model_shortlist: 100

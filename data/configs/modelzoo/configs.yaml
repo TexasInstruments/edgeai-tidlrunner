@@ -162,8 +162,10 @@ configs:
   cl-6060: models/vision/classification/imagenet1k/edgeai-tv/mobilenet_v1_20190906_config.yaml
   cl-0218: models/vision/classification/imagenet1k/tf1-models/mobilenet_v1_1.0_224_quant_config.yaml
   cl-0020: models/vision/classification/imagenet1k/tf1-models/squeezenet_config.yaml
+  cl-0041: models/vision/classification/imagenet1k/tf1-models/inception_v4_config.yaml
   cl-0070: models/vision/classification/imagenet1k/tf1-models/mnasnet_1.0_224_config.yaml
   cl-0060: models/vision/classification/imagenet1k/tf1-models/resnet50_v2_config.yaml
+  cl-0280: models/vision/classification/imagenet1k/tf1-models/densenet_config.yaml
   od-8070: models/vision/detection/coco/edgeai-mmdet/yolov3_d53_416x416_20210116_model_config.yaml
   od-8090: models/vision/detection/coco/edgeai-mmdet/retinanet_regnetx-800mf_fpn_bgr_lite_512x512_20200908_model_config.yaml
   od-8230: models/vision/detection/coco/edgeai-mmdet/yolox_m_lite_640x640_20220228_model_config.yaml
