@@ -245,6 +245,7 @@ class GenReport(CommonPipelineBase):
 
         date = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         report_csv = os.path.join(benchmark_dir, f'report_{date}.csv')
+        report_csv = os.path.abspath(report_csv)
         with open(report_csv, 'w') as wfp:
             title_str = ','.join(title_line)
             wfp.write(f'{title_str}\n')
@@ -260,30 +261,44 @@ class GenReport(CommonPipelineBase):
 
 
     def get_metric(self, pipeline_params, metric_keys, compilation_done):
+        metric_keys= metric_keys.copy()
         metric_name = None
         metric = None
         metric_reference = None
         if pipeline_params is not None:
+            if 'model_info' in pipeline_params:
+                model_info = pipeline_params['model_info']
+                if 'metric_reference' in model_info:
+                    metrics = model_info['metric_reference']
+                    for t_metric in metrics:
+                        if t_metric not in metric_keys:
+                            metric_keys.append(t_metric)
+
             if 'result' in pipeline_params and pipeline_params['result'] is not None:
                 result = pipeline_params['result']
+
+                metrics_available = []
                 for metric_key in metric_keys:
-                    if metric_key in result:
-                        metric = result[metric_key]
-                        metric_name = metric_key
-                    #
+                    matches = [key for key in result if key.find(metric_key)>=0]
+                    metrics_available.extend(matches)
                 #
-            elif compilation_done is True:
-                metric = 'no_inference'
-            elif compilation_done is False:
-                metric = 'no_compilation'
+                if metrics_available:
+                    keys = list(set(metrics_available))
+                    vals = [str(result[key]) for key in keys]
+                    metric_name = keys[0]  #'|'.join(keys)
+                    metric = vals[0] #'|'.join(vals)
+                elif compilation_done is True:
+                    metric = 'no_inference'
+                elif compilation_done is False:
+                    metric = 'no_compilation'
+                #
             #
+
             if 'model_info' in pipeline_params and pipeline_params['model_info'] is not None:
                 model_info = pipeline_params.get('model_info', {})
                 metric_reference_dict = model_info.get('metric_reference', None)
-                for metric_key in metric_keys:
-                    if metric_reference_dict and metric_key in metric_reference_dict:
-                        metric_reference = metric_reference_dict[metric_key]
-                    #
+                if metric_reference_dict and metric_name in metric_reference_dict:
+                    metric_reference = metric_reference_dict[metric_name]
                 #
             #
         #
