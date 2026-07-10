@@ -50,5 +50,7 @@ postprocess:
   enable_nms: false
 metric: {}
 model_info:
-  metric_reference: {}
+  metric_reference:
+    pred_instances_3d/mAP: 0.1728
+    pred_instances_3d/NDS: 0.2649
   model_shortlist: 100
