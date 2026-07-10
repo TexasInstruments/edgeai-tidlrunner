@@ -108,7 +108,7 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | SETTINGS_DEFAULT['surg
     'config_template':          {'dest': 'common.config_template', 'default':'data/templates/configs/param_template_config.yaml', 'type':str, 'metavar':'value', 'help':'param template path'},
     'incremental':              {'dest': 'common.incremental', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', 'help':'param template path'},
     'clear_run_dir':            {'dest': 'common.clear_run_dir', 'default':True, 'type':utils.str_to_bool, 'metavar':'value', 'help':'clear_run_dir'},
-    'save_input_tensors':       {'dest': 'common.save_input_tensors', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', 'help':'save inputs to the model after preprocessing'},
+    'save_tensors':             {'dest': 'common.save_tensors', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', 'help':'save inputs to the model after preprocessing'},
     # parallel
     'instance_timeout':         {'dest': 'common.instance_timeout', 'default': None, 'type': utils.int_or_none, 'metavar': 'value', 'help': 'max time (seconds) to keep an instance alive for parallel runs'},
     'overall_timeout':          {'dest': 'common.overall_timeout', 'default': None, 'type': utils.int_or_none, 'metavar': 'value', 'help': 'max time (seconds) to run the entire pipeline for parallel runs'},
