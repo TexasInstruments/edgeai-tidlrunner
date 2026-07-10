@@ -46,6 +46,7 @@ def get_command_pipelines(**kwargs):
         'evaluate': ['InferEvaluate'],
         'compile+infer': ['CompileModel', 'InferModel'],
         'compile+evaluate': ['CompileModel', 'InferEvaluate'],
+        'compile+evaluate+report': ['CompileModel', 'InferEvaluate', 'GenReport'],
         'analyze': ['CompileAnalyzeTIDL', 'InferAnalyzeTIDL', 'CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL32', 'InferAnalyzeTIDL32', 'InferAnalyzeFinal'],    
         'inspect': ['CompileAnalyzeTIDL', 'InferAnalyzeTIDL', 'CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL32', 'InferAnalyzeTIDL32', 'InferAnalyzeFinal','GenerateModelInspectorJSON', 'GenerateModelInspectorHTML'],
         'report': ['GenReport'],   
