@@ -1,4 +1,5 @@
 task_type: detection
+task_name: null
 #dataset_category: coco  # Optional
 #calibration_dataset:    # Optional
 #  num_classes: 90       # Optional
@@ -7,6 +8,7 @@ input_dataset:
   # dataset_info: yolox_nano_lite_416x416_20220214_model_dataset.yaml
 preprocess:
   name: null
+  imsize: null
   resize: 416
   crop: 416
   data_layout: NCHW
@@ -21,6 +23,10 @@ preprocess:
   - 114
   - 114
   - 114
+  pad: null
+  bev_size: null
+  pc_range: null
+  queue_length: null
 session:
   name: null
   session_name: null
@@ -90,6 +96,7 @@ session:
     type: tensor(int64)
   num_inputs: 1
   # artifacts_folder: artifacts
+  model_surgery: null
 postprocess:
   name: null
   data_layout: null
@@ -112,7 +119,8 @@ postprocess:
   with_argmax: false
   logits_bbox_to_bbox_ls: false
   keypoint: false
-  object6dpose: false  
+  object6dpose: false
+  enable_nms: null
 metric:
   label_offset_pred: 0
 model_info:
@@ -120,6 +128,8 @@ model_info:
     accuracy_top1%: 71.676
     accuracy_ap[.5:.95]%: 38.3
     accuracy_mean_iou%: 50.55
+    pred_instances_3d/mAP: 0.22
+    pred_instances_3d/NDS: 0.2798
   model_shortlist: 10  # options - just to sort models in terms of importance
   compact_name: None
   shortlisted: None
