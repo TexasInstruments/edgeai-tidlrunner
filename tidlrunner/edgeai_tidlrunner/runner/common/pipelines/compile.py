@@ -271,8 +271,9 @@ class CompileModel(CompileModelBase):
         input_data, output_dict = self.session.run_import(input_data)
 
         # Dump inputs to NPZ file if enabled
-        if common_kwargs.get('save_input_tensors', False):
-            self._save_input_tensors(input_data, phase='import')
+        # if common_kwargs.get('save_tensors', False):
+        #     self._save_input_tensors(input_data, phase='import')
+        #     self._save_output_tensors(output_dict, phase='import')
 
         # Update temporal queue for temporal detection (BEV) models 
         if hasattr(self.dataloader, 'update_queue_mem'):

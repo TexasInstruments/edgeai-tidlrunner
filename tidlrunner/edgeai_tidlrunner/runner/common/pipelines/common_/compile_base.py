@@ -171,7 +171,7 @@ class CompileModelBase(CommonPipelineBase):
     def _save_input_tensors(self, input_data, phase=None):
         """Dump input data to NPZ file for debugging/analysis purposes."""
         # Create output directory if it doesn't exist
-        dump_dir = self.kwargs.get('input_save_dir', os.path.join(self.run_dir, 'inputs'))
+        dump_dir = self.kwargs.get('save_input_tensors_dir', os.path.join(self.run_dir, 'save_tensors', 'inputs'))
         os.makedirs(dump_dir, exist_ok=True)
         
         # Create filename with counter for uniqueness
@@ -192,5 +192,27 @@ class CompileModelBase(CommonPipelineBase):
         # Save to NPZ file
         np.savez(filepath, **npz_data)
 
-        # print(f"INFO: Dumped ONNX inputs to: {filepath}")
-            
+    def _save_output_tensors(self, output_data, phase=None):
+        """Dump output data to NPZ file for debugging/analysis purposes."""
+        # Create output directory if it doesn't exist
+        dump_dir = self.kwargs.get('save_output_tensors_dir', os.path.join(self.run_dir, 'save_tensors', 'outputs'))
+        os.makedirs(dump_dir, exist_ok=True)
+
+        # Create filename with counter for uniqueness
+        # phase = "import" if self.is_import else "infer"
+        filename = f"outputs_{phase}_{self._run_counter:04d}.npz"
+        filepath = os.path.join(dump_dir, filename)
+
+        # Convert output_data to numpy arrays if they aren't already
+        npz_data = {}
+        for key, value in output_data.items():
+            if hasattr(value, 'numpy'):  # Handle torch tensors
+                npz_data[key] = value.numpy()
+            elif isinstance(value, np.ndarray):
+                npz_data[key] = value
+            else:
+                npz_data[key] = np.array(value)
+
+        # Save to NPZ file
+        np.savez(filepath, **npz_data)
+
