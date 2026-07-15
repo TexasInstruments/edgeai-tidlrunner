@@ -109,16 +109,19 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     # post process transforms for detection
     ###############################################################
     @classmethod
-    def create_transforms_detection_base(cls, settings, formatter=None, resize_with_pad=False, keypoint=False, object6dpose=False, normalized_detections=True,
+    def create_transforms_detection_base(cls, settings, formatter=None, resize_with_pad=False, keypoint=False, object6dpose=False, normalized_detections=True, transpose_indices=None, model_output_type=None,
                                      shuffle_indices=None, squeeze_axis=0, reshape_list=None, ignore_index=None, logits_bbox_to_bbox_ls=False,
                                      detection_threshold=None, detection_top_k=None, detection_keep_top_k=None, save_output=False, save_output_frames=50, **kwargs):
 
         # detection_threshold = detection_threshold or settings.detection_threshold
 
         transforms_list = []
+        if transpose_indices is not None:
+            transforms_list += [TransposeTensor(indices=transpose_indices)]
+
         if logits_bbox_to_bbox_ls:
             logits_bbox_to_bbox_kwargs = logits_bbox_to_bbox_ls if isinstance(logits_bbox_to_bbox_ls, dict) else {}
-            transforms_list += [LogitsToLabelScore(**logits_bbox_to_bbox_kwargs)]
+            transforms_list += [LogitsToLabelScore(model_output_type=model_output_type, **logits_bbox_to_bbox_kwargs)]
         #
         transforms_list += [ReshapeList(reshape_list=reshape_list),
                                  ShuffleList(indices=shuffle_indices),
