@@ -106,6 +106,20 @@ def sigmoid(tensor):
 
 
 ##############################################################################
+class TransposeTensor():
+    def __init__(self, indices=None):
+        self.indices = indices
+
+    def __call__(self, input, info_dict):
+        if isinstance(input, (list,tuple)) and len(input) == 1:
+            input = input[0]
+        
+        if isinstance(self.indices, (list,tuple)):
+            return np.transpose(input, self.indices), info_dict
+        else:
+            return input, info_dict
+
+
 class SqueezeAxis():
     def __init__(self, axis=0):
         self.axis = axis
@@ -516,27 +530,79 @@ class DetectionFilter():
 
 
 class LogitsToLabelScore():
-    def __init__(self, scores_index=0, bbox_index=1, background_class_id=None, score_fn='softmax'):
+    def __init__(self, scores_index=0, bbox_index=1, objectness_index=None, background_class_id=None, score_fn='softmax', model_output_type=None):
+        '''
+        Initialize the LogitsToLabelScore transform.
+
+        Args:
+            scores_index (int): Index of the scores tensor in the input list.
+            bbox_index (int): Index of the bounding box tensor in the input list.
+            objectness_index (int): Index of the objectness tensor in the input list.
+            background_class_id (int): ID of the background class.
+            score_fn (str): Function to apply to the scores tensor.
+            model_output_type (str): Format of the model output. None: default, logits and bboxes are separate. 'combined': logits and bboxes are combined.
+        '''
         self.scores_index = scores_index
         self.bbox_index = bbox_index
+        self.objectness_index = objectness_index
         self.background_class_id = background_class_id
         self.score_fn = softmax if score_fn == 'softmax' else (sigmoid if score_fn == 'sigmoid' else None)
+        self.model_output_type = model_output_type
 
     def __call__(self, tensor_list, info_dict):
-        tensor_list_softmax=[]
-        if self.bbox_index is not None:
-            tensor_list_softmax.append(tensor_list[self.bbox_index].reshape(-1,4))
-        #
-        score_tensor = tensor_list[self.scores_index]
-        softmax_score = self.score_fn(score_tensor) if self.score_fn else score_tensor
+        if self.model_output_type == 'combined':
+            output_list=[]
+
+            bbox_index = []
+            for i in self.bbox_index:
+                bbox_index.append(tensor_list.shape[i] if i == -1 else i)
+
+            bbox_index = range(*bbox_index)
+            bbox_tensor = tensor_list[...,bbox_index]
+            bbox_tensor = bbox_tensor.reshape(-1,bbox_tensor.shape[-1])
+            output_list.append(bbox_tensor)
+            
+            scores_index = []
+            for i in self.scores_index:
+                scores_index.append(tensor_list.shape[i] if i == -1 else i)
+            
+            scores_index = range(*scores_index)
+            score_tensor = tensor_list[...,scores_index]
+            score_tensor = score_tensor.reshape(-1, score_tensor.shape[-1])
+
+            confidence_score = self.score_fn(score_tensor) if self.score_fn else score_tensor
+            if self.background_class_id == -1:  
+                confidence_score = confidence_score[...,:self.background_class_id]
+            elif self.background_class_id is not None:
+                confidence_score = confidence_score[...,self.background_class_id+1:]
+            
+            if self.objectness_index is not None:
+                objectness_tensor = tensor_list[...,self.objectness_index]
+                objectness_score = self.score_fn(objectness_tensor) if self.score_fn else objectness_tensor
+                confidence_score = confidence_score * objectness_score
+                
+        else:
+            output_list=[]
+            if self.bbox_index is not None:
+                output_list.append(tensor_list[self.bbox_index].reshape(-1,4))
+            #
+            score_tensor = tensor_list[self.scores_index]
+            confidence_score = self.score_fn(score_tensor) if self.score_fn else score_tensor
+
+            if self.objectness_index is not None:
+                objectness_tensor = tensor_list[self.objectness_index]
+                objectness_score = self.score_fn(objectness_score) if self.score_fn else objectness_score
+                confidence_score = confidence_score * objectness_score
+
         if self.background_class_id == -1:  
-            softmax_score = softmax_score[...,:self.background_class_id]
+            confidence_score = confidence_score[...,:self.background_class_id]
         elif self.background_class_id is not None:
-            softmax_score = softmax_score[...,self.background_class_id+1:]
+            confidence_score = confidence_score[...,self.background_class_id+1:]
         #
-        tensor_list_softmax.append(np.argmax(softmax_score,axis=-1).reshape(-1,1))
-        tensor_list_softmax.append(np.max(softmax_score,axis=-1).reshape(-1,1))
-        return tensor_list_softmax, info_dict  
+        output_list.append(np.argmax(confidence_score,axis=-1).reshape(-1,1))
+        output_list.append(np.max(confidence_score,axis=-1).reshape(-1,1))
+
+        return output_list, info_dict  
     
 
 class DetectionImageSave():

@@ -136,6 +136,12 @@ def resize(img, size, **kwargs):
                 if "corner" in resize_with_pad:
                     top, left = 0, 0
                     bottom, right = hpad, wpad
+                elif "center" in resize_with_pad:
+                    top = hpad // 2
+                    bottom = hpad - top
+                    left = wpad // 2
+                    right = wpad - left
+                #
             else :
                 top = hpad // 2
                 bottom = hpad - top
