@@ -141,16 +141,17 @@ class UpdateModelInspectorEVMPerfJSON(CompileModelBase):
             is_evm = False
 
         if not is_evm:
-            return
+            return  # PC: compile already populated JSON; nothing to update here
 
         inspector_dir = os.path.join(self.run_dir, 'inspector')
         json_path = os.path.join(inspector_dir, 'modelinspector.json')
 
         if not os.path.exists(json_path):
-            print(f'INFO: Model Inspector JSON not found at {json_path}, skipping EVM perf update')
+            print(f'INFO: Model Inspector JSON not found at {json_path}, skipping EVM update')
             return
 
-        print('INFO: Model Inspector - Updating JSON with EVM hardware performance data')
+        # 1 — EVM perf: /tmp/tidl_trace_subgraph_<N>_perf.csv
+        print('INFO: Model Inspector - Updating JSON with EVM hardware data')
         from ....modelinspector.data_extractor import update_with_evm_perf
         try:
             update_with_evm_perf(json_path)
@@ -196,26 +197,18 @@ class UpdateModelInspectorEVMAccuracyJSON(CompileModelBase):
             return
 
         from ....modelinspector.data_extractor import load_accuracy_from_result_yaml
-        accuracy = load_accuracy_from_result_yaml(self.run_dir)
-        if not accuracy:
-            print('INFO: Model Inspector - result.yaml not found or empty, skipping accuracy update')
-            return
-
-        print('INFO: Model Inspector - Updating JSON with EVM accuracy data from result.yaml')
         try:
-            with open(json_path, 'r', encoding='utf-8') as fh:
-                data = json.load(fh)
-
-            # Write accuracy fields flat into metadata (same level as model_name, task_type)
-            meta = data.setdefault('metadata', {})
-            for key, val in accuracy.items():
-                if not key.startswith('_'):  # skip internal keys like _result_path
-                    meta[key] = val
-            # Clean up any old nested key from previous runs
-            meta.pop('evm_accuracy', None)
-
-            with open(json_path, 'w', encoding='utf-8') as fh:
-                json.dump(data, fh, indent=2)
-            print(f'INFO: Model Inspector - Accuracy data written to JSON')
+            accuracy = load_accuracy_from_result_yaml(self.run_dir)
+            if accuracy:
+                with open(json_path, 'r', encoding='utf-8') as fh:
+                    data = json.load(fh)
+                meta = data.setdefault('metadata', {})
+                for key, val in accuracy.items():
+                    if not key.startswith('_'):
+                        meta[key] = val
+                meta.pop('evm_accuracy', None)
+                with open(json_path, 'w', encoding='utf-8') as fh:
+                    json.dump(data, fh, indent=2)
+                print('INFO: Model Inspector - Accuracy data written to JSON')
         except Exception as e:
             print(f'INFO: Model Inspector - Accuracy update failed: {e}')
