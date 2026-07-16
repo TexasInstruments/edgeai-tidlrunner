@@ -33,19 +33,6 @@ import yaml
 import json
 
 
-def _json_has_perfsim(json_path):
-    """Returns True if JSON already has perfsim (performance) data in any TIDL layer."""
-    try:
-        with open(json_path) as f:
-            d = json.load(f)
-        for sg in d.get('runtime', {}).get('subgraphs', {}).values():
-            for layer in sg.get('layers', []):
-                if layer.get('performance') is not None:
-                    return True
-    except Exception:
-        pass
-    return False
-
 from ..settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
 from .common_.common_base import CommonPipelineBase
 from .common_.compile_base import CompileModelBase
@@ -76,10 +63,6 @@ class GenerateModelInspectorJSON(CompileModelBase):
         inspector_base_path = os.path.join(self.run_dir, 'inspector')
         output_json_path = os.path.join(inspector_base_path, 'modelinspector.json')
         os.makedirs(inspector_base_path, exist_ok=True)
-
-        if os.path.exists(output_json_path) and _json_has_perfsim(output_json_path):
-            print(f'INFO: Model Inspector JSON already has perfsim data, skipping generation')
-            return
 
         common_kwargs = self.settings['common']
         extract_activations = common_kwargs.get('act_data', True)
@@ -129,54 +112,13 @@ class GenerateModelInspectorHTML(CompileModelBase):
             print(f'INFO: Model Inspector - HTML generation skipped due to missing compile artifacts: {e}')
 
 
-class UpdateModelInspectorActivations(CompileModelBase):
-    """Update existing inspector JSON with activation/trace data after an analyze run."""
-    ARGS_DICT=SETTINGS_DEFAULT['analyze']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['analyze']
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+class UpdateModelInspectorEVMPerfJSON(CompileModelBase):
+    """Update inspector JSON with EVM hardware performance data.
 
-    def _prepare(self):
-        super()._prepare()
-
-    def info(self):
-        print(f'INFO: Model Inspector - {__file__}')
-
-    def _run(self):
-        print(f'INFO: Model Inspector - Updating JSON with activation data')
-
-        common_kwargs = self.settings['common']
-        if not common_kwargs.get('act_data', True):
-            print(f'INFO: Model Inspector - act_data=False, skipping activation update')
-            return
-
-        inspector_base_path = os.path.join(self.run_dir, 'inspector')
-        output_json_path = os.path.join(inspector_base_path, 'modelinspector.json')
-
-        if not os.path.exists(output_json_path):
-            print(f'INFO: Model Inspector JSON not found at {output_json_path}, skipping activation update')
-            return
-
-        from ....modelinspector.data_extractor import update_with_activations
-        try:
-            success = update_with_activations(self.run_dir, output_json_path)
-            if success:
-                print(f'INFO: Model Inspector - Activation update successful')
-            else:
-                print(f'INFO: Model Inspector - No activation data found, JSON unchanged')
-        except Exception as e:
-            print(f'INFO: Model Inspector - Activation update skipped: {e}')
-
-
-class UpdateModelInspectorEVMPerf(CompileModelBase):
-    """Update inspector JSON with performance data and regenerate HTML.
-
+    Only updates JSON — HTML generation is handled by GenerateModelInspectorHTML.
     - On EVM : reads /tmp/tidl_trace_subgraph_<N>_perf.csv (real hardware).
-               Stamps performance_source = 'evm_hardware' and locks the JSON so
-               subsequent PC runs cannot overwrite the real data.
-    - On PC  : skipped — compile already wrote artifacts/ CSV data into the JSON
-               with performance_source = 'pc_simulation'.
+    - On PC  : skipped — compile already populated the JSON.
     """
     ARGS_DICT = SETTINGS_DEFAULT['analyze']
     COPY_ARGS = COPY_SETTINGS_DEFAULT['analyze']
@@ -188,7 +130,7 @@ class UpdateModelInspectorEVMPerf(CompileModelBase):
         super()._prepare()
 
     def info(self):
-        print(f'INFO: Model Inspector EVM Perf - {__file__}')
+        print(f'INFO: Model Inspector EVM Perf JSON - {__file__}')
 
     def _run(self):
         try:
@@ -198,13 +140,11 @@ class UpdateModelInspectorEVMPerf(CompileModelBase):
         except Exception:
             is_evm = False
 
-        # On PC, compile already populated the perf data; nothing to do here.
         if not is_evm:
             return
 
         inspector_dir = os.path.join(self.run_dir, 'inspector')
         json_path = os.path.join(inspector_dir, 'modelinspector.json')
-        html_path = os.path.join(inspector_dir, 'modelinspector.html')
 
         if not os.path.exists(json_path):
             print(f'INFO: Model Inspector JSON not found at {json_path}, skipping EVM perf update')
@@ -213,30 +153,17 @@ class UpdateModelInspectorEVMPerf(CompileModelBase):
         print('INFO: Model Inspector - Updating JSON with EVM hardware performance data')
         from ....modelinspector.data_extractor import update_with_evm_perf
         try:
-            updated = update_with_evm_perf(json_path)
-            if not updated:
-                print('INFO: Model Inspector - No /tmp/ EVM perf CSV found, skipping HTML regeneration')
-                return
+            update_with_evm_perf(json_path)
         except Exception as e:
             print(f'INFO: Model Inspector - EVM perf update failed: {e}')
-            return
-
-        try:
-            from .... import modelinspector
-            from ....modelinspector.html_generator import main as gen_html
-            template_file = os.path.join(os.path.dirname(modelinspector.__file__), 'template.html')
-            gen_html(json_path, template_file, html_path)
-            print('INFO: Model Inspector - HTML regenerated with EVM performance data')
-        except Exception as e:
-            print(f'INFO: Model Inspector - HTML regeneration failed: {e}')
 
 
-class UpdateModelInspectorEVMAccuracy(CompileModelBase):
-    """Read accuracy/timing from result.yaml and patch the inspector JSON.
 
-    Only runs on EVM after an evaluate pipeline.  On PC the result.yaml exists
-    but reflects simulation — we skip it so the HTML never shows misleading
-    accuracy numbers from PC emulation.
+class UpdateModelInspectorEVMAccuracyJSON(CompileModelBase):
+    """Update inspector JSON with EVM accuracy data from result.yaml.
+
+    Only updates JSON — HTML generation is handled by GenerateModelInspectorHTML.
+    Only runs on EVM after evaluate. On PC result.yaml reflects simulation — skipped.
     """
     ARGS_DICT = SETTINGS_DEFAULT['analyze']
     COPY_ARGS = COPY_SETTINGS_DEFAULT['analyze']

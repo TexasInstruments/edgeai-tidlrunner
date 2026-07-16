@@ -35,18 +35,18 @@ from .report import GenReport
 from .surgery import ModelSurgery
 from .extract import ExtractNodes
 from .package import PackageArtifacts
-from .inspector import GenerateModelInspectorJSON, GenerateModelInspectorHTML, UpdateModelInspectorActivations, UpdateModelInspectorEVMPerf, UpdateModelInspectorEVMAccuracy
+from .inspector import GenerateModelInspectorJSON, GenerateModelInspectorHTML, UpdateModelInspectorEVMPerfJSON, UpdateModelInspectorEVMAccuracyJSON
 
 
 def get_command_pipelines(**kwargs):
     command_module_name_dict = {
         # compile related
         'compile': ['CompileModel', 'GenerateModelInspectorJSON', 'GenerateModelInspectorHTML'],
-        'infer': ['InferModel', 'UpdateModelInspectorEVMPerf'],
-        'evaluate': ['InferEvaluate', 'UpdateModelInspectorEVMPerf', 'UpdateModelInspectorEVMAccuracy', 'GenerateModelInspectorHTML'],
+        'infer': ['InferModel', 'UpdateModelInspectorEVMPerfJSON', 'GenerateModelInspectorHTML'],
+        'evaluate': ['InferEvaluate', 'UpdateModelInspectorEVMPerfJSON', 'UpdateModelInspectorEVMAccuracyJSON', 'GenerateModelInspectorHTML'],
         'compile+infer': ['CompileModel', 'GenerateModelInspectorJSON', 'GenerateModelInspectorHTML', 'InferModel'],
-        'compile+evaluate': ['CompileModel', 'InferEvaluate'],
-        'analyze': ['CompileAnalyzeTIDL', 'InferAnalyzeTIDL', 'CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL32', 'InferAnalyzeTIDL32', 'InferAnalyzeFinal', 'GenerateModelInspectorJSON', 'UpdateModelInspectorActivations', 'GenerateModelInspectorHTML'],
+        'compile+evaluate': ['CompileModel', 'InferEvaluate', 'GenerateModelInspectorJSON', 'GenerateModelInspectorHTML'],
+        'analyze': ['CompileAnalyzeTIDL', 'InferAnalyzeTIDL', 'CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL32', 'InferAnalyzeTIDL32', 'InferAnalyzeFinal', 'GenerateModelInspectorJSON', 'GenerateModelInspectorHTML'],
         'inspect': ['CompileAnalyzeTIDL', 'InferAnalyzeTIDL', 'CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL32', 'InferAnalyzeTIDL32', 'InferAnalyzeFinal','GenerateModelInspectorJSON', 'GenerateModelInspectorHTML'],
         'report': ['GenReport'],   
         'package': ['PackageArtifacts'], 
