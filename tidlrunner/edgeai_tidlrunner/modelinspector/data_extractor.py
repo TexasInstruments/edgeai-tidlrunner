@@ -1837,11 +1837,13 @@ class ONNXParser:
                     attrs[key] = list(val)
                 elif isinstance(val, bytes):
                     attrs[key] = val.decode('utf-8')
-                elif self.use_gs and hasattr(val, '__class__') and 'gs' in str(type(val)).lower():
-                    # Convert GraphSurgeon objects to string representation to avoid JSON serialization issues
-                    attrs[key] = str(val)
-                else:
+                elif isinstance(val, (int, float, bool, str, type(None))):
                     attrs[key] = val
+                else:
+                    # gs.Constant, gs.Graph, onnx.TensorProto, etc. — not JSON-serializable;
+                    # the 'gs' substring check used here previously was unreliable because
+                    # 'onnx_graphsurgeon' does not contain 'gs' as a substring.
+                    attrs[key] = str(val)
             return attrs
         else:
             attrs = {}
@@ -2579,6 +2581,226 @@ def load_config_data(model_dir_path: str) -> Dict[str, Any]:
     return config_data
 
 
+# ---------------------------------------------------------------------------
+# EVM hardware performance (reads /tmp/tidl_trace_subgraph_<N>_perf.csv)
+# ---------------------------------------------------------------------------
+
+def is_evm_perf_locked(json_path: str) -> bool:
+    """Return True if the JSON already contains real EVM hardware perf data.
+    Detected by presence of infer_time_subgraph_ms in metadata (written by EVM infer).
+    Once locked, PC simulation data must not overwrite it."""
+    try:
+        with open(json_path, 'r') as fh:
+            d = json.load(fh)
+        meta = d.get('metadata', {})
+        return (
+            meta.get('performance_source') == 'evm_hardware' or
+            meta.get('infer_time_subgraph_ms') is not None
+        )
+    except Exception:
+        return False
+
+
+def load_accuracy_from_result_yaml(run_dir: str) -> Dict[str, Any]:
+    """Read accuracy and timing fields from result.yaml in run_dir.
+    Returns an empty dict if the file is missing or unreadable.
+    Only call this when running on EVM (caller is responsible for the check).
+    """
+    import glob as _glob
+    import yaml as _yaml
+
+    result_files = _glob.glob(os.path.join(run_dir, '**/result.yaml'), recursive=True)
+    result_path = None
+    for p in result_files:
+        if '/tidl/' not in p and '/tidl32/' not in p and '/notidl/' not in p:
+            result_path = p
+            break
+    if not result_path and result_files:
+        result_path = result_files[0]
+
+    if not result_path:
+        return {}
+
+    try:
+        with open(result_path, 'r') as fh:
+            data = _yaml.safe_load(fh)
+
+        # Only use timing when the result was generated on real EVM hardware.
+        # On PC (compile or evaluate), timing comes from simulation and num_frames
+        # may refer to calibration frames — not real inference time.
+        target_machine = data.get('session', {}).get('target_machine', '')
+        timing_valid = (target_machine == 'evm')
+
+        r = data.get('result', {})
+        accuracy = {}
+
+        if timing_valid:
+            for key in ('infer_time_subgraph_ms', 'infer_time_core_ms',
+                        'infer_time_invoke_ms', 'num_frames'):
+                if key in r:
+                    accuracy[key] = r[key]
+        else:
+            print(f'  NOTE: result.yaml is from target_machine={target_machine!r} '
+                  f'— skipping timing fields (only valid on EVM)')
+
+        # Accuracy metrics are valid from any pipeline (evaluate always writes them)
+        for key, val in r.items():
+            if key.lower().startswith('accuracy') and isinstance(val, (int, float)):
+                accuracy[key] = val
+
+        accuracy['_result_path'] = result_path
+        print(f'  Loaded result.yaml from: {result_path}')
+        return accuracy
+    except Exception as exc:
+        print(f'  WARNING: Failed to read result.yaml: {exc}')
+        return {}
+
+# C7x DSP clock on J721E/AM6xA in MHz — used to convert cycles → µs.
+# Override with env var C7X_DSP_FREQ_MHZ if your board runs at a different speed.
+_C7X_FREQ_MHZ = int(os.environ.get('C7X_DSP_FREQ_MHZ', '1000'))
+
+
+def load_evm_perf_csv(csv_path: str) -> Dict[int, Dict[str, Any]]:
+    """Parse a /tmp/tidl_trace_subgraph_<N>_perf.csv written by TIDL on the EVM.
+
+    Returns {layer_id: {cycle fields}} for each data row.
+    The trailing 'Sum of Layer Cycles …' line is silently skipped.
+    Column headers in the file have extra whitespace — all keys are stripped.
+    """
+    import csv as _csv
+    result: Dict[int, Dict[str, Any]] = {}
+    try:
+        with open(csv_path, 'r') as fh:
+            reader = _csv.reader(fh)
+            raw_headers = next(reader)
+            headers = [h.strip() for h in raw_headers]
+            for raw_row in reader:
+                row = {headers[i]: v.strip()
+                       for i, v in enumerate(raw_row) if i < len(headers)}
+                layer_str = row.get('Layer', '')
+                if not layer_str.lstrip('-').isdigit():
+                    continue  # skip blank lines and the final "Sum" line
+                layer_id = int(layer_str)
+
+                def _int(col: str) -> int:
+                    v = row.get(col, '').strip()
+                    return int(v) if v.lstrip('-').isdigit() else 0
+
+                result[layer_id] = {
+                    'layer_cycles':       _int('Layer Cycles'),
+                    'kernel_cycles':      _int('kernelOnlyCycles'),
+                    'core_loop_cycles':   _int('coreLoopCycles'),
+                    'layer_setup_cycles': _int('LayerSetupCycles'),
+                    'dma_pipeup_cycles':  _int('dmaPipeupCycles'),
+                    'ddr_read_bytes':     _int('DDRBWReadInBytes'),
+                    'ddr_write_bytes':    _int('DDRBWWriteInBytes'),
+                }
+    except Exception as exc:
+        print(f'WARNING: Failed to load EVM perf CSV {csv_path}: {exc}')
+    return result
+
+
+def update_with_evm_perf(json_path: str) -> bool:
+    """Update inspector JSON in-place with real hardware cycle data from the EVM.
+
+    Scans /tmp/ for tidl_trace_subgraph_<N>_perf.csv files, matches each row
+    to the corresponding TIDL layer by layer_id, and writes updated performance
+    fields back to *json_path*.  Also returns True if anything was updated.
+    """
+    import glob as _glob
+    import re as _re
+
+    csv_files = _glob.glob('/tmp/tidl_trace_subgraph_*_perf.csv')
+    if not csv_files:
+        print('  No /tmp/tidl_trace_subgraph_*_perf.csv files found on this device')
+        return False
+
+    with open(json_path, 'r', encoding='utf-8') as fh:
+        data = json.load(fh)
+
+    updated = False
+    for csv_path in sorted(csv_files):
+        m = _re.search(r'tidl_trace_subgraph_(\d+)_perf\.csv', csv_path)
+        if not m:
+            continue
+        sg_num = int(m.group(1))
+
+        perf_map = load_evm_perf_csv(csv_path)
+        if not perf_map:
+            continue
+
+        # Subgraph key may be 'tidl_0' or '0'
+        subgraphs = data.get('runtime', {}).get('subgraphs', {})
+        subgraph = subgraphs.get(f'tidl_{sg_num}') or subgraphs.get(str(sg_num))
+        if not subgraph:
+            print(f'  WARNING: subgraph {sg_num} not found in JSON, skipping')
+            continue
+
+        matched = 0
+        for layer in subgraph.get('layers', []):
+            lid = layer.get('layer_id')
+            if lid is None or lid not in perf_map:
+                continue
+
+            p = perf_map[lid]
+
+            # Replace performance with only the two reliable EVM metrics.
+            # Everything else (proctime_us, core_loop_cycles, io_cycles, memory)
+            # is set null — HTML hides charts for null fields automatically.
+            layer['performance'] = {
+                'layer_cycles':     p['layer_cycles'],
+                'kernel_cycles':    p['kernel_cycles'],
+                'core_loop_cycles': None,
+                'proctime_us':      None,
+                'io_cycles':        None,
+                'memory':           {'l2_kb': None, 'msmc_kb': None, 'ddr_kb': None, 'total_kb': None},
+            }
+            matched += 1
+            updated = True
+
+        print(f'  Subgraph {sg_num}: matched {matched}/{len(perf_map)} layers '
+              f'from {os.path.basename(csv_path)}')
+
+    if updated:
+        meta = data.setdefault('metadata', {})
+
+        # Stamp the source so html_generator knows this JSON has real EVM cycle data.
+        # Stored in metadata (not root) to keep the 3-key top-level structure clean.
+        meta['performance_source'] = 'evm_hardware'
+
+        # Load result.yaml timing and write flat into metadata — only when the
+        # result.yaml was generated by an actual infer/evaluate run (not compile).
+        run_dir = os.path.dirname(os.path.dirname(json_path))  # inspector/ -> model_dir
+        acc = load_accuracy_from_result_yaml(run_dir)
+        if acc:
+            timing_written = False
+            for key in ('infer_time_subgraph_ms', 'infer_time_core_ms', 'infer_time_invoke_ms'):
+                raw = acc.get(key)
+                if raw is not None:
+                    # Values are already per-frame averages (basert_wrapper divides
+                    # the running sum by num_frames before writing result.yaml).
+                    # Do NOT divide again here.
+                    meta[key] = round(float(raw), 3)
+                    timing_written = True
+            if acc.get('num_frames'):
+                meta['num_frames'] = acc['num_frames']
+            if timing_written:
+                print(f'  EVM timing written to metadata')
+
+        # Clean up any old-format keys left from previous runs
+        data.pop('performance_source', None)  # remove from root if present
+        meta.pop('evm_timing', None)
+        meta.pop('evm_accuracy', None)
+        for sg_info in data.get('runtime', {}).get('subgraphs', {}).values():
+            sg_info.pop('evm_execution_time_ms_per_frame', None)
+
+        with open(json_path, 'w', encoding='utf-8') as fh:
+            json.dump(data, fh, indent=2)
+        print(f'  EVM perf data written to {json_path}')
+
+    return updated
+
+
 def load_proctime_data(model_dir_path: str) -> Dict[int, List[Dict[str, Any]]]:
     """Load proctime data from performance CSV files for each subgraph"""
     proctime_data = {}
@@ -3272,6 +3494,22 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
 
             onnx_layers[layer_name] = unified_layer
 
+        # Override runtime_assignment for ONNX nodes that are fused into TIDL layers.
+        # graphvizInfo.txt may label them as ARM (e.g. "will be delegated in post-processing")
+        # but if they appear in onnx_mapping.onnx_node_names of a TIDL layer they actually
+        # run on C7x DSP (e.g. TIDL_OdOutputReformatLayer absorbs all OD post-processing).
+        for sg_id, tidl_subgraph in enhanced_tidl_data.items():
+            sg_runtime = tidl_subgraph.get('runtime', 'tidl_rt')
+            for layer in tidl_subgraph.get('layers', []):
+                for onnx_name in layer.get('onnx_mapping', {}).get('onnx_node_names', []):
+                    if onnx_name in onnx_layers:
+                        # Node IS compiled into a TIDL layer — override graphvizInfo
+                        # classification and clear misleading reason text.
+                        onnx_layers[onnx_name]['runtime_assignment'] = {
+                            'assigned_runtime': sg_runtime,
+                            'reason': None  # clear "will be delegated in post-processing"
+                        }
+
         # Calculate total_time_us for each TIDL subgraph
         for subgraph_id, tidl_subgraph in enhanced_tidl_data.items():
             total_time = 0.0
@@ -3348,10 +3586,18 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
 
         print(f"Writing unified JSON to: {output_json_path}")
 
+        class _JSONSafeEncoder(json.JSONEncoder):
+            """Fallback encoder: converts any non-serializable object to its str()."""
+            def default(self, obj):
+                try:
+                    return super().default(obj)
+                except TypeError:
+                    return str(obj)
+
         # Write single unified JSON for inspection (activation data embedded in TIDL layers)
         print("  Serializing unified data...")
         with open(output_json_path, 'w', encoding='utf-8') as f:
-            json.dump(combined_data, f, indent=2)
+            json.dump(combined_data, f, indent=2, cls=_JSONSafeEncoder)
 
         file_size = os.path.getsize(output_json_path) / (1024 * 1024)
         print(f"Unified JSON saved: {output_json_path} ({file_size:.2f} MB)")
