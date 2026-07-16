@@ -708,19 +708,48 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
                 'node_type': layer_info.get('type', 'Unknown')
             }
 
-        # Identify which layers belong to which subgraph based on TIDL data
+        # Build name→arrayIndex map so SUBGRAPH_DATA.subgraphs[i].nodes contains
+        # integer indices matching the arrayIndex used in transformData (template).
+        # Must be built BEFORE the subgraph assignment loop below.
+        layer_name_to_idx = {name: idx for idx, name in enumerate(transformed_layers.keys())}
+
+        # Identify which layers belong to which subgraph based on TIDL data.
+        # node_support is keyed by integer index (str), NOT by layer name, so we
+        # look up the index via layer_name_to_idx before writing the subgraph field.
         tidl_subgraphs_raw = tidl_data_raw.get('subgraphs', {})
         for subgraph_id, subgraph_info in tidl_subgraphs_raw.items():
             for tidl_layer in subgraph_info.get('layers', []):
                 onnx_mapping = tidl_layer.get('onnx_mapping', {})
                 for onnx_name in onnx_mapping.get('onnx_node_names', []):
-                    if onnx_name in node_support:
-                        node_support[onnx_name]['subgraph'] = str(subgraph_id)
-                        node_support[onnx_name]['supported'] = True
+                    idx_key = str(layer_name_to_idx.get(onnx_name, -1))
+                    if idx_key in node_support:
+                        node_support[idx_key]['subgraph'] = str(subgraph_id)
+                        node_support[idx_key]['supported'] = True
+                        # A node present in onnx_mapping is compiled into a TIDL layer
+                        # (e.g. TIDL_OdOutputReformatLayer fuses all OD post-processing).
+                        # Override any graphvizInfo 'arm' assignment — it runs on C7x DSP.
+                        # Also clear the misleading diagInfo message so the UI doesn't
+                        # show "will be delegated in post-processing" for an accelerated node.
+                        sg_runtime = subgraph_info.get('runtime', 'tidl_rt')
+                        node_support[idx_key]['assigned_runtime'] = sg_runtime
+                        node_support[idx_key]['diagInfo'] = ''
 
-        # Build name→arrayIndex map so SUBGRAPH_DATA.subgraphs[i].nodes contains
-        # integer indices matching the arrayIndex used in transformData (template).
-        layer_name_to_idx = {name: idx for idx, name in enumerate(transformed_layers.keys())}
+        # The virtual __input_*__ / __output_*__ sentinel nodes are appended to
+        # transformed_layers AFTER node_support is built from onnx_layers, so they
+        # have no entry in node_support.  JavaScript then defaults them to
+        # supported=false → ARM, showing them as non-accelerated nodes.
+        # Fix: register them as transparent IO boundary markers (not real ONNX ops).
+        for layer_name, layer_info in transformed_layers.items():
+            if layer_name.startswith('__input_') or layer_name.startswith('__output_'):
+                idx = layer_name_to_idx.get(layer_name)
+                if idx is not None:
+                    node_support[str(idx)] = {
+                        'supported': True,
+                        'diagInfo': '',
+                        'assigned_runtime': 'tidl_rt',
+                        'node_name': layer_name,
+                        'node_type': layer_info.get('type', 'Input')
+                    }
 
         # Build subgraph_data
         subgraph_list = []
@@ -870,6 +899,10 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
                 'graph_nodes': graph_nodes,
                 'graph_edges': graph_edges,
                 'onnx_nodes': onnx_nodes_for_subgraph,
+                # Real EVM execution time per frame (None on PC / when not measured)
+                'evm_execution_time_ms_per_frame': subgraph_info.get(
+                    'evm_execution_time_ms_per_frame', None
+                ),
             }
 
     # Extract performance and metrics data from unified schema
@@ -971,32 +1004,34 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
                 if tidl_layer.get('performance'):
                     perf = tidl_layer['performance']
 
-                    if 'proctime_us' in perf:
+                    # Only add to lists when values are actually present (not None)
+                    if perf.get('proctime_us') is not None:
                         proctime_list.append({
                             'layer_num': layer_id,
                             'layer_type': layer_type,
                             'proctime': perf['proctime_us']
                         })
 
-                    if 'kernel_cycles' in perf or 'core_loop_cycles' in perf:
+                    if perf.get('layer_cycles') is not None or perf.get('kernel_cycles') is not None:
                         cycles_list.append({
                             'layer_num': layer_id,
                             'layer_type': layer_type,
-                            'kernelOnlyCycles': perf.get('kernel_cycles', 0),
-                            'coreLoopCycles': perf.get('core_loop_cycles', 0),
-                            'layerCycles': perf.get('layer_cycles', 0),
-                            'ioCycles': perf.get('io_cycles', 0)
+                            'kernelOnlyCycles': perf.get('kernel_cycles') or 0,
+                            'coreLoopCycles':   perf.get('core_loop_cycles') or 0,
+                            'layerCycles':      perf.get('layer_cycles') or 0,
+                            'ioCycles':         perf.get('io_cycles') or 0,
                         })
 
-                    if 'memory' in perf:
-                        mem = perf['memory']
+                    mem = perf.get('memory') or {}
+                    # Only add memory entry when at least one sub-field has a real value
+                    if any(mem.get(k) is not None for k in ('l2_kb', 'msmc_kb', 'ddr_kb')):
                         memory_list.append({
                             'layer_num': layer_id,
                             'layer_type': layer_type,
-                            'l2_usage': mem.get('l2_kb', 0),
-                            'msmc_usage': mem.get('msmc_kb', 0),
-                            'ddr_usage': mem.get('ddr_kb', 0),
-                            'total_usage': mem.get('total_kb', 0)
+                            'l2_usage':   mem.get('l2_kb') or 0,
+                            'msmc_usage': mem.get('msmc_kb') or 0,
+                            'ddr_usage':  mem.get('ddr_kb') or 0,
+                            'total_usage': mem.get('total_kb') or 0,
                         })
 
             # Use loaded metrics from Excel if available, otherwise use metrics from JSON
@@ -1026,11 +1061,19 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
             elif metrics_list:
                 metrics_data[sg_id] = metrics_list
 
-            if proctime_list:
+            # On EVM: proctime is computed from inflated debug cycles (unreliable)
+            # and memory data is leftover from PC simulation — skip both.
+            # EVM is detected by presence of infer_time_subgraph_ms in metadata.
+            _is_evm_src = (
+                json_data.get('metadata', {}).get('performance_source') == 'evm_hardware' or
+                json_data.get('metadata', {}).get('infer_time_subgraph_ms') is not None or
+                json_data.get('performance_source') == 'evm_hardware'
+            )
+            if proctime_list and not _is_evm_src:
                 proctime_data[sg_id] = proctime_list
             if cycles_list:
                 cycles_data[sg_id] = cycles_list
-            if memory_list:
+            if memory_list and not _is_evm_src:
                 memory_data[sg_id] = memory_list
 
         # Config data from metadata and subgraphs
@@ -1057,8 +1100,17 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
     onnx_to_overview_id = {}  # Map ONNX node name to overview node id
 
     for sg_id, sg_info in tidl_data.items():
-        for n in sg_info.get('onnx_nodes', []):
-            subgraph_onnx_names.add(n['name'])
+        # Collect ALL onnx node names for this subgraph:
+        # (a) explicitly listed onnx_nodes, AND
+        # (b) all names from each TIDL layer's onnx_node_names (includes fused layers
+        #     like TIDL_OdOutputReformatLayer that absorb 100+ ONNX nodes but may not
+        #     all appear in the explicit onnx_nodes list).
+        sg_all_onnx_names = set(n['name'] for n in sg_info.get('onnx_nodes', []))
+        for gn in sg_info.get('graph_nodes', []):
+            for oname in gn.get('layer_data', {}).get('onnx_node_names', []):
+                sg_all_onnx_names.add(oname)
+        subgraph_onnx_names.update(sg_all_onnx_names)
+
         runtime_label = sg_info.get('runtime', 'tidl_rt')
         node_id = f'subgraph_{sg_id}'
         overview_nodes.append({
@@ -1069,22 +1121,24 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
             'label': f"{runtime_label} #{sg_id}",
             'total_gmacs': sg_info.get('total_gmacs', 0.0),
             'num_layers': sg_info.get('num_layers', 0),
-            'num_onnx_nodes': len(sg_info.get('onnx_nodes', [])),
+            'num_onnx_nodes': len(sg_all_onnx_names),
             'tensor_bits': sg_info.get('tensor_bits', 8),
             'inputs': sg_info.get('subgraph_inputs', []),
             'outputs': sg_info.get('subgraph_outputs', []),
         })
-        # Map all ONNX nodes in this subgraph to the subgraph overview node
-        for n in sg_info.get('onnx_nodes', []):
-            onnx_to_overview_id[n['name']] = node_id
+        # Map ALL ONNX nodes in this subgraph to the subgraph overview node
+        for oname in sg_all_onnx_names:
+            onnx_to_overview_id[oname] = node_id
 
-    # Add ARM/unsupported ONNX nodes not covered by any subgraph
+    # Add ARM/unsupported ONNX nodes not covered by any subgraph.
+    # A node that appears in subgraph_onnx_names is compiled into a TIDL/TVM layer
+    # (even if graphvizInfo.txt / JSON runtime_assignment says 'arm') so it must NOT
+    # appear as an ARM overview node.  The subgraph_onnx_names check is the authoritative
+    # source; ra.assigned_runtime from the JSON is a secondary hint only.
     if is_unified_schema:
         for layer_name, layer_info in onnx_layers.items():
             ra = layer_info.get('runtime_assignment', {})
-            if ra.get('assigned_runtime') == 'arm' or (
-                ra.get('assigned_runtime') not in ('tidl_rt', 'tvm_rt') and layer_name not in subgraph_onnx_names
-            ):
+            if layer_name not in subgraph_onnx_names and ra.get('assigned_runtime') not in ('tidl_rt', 'tvm_rt'):
                 node_id = f'arm_{layer_name}'
                 overview_nodes.append({
                     'id': node_id,
@@ -1128,6 +1182,66 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
     memory_json = json.dumps(memory_data, indent=2)
     tree_json = json.dumps(tree_structure, indent=2)
 
+    # Performance source + per-field availability flags for conditional HTML rendering.
+    # The template uses these to hide charts / toggle-buttons with no backing data.
+    meta = json_data.get('metadata', {})
+    # EVM detected by performance_source in metadata (set when /tmp/ CSV was loaded).
+    # Also supports: flat infer_time_subgraph_ms (timing present),
+    # and legacy root-level performance_source (old JSONs — backward compat).
+    is_evm_data = (
+        meta.get('performance_source') == 'evm_hardware' or
+        meta.get('infer_time_subgraph_ms') is not None or
+        json_data.get('performance_source') == 'evm_hardware'
+    )
+    performance_source = 'evm_hardware' if is_evm_data else 'pc_simulation'
+
+    # Accuracy: flat keys in metadata (accuracy_top1%, accuracy_ap[.5:.95]%, etc.)
+    # Also support old nested evm_accuracy key for backward compat
+    evm_accuracy = {k: v for k, v in meta.items()
+                    if k.lower().startswith('accuracy') and isinstance(v, (int, float))}
+    if not evm_accuracy:
+        evm_accuracy = meta.get('evm_accuracy', {})
+
+    # Scan cycles_data to find which cycle sub-fields are actually non-zero.
+    _has_kernel = _has_core = _has_io = False
+    for sg_layers in cycles_data.values():
+        for row in sg_layers:
+            if row.get('kernelOnlyCycles', 0): _has_kernel = True
+            if row.get('coreLoopCycles', 0):   _has_core   = True
+            if row.get('ioCycles', 0):          _has_io     = True
+
+    # Scan memory_data to find which memory sub-fields are actually non-zero.
+    _has_l2 = _has_msmc = _has_ddr = False
+    for sg_layers in memory_data.values():
+        for row in sg_layers:
+            if row.get('l2_usage', 0):   _has_l2   = True
+            if row.get('msmc_usage', 0): _has_msmc = True
+            if row.get('ddr_usage', 0):  _has_ddr  = True
+
+    is_evm = (performance_source == 'evm_hardware')
+    # On EVM the /tmp/ CSV has no memory data and Layer Cycles at debug_level>1
+    # are inflated — proctime_us and IO (dmaPipeupCycles) are unreliable.
+    # Force those flags off so the HTML never renders misleading charts.
+    perf_availability = {
+        'source':        performance_source,
+        'has_proctime':  False if is_evm else bool(proctime_data),
+        'has_cycles':    bool(cycles_data),
+        'has_kernel':    _has_kernel,
+        'has_core':      _has_core,
+        'has_io':        False if is_evm else _has_io,
+        'has_memory':    False if is_evm else bool(memory_data),
+        'has_l2':        False if is_evm else _has_l2,
+        'has_msmc':      False if is_evm else _has_msmc,
+        'has_ddr':       False if is_evm else _has_ddr,
+        'evm_accuracy':  evm_accuracy,
+        # Timing: flat keys in metadata (new format) OR nested evm_timing (old format)
+        'evm_timing':    ({k: meta[k] for k in
+                           ('infer_time_subgraph_ms', 'infer_time_core_ms', 'infer_time_invoke_ms')
+                           if k in meta}
+                          or meta.get('evm_timing', {})),
+    }
+    perf_availability_json = json.dumps(perf_availability, indent=2)
+
     print(f"  model_json: {len(model_json) / 1024:.2f} KB")
     print(f"  subgraph_json: {len(subgraph_json) / 1024:.2f} KB")
     print(f"  tidl_json: {len(tidl_json) / 1024:.2f} KB")
@@ -1137,6 +1251,7 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
     print(f"  cycles_json: {len(cycles_json) / 1024:.2f} KB")
     print(f"  memory_json: {len(memory_json) / 1024:.2f} KB")
     print(f"  tree_json: {len(tree_json) / 1024:.2f} KB")
+    print(f"  performance_source: {performance_source}")
 
     # Use per-layer compression for lazy loading (on-demand decompression)
     if activation_data:
@@ -1159,6 +1274,7 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
     compiled_html = compiled_html.replace('{{MEMORY_DATA}}', memory_json)
     compiled_html = compiled_html.replace('{{TREE_DATA}}', tree_json)
     compiled_html = compiled_html.replace('{{OVERVIEW_DATA}}', overview_json)
+    compiled_html = compiled_html.replace('{{PERF_AVAILABILITY}}', perf_availability_json)
 
     print(f"\nWriting compiled HTML: {output_path}")
     with open(output_path, 'w', encoding='utf-8') as f:

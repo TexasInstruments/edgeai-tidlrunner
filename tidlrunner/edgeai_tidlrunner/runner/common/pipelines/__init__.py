@@ -35,15 +35,15 @@ from .report import GenReport
 from .surgery import ModelSurgery
 from .extract import ExtractNodes
 from .package import PackageArtifacts
-from .inspector import GenerateModelInspectorJSON, GenerateModelInspectorHTML, UpdateModelInspectorActivations
+from .inspector import GenerateModelInspectorJSON, GenerateModelInspectorHTML, UpdateModelInspectorActivations, UpdateModelInspectorEVMPerf, UpdateModelInspectorEVMAccuracy
 
 
 def get_command_pipelines(**kwargs):
     command_module_name_dict = {
         # compile related
         'compile': ['CompileModel', 'GenerateModelInspectorJSON', 'GenerateModelInspectorHTML'],
-        'infer':'InferModel',
-        'evaluate': ['InferEvaluate'],
+        'infer': ['InferModel', 'UpdateModelInspectorEVMPerf'],
+        'evaluate': ['InferEvaluate', 'UpdateModelInspectorEVMPerf', 'UpdateModelInspectorEVMAccuracy', 'GenerateModelInspectorHTML'],
         'compile+infer': ['CompileModel', 'GenerateModelInspectorJSON', 'GenerateModelInspectorHTML', 'InferModel'],
         'compile+evaluate': ['CompileModel', 'InferEvaluate'],
         'compile+evaluate+report': ['CompileModel', 'InferEvaluate', 'GenReport'],
