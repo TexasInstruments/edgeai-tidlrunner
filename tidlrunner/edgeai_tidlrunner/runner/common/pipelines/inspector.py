@@ -37,6 +37,16 @@ from ..settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
 from .common_.common_base import CommonPipelineBase
 from .common_.compile_base import CompileModelBase
 
+# Runtimes supported by Model Inspector (ONNX-based only for now).
+# TFLite and other formats are skipped — data_extractor only handles ONNX.
+_INSPECTOR_SUPPORTED_SESSIONS = ('onnxrt',)
+
+
+def _is_inspector_supported(settings):
+    """Return True if the model session type is supported by Model Inspector."""
+    session_name = settings.get('session', {}).get('name', '')
+    return session_name in _INSPECTOR_SUPPORTED_SESSIONS
+
 
 class GenerateModelInspectorJSON(CompileModelBase):
     ARGS_DICT=SETTINGS_DEFAULT['analyze']
@@ -56,6 +66,10 @@ class GenerateModelInspectorJSON(CompileModelBase):
         print(f'INFO: Model Inspector - {__file__}')
 
     def _run(self):
+        if not _is_inspector_supported(self.settings):
+            print(f'INFO: Model Inspector - skipping JSON generation (unsupported session type)')
+            return
+
         print(f'INFO: Model Inspector - JSON generation')
 
         from ....modelinspector.data_extractor import main as gen_json
@@ -91,6 +105,10 @@ class GenerateModelInspectorHTML(CompileModelBase):
         print(f'INFO: Model Inspector - {__file__}')
 
     def _run(self):
+        if not _is_inspector_supported(self.settings):
+            print(f'INFO: Model Inspector - skipping HTML generation (unsupported session type)')
+            return
+
         print(f'INFO: Model Inspector - HTML generation')
         from .... import modelinspector
         from ....modelinspector.html_generator import main as gen_html
@@ -140,8 +158,8 @@ class UpdateModelInspectorEVMPerfJSON(CompileModelBase):
         except Exception:
             is_evm = False
 
-        if not is_evm:
-            return  # PC: compile already populated JSON; nothing to update here
+        if not is_evm or not _is_inspector_supported(self.settings):
+            return
 
         inspector_dir = os.path.join(self.run_dir, 'inspector')
         json_path = os.path.join(inspector_dir, 'modelinspector.json')
@@ -186,8 +204,8 @@ class UpdateModelInspectorEVMAccuracyJSON(CompileModelBase):
         except Exception:
             is_evm = False
 
-        if not is_evm:
-            return  # Ignore result.yaml on PC
+        if not is_evm or not _is_inspector_supported(self.settings):
+            return
 
         inspector_dir = os.path.join(self.run_dir, 'inspector')
         json_path = os.path.join(inspector_dir, 'modelinspector.json')
