@@ -27,13 +27,19 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+import warnings
+
 from ....common import utils
 from ....common.bases import transforms_base
 from ...settings import constants
 from ...settings.constants import presets
 from .transforms import *
 from .audio_transforms import AudioLoadAndResample, VGGishMelSpectrogram, YAMNetMelSpectrogram, STFTTransform, GCRNSTFTTransform
-from .bev_detection import *
+
+try:
+    from .bev_detection import *
+except ImportError as e:
+    warnings.warn(f'WARNING: bev_detection postprocessing could not be imported - {str(e)}')
 
 
 class PreProcessTransforms(transforms_base.TransformsCompose):
