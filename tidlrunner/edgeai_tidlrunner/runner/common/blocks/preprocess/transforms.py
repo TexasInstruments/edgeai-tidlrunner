@@ -157,6 +157,29 @@ class ImageRead(object):
         return self.__class__.__name__ + f'(backend={self.backend})'
 
 
+class RempoveBatchAxis(object):
+    def __init__(self):
+        super().__init__()
+
+    def __call__(self, tensor, info_dict):
+        """
+        Args:
+            tensor (Tensor): Tensor image of size (C, H, W) to be normalized.
+
+        Returns:
+            Tensor: Normalized Tensor image.
+        """
+        if isinstance(tensor, (list,tuple)):
+            tensor = [t[0] if t.ndim == 4 and t.shape[0] == 1 else t for t in tensor]
+        else:
+            tensor = tensor[0] if tensor.ndim == 4 and tensor.shape[0] == 1 else tensor
+        #
+        return tensor, info_dict
+
+    def __repr__(self):
+        return self.__class__.__name__ + '()'
+
+
 class ImageNorm(object):
     """Normalize a tensor image with mean and standard deviation.
     Given mean: ``(mean[1],...,mean[n])`` and std: ``(std[1],..,std[n])`` for ``n``

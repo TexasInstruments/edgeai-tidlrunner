@@ -89,6 +89,8 @@ class CompileModelBase(CommonPipelineBase):
                         f'\n  please specify a dataloader using the argument data_name or dataloader.name'
                         f'\n  in addition data_path or dataloader.path may need to be provided.')
                     dataloader_kwargs['name'] = 'random_dataloader'
+                    print(f'WARNING: preprocess name will be set to "no_preprocess" since no dataloader was provided.')
+                    preprocess_kwargs['name'] = None
                 #
                 if not preprocess_kwargs.get('name', None):
                     preprocess_kwargs['name'] = 'no_preprocess'
