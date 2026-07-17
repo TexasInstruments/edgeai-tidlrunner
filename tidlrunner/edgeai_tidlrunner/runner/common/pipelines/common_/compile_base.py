@@ -174,7 +174,7 @@ class CompileModelBase(CommonPipelineBase):
     def _save_input_tensors(self, input_data, phase=None):
         """Dump input data to NPZ file for debugging/analysis purposes."""
         # Create output directory if it doesn't exist
-        dump_dir = self.kwargs.get('save_input_tensors_dir', os.path.join(self.run_dir, 'save_tensors', 'inputs'))
+        dump_dir = self.kwargs.get('save_tensors_input_dir', os.path.join(self.run_dir, 'tensors', 'inputs'))
         os.makedirs(dump_dir, exist_ok=True)
         
         # Create filename with counter for uniqueness
@@ -198,7 +198,7 @@ class CompileModelBase(CommonPipelineBase):
     def _save_output_tensors(self, output_data, phase=None):
         """Dump output data to NPZ file for debugging/analysis purposes."""
         # Create output directory if it doesn't exist
-        dump_dir = self.kwargs.get('save_output_tensors_dir', os.path.join(self.run_dir, 'save_tensors', 'outputs'))
+        dump_dir = self.kwargs.get('save_tensors_output_dir', os.path.join(self.run_dir, 'tensors', 'outputs'))
         os.makedirs(dump_dir, exist_ok=True)
 
         # Create filename with counter for uniqueness
