@@ -32,7 +32,6 @@
 ##################################################################
 # compile and evaluate accuracy using aggregate configs file
 #----------------------------------------------------------------
-tidlrunner-cli compile+evaluate --config_path ./data/configs/modelzoo/configs.yaml --model_shortlist 100 "$@"
+tidlrunner-cli evaluate --config_path ./data/configs/modelzoo/configs.yaml --model_shortlist 100 "$@"
 
-tidlrunner-cli report "$@"
-
+tidlrunner-cli report

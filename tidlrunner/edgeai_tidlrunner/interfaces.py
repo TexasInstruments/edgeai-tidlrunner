@@ -347,7 +347,8 @@ def _create_run_dict(command, ignore_unknown_args=False, model_id=None, **kwargs
         if ignore_unknown_args:
             warnings.warn(f'WARNING: unknown args found for command: {command} - {rest_args}')
         else:
-            raise RuntimeError(f'WARNING: unknown args found for command: {command} - {rest_args}')
+            print(f'WARNING: unknown args found for command: {command} - {rest_args}')
+            exit(0)
         #
     #
 

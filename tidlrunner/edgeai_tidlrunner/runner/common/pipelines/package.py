@@ -170,9 +170,17 @@ class PackageArtifacts(CommonPipelineBase):
         #
 
         # copy artifacts
-        package_artifacts_folder = os.path.join(package_run_dir, relative_artifacts_dir)
         artifacts_files = utils.list_files(artifacts_folder, basename=False)
+        package_artifacts_folder = os.path.join(package_run_dir, relative_artifacts_dir)
         package_artifacts_files = [os.path.join(package_artifacts_folder,os.path.basename(f)) for f in artifacts_files]
+
+        inspector_files = utils.list_files(os.path.join(run_dir, 'inspector'), basename=False)
+        package_inspector_folder = os.path.join(package_run_dir, 'inspector')
+        package_inspector_files = [os.path.join(package_inspector_folder, os.path.basename(f)) for f in inspector_files]
+
+        artifacts_files += inspector_files
+        package_artifacts_files += package_inspector_files
+
         artifacts_patterns = [
             r'_tidl_net.bin$',
             r'_tidl_io_\d*.bin$',
@@ -192,7 +200,9 @@ class PackageArtifacts(CommonPipelineBase):
             r'.svg$',
             r'.html$',
             r'onnxrtMetaData.txt',
-            r'dataset.yaml'
+            r'dataset.yaml',
+            r'inspector.html',
+            r'inspector.json',
         ]
         for f, pf in zip(artifacts_files, package_artifacts_files):
             if self.match_string(artifacts_patterns, f):
@@ -303,8 +313,8 @@ class PackageArtifacts(CommonPipelineBase):
                 else:
                     print(utils.log_color('WARNING', 'could not package', f'{run_dir}'))
                 #
-            except:
-                print(utils.log_color('WARNING', 'could not package', f'{run_dir}'))
+            except Exception as e:
+                print(utils.log_color('WARNING', 'could not package', f'{run_dir} : {e}'))
             #
             sys.stdout.flush()
         #

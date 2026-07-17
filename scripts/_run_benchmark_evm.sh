@@ -41,5 +41,5 @@
 #----------------------------------------------------------------
 tidlrunner-cli evaluate --config_path ./data/configs/modelzoo/configs.yaml --model_shortlist 100 --parallel_processes 1 "$@"
 
-tidlrunner-cli report "$@"
+tidlrunner-cli report
 
