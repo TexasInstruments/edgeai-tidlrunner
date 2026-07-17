@@ -76,7 +76,7 @@ class CompileAnalyzeNoTIDL(compile.CompileModel):
             onnx_model = onnx.load(model_path)
 
             # Store original IR version for later comparison
-            original_ir_version = onnx_model.ir_version
+            # original_ir_version = onnx_model.ir_version
 
             # using native onnx
             # intermediate_layer_value_info = onnx.helper.ValueInfoProto()
@@ -102,11 +102,11 @@ class CompileAnalyzeNoTIDL(compile.CompileModel):
             
             onnx_model = gs.export_onnx(graph)
             # Check and downgrade IR version if needed (using stored original version)
-            if original_ir_version > MAX_SUPPORTED_IR_VERSION:
-                print(f'WARNING: IR version of model: {original_ir_version} - not supported in TIDL - updating ONNX IR version to {MAX_SUPPORTED_IR_VERSION}')
-                onnx_model.ir_version = MAX_SUPPORTED_IR_VERSION
-            else:
-                onnx_model.ir_version = original_ir_version
+            # if original_ir_version > MAX_SUPPORTED_IR_VERSION:
+            #     print(f'WARNING: IR version of model: {original_ir_version} - not supported in TIDL - updating ONNX IR version to {MAX_SUPPORTED_IR_VERSION}')
+            #     onnx_model.ir_version = MAX_SUPPORTED_IR_VERSION
+            # else:
+            #     onnx_model.ir_version = original_ir_version
             onnx.save(onnx_model, model_path)
         
         else :
