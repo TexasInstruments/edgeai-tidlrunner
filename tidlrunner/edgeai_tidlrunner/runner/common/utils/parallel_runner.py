@@ -41,7 +41,8 @@ from .logger_utils import log_color
 
 class ParallelRunner:
     def __init__(self, parallel_processes, desc='TASKS', mininterval=0.2, maxinterval=10.0, tqdm_obj=None,
-            overall_timeout=None, instance_timeout=None, check_errors=False, verbose=False, with_progressbar=True):
+            overall_timeout=None, instance_timeout=None, check_errors=False, verbose=False, with_progressbar=True,
+            terminate_task_on_error=True):
         self.parallel_processes = parallel_processes
         self.desc = desc
         self.queued_tasks = dict()
@@ -60,6 +61,8 @@ class ParallelRunner:
         self.check_errors = check_errors
         self.with_progressbar = with_progressbar
         self.last_update_time = time.time()
+        self.terminate_task_on_error = terminate_task_on_error
+
         if verbose:
             warnings.warn('''
             Note: ParallelRunner is for tasks that are started with subprocess.Popen()
@@ -127,19 +130,20 @@ class ParallelRunner:
         running_proc_name = proc_dict['proc_name']
         completed = False
         out_ret = None
+        exit_code = None
         if proc is not None:
             completed = False
             exit_code = proc.returncode if hasattr(proc, 'returncode') else None
             try:
-                err_code = proc.wait(timeout=self.epsinterval) if hasattr(proc, 'wait') else None
-                if err_code:
-                    # raise subprocess.CalledProcessError(err_code, "Error occurred")
-                    print(log_color("\nERROR", f"Error occurred: {running_proc_name} Details: {proc_dict}", f"ERROR: Error Code: {err_code} at {__file__}"))
+                exit_code = proc.wait(timeout=self.epsinterval) if hasattr(proc, 'wait') else None
+                if exit_code:
+                    # raise subprocess.CalledProcessError(exit_code, "Error occurred")
+                    print(log_color("\nERROR", f"Error occurred: {running_proc_name} Details: {proc_dict}", f"ERROR: Error Code: {exit_code} at {__file__}"))
                     if hasattr(proc, 'terminate'):
                         proc.terminate()
                     #
                     completed = True
-                    return completed, out_ret
+                    return completed, out_ret, exit_code
                 #
             except subprocess.TimeoutExpired as ex:
                 pass
@@ -152,7 +156,7 @@ class ParallelRunner:
                 #
                 print(log_color("\nERROR", f"Error occurred: {running_proc_name} Details: {proc_dict}", f"\nERROR Error Code: {ex} at {__file__}"))
             else:
-                out_ret, err_ret = proc.communicate(timeout=self.epsinterval) if hasattr(proc, 'communicate') else None, None
+                out_ret, exit_code = proc.communicate(timeout=self.epsinterval) if hasattr(proc, 'communicate') else None, None
                 completed = True
             #
         else:
@@ -161,7 +165,7 @@ class ParallelRunner:
             # print(log_color("\nERROR", f"Process is None for: {running_proc_name}", f"Check process initialization at {__file__}"))
             completed = True
         #
-        return completed, out_ret
+        return completed, out_ret, exit_code
 
     def check_errors_in_log_file(self, proc_log, proc_error):
         proc_error = [proc_error] if not isinstance(proc_error, (list,tuple)) else proc_error
@@ -196,7 +200,7 @@ class ParallelRunner:
                 # check running processes                         
                 if running:
                     # try to update the completed status for running processes
-                    completed, result = self._check_proc_complete(proc_dict)
+                    completed, result, exit_code = self._check_proc_complete(proc_dict)
                     running = (not completed)
                     proc_dict['completed'] = completed
                     proc_dict['running'] = running
@@ -221,12 +225,21 @@ class ParallelRunner:
                             proc_term_msgs += [f"TIMEOUT : {self.instance_timeout}"]
                         #
                         proc_terminate = len(proc_term_msgs) > 0
-                        if proc_terminate:
+                        if proc_terminate or exit_code:
                             print(f"WARNING: terminating the process - {running_proc_name} - {', '.join(proc_term_msgs)}")
                             if hasattr(proc, 'terminate'):
                                 proc.terminate()
                             #
                             proc_dict['terminated'] = True
+                            # An error seems to have occurred - terminate all the procs in this task_list
+                            if self.terminate_task_on_error:
+                                print(f"WARNING: error occurred - terminating the task - {task_name}")
+                                for proc_id_, proc_dict_ in enumerate(task_list):
+                                    proc_dict_['terminated'] = True
+                                    proc_dict_['completed'] = True
+                                    proc_dict_['running'] = False
+                                #
+                            #
                         #
                     #
                 #
