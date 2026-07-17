@@ -74,7 +74,7 @@ class GenerateModelInspectorJSON(CompileModelBase):
 
         from ....modelinspector.data_extractor import main as gen_json
 
-        inspector_base_path = os.path.join(self.run_dir, 'inspector')
+        inspector_base_path = os.path.join(self.run_dir, 'inspect')
         output_json_path = os.path.join(inspector_base_path, 'modelinspector.json')
         os.makedirs(inspector_base_path, exist_ok=True)
 
@@ -113,7 +113,7 @@ class GenerateModelInspectorHTML(CompileModelBase):
         from .... import modelinspector
         from ....modelinspector.html_generator import main as gen_html
 
-        inspector_base_path = os.path.join(self.run_dir, 'inspector')
+        inspector_base_path = os.path.join(self.run_dir, 'inspect')
         output_json_path = os.path.join(inspector_base_path, 'modelinspector.json')
         output_html_path = os.path.join(inspector_base_path, 'modelinspector.html')
         template_file = os.path.join(os.path.dirname(modelinspector.__file__), 'template.html')
@@ -161,7 +161,7 @@ class UpdateModelInspectorEVMPerfJSON(CompileModelBase):
         if not is_evm or not _is_inspector_supported(self.settings):
             return
 
-        inspector_dir = os.path.join(self.run_dir, 'inspector')
+        inspector_dir = os.path.join(self.run_dir, 'inspect')
         json_path = os.path.join(inspector_dir, 'modelinspector.json')
 
         if not os.path.exists(json_path):
@@ -207,7 +207,7 @@ class UpdateModelInspectorEVMAccuracyJSON(CompileModelBase):
         if not is_evm or not _is_inspector_supported(self.settings):
             return
 
-        inspector_dir = os.path.join(self.run_dir, 'inspector')
+        inspector_dir = os.path.join(self.run_dir, 'inspect')
         json_path = os.path.join(inspector_dir, 'modelinspector.json')
 
         if not os.path.exists(json_path):

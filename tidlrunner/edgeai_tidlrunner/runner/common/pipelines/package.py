@@ -174,8 +174,8 @@ class PackageArtifacts(CommonPipelineBase):
         package_artifacts_folder = os.path.join(package_run_dir, relative_artifacts_dir)
         package_artifacts_files = [os.path.join(package_artifacts_folder,os.path.basename(f)) for f in artifacts_files]
 
-        inspector_files = utils.list_files(os.path.join(run_dir, 'inspector'), basename=False)
-        package_inspector_folder = os.path.join(package_run_dir, 'inspector')
+        inspector_files = utils.list_files(os.path.join(run_dir, 'inspect'), basename=False)
+        package_inspector_folder = os.path.join(package_run_dir, 'inspect')
         package_inspector_files = [os.path.join(package_inspector_folder, os.path.basename(f)) for f in inspector_files]
 
         artifacts_files += inspector_files
