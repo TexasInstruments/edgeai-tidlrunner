@@ -4179,7 +4179,9 @@ main {
                     </div>
                     <div id="cycles-chart-section" class="cycles-chart-section" style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid rgba(128, 128, 128, 0.1);">
                         <div class="perf-chart-header">
-                            <h3 id="cycles-chart-title" title="Total layer cycles, IO cycles, and kernel-only cycles per TIDL layer shown side by side.">Cycles Per Layer</h3>
+                            <h3 id="cycles-chart-title" title="Total layer cycles, IO cycles, and kernel-only cycles per TIDL layer shown side by side.">
+                                <span id="cycles-label-text">Cycles Per Layer (Estimated)</span>
+                            </h3>
                             <div class="perf-chart-controls">
                                 <div class="memory-toggle-group">
                                     <button class="memory-toggle-btn active" data-cycles="total" id="cycles-btn-total" title="Total Layer Cycles">Total</button>
@@ -11279,6 +11281,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Cycles: hide the whole section if no cycles data at all
         const cyclesSec = document.getElementById('cycles-chart-section');
         if (cyclesSec) cyclesSec.style.display = PA.has_cycles ? '' : 'none';
+
+        // Cycles label: show "(Estimated)" for PC, no suffix for EVM
+        const cyclesLabel = document.getElementById('cycles-label-text');
+        if (cyclesLabel) cyclesLabel.textContent = isEVM ? 'Cycles Per Layer' : 'Cycles Per Layer (Estimated)';
 
         // Cycles toggle buttons:
         // - IO button: dmaPipeupCycles is DMA setup only, not true IO — hide on EVM.
