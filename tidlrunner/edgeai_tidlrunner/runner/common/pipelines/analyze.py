@@ -111,7 +111,7 @@ class CompileAnalyzeNoTIDL(compile.CompileModel):
         
         else :
             # Not implemented for other model formats
-            raise NotImplementedError("This model format is curretly not supported")
+            raise NotImplementedError("WARNING: This model format is curretly not supported in {self.__class__.__name__} pipeline. ONNX model format is supported.")
 
     def _prepare(self):     
         # if os.path.exists(self.run_dir):

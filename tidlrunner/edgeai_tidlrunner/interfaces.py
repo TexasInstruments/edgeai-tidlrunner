@@ -104,7 +104,12 @@ def _run_command(task_index, command_name, pipeline_name, command_kwargs, captur
     command_module = getattr(target_module.pipelines, pipeline_name)
 
     runner_obj = command_module(**command_kwargs)
-    runner_obj.prepare()
+    try:
+        runner_obj.prepare()
+    except Exception as e:
+        print(f"ERROR: Failed to prepare runner for command: {command_name} : {e}")
+        sys.exit(1)
+    
     runner_obj.run()
 
 
