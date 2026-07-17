@@ -109,7 +109,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     # post process transforms for detection
     ###############################################################
     @classmethod
-    def create_transforms_detection_base(cls, settings, formatter=None, resize_with_pad=False, keypoint=False, object6dpose=False, normalized_detections=True, transpose_indices=None, model_output_type=None,
+    def create_transforms_detection_base(cls, settings, formatter=None, resize_with_pad=False, keypoint=False, object6dpose=False, normalized_detections=True, transpose_indices=None, model_output_type=None, concat_details=None,
                                      shuffle_indices=None, squeeze_axis=0, reshape_list=None, ignore_index=None, logits_bbox_to_bbox_ls=False,
                                      detection_threshold=None, detection_top_k=None, detection_keep_top_k=None, save_output=False, save_output_frames=50, **kwargs):
 
@@ -118,6 +118,14 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         transforms_list = []
         if transpose_indices is not None:
             transforms_list += [TransposeTensor(indices=transpose_indices)]
+        
+        if concat_details is not None:
+            if isinstance(concat_details, dict):
+                transforms_list += [Concat(**concat_details)]
+            else:
+                raise TypeError(
+                    f'concat_details must be a dict, got {type(concat_details).__name__!r}'
+                )
 
         if logits_bbox_to_bbox_ls:
             logits_bbox_to_bbox_kwargs = logits_bbox_to_bbox_ls if isinstance(logits_bbox_to_bbox_ls, dict) else {}
