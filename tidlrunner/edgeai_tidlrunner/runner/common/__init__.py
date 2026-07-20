@@ -27,9 +27,17 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from . import blocks
+from . import bases
 from . import pipelines
 
 
 def get_command_pipelines(**kwargs):
-    return pipelines.get_command_pipelines(**kwargs)
+    return pipelines.get_command_pipelines()
+    
+
+def get_pipeline(pipeline_name):
+    command_pipelines_dict = get_command_pipelines()
+    supported_pipeline_names = list(command_pipelines_dict.keys())
+    assert pipeline_name in supported_pipeline_names, f'ERROR: invalid pipeline name: {pipeline_name} - must be one of {supported_pipeline_names}'
+    return getattr(pipelines, pipeline_name)
+
