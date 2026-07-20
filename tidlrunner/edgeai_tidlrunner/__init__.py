@@ -31,5 +31,3 @@ from .version import __version__
 
 from . import rtwrapper
 from . import runner
-
-from .interfaces import *

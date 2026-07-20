@@ -38,7 +38,7 @@ import subprocess
 
 
 import edgeai_tidlrunner
-from edgeai_tidlrunner import rtwrapper, runner, interfaces
+from edgeai_tidlrunner import rtwrapper, runner
 
 
 SPECIAL_PIPELINE_NAMES = ('report',)
@@ -76,9 +76,9 @@ class StartRunner(runner.common.bases.PipelineBase):
 
     def run(self, command):
         if command not in SPECIAL_PIPELINE_NAMES:
-            return interfaces.run(command, argparse=True, **self.kwargs)
+            return runner.run(command, argparse=True, **self.kwargs)
         else:
-            return interfaces.run(command, argparse=True, model_id=command+'_model', **self.kwargs)
+            return runner.run(command, argparse=True, model_id=command+'_model', **self.kwargs)
 
     @classmethod
     def main(cls, **kwargs):
