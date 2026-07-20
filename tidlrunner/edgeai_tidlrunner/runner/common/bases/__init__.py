@@ -28,6 +28,6 @@
 
 
 from .pipeline_base import *
-from ...pipeline_manager import *
+from ...manager import *
 from .settings_base import *
 from .transforms_base import *
