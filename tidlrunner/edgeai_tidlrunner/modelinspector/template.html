@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Model Inspector</title>
+<script>
+// Apply saved/system theme before first paint to avoid a light-mode flash.
+(function() {
+    var saved = localStorage.getItem('modelInspectorTheme');
+    var theme = saved || ((window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+})();
+</script>
 <link rel="icon" href="https://companieslogo.com/img/orig/TXN-e197f953.png" type="image/png">
 <!-- V4: Added pako.js for decompressing activation data -->
 <!-- V3: Enhanced graph rendering with Dagre layout algorithm and curved edges -->
@@ -127,6 +135,248 @@ Chart.defaults.color = '#495057';
     --transition-speed: var(--transition-base);
     --node-supported: var(--success);
     --node-non-accelerated: var(--error);
+}
+
+/* ===== DARK THEME =====
+   Overrides only the grayscale/accent primitives — every semantic token
+   (--background-color, --card-background, --text-primary/secondary/muted,
+   --border-color) is derived from these, so the whole UI re-themes from
+   this one block without touching individual component rules. */
+[data-theme="dark"] {
+    --gray-50:  #0f1115;
+    --white:    #1a1d23;
+    --gray-900: #e8e8ea;
+    --gray-700: #a8adb5;
+    --gray-500: #7b8290;
+    --gray-300: #2e323a;
+    --gray-100: #20242b;
+
+    --ti-red-10: #2a1416;
+    --success-light: #123822;
+    --warning-light: #3a2a05;
+    --error-light: #3a1414;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.55);
+    --shadow-red: 0 4px 12px rgba(227, 30, 36, 0.3);
+}
+
+/* Text/icons drawn on a solid accent-color background must stay light in
+   both themes — they are NOT part of the flip above. */
+[data-theme="dark"] .acceleration-progress-text,
+[data-theme="dark"] .btn-icon:active,
+[data-theme="dark"] .view-tab-btn.active,
+[data-theme="dark"] .view-tab-btn.active i {
+    color: #ffffff;
+}
+
+/* ── Dark mode: replace every hardcoded white/light bg with semantic tokens ── */
+
+/* Graph canvas background (was #e5e9f4 light blue) */
+[data-theme="dark"] .canvas-wrapper {
+    background: var(--gray-100);
+}
+
+/* Details / side panel */
+[data-theme="dark"] .details-panel {
+    background-color: var(--card-background);
+}
+[data-theme="dark"] .panel-content {
+    background-color: var(--card-background);
+}
+[data-theme="dark"] .detail-section {
+    background: var(--card-background);
+}
+[data-theme="dark"] .detail-section:fullscreen {
+    background: var(--background-color);
+}
+
+/* Table rows — the most visible issue (image_1, image_4) */
+[data-theme="dark"] .layer-table tbody tr,
+[data-theme="dark"] .operator-summary-table tbody tr,
+[data-theme="dark"] .sg-perf-table tbody tr,
+[data-theme="dark"] .layer-index-content tbody tr,
+[data-theme="dark"] .metrics-table tbody tr {
+    background-color: var(--card-background);
+}
+[data-theme="dark"] .layer-table tbody tr:hover,
+[data-theme="dark"] .operator-summary-table tbody tr:hover,
+[data-theme="dark"] .sg-perf-table tbody tr:hover,
+[data-theme="dark"] .layer-index-content tbody tr:hover {
+    background-color: var(--gray-100);
+}
+[data-theme="dark"] .layer-table thead,
+[data-theme="dark"] .operator-summary-table thead {
+    background-color: var(--gray-100);
+}
+
+/* Search input & dropdown */
+[data-theme="dark"] .search-input,
+[data-theme="dark"] .search-input:focus {
+    background: var(--card-background);
+    color: var(--text-primary);
+}
+[data-theme="dark"] .search-dropdown {
+    background: var(--card-background);
+}
+[data-theme="dark"] #non-accelerated-layers-select {
+    background: var(--card-background);
+    color: var(--text-primary);
+}
+
+/* Select dropdowns (subgraph selector etc.) */
+[data-theme="dark"] select {
+    background: var(--card-background);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+/* Cards and section backgrounds */
+[data-theme="dark"] .card,
+[data-theme="dark"] .card-header {
+    background-color: var(--card-background);
+}
+
+/* Node status chips */
+[data-theme="dark"] .node-status-chip.supported {
+    background: var(--success-light);
+}
+[data-theme="dark"] .node-status-chip.unsupported {
+    background: var(--error-light);
+}
+
+/* Tooltips */
+[data-theme="dark"] .node-tooltip {
+    background: var(--gray-100);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+/* Layer index panel */
+[data-theme="dark"] .layer-index-container,
+[data-theme="dark"] .layer-index-content {
+    background: var(--card-background);
+}
+[data-theme="dark"] .layer-index-content tr.selected-layer {
+    background: var(--gray-100);
+}
+
+/* Misc white panels */
+[data-theme="dark"] .performance-table-container,
+[data-theme="dark"] .sg-perf-section,
+[data-theme="dark"] .metrics-section,
+[data-theme="dark"] .activation-panel,
+[data-theme="dark"] .section-container,
+[data-theme="dark"] .perf-card,
+[data-theme="dark"] .perf-section {
+    background-color: var(--card-background);
+}
+
+/* Input backgrounds (any remaining light inputs) */
+[data-theme="dark"] input,
+[data-theme="dark"] textarea {
+    background-color: var(--card-background);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+/* Subgraph pill/badge backgrounds that use hard status colors */
+[data-theme="dark"] .runtime-badge-tidl  { background: #0d2b0d; }
+[data-theme="dark"] .runtime-badge-tvm   { background: #0d1e3a; }
+[data-theme="dark"] .runtime-badge-arm   { background: #3a0d0d; }
+
+/* ── Dark mode: Overview / TIDL-TVM / ONNX nav buttons & subgraph dropdown ── */
+[data-theme="dark"] .sg-nav-btn {
+    background: rgba(30, 33, 41, 0.92);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+[data-theme="dark"] .sg-nav-btn:hover {
+    background: var(--gray-100);
+    border-color: var(--ti-red);
+    color: var(--ti-red);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+[data-theme="dark"] .sg-nav-btn.active {
+    background: var(--ti-red);
+    border-color: var(--ti-red);
+    color: #fff;
+}
+[data-theme="dark"] .sg-subgraph-select {
+    background: rgba(30, 33, 41, 0.92);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+[data-theme="dark"] .sg-subgraph-select:hover,
+[data-theme="dark"] .sg-subgraph-select:focus {
+    background: var(--gray-100);
+    border-color: var(--ti-red);
+}
+
+/* ── Dark mode: graph control buttons (zoom +/- etc.) ───────────────────── */
+[data-theme="dark"] .graph-control-btn {
+    background: rgba(26, 29, 35, 0.95);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+[data-theme="dark"] .graph-control-btn:hover {
+    background: var(--gray-100);
+    border-color: var(--ti-red);
+    color: var(--ti-red);
+}
+
+/* ── Dark mode: SVG graph nodes ──────────────────────────────────────────── */
+/* Node rect backgrounds — swap light tints for dark equivalents */
+[data-theme="dark"] .node-rect {
+    fill: #1a2e24 !important;           /* dark green tint for TIDL-accelerated */
+    stroke: #00A651;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+}
+[data-theme="dark"] .node-rect.non-accelerated {
+    fill: #2e1a1a !important;           /* dark red tint for non-accelerated */
+    stroke: #D32F2F;
+}
+[data-theme="dark"] .graph-node.selected .node-rect {
+    fill: #CC0000 !important;           /* selected: keep red accent */
+}
+
+/* Node label text — JS sets fill inline; CSS !important overrides it */
+[data-theme="dark"] .node-type-label {
+    fill: #e8e8ea !important;           /* light text so it's readable on dark node */
+}
+[data-theme="dark"] .io-label {
+    fill: #e8e8ea !important;
+}
+[data-theme="dark"] .graph-node.selected .io-label,
+[data-theme="dark"] .graph-node:active  .io-label {
+    fill: #ffffff !important;
+}
+[data-theme="dark"] .graph-node.selected .node-icon-path,
+[data-theme="dark"] .graph-node:active  .node-icon-path {
+    stroke: #ffffff !important;
+}
+[data-theme="dark"] .node-icon-path {
+    stroke: #a0aec0 !important;         /* softer icon stroke on dark background */
+}
+[data-theme="dark"] .selected-node-name {
+    fill: #ffffff;
+}
+
+/* Edge / link lines */
+[data-theme="dark"] .graph-edge {
+    stroke: #4a5568 !important;
+}
+
+/* Tensor shape label pill on edges */
+[data-theme="dark"] .edge-label-bg {
+    fill: rgba(26, 29, 35, 0.95) !important;
+    stroke: #4a5568 !important;
+}
+[data-theme="dark"] .edge-label {
+    fill: #a0aec0 !important;
 }
 
 html {
@@ -713,8 +963,10 @@ header.scrolled {
 .model-info {
     display: flex;
     align-items: center;
-    gap: var(--space-8);
-    padding-left: var(--space-6);
+    gap: var(--space-4);
+    padding-left: var(--space-4);
+    margin-left: auto; /* push model-info + theme button to right, avoids overlap with centered name */
+    flex-shrink: 0;
 }
 
 .model-info > * {
@@ -2166,8 +2418,8 @@ main {
     user-select: none;
 }
 .edge-label-bg {
-    fill: rgba(255, 255, 255, 0.95);
-    stroke: #cbd5e0;
+    fill: var(--card-background, rgba(255, 255, 255, 0.95));
+    stroke: var(--border-color, #cbd5e0);
     stroke-width: 1;
     rx: 4;
     pointer-events: none;
@@ -3871,6 +4123,11 @@ main {
             <span class="model-label">Target Device:</span>
             <span class="model-name" id="target-device">Loading...</span>
         </div>
+        <div class="header-actions">
+            <button class="btn-icon" id="theme-toggle-btn" title="Toggle light/dark theme" onclick="toggleTheme()">
+                <i class="fas fa-moon" id="theme-toggle-icon"></i>
+            </button>
+        </div>
     </div>
 </header>
 <!-- Navigation Tabs -->
@@ -4319,6 +4576,47 @@ main {
 </section>
 </main>
 <script>
+// ==================== THEME TOGGLE (light/dark) ====================
+function syncThemeIcon() {
+    const icon = document.getElementById('theme-toggle-icon');
+    if (!icon) return;
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+}
+
+// Chart.js reads colors from CSS vars only at chart-creation time, so charts
+// already on screen need their text/grid colors patched manually on toggle.
+function retintChartsForTheme() {
+    if (typeof Chart === 'undefined' || !Chart.instances) return;
+    const textPrimary = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim();
+    const textSecondary = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim();
+    Object.values(Chart.instances).forEach(chart => {
+        try {
+            const legendLabels = chart.options?.plugins?.legend?.labels;
+            if (legendLabels) legendLabels.color = textPrimary;
+            const scales = chart.options?.scales;
+            if (scales) {
+                Object.values(scales).forEach(scale => {
+                    if (scale.ticks) scale.ticks.color = textSecondary;
+                    if (scale.title) scale.title.color = textSecondary;
+                });
+            }
+            chart.update('none');
+        } catch (e) { /* ignore charts with unexpected option shapes */ }
+    });
+}
+
+function toggleTheme() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const next = isDark ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('modelInspectorTheme', next);
+    syncThemeIcon();
+    retintChartsForTheme();
+}
+
+syncThemeIcon();
+
 // ==================== INJECTED MODEL DATA ====================
 // NOTE: This template receives data transformed by html_generator.py
 //
