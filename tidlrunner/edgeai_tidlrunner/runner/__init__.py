@@ -28,20 +28,21 @@
 
 
 from . import common
+from .pipeline_manager import PipelineManager
 
 
-def get_target_modules():
-    return {
-        'common': common,
-    }
-    
-    
 def get_command_pipelines(**kwargs):
-    command_pipelines = {}
-    target_modules = get_target_modules()
-    for module_name, module in target_modules.items():
-        module_pipelines = module.get_command_pipelines(**kwargs)
-        command_pipelines.update({f'{module_name}.{k}':v for k,v in module_pipelines.items()})
-    #
-    return command_pipelines
+    command_pipelines_dict = common.get_command_pipelines(**kwargs)
+    return command_pipelines_dict
 
+
+def get_pipeline(pipeline_name):
+    return common.get_pipeline(pipeline_name)
+
+
+def get_pipeline_manager(command, **kwargs):
+    command_pipelines_dict = get_command_pipelines(**kwargs)
+    supported_pipeline_names = list(command_pipelines_dict.keys())
+    assert command in command_pipelines_dict, f"ERROR: invalid command: {command} - must be one of {supported_pipeline_names}"
+    pipeline_names = command_pipelines_dict[command]
+    return PipelineManager(command, pipeline_names, **kwargs)
