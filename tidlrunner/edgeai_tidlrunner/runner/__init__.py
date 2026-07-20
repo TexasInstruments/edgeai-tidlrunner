@@ -28,7 +28,7 @@
 
 
 from . import common
-from .pipeline_manager import PipelineManager
+from .manager import PipelineManager
 
 
 def get_command_pipelines(**kwargs):
