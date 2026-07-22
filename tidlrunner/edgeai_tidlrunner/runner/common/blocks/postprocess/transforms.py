@@ -553,6 +553,10 @@ class LogitsToLabelScore():
         if self.model_output_type == 'combined':
             output_list=[]
 
+            if isinstance(tensor_list, list):
+                assert len(tensor_list) == 1, 'tensor_list should be a single nd array for "Combined" output type'
+                tensor_list = tensor_list[0]
+
             bbox_index = []
             for i in self.bbox_index:
                 bbox_index.append(tensor_list.shape[i] if i == -1 else i)
