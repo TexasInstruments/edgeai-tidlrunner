@@ -122,12 +122,12 @@ class VideoFileDataLoader(VideoCaptureDataLoader):
         super().__init__(source=video_path, num_frames=num_frames, bgr_to_rgb=bgr_to_rgb, **kwargs)
 
 
-def video_capture_dataloader(settings, name, source, num_frames=None, **kwargs):
+def video_capture_dataloader(settings, name, source=0, num_frames=None, **kwargs):
     return VideoCaptureDataLoader(source=source, num_frames=num_frames, **kwargs)
 
 
-def camera_capture_dataloader(settings, name, source, num_frames=None, **kwargs):
-    return LiveCameraCaptureDataLoader(source=source, num_frames=num_frames, **kwargs)
+def camera_capture_dataloader(settings, name, source=0, num_frames=None, **kwargs):
+    return CameraCaptureDataLoader(source=source, num_frames=num_frames, **kwargs)
 
 
 def video_file_dataloader(settings, name, video_path, num_frames=None, **kwargs):
