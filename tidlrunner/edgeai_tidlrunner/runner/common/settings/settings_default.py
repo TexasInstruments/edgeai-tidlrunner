@@ -184,6 +184,7 @@ COPY_SETTINGS_DEFAULT['compile'] = COPY_SETTINGS_DEFAULT['basic'] | COPY_SETTING
 ##########################################################################
 SETTINGS_DEFAULT['infer'] = SETTINGS_DEFAULT['compile'] | {
     'display_benchmark':        {'dest': 'common.display_benchmark', 'default': False, 'type': utils.str_to_bool, 'nargs': '?', 'const': True, 'metavar': 'value', 'help': 'display benchmark statistics after inference on EVM'},
+    'show_output':            {'dest':'postprocess.show_output', 'default':False, 'type':bool, 'metavar':'value', 'help': 'show postprocessed output images on screen (using opencv imshow)'},
 }
 
 COPY_SETTINGS_DEFAULT['infer'] = COPY_SETTINGS_DEFAULT['compile'] | {
