@@ -985,7 +985,7 @@ class BboxKeypointsConfReformat():
 
 
 class HumanPoseImageSave:
-    def __init__(self, num_output_frames=None):
+    def __init__(self, save_output=False, num_output_frames=None, show_output=False):
         self.pose_nms_thr = 0.9
         self.kpt_score_thr = 0.5
         self.palette = np.array([[255, 128, 0], [255, 153, 51], [255, 178, 102],
@@ -1001,6 +1001,8 @@ class HumanPoseImageSave:
         self.show_keypoint_weight = False
         self.num_output_frames = num_output_frames
         self.output_frame_idx = 0
+        self.save_output = save_output
+        self.show_output = show_output
 
     def oks_iou(self, g, d, a_g, a_d, sigmas=None, vis_thr=None):
         """Calculate oks ious.
@@ -1206,7 +1208,12 @@ class HumanPoseImageSave:
         img_data = copy.deepcopy(img_data[:,:,::-1])
         if isinstance(img_data, np.ndarray):
             img = self.draw_and_save(img_data, pose_results)
-            cv2.imwrite(save_path, img)
+            if self.save_output:
+                cv2.imwrite(save_path, img)
+
+            if self.show_output:
+                cv2.imshow('Pose Estimation Result', img)
+                cv2.waitKey(5000)
         else:
             assert False, f'PIL image type isnt supported because PIL process dont pad right now' #TODO
         #

@@ -60,6 +60,8 @@ from .modelmaker_dataloaders import modelmaker_classification_dataloader, \
 from .audio_classification import audio_classification_dataloader
 from .speech_enhancement import speech_enhancement_dataloader
 
+from .video_capture import video_capture_dataloader, camera_capture_dataloader, video_file_dataloader
+
 import warnings
 
 try:

@@ -207,8 +207,10 @@ SETTINGS_DEFAULT['evaluate'] = SETTINGS_DEFAULT['compile'] | {
     'postprocess_ignore_index':           {'dest':'postprocess.ignore_index', 'default':None, 'type':str, 'metavar':'value', 'help': 'index to ignore during accuracy calculation'},
     'postprocess_logits_bbox_to_bbox_ls': {'dest':'postprocess.logits_bbox_to_bbox_ls', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', 'help': 'convert logits bounding box format to bounding box list'},
     'postprocess_keypoint':               {'dest':'postprocess.keypoint', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', 'help': 'enable keypoint postprocessing'},
-    'postprocess_save_output':            {'dest':'postprocess.save_output', 'default':True, 'type':bool, 'metavar':'value', 'help': 'save postprocessed output to files'},
-    'postprocess_save_output_frames':     {'dest':'postprocess.save_output_frames', 'default':10, 'type':int, 'metavar':'value', 'help': 'number of output frames to save'},
+    # save or show output
+    'save_output':            {'dest':'postprocess.save_output', 'default':True, 'type':bool, 'metavar':'value', 'help': 'save postprocessed output to files'},
+    'save_output_frames':     {'dest':'postprocess.save_output_frames', 'default':10, 'type':int, 'metavar':'value', 'help': 'number of output frames to save'},
+    'show_output':            {'dest':'postprocess.show_output', 'default':False, 'type':bool, 'metavar':'value', 'help': 'save postprocessed output to files'},
 }
 
 COPY_SETTINGS_DEFAULT['evaluate'] = COPY_SETTINGS_DEFAULT['compile'] | {   
