@@ -210,7 +210,7 @@ SETTINGS_DEFAULT['evaluate'] = SETTINGS_DEFAULT['compile'] | {
     # save or show output
     'save_output':            {'dest':'postprocess.save_output', 'default':True, 'type':bool, 'metavar':'value', 'help': 'save postprocessed output to files'},
     'save_output_frames':     {'dest':'postprocess.save_output_frames', 'default':10, 'type':int, 'metavar':'value', 'help': 'number of output frames to save'},
-    'show_output':            {'dest':'postprocess.show_output', 'default':False, 'type':bool, 'metavar':'value', 'help': 'save postprocessed output to files'},
+    'show_output':            {'dest':'postprocess.show_output', 'default':False, 'type':bool, 'metavar':'value', 'help': 'show postprocessed output images on screen (using opencv imshow)'},
 }
 
 COPY_SETTINGS_DEFAULT['evaluate'] = COPY_SETTINGS_DEFAULT['compile'] | {   
