@@ -245,7 +245,7 @@ class IgnoreIndex():
 
 
 class ClassificationImageSave():
-    def __init__(self, num_output_frames=None):
+    def __init__(self, save_output=False, num_output_frames=None, show_output=False):
         self.thickness = 2
         self.thickness_txt = 1
         self.dataset_info = None
@@ -254,6 +254,8 @@ class ClassificationImageSave():
         self.num_output_frames = num_output_frames
         self.output_frame_idx = 0
         self.color_map = None
+        self.save_output = save_output
+        self.show_output = show_output
 
     def __call__(self, output, info_dict):
         if self.output_frame_idx >= self.num_output_frames:
@@ -296,9 +298,20 @@ class ClassificationImageSave():
         label_color = self.color_map[output_id % len(self.color_map)]
         img_data = self.put_text(img_data, output_txt, label_color)
         if isinstance(img_data, np.ndarray):
-            cv2.imwrite(save_path, img_data[:, :, ::-1])
+            if self.save_output:
+                cv2.imwrite(save_path, img_data[:, :, ::-1])
+
+            if self.show_output:
+                cv2.imshow('Classification Result', img_data[:, :, ::-1])
+                cv2.waitKey(5000)
         else:
-            img_data.save(save_path)
+            if self.save_output:
+                img_data.save(save_path)
+
+            if self.show_output:
+                img_array = np.array(img_data)
+                cv2.imshow('Classification Result', img_array[:, :, ::-1])
+                cv2.waitKey(5000)
         #
         self.output_frame_idx += 1
         return output, info_dict
@@ -342,12 +355,14 @@ class SegmentationImagetoBytes():
 
 
 class SegmentationImageSave():
-    def __init__(self, num_output_frames=None, num_classes=None):
+    def __init__(self, save_output=False, num_output_frames=None, num_classes=None, show_output=False):
         self.num_classes = num_classes
         self.num_output_frames = num_output_frames
         self.output_frame_idx = 0
         self.color_map = None
         self.palette = None
+        self.save_output = save_output
+        self.show_output = show_output
 
     def update_color_map(self, color_map):
         self.color_map = color_map
@@ -396,10 +411,21 @@ class SegmentationImageSave():
         if isinstance(output_image, np.ndarray):
             # convert image to BGR
             output_image = output_image[:, :, ::-1] if output_image.ndim > 2 else output_image
-            cv2.imwrite(save_path, output_image)
+            if self.save_output:
+                cv2.imwrite(save_path, output_image)
+
+            if self.show_output:
+                cv2.imshow('Segmentation Result', output_image)
+                cv2.waitKey(5000)
         else:
             # add fill code here
-            output_image.save(save_path)
+            if self.save_output:
+                output_image.save(save_path)
+
+            if self.show_output:
+                img_array = np.array(output_image)
+                cv2.imshow('Segmentation Result', img_array[:, :, ::-1])
+                cv2.waitKey(5000)
         #
         self.output_frame_idx += 1
         return tensor, info_dict
@@ -610,7 +636,7 @@ class LogitsToLabelScore():
     
 
 class DetectionImageSave():
-    def __init__(self, num_output_frames=None):
+    def __init__(self, save_output=False, num_output_frames=None, show_output=False):
         self.thickness = 2
         self.thickness_txt = 1
         self.dataset_info = None
@@ -619,6 +645,8 @@ class DetectionImageSave():
         self.num_output_frames = num_output_frames
         self.output_frame_idx = 0
         self.color_map = None
+        self.save_output = save_output
+        self.show_output = show_output
 
     def __call__(self, bbox, info_dict):
         if self.output_frame_idx >= self.num_output_frames:
@@ -663,9 +691,20 @@ class DetectionImageSave():
         #
         img_data = PIL.Image.fromarray(img_data) if not is_ndarray else img_data
         if isinstance(img_data, np.ndarray):
-            cv2.imwrite(save_path, img_data[:, :, ::-1])
+            if self.save_output:
+                cv2.imwrite(save_path, img_data[:, :, ::-1])
+
+            if self.show_output:
+                cv2.imshow('Detection Result', img_data[:, :, ::-1])
+                cv2.waitKey(5000)
         else:
-            img_data.save(save_path)
+            if self.save_output:
+                img_data.save(save_path)
+
+            if self.show_output:
+                img_array = np.array(img_data)
+                cv2.imshow('Detection Result', img_array[:, :, ::-1])
+                cv2.waitKey(5000)
         #
         self.output_frame_idx += 1
         return bbox, info_dict
@@ -735,9 +774,11 @@ class DepthImageResize():
 
 
 class DepthImageSave():
-    def __init__(self, num_output_frames=None):
+    def __init__(self, save_output=False, num_output_frames=None, show_output=False):
         self.num_output_frames = num_output_frames
         self.output_frame_idx = 0
+        self.save_output = save_output
+        self.show_output = show_output
 
     # Taken from MiDaS (https://github.com/isl-org/MiDaS)
     def write_pfm(path, image, scale=1):
@@ -791,7 +832,12 @@ class DepthImageSave():
         save_path = os.path.join(save_dir, image_name)
 
         pred = result['preds'].astype(np.float32)
-        self.write_pfm(pred)
+        if self.save_output:
+            self.write_pfm(pred)
+
+        if self.show_output:
+            cv2.imshow('Depth Result', pred[:, :, ::-1])
+            cv2.waitKey(5000)
 
         # Write a relative 16 bit depth map
         d_min = np.min(pred)

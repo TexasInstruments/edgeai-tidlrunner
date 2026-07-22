@@ -98,10 +98,10 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     # post process transforms for classification
     ###############################################################
     @classmethod
-    def create_transforms_classification(cls, settings, save_output=False, save_output_frames=50, **kwargs):
+    def create_transforms_classification(cls, settings, save_output=False, save_output_frames=50, show_output=False, **kwargs):
         transforms_list = [SqueezeAxis(), ArgMax(axis=-1)]
-        if save_output:
-            transforms_list += [ClassificationImageSave(save_output_frames)]
+        if save_output or show_output:
+            transforms_list += [ClassificationImageSave(save_output=save_output, num_output_frames=save_output_frames, show_output=show_output)]
         #
         return transforms_list, dict(**kwargs)
 
@@ -111,7 +111,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     @classmethod
     def create_transforms_detection_base(cls, settings, formatter=None, resize_with_pad=False, keypoint=False, object6dpose=False, normalized_detections=True, transpose_indices=None, model_output_type=None, concat_details=None,
                                      shuffle_indices=None, squeeze_axis=0, reshape_list=None, ignore_index=None, logits_bbox_to_bbox_ls=False,
-                                     detection_threshold=None, detection_top_k=None, detection_keep_top_k=None, save_output=False, save_output_frames=50, **kwargs):
+                                     detection_threshold=None, detection_top_k=None, detection_keep_top_k=None, save_output=False, save_output_frames=50, show_output=False, **kwargs):
 
         # detection_threshold = detection_threshold or settings.detection_threshold
 
@@ -168,11 +168,11 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
 
         if save_output and save_output_frames:
             if keypoint:
-                transforms_list += [HumanPoseImageSave(save_output_frames)]
+                transforms_list += [HumanPoseImageSave(save_output_frames, show_output=show_output)]
             elif object6dpose:
-                transforms_list += [Object6dPoseImageSave(save_output_frames)]
+                transforms_list += [Object6dPoseImageSave(save_output=save_output, num_output_frames=save_output_frames, show_output=show_output)]
             else:
-                transforms_list += [DetectionImageSave(save_output_frames)]
+                transforms_list += [DetectionImageSave(save_output=save_output, num_output_frames=save_output_frames, show_output=show_output)]
         #
         return transforms_list, dict(reshape_list=reshape_list, detection_threshold=detection_threshold,
                                     formatter=formatter, resize_with_pad=resize_with_pad,
@@ -220,7 +220,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     # post process transforms for segmentation
     ###############################################################
     @classmethod
-    def create_transforms_segmentation_base(cls, settings, data_layout=None, with_argmax=True, save_output=False, save_output_frames=50, **kwargs):
+    def create_transforms_segmentation_base(cls, settings, data_layout=None, with_argmax=True, save_output=False, save_output_frames=50, show_output=False, **kwargs):
         transforms_list = [SqueezeAxis()]
         if with_argmax:
             transforms_list += [ArgMax(axis=None, data_layout=data_layout)]
@@ -229,7 +229,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
                                      SegmentationImageResize(),
                                      SegmentationImagetoBytes()]
         if save_output:
-            transforms_list += [SegmentationImageSave(save_output_frames)]
+            transforms_list += [SegmentationImageSave(save_output=save_output, num_output_frames=save_output_frames, show_output=show_output)]
         #
         return transforms_list, dict(data_layout=data_layout, with_argmax=with_argmax, **kwargs)
 
@@ -245,14 +245,14 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     # post process transforms for human pose estimation
     ###############################################################
     @classmethod
-    def create_transforms_human_pose_estimation_base(cls, settings, data_layout=None, with_udp=True, save_output=False, save_output_frames=50, **kwargs):
+    def create_transforms_human_pose_estimation_base(cls, settings, data_layout=None, with_udp=True, save_output=False, save_output_frames=50, show_output=False, **kwargs):
         # channel_axis = -1 if data_layout == presets.DataLayoutType.NHWC else 1
         # postprocess_human_pose_estimation = [SqueezeAxis()] #just removes the first axis from output list, final size (c,w,h)
         transforms_list = [HumanPoseHeatmapParser(use_udp=with_udp),
                            KeypointsProject2Image(use_udp=with_udp)]
 
         if save_output:
-            transforms_list += [HumanPoseImageSave(save_output_frames)]
+            transforms_list += [HumanPoseImageSave(save_output=save_output, num_output_frames=save_output_frames, show_output=show_output)]
         #
         return transforms_list, dict(data_layout=data_layout, with_udp=with_udp, **kwargs)
 
@@ -264,12 +264,12 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     # post process transforms for depth estimation
     ###############################################################
     @classmethod
-    def create_transforms_depth_estimation_base(cls, settings, data_layout=presets.DataLayoutType.NCHW, save_output=False, save_output_frames=50, **kwargs):
+    def create_transforms_depth_estimation_base(cls, settings, data_layout=presets.DataLayoutType.NCHW, save_output=False, save_output_frames=50, show_output=False, **kwargs):
         transforms_list = [SqueezeAxis(),
                            NPTensorToImage(data_layout=data_layout),
                            DepthImageResize()]
         if save_output:
-            transforms_list += [DepthImageSave(save_output_frames)]
+            transforms_list += [DepthImageSave(save_output=save_output, num_output_frames=save_output_frames, show_output=show_output)]
         #
         return transforms_list, dict(data_layout=data_layout, **kwargs)
 
@@ -284,13 +284,13 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     # post process transforms for disparity estimation
     ###############################################################
     @classmethod
-    def create_transforms_disparity_estimation_base(cls, settings, data_layout, save_output=False, save_output_frames=50, **kwargs):
+    def create_transforms_disparity_estimation_base(cls, settings, data_layout, save_output=False, save_output_frames=50, show_output=False, **kwargs):
         transforms_list = [SqueezeAxis(), 
                            NPTensorToImage(data_layout=data_layout)]
         
         # To REVISIT!
         #if save_output:
-        #    transforms_list += [DepthImageSave(save_output_frames)]
+        #    transforms_list += [DepthImageSave(save_output=save_output, num_output_frames=save_output_frames, show_output=show_output)]
         return transforms_list, dict(data_layout=data_layout, **kwargs)
 
     @classmethod
@@ -303,7 +303,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     # To REVISIT
     # Any necessary visualization funtions will be addeed in bev_detection.py
     @classmethod
-    def create_transforms_bev_detection_base(cls, settings, data_layout=presets.DataLayoutType.NCHW, save_output=False, save_output_frames=50, **kwargs):
+    def create_transforms_bev_detection_base(cls, settings, data_layout=presets.DataLayoutType.NCHW, save_output=False, save_output_frames=50, show_output=False, **kwargs):
 
         try:
             postprocess_bev_detection_base = [Bbox3d2result()]
@@ -313,7 +313,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         if save_output:
             # To be updated
             try:
-                postprocess_bev_detection_base += [BEVImageSave(save_output_frames,
+                postprocess_bev_detection_base += [BEVImageSave(save_output=save_output, num_output_frames=save_output_frames, show_output=show_output,
                                                                 score_threshold=0.5,
                                                                 mode='frame')]
             except Exception as message:
@@ -338,7 +338,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         if save_output:
             # To be updated
             try:
-                postprocess_bev_detection_bevdet += [BEVImageSave(save_output_frames,
+                postprocess_bev_detection_bevdet += [BEVImageSave(save_output=save_output, num_output_frames=save_output_frames, show_output=show_output,
                                                                 score_threshold=0.5,
                                                                 mode='frame')]
             except Exception as message:
@@ -357,7 +357,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         if save_output:
             # To be updated
             try:
-                postprocess_fcos3d += [BEVImageSave(save_output_frames,
+                postprocess_fcos3d += [BEVImageSave(save_output=save_output, num_output_frames=save_output_frames, show_output=show_output,
                                                     score_threshold=0.2,
                                                     mode='mv_image')]
             except Exception as message:
@@ -383,7 +383,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         if save_output:
             # To be updated
             try:
-                postprocess_bev_detection_fastbev += [BEVImageSave(save_output_frames,
+                postprocess_bev_detection_fastbev += [BEVImageSave(save_output=save_output, num_output_frames=save_output_frames, show_output=show_output,
                                                                     score_threshold=0.5,
                                                                     mode='frame')]
             except Exception as message:

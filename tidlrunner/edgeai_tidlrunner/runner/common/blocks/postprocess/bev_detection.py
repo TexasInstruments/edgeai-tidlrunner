@@ -2112,7 +2112,7 @@ class UpdateTemporalQueue():
 
 
 class BEVImageSave():
-    def __init__(self, num_output_frames=None, score_threshold=0.2, mode='frame'):
+    def __init__(self, save_output=False, num_output_frames=None, show_output=False, score_threshold=0.2, mode='frame'):
         self.num_output_frames = num_output_frames
         self.output_frame_idx = 0
         self.score_threshold = score_threshold
@@ -2130,6 +2130,8 @@ class BEVImageSave():
         self.lidar_image_center = self.lidar_image_size[0] // 2
         self.xy_bound = [-55, 55, -55, 55]
         self.use_dim = 5
+        self.save_output = save_output
+        self.show_output = show_output
 
 
     def visualize_LiDAR_detections(self, corners_3d, labels_3d, info_dict):
@@ -2223,7 +2225,13 @@ class BEVImageSave():
                         if a is not None:
                             cv2.line(img, tuple(a), tuple(b), self.bbox_color[labels_3d[idx]], self.thickness)
             save_path = os.path.join(save_dir, 'output_frame-{:04d}.png'.format(self.output_frame_idx))
-            cv2.imwrite(save_path, img)
+
+            if self.save_output:
+                cv2.imwrite(save_path, img)
+
+            if self.show_output:
+                cv2.imshow('BEV Detection Result', img[:, :, ::-1])
+                cv2.waitKey(5000)
 
         else:
             imgs = []
@@ -2268,7 +2276,12 @@ class BEVImageSave():
                                 cv2.line(single_img, tuple(a), tuple(b), self.bbox_color[labels[idx]], self.thickness)
 
                 save_path = os.path.join(save_dir, 'output_frame-{:04d}_{}.png'.format(self.output_frame_idx, i))
-                cv2.imwrite(save_path, single_img)
+                if self.save_output:
+                    cv2.imwrite(save_path, single_img)
+
+                if self.show_output:
+                    cv2.imshow('BEV Detection Result', single_img[:, :, ::-1])
+                    cv2.waitKey(5000)
 
             # Visualize Bird's eye view detections
             self.visualize_LiDAR_detections(corners_3d, labels_3d, info_dict)

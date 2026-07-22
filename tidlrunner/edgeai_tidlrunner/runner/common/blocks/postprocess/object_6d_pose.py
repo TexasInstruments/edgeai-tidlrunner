@@ -275,13 +275,15 @@ class BboxObject6dPoseReformat():
 
 
 class Object6dPoseImageSave:
-    def __init__(self, num_output_frames=None):
+    def __init__(self, save_output=False, num_output_frames=None, show_output=False):
         self.cadmodels = None
         self.camera_matrix = None
         self.class_to_cuboid = None
         self.color_map = None
         self.num_output_frames = num_output_frames
+        self.save_output = save_output
         self.output_frame_idx = 0
+        self.show_output = show_output
         
     def __call__(self, result, info_dict):
         if self.output_frame_idx >= self.num_output_frames:
@@ -309,7 +311,13 @@ class Object6dPoseImageSave:
         img_data = copy.deepcopy(img_data[:,:,::-1])
         if isinstance(img_data, np.ndarray):
             img = self.draw_6d_pose(img_data, result)
-            cv2.imwrite(save_path, img)
+            if self.save_output:
+                cv2.imwrite(save_path, img)
+
+            if self.show_output:
+                cv2.imshow('Depth Result', img)
+                cv2.waitKey(5000)
+
         else:
             assert False, f'PIL image type isnt supported because PIL process dont pad right now' #TODO
         #
