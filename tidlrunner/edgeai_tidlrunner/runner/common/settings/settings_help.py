@@ -32,6 +32,7 @@ import inspect
 from dataclasses import asdict, dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
+from .constants import SETTINGS_HELP
 
 @dataclass
 class HelpSettingsEntry:
@@ -45,11 +46,6 @@ class HelpSettingsEntry:
     tags: List[str] = field(default_factory=list)
     notes: Optional[str] = None
     example: Optional[str] = None
-
-
-SETTINGS_HELP: Dict[str, Dict[str, Dict[str, Any]]] = {}
-
-SETTINGS_HELP['dataloaders'] : Dict[str, Dict[str, Any]] = {}
 
 
 def _infer_args_from_signature(fn: Callable[..., Any]) -> Tuple[List[str], Dict[str, Any]]:
@@ -101,17 +97,28 @@ def register_help(
     tags = tags or []
 
     def _decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
-        entry_name = name or fn.__name__
-
         if section not in SETTINGS_HELP:
             SETTINGS_HELP[section] = {}
-        if (entry_name in SETTINGS_HELP[section]) and not overwrite:
-            return fn
 
-        inferred_required, inferred_optional = _infer_args_from_signature(fn) if infer_signature else ([], {})
-        merged_required = _merge_unique(inferred_required, required_args)
-        merged_optional = dict(inferred_optional)
-        merged_optional.update(optional_args)
+        if isinstance(fn, dict):
+            entry_name = name
+            if (entry_name in SETTINGS_HELP[section]) and not overwrite:
+                return fn
+
+            dict_required_args = [k for k, v in fn.items() if v.get('required')]
+            dict_optional_args = {k: v.get('default') for k, v in fn.items() if not v.get('required')}
+            merged_required = _merge_unique(dict_required_args, required_args)
+            merged_optional = dict(dict_optional_args)
+            merged_optional.update(optional_args)
+        else:
+            entry_name = name or fn.__name__
+            if (entry_name in SETTINGS_HELP[section]) and not overwrite:
+                return fn
+
+            inferred_required, inferred_optional = _infer_args_from_signature(fn) if infer_signature else ([], {})
+            merged_required = _merge_unique(inferred_required, required_args)
+            merged_optional = dict(inferred_optional)
+            merged_optional.update(optional_args)
 
         entry = HelpSettingsEntry(
             name=entry_name,
@@ -128,7 +135,8 @@ def register_help(
 
         entry_dict = asdict(entry)
         SETTINGS_HELP[section][entry_name] = entry_dict
-        setattr(fn, '__settings_help__', copy.deepcopy(entry_dict))
+        if not isinstance(fn, dict):
+            setattr(fn, '__settings_help__', copy.deepcopy(entry_dict))
         return fn
 
     return _decorator

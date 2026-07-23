@@ -36,6 +36,7 @@ from .surgery import ModelSurgery
 from .extract import ExtractNodes
 from .package import PackageArtifacts
 from .inspector import GenerateModelInspectorJSON, GenerateModelInspectorHTML, UpdateModelInspectorEVMPerfJSON, UpdateModelInspectorEVMAccuracyJSON
+from .help import HelpRunner
 
 
 def get_command_pipelines(**kwargs):
@@ -53,5 +54,6 @@ def get_command_pipelines(**kwargs):
         # other
         'surgery':'ModelSurgery',
         'extract':'ExtractNodes',
+        'help':'HelpRunner',
     }
     return command_module_name_dict

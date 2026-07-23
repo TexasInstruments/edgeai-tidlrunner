@@ -39,13 +39,14 @@ import subprocess
 
 import edgeai_tidlrunner
 from edgeai_tidlrunner import rtwrapper, runner
+from edgeai_tidlrunner.runner.common.settings.settings_help import export_help_markdown
 
 
 SPECIAL_PIPELINE_NAMES = ('report',)
 
 
 class StartRunner(runner.common.bases.PipelineBase):
-    ARGS_DICT = runner.common.bases.SETTING_PIPELINE_RUNNER_ARGS_DICT
+    ARGS_DICT = runner.common.bases.SETTING_PIPELINE_RUNNER_ARGS_BASE
     COPY_ARGS = {}
 
     def __init__(self, **kwargs):
@@ -74,11 +75,14 @@ class StartRunner(runner.common.bases.PipelineBase):
         num_cuda_gpus = int(out_ret)
         return num_cuda_gpus
 
-    def run(self, command):
+    def run(self, command=None, **kwargs):
+        full_kwargs = self.kwargs | kwargs
+        command = command or full_kwargs.pop('command', None)
+        
         if command not in SPECIAL_PIPELINE_NAMES:
-            return runner.run(command, argparse=True, **self.kwargs)
+            return runner.run(command=command, argparse=True, **full_kwargs)
         else:
-            return runner.run(command, argparse=True, model_id=command+'_model', **self.kwargs)
+            return runner.run(command=command, argparse=True, model_id=command+'_model', **full_kwargs)
 
     @classmethod
     def main(cls, **kwargs):
@@ -88,51 +92,49 @@ class StartRunner(runner.common.bases.PipelineBase):
             has_arg = any([f'--{k}' in arg for arg in sys.argv])
             if not has_arg:
                 sys.argv.append(f'--{k}={v}')
-            #
-        #
 
+        has_help_arg = any([arg in ('help', 'h', '--help', '-h') for arg in sys.argv])
         if len(sys.argv) == 1 or (len(sys.argv) > 1 and sys.argv[1] in ('help', 'h', '--help', '-h')):
             print('============================================================')
-            sys.argv = [sys.argv[0]]
-            parser = cls.get_arg_parser()
+            sys.argv = [sys.argv[0], 'help']
+            
+            parser = cls.get_arg_parser(exit_on_error=False)
+            command_choices = list(runner.get_command_pipelines().keys())
+            parser.print_help()
+            
             command_args, rest_args = parser.parse_known_args()
             kwargs = vars(command_args)
-            command_choices = runner.get_command_pipelines(**kwargs)
-            parser.print_help()
+
             print('============================================================')
             print('for detailed help, use the following options:')
             for command_choice in command_choices:
                 print(f'{sys.argv[0]} {command_choice} --help')
-            #
-        elif (len(sys.argv) == 2 and sys.argv[1] not in SPECIAL_PIPELINE_NAMES) or \
-            (len(sys.argv) > 2 and sys.argv[2] in ('help', 'h', '--help', '-h')):
-            if len(sys.argv) == 2:
-                if sys.argv[1].startswith('-'):
-                    sys.argv[1] = '--help'
-                #
-            #
-            sys.argv = [sys.argv[0], sys.argv[1]]
-            parser = cls.get_arg_parser()
-            command_args, rest_args = parser.parse_known_args()
-            kwargs = vars(command_args)
-            command_choices = runner.get_command_pipelines(**kwargs)
-            command = sys.argv[1]
-            # assert command in command_choices, RuntimeError(
-            #     f'ERROR: invalid command: {command} - must be one of {command_choices}')
-            sys.argv = [sys.argv[0]] + ['--help']
-            main_runner = cls()
-            main_runner.run(command)
+            
+            help_markdown = export_help_markdown()
+            if help_markdown:
+                print('============================================================')
+                print('registered command help (markdown):')
+                print(help_markdown)
+
         else:
-            parser = cls.get_arg_parser()
-            command_args, rest_args = parser.parse_known_args()
-            kwargs = vars(command_args)
-            command_choices = runner.get_command_pipelines(**kwargs)
-            command = sys.argv[1].lower().replace(' ', '')
-            # assert command in command_choices, RuntimeError(
-            #     f'ERROR: invalid command: {command} - must be one of {command_choices}')
-            sys.argv = [sys.argv[0]] + sys.argv[2:]
-            main_runner = cls(**kwargs)
-            main_runner.run(command)
+            parser = cls.get_arg_parser(exit_on_error=False)
+            command = sys.argv[1]
+            main_runner = cls()
+            main_runner.run(command, **kwargs)
+
+        # elif has_help_arg:
+        #     parser = cls.get_arg_parser(exit_on_error=False)
+        #     command = sys.argv[1]
+        #     main_runner = cls()
+        #     main_runner.run(command)
+
+        # else:
+        #     parser = cls.get_arg_parser(exit_on_error=False)
+        #     command_args, rest_args = parser.parse_known_args()
+        #     kwargs = vars(command_args)
+        #     command = sys.argv[1]
+        #     main_runner = cls(**kwargs)
+        #     main_runner.run(command)
 
 
 def start():
@@ -141,18 +143,28 @@ def start():
 
 
 def start_with_proper_environment(**kwargs):
+    if len(sys.argv) == 1:
+        sys.argv.append('help')
+    
     print(f'INFO: running - {sys.argv}')
+
     target_machine = kwargs['target_machine']
     is_tidl_tools_path_defined = (os.environ.get('TIDL_TOOLS_PATH', None) is not None and os.environ.get('LD_LIBRARY_PATH', None) is not None)
-    command_args, rest_args = StartRunner.get_arg_parser().parse_known_args()  
-    command_kwargs = vars(command_args)
-    if 'session.target_device' not in command_kwargs:
-        print('INFO: provide target_device argument - this has to match to with your device. eg: --target_device=AM62A')
-        print('INFO: list of supported devices can be found here:\n      https://github.com/TexasInstruments/edgeai/blob/main/edgeai-mpu/readme_sdk.md \n      https://github.com/TexasInstruments/edgeai-tidlrunner/blob/main/tools/tidl_tools_package/download.py#L50')
-        exit(0)
+    has_help_arg = any([arg in ('help', 'h', '--help', '-h') for arg in sys.argv])
 
-    if target_machine == rtwrapper.core.presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION and (not is_tidl_tools_path_defined):
+    if (not has_help_arg) and target_machine == rtwrapper.core.presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION and (not is_tidl_tools_path_defined):
         print("INFO: TIDL_TOOLS_PATH or LD_LIBRARY_PATH is not set, restarting with proper environment...")
+
+        parser = StartRunner.get_arg_parser(exit_on_error=False)
+        command_choices = list(runner.get_command_pipelines().keys())
+        parser.add_argument('command', choices=command_choices, help='command to run (compile, infer, etc.)')
+        command_args, rest_args = parser.parse_known_args()
+        command_kwargs = vars(command_args)
+        if 'session.target_device' not in command_kwargs:
+            print('INFO: provide target_device argument - this has to match to with your device. eg: --target_device=AM62A')
+            print('INFO: list of supported devices can be found here:\n      https://github.com/TexasInstruments/edgeai/blob/main/edgeai-mpu/readme_sdk.md \n      https://github.com/TexasInstruments/edgeai-tidlrunner/blob/main/tools/tidl_tools_package/download.py#L50')
+            exit(0)
+
         start_kwargs = kwargs.copy()
         cmd_keys_mapping = {
             'session.target_device': 'target_device',

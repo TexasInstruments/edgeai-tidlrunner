@@ -175,7 +175,7 @@ class PipelineBase():
     def _set_default_args(cls, **kwargs):
         kwargs_cmd = {}
         for k_name, v_dict in cls.ARGS_DICT.items():
-            if v_dict['default'] != argparse.SUPPRESS:
+            if v_dict['default'] != argparse.SUPPRESS and 'dest' in v_dict:
                 kwargs_cmd[v_dict['dest']] = v_dict['default']
         return kwargs_cmd
 
@@ -185,7 +185,7 @@ class PipelineBase():
         kwargs_cmd = {}
         for k, v in kwargs.items():
             if '.' not in k:
-                if k in cls.ARGS_DICT:
+                if k in cls.ARGS_DICT and 'dest' in cls.ARGS_DICT[k]:
                     v_dict = cls.ARGS_DICT[k]
                     kwargs_cmd[v_dict['dest']] = v
                 else:
@@ -220,7 +220,7 @@ class PipelineBase():
         #
 
     @classmethod
-    def get_arg_parser(cls):
+    def get_arg_parser(cls, **kwargs):
         args_dict = copy.deepcopy(cls.ARGS_DICT)
         group_keys = args_dict.keys()
         group_dict = {}
@@ -236,7 +236,8 @@ class PipelineBase():
             description='Runner commandline arguments',
             allow_abbrev=False,
             argument_default=argparse.SUPPRESS,
-            epilog=cls._arg_parser_info()
+            epilog=cls._arg_parser_info(),
+            **kwargs
         )
 
         for group_k, group_entry in group_dict.items():
