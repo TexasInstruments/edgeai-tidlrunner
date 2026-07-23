@@ -4,7 +4,7 @@ Please find common questions from users. If your question is not covered here, p
 
 ## General TIDL questions
 
-First refer to the docs in ['edgeai-tidl-tools/docs'](https://github.com/TexasInstruments/edgeai-tidl-tools/tree/master/docs). Releases and branches of this repo are version tagged. 
+First refer to the docs in [edgeai-tidl-tools/docs](https://github.com/TexasInstruments/edgeai-tidl-tools/tree/master/docs). Releases and branches of this repo are version tagged.
 
 There are several documents present in that repo that will help with general TIDL tips, behavior, and debugging recommendations. Those documents cover compilation, inference, and the corresponding options in detail. Some questions may even be covered by the [FAQ in that repository](https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/faq.md).
 
@@ -226,7 +226,7 @@ The performance statistics are nominally in milliseconds
 
 ## Versioning
 
-The default TIDL version will be the  TIDL_TOOLS_VERSION value in setup_pc_runner.sh, unless manually changed or if the repo is pulled after installation. 
+The default TIDL version will be the TIDL_TOOLS_VERSION value in setup_runner_pc.sh, unless manually changed or if the repo is pulled after installation.
 
 #### What SDK version or branch do I need to use?
 

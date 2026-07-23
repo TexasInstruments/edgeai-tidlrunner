@@ -36,7 +36,7 @@ TARGET_DEVICE="AM62A"
 ##################################################################
 # Example 1: compile by directly using a model path
 # if data_path is not specified, this will use random inputs and it may not be good for accuracy.
-# also there are several paameters for which defaults are assumed - it may not be perfect
+# also there are several parameters for which defaults are assumed - it may not be perfect
 # to understand the options that can be specified, use: tidlrunner-cli-pc compile --help 
 #----------------------------------------------------------------
 # Example 1.1 - compile
@@ -52,7 +52,7 @@ tidlrunner-cli compile --model_path ./data/configs/subset/models/vision/classifi
 
 
 ##################################################################
-# Exampe 2: compile+infer using a config file
+# Example 2: compile+infer using a config file
 #----------------------------------------------------------------
 # tidlrunner-cli compile+infer --config_path ./data/configs/subset/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv_config.yaml --target_device ${TARGET_DEVICE}
 
