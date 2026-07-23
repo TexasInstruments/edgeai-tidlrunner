@@ -87,3 +87,7 @@ ONNX_OPSET_VERSION_DEFAULT = 18 #17
 # this is not used when running with individual config file
 MODEL_SHORTLIST_DEFAULT = None
 
+# this is where the command args are kept in a way argparse understands it
+# for more information, see settings_default.py
+SETTINGS_DEFAULT = {}
+COPY_SETTINGS_DEFAULT = {}

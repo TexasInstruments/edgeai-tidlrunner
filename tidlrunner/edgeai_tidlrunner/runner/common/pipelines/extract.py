@@ -59,8 +59,8 @@ class ONNXNode:
         
 
 class ExtractNodes(CommonPipelineBase):
-    ARGS_DICT=SETTINGS_DEFAULT['extract']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['extract']
+    ARGS_DICT=SETTINGS_DEFAULT['commands.extract']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['commands.extract']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

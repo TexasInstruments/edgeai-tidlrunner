@@ -42,8 +42,8 @@ from . import distill
 
 
 class QuantAwareDistillation(distill.DistillModel):
-    ARGS_DICT=SETTINGS_DEFAULT['qdistill']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['qdistill']
+    ARGS_DICT=SETTINGS_DEFAULT['commands.qdistill']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['commands.qdistill']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs) #parametrization_types=('clip_const',),

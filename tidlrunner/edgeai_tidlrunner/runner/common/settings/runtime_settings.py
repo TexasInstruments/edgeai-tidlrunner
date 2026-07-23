@@ -34,7 +34,7 @@ import warnings
 
 from edgeai_tidlrunner.rtwrapper.options import presets, attr_dict
 from edgeai_tidlrunner.rtwrapper.options.runtime_options import RuntimeOptions
-from . import settings_default as runtime_settings_default_module
+from . import settings_default
 
 
 def update_runtime_settings(runtime_settings, **kwargs):
@@ -112,7 +112,7 @@ class RuntimeSettings(attr_dict.AttrDict):
         runtime_options_kwargs = kwargs.pop('runtime_options', {})
         runtime_options = RuntimeOptions(model_quant_type=model_quant_type, verbose=verbose, **runtime_options_kwargs)
 
-        runtime_settings_default = runtime_settings_default or runtime_settings_default_module.RUNTIME_SETTINGS_DEFAULT
+        runtime_settings_default = runtime_settings_default or settings_default.RUNTIME_SETTINGS_DEFAULT
         runtime_settings = copy.deepcopy(runtime_settings_default)
         for k, v in kwargs.items():
             runtime_settings[k] = v            

@@ -45,8 +45,8 @@ from . import infer
 
 
 class InferEvaluate(infer.InferModel):
-    ARGS_DICT=SETTINGS_DEFAULT['evaluate']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['evaluate']
+    ARGS_DICT=SETTINGS_DEFAULT['commands.evaluate']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['commands.evaluate']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

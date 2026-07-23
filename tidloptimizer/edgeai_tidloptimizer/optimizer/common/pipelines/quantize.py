@@ -37,8 +37,8 @@ from . import qdistill
 
 
 class QuantizeModel(qdistill.QuantAwareDistillation):
-    ARGS_DICT=SETTINGS_DEFAULT['quantize']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['quantize']
+    ARGS_DICT=SETTINGS_DEFAULT['commands.quantize']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['commands.quantize']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

@@ -40,7 +40,7 @@ from edgeai_tidlrunner.runner.common import utils
 
 
 ##########################################################################
-SETTINGS_DEFAULT['convert'] = SETTINGS_DEFAULT['basic'] | {
+SETTINGS_DEFAULT['commands.convert'] = SETTINGS_DEFAULT['common.basic'] | {
     'model_path':             {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
     'config_path':            {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'},    
     'work_path':              {'dest': 'common.work_path', 'default':'./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'work path'},   
@@ -51,12 +51,12 @@ SETTINGS_DEFAULT['convert'] = SETTINGS_DEFAULT['basic'] | {
     'model_shortlist':          {'dest': 'common.model_shortlist', 'default': None, 'type': str, 'metavar': 'value', 'help': 'select a subset of models to run - models configs with model_shortlist value <= this specified value will be used'},
 }
 
-COPY_SETTINGS_DEFAULT['convert'] = COPY_SETTINGS_DEFAULT['basic'] | {
+COPY_SETTINGS_DEFAULT['commands.convert'] = COPY_SETTINGS_DEFAULT['common.basic'] | {
 }
 
 
 ##########################################################################
-SETTINGS_DEFAULT['distill'] = SETTINGS_DEFAULT['compile'] | {
+SETTINGS_DEFAULT['commands.distill'] = SETTINGS_DEFAULT['commands.compile'] | {
     'pipeline_type':            {'dest': 'common.pipeline_type', 'default': 'distill', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},    
     'teacher_model_path':       {'dest': 'common.teacher_model_path', 'default': None, 'type': str, 'metavar': 'value', 'help': 'teacher model'},
     'output_model_path':        {'dest': 'common.output_model_path', 'default': None, 'type': str, 'metavar': 'value', 'help': 'output model'},
@@ -71,24 +71,24 @@ SETTINGS_DEFAULT['distill'] = SETTINGS_DEFAULT['compile'] | {
     'torch_device':             {'dest': 'common.torch_device', 'default': 'cpu', 'type': str, 'metavar': 'value', 'help': 'Device to use for Pytorch distillation - cpu or cuda'},
 }
 
-COPY_SETTINGS_DEFAULT['distill'] = COPY_SETTINGS_DEFAULT['compile'] | {
+COPY_SETTINGS_DEFAULT['commands.distill'] = COPY_SETTINGS_DEFAULT['commands.compile'] | {
 }
 
 
 ##########################################################################
-SETTINGS_DEFAULT['qdistill'] = SETTINGS_DEFAULT['distill'] | {
+SETTINGS_DEFAULT['commands.qdistill'] = SETTINGS_DEFAULT['commands.distill'] | {
     'pipeline_type':          {'dest': 'common.pipeline_type', 'default': 'qdistill', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'}, 
 }
 
-COPY_SETTINGS_DEFAULT['qdistill'] = COPY_SETTINGS_DEFAULT['distill'] | {
+COPY_SETTINGS_DEFAULT['commands.qdistill'] = COPY_SETTINGS_DEFAULT['commands.distill'] | {
 }
 
 
 ##########################################################################
-SETTINGS_DEFAULT['quantize'] = SETTINGS_DEFAULT['distill'] | {
+SETTINGS_DEFAULT['commands.quantize'] = SETTINGS_DEFAULT['commands.distill'] | {
     'pipeline_type':          {'dest': 'common.pipeline_type', 'default': 'quantize', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'}, 
 }
 
-COPY_SETTINGS_DEFAULT['quantize'] = COPY_SETTINGS_DEFAULT['distill'] | {
+COPY_SETTINGS_DEFAULT['commands.quantize'] = COPY_SETTINGS_DEFAULT['commands.distill'] | {
 }
 

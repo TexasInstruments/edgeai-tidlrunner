@@ -39,8 +39,8 @@ from .common_ import common_base
 
 
 class ModelSurgery(common_base.CommonPipelineBase):
-    ARGS_DICT=SETTINGS_DEFAULT['surgery']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['surgery']
+    ARGS_DICT=SETTINGS_DEFAULT['commands.surgery']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['commands.surgery']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
