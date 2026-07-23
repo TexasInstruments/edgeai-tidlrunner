@@ -27,6 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from edgeai_tidlrunner.rtwrapper.options import presets
 
@@ -87,7 +88,12 @@ ONNX_OPSET_VERSION_DEFAULT = 18 #17
 # this is not used when running with individual config file
 MODEL_SHORTLIST_DEFAULT = None
 
+
 # this is where the command args are kept in a way argparse understands it
 # for more information, see settings_default.py
 SETTINGS_DEFAULT = {}
 COPY_SETTINGS_DEFAULT = {}
+
+# this is where the help information for several options are kept
+SETTINGS_HELP: Dict[str, Dict[str, Dict[str, Any]]] = {}
+SETTINGS_HELP['dataloaders'] : Dict[str, Dict[str, Any]] = {}

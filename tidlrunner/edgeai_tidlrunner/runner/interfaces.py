@@ -61,7 +61,7 @@ def get_pipeline_manager(command, **kwargs):
     return manager.PipelineManager(command, pipeline_names, **kwargs)
 
 
-def run(command, **kwargs):
+def run(command=None, **kwargs):
     """
     Run the given command with the provided keyword arguments.
     
@@ -69,8 +69,8 @@ def run(command, **kwargs):
     :param kwargs: Additional keyword arguments to pass to the command.
     :return: The result of the command execution.
     """
-    if not isinstance(command, str):
-        raise RuntimeError(f"ERROR: run() got unexpected command {command} with type {type(command)}. Expected str or dict.")
+    if command is None or not isinstance(command, str):
+        raise RuntimeError(f"ERROR: run() got unexpected command {command} with type {type(command)}. Expected str.")
 
     pipeline_manager = get_pipeline_manager(command)
     run_dict = pipeline_manager.create_run_dict(**kwargs)

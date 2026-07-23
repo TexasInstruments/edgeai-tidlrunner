@@ -27,42 +27,23 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-import sys
-import os
-import copy
-import argparse
-import ast
-import yaml
-import functools
-import subprocess
-import platform
+from edgeai_tidlrunner.rtwrapper.core import presets
 
-from edgeai_tidlrunner import rtwrapper, runner
-from edgeai_tidlrunner.start import StartRunner, start_with_proper_environment
+from ...common import bases
+from ...common import utils
+from ...common.utils import onnx_utils
+
+from .. import blocks
+from ..settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
+from .common_.compile_base import CompileModelBase
+from . import surgery
 
 
-def _main(**kwargs):
-    print(f"INFO: checking machine architecture...")
-    arch = platform.machine()
-    print(f"INFO: machine architecture found: {arch}")
-    target_machine = rtwrapper.core.presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION \
-        if 'x86' in arch or 'amd64' in arch else rtwrapper.core.presets.TargetMachineType.TARGET_MACHINE_EVM
-
-    target_machine = kwargs.get('target_machine')
-    package_name = kwargs.pop('package_name', None)
-
-    # this is now not a requirement, but only a recommendation - and only in PC
-    if (package_name not in os.path.abspath(sys.executable)) and (target_machine == presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION):
-        print(f'{Back.WHITE}{Fore.YELLOW}WARNING: recommended to use a Python virtual environment with {package_name} in its name. This is to avoid using a wrong Python enviroment.{Style.RESET_ALL}')
-
-    print(f"INFO: setting target_machine to: {target_machine}")
-    start_with_proper_environment(target_machine=target_machine, **kwargs)
+class HelpRunner(CompileModelBase):
+    ARGS_DICT=SETTINGS_DEFAULT['common.basic']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['common.basic']
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
 
-def main(**kwargs):
-    _main(package_name='tidlrunner', **kwargs)
-
-
-if __name__ == "__main__":
-    print(f'INFO: running {__file__} __main__')  
-    _main(package_name='tidlrunner')
