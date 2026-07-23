@@ -38,8 +38,8 @@ from .common_.common_base import CommonPipelineBase
 
 
 class GenReport(CommonPipelineBase):
-    ARGS_DICT=SETTINGS_DEFAULT['report']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['report']
+    ARGS_DICT=SETTINGS_DEFAULT['commands.report']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['commands.report']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

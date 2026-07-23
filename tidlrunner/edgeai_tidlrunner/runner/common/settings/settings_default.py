@@ -35,7 +35,7 @@ import argparse
 
 from edgeai_tidlrunner.rtwrapper.options import options_default
 from . import constants
-from .constants import presets
+from .constants import presets, SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
 from ...common import utils
 from ...common.bases import settings_base
 
@@ -55,18 +55,15 @@ RUNTIME_SETTINGS_DEFAULT = {
 
 
 ##########################################################################
-SETTINGS_DEFAULT = {}
-COPY_SETTINGS_DEFAULT = {}
-
-SETTINGS_DEFAULT['basic'] = settings_base.SETTING_PIPELINE_RUNNER_ARGS_DICT | {
+SETTINGS_DEFAULT['common.basic'] = settings_base.SETTING_PIPELINE_RUNNER_ARGS_DICT | {
     'pipeline_type': {'dest': 'common.pipeline_type', 'default': None, 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},
     'verbose':       {'dest': 'common.verbose', 'default': 0, 'type': int, 'metavar': 'value', 'help': 'verbosity level'},
 }
 
-COPY_SETTINGS_DEFAULT['basic'] = {}
+COPY_SETTINGS_DEFAULT['common.basic'] = {}
 
 ##########################################################################
-SETTINGS_DEFAULT['surgery'] = SETTINGS_DEFAULT['basic'] | {
+SETTINGS_DEFAULT['commands.surgery'] = SETTINGS_DEFAULT['common.basic'] | {
     'model_path':                       {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
     'config_path':                      {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'},    
     'work_path':                {'dest': 'common.work_path', 'default':'./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'work path'},
@@ -81,14 +78,14 @@ SETTINGS_DEFAULT['surgery'] = SETTINGS_DEFAULT['basic'] | {
     'input_scale':                      {'dest': 'session.input_scale', 'default': (0.017125, 0.017507, 0.017429), 'type': float, 'nargs': '*', 'metavar': 'value', 'help': 'scale values for input normalization (RGB channels)'},
 }
 
-COPY_SETTINGS_DEFAULT['surgery'] = COPY_SETTINGS_DEFAULT['basic'] | {
+COPY_SETTINGS_DEFAULT['commands.surgery'] = COPY_SETTINGS_DEFAULT['common.basic'] | {
 }
 
 ##########################################################################
 # compile can be followed by infer, analyze or accuracy
 # compile is used to indicate a more sophisticated import - populate real data_path for that.
 ##########################################################################
-SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | SETTINGS_DEFAULT['surgery'] | {
+SETTINGS_DEFAULT['commands.compile'] = SETTINGS_DEFAULT['common.basic'] | SETTINGS_DEFAULT['commands.surgery'] | {
     'model_path':               {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
     'config_path':              {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'}, 
     'work_path':                {'dest': 'common.work_path', 'default':'./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'work path'},
@@ -173,7 +170,7 @@ SETTINGS_DEFAULT['compile'] = SETTINGS_DEFAULT['basic'] | SETTINGS_DEFAULT['surg
     #'postprocess_detection_keep_top_k':   {'dest':'postprocess.detection_keep_top_k', 'default':None, 'type':utils.float_or_none, 'metavar':'value', 'help': 'number of detections to keep after NMS in postprocessing'},
 }
 
-COPY_SETTINGS_DEFAULT['compile'] = COPY_SETTINGS_DEFAULT['basic'] | COPY_SETTINGS_DEFAULT['surgery'] | {
+COPY_SETTINGS_DEFAULT['commands.compile'] = COPY_SETTINGS_DEFAULT['common.basic'] | COPY_SETTINGS_DEFAULT['commands.surgery'] | {
     'session.data_layout': 'preprocess.data_layout', 
     'postprocess.data_layout': 'preprocess.data_layout',
     'postprocess.detection_threshold': 'session.runtime_options.object_detection:confidence_threshold',
@@ -182,7 +179,7 @@ COPY_SETTINGS_DEFAULT['compile'] = COPY_SETTINGS_DEFAULT['basic'] | COPY_SETTING
 }
 
 ##########################################################################
-SETTINGS_DEFAULT['infer'] = SETTINGS_DEFAULT['compile'] | {
+SETTINGS_DEFAULT['commands.infer'] = SETTINGS_DEFAULT['commands.compile'] | {
     'display_benchmark':        {'dest': 'common.display_benchmark', 'default': False, 'type': utils.str_to_bool, 'nargs': '?', 'const': True, 'metavar': 'value', 'help': 'display benchmark statistics after inference on EVM'},
     # save or show output
     'save_output':            {'dest':'postprocess.save_output', 'default':True, 'type':utils.str_to_bool, 'metavar':'value', 'help': 'save postprocessed output to files'},
@@ -190,13 +187,13 @@ SETTINGS_DEFAULT['infer'] = SETTINGS_DEFAULT['compile'] | {
     'show_output':            {'dest':'postprocess.show_output', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', 'help': 'show postprocessed output images on screen (using opencv imshow)'},
 }
 
-COPY_SETTINGS_DEFAULT['infer'] = COPY_SETTINGS_DEFAULT['compile'] | {
+COPY_SETTINGS_DEFAULT['commands.infer'] = COPY_SETTINGS_DEFAULT['commands.compile'] | {
 }
 
 
 ##########################################################################
 # accuracy requires label_path as well
-SETTINGS_DEFAULT['evaluate'] = SETTINGS_DEFAULT['compile'] | {
+SETTINGS_DEFAULT['commands.evaluate'] = SETTINGS_DEFAULT['commands.compile'] | {
     'label_path':                         {'dest': 'dataloader.label_path', 'default':None, 'type':str, 'metavar':'path', 'help': 'path to ground truth labels for accuracy evaluation'},
     # increase number of frames for infer_accuracy
     'num_frames': {'dest': 'common.num_frames', 'default': 1000, 'type': int, 'metavar': 'value', 'help': 'number of frames to process for accuracy evaluation'},
@@ -217,30 +214,30 @@ SETTINGS_DEFAULT['evaluate'] = SETTINGS_DEFAULT['compile'] | {
     'show_output':            {'dest':'postprocess.show_output', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', 'help': 'show postprocessed output images on screen (using opencv imshow)'},
 }
 
-COPY_SETTINGS_DEFAULT['evaluate'] = COPY_SETTINGS_DEFAULT['compile'] | {   
+COPY_SETTINGS_DEFAULT['commands.evaluate'] = COPY_SETTINGS_DEFAULT['commands.compile'] | {   
 }
 
 ##########################################################################
-SETTINGS_DEFAULT['analyze'] = SETTINGS_DEFAULT['infer'] | {
+SETTINGS_DEFAULT['commands.analyze'] = SETTINGS_DEFAULT['commands.infer'] | {
     # 'pipeline_type':                      {'dest': 'common.pipeline_type', 'default': 'analyze', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},
     'analyze_level':                      {'dest': 'common.analyze_level', 'default': 2, 'type': int, 'metavar': 'value', 'help': 'analyze_level - 0: basic, 1: whole model stats, 2: whole model and per layer stats'},
     'num_frames': {'dest': 'common.num_frames', 'default': 1, 'type': int, 'metavar': 'value', 'help': 'number of frames to process for accuracy evaluation'},
     'act_data':                           {'dest': 'common.act_data', 'default': True, 'type': utils.str_to_bool, 'nargs': '?', 'const': True, 'metavar': 'value', 'help': 'extract activation data for model inspector visualization (enabled by default, use --act_data=false to disable)'},
 }
 
-COPY_SETTINGS_DEFAULT['analyze'] = COPY_SETTINGS_DEFAULT['infer'] | {
+COPY_SETTINGS_DEFAULT['commands.analyze'] = COPY_SETTINGS_DEFAULT['commands.infer'] | {
 }
 
 
 ##########################################################################
-SETTINGS_DEFAULT['inspect'] = SETTINGS_DEFAULT['analyze'] | {
+SETTINGS_DEFAULT['commands.inspect'] = SETTINGS_DEFAULT['commands.analyze'] | {
 }
 
-COPY_SETTINGS_DEFAULT['inspect'] = COPY_SETTINGS_DEFAULT['analyze'] | {
+COPY_SETTINGS_DEFAULT['commands.inspect'] = COPY_SETTINGS_DEFAULT['commands.analyze'] | {
 }
 
 ##########################################################################
-SETTINGS_DEFAULT['extract'] = SETTINGS_DEFAULT['basic'] | {
+SETTINGS_DEFAULT['commands.extract'] = SETTINGS_DEFAULT['common.basic'] | {
     'model_path':             {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
     'config_path':            {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'},
     'work_path':                {'dest': 'common.work_path', 'default':'./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'work path'},
@@ -254,12 +251,12 @@ SETTINGS_DEFAULT['extract'] = SETTINGS_DEFAULT['basic'] | {
     'end_names':              {'dest': 'common.extract.end_names', 'default': None, 'type': str, 'metavar': 'value', 'help': 'ending layer names for start2end extraction'},
 }
 
-COPY_SETTINGS_DEFAULT['extract'] = COPY_SETTINGS_DEFAULT['basic'] | {
+COPY_SETTINGS_DEFAULT['commands.extract'] = COPY_SETTINGS_DEFAULT['common.basic'] | {
 }
 
 
 ##########################################################################
-SETTINGS_DEFAULT['report'] = SETTINGS_DEFAULT['basic'] | {
+SETTINGS_DEFAULT['commands.report'] = SETTINGS_DEFAULT['common.basic'] | {
     'pipeline_type':          {'dest': 'common.pipeline_type', 'default': 'compile', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},
     'target_device':          {'dest': 'session.target_device', 'default': None, 'type': str, 'metavar': 'value', 'help': 'target device for report (AM62A, AM69A, etc. None for all devices)'},
     'report_mode':            {'dest': 'common.report.mode', 'default': 'detailed', 'type': str, 'metavar': 'value', 'choices': ['summary', 'detailed'], 'help': 'report generation mode (summary or detailed)'},
@@ -268,12 +265,12 @@ SETTINGS_DEFAULT['report'] = SETTINGS_DEFAULT['basic'] | {
     'report_perfsim':         {'dest': 'common.report_perfsim', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'include perfsim report'},
 }
 
-COPY_SETTINGS_DEFAULT['report'] = COPY_SETTINGS_DEFAULT['basic'] | {
+COPY_SETTINGS_DEFAULT['commands.report'] = COPY_SETTINGS_DEFAULT['common.basic'] | {
 }
 
 
 ##########################################################################
-SETTINGS_DEFAULT['package'] = SETTINGS_DEFAULT['basic'] | {
+SETTINGS_DEFAULT['commands.package'] = SETTINGS_DEFAULT['common.basic'] | {
     'pipeline_type':        {'dest': 'common.pipeline_type', 'default': 'package', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'}, 
     'target_device':        {'dest': 'session.target_device', 'default': presets.TargetDeviceType.TARGET_DEVICE_DEFAULT, 'type': str, 'metavar': 'value', 'help': 'target device for inference (AM68A, AM69A, etc.)'},
     'tensor_bits':          {'dest': 'session.runtime_options.tensor_bits', 'default': 8, 'type': int, 'metavar': 'value', 'help': 'quantization bit-width for tensors (8 or 16)'},
@@ -283,6 +280,6 @@ SETTINGS_DEFAULT['package'] = SETTINGS_DEFAULT['basic'] | {
     'param_template':       {'dest': 'common.param_template', 'default':'data/templates/configs/param_template_package.yaml', 'type':str, 'metavar':'value', 'help':'param template path'},
 }
 
-COPY_SETTINGS_DEFAULT['package'] = COPY_SETTINGS_DEFAULT['basic'] | {
+COPY_SETTINGS_DEFAULT['commands.package'] = COPY_SETTINGS_DEFAULT['common.basic'] | {
 }
 

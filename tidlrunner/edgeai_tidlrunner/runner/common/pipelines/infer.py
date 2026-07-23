@@ -46,8 +46,8 @@ from .common_.compile_base import CompileModelBase
 
 
 class InferModel(CompileModelBase):
-    ARGS_DICT=SETTINGS_DEFAULT['infer']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['infer']
+    ARGS_DICT=SETTINGS_DEFAULT['commands.infer']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['commands.infer']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

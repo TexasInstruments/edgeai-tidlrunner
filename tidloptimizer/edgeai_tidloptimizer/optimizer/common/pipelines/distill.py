@@ -45,8 +45,8 @@ from . import convert
 
 
 class DistillModel(compile.CompileModel):
-    ARGS_DICT=SETTINGS_DEFAULT['distill']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['distill']
+    ARGS_DICT=SETTINGS_DEFAULT['commands.distill']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['commands.distill']
 
     def __init__(self, parametrization_types=None, **kwargs):
         super().__init__(**kwargs)

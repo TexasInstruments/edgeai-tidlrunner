@@ -49,8 +49,8 @@ def _is_inspector_supported(settings):
 
 
 class GenerateModelInspectorJSON(CompileModelBase):
-    ARGS_DICT=SETTINGS_DEFAULT['analyze']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['analyze']
+    ARGS_DICT=SETTINGS_DEFAULT['commands.analyze']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['commands.analyze']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -88,8 +88,8 @@ class GenerateModelInspectorJSON(CompileModelBase):
 
 
 class GenerateModelInspectorHTML(CompileModelBase):
-    ARGS_DICT=SETTINGS_DEFAULT['analyze']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['analyze']
+    ARGS_DICT=SETTINGS_DEFAULT['commands.analyze']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['commands.analyze']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -138,8 +138,8 @@ class UpdateModelInspectorEVMPerfJSON(CompileModelBase):
     - On EVM : reads /tmp/tidl_trace_subgraph_<N>_perf.csv (real hardware).
     - On PC  : skipped — compile already populated the JSON.
     """
-    ARGS_DICT = SETTINGS_DEFAULT['analyze']
-    COPY_ARGS = COPY_SETTINGS_DEFAULT['analyze']
+    ARGS_DICT = SETTINGS_DEFAULT['commands.analyze']
+    COPY_ARGS = COPY_SETTINGS_DEFAULT['commands.analyze']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -184,8 +184,8 @@ class UpdateModelInspectorEVMAccuracyJSON(CompileModelBase):
     Only updates JSON — HTML generation is handled by GenerateModelInspectorHTML.
     Only runs on EVM after evaluate. On PC result.yaml reflects simulation — skipped.
     """
-    ARGS_DICT = SETTINGS_DEFAULT['analyze']
-    COPY_ARGS = COPY_SETTINGS_DEFAULT['analyze']
+    ARGS_DICT = SETTINGS_DEFAULT['commands.analyze']
+    COPY_ARGS = COPY_SETTINGS_DEFAULT['commands.analyze']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

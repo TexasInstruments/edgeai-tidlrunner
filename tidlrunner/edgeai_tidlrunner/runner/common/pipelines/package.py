@@ -42,8 +42,8 @@ from .common_.common_base import CommonPipelineBase
 
 
 class PackageArtifacts(CommonPipelineBase):
-    ARGS_DICT=SETTINGS_DEFAULT['package']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['package']
+    ARGS_DICT=SETTINGS_DEFAULT['commands.package']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['commands.package']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

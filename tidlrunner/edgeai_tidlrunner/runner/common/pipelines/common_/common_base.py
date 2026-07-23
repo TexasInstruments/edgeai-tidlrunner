@@ -41,8 +41,8 @@ from ...settings import constants
 
 
 class CommonPipelineBase(bases.PipelineBase):
-    ARGS_DICT = SETTINGS_DEFAULT['basic']
-    COPY_ARGS = COPY_SETTINGS_DEFAULT['basic']
+    ARGS_DICT = SETTINGS_DEFAULT['common.basic']
+    COPY_ARGS = COPY_SETTINGS_DEFAULT['common.basic']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

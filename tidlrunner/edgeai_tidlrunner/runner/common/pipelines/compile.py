@@ -47,8 +47,8 @@ from . import surgery
 
 
 class CompileModel(CompileModelBase):
-    ARGS_DICT=SETTINGS_DEFAULT['compile']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['compile']
+    ARGS_DICT=SETTINGS_DEFAULT['commands.compile']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['commands.compile']
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

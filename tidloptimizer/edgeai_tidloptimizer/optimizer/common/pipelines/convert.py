@@ -46,8 +46,8 @@ from ..settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
 
 
 class ConvertModel(common_base.CommonPipelineBase):
-    ARGS_DICT=SETTINGS_DEFAULT['convert']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['convert']
+    ARGS_DICT=SETTINGS_DEFAULT['commands.convert']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['commands.convert']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
