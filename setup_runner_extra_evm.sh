@@ -28,7 +28,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# setup extra Python package depdencies
+# setup extra Python package dependencies
 ./examples/example_setup_nuscenes.sh
 ./examples/example_setup_pandaset.sh
 

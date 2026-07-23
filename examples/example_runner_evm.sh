@@ -33,6 +33,9 @@
 # for convenience, setting TARGET_DEVICE env variable to be used below - this is not needed.
 TARGET_DEVICE="AM62A"
 
+# This script is intentionally example-only. Commands are commented so users can
+# enable one flow at a time after model artifacts are prepared on PC.
+
 ##################################################################
 # Example 1 - infer using compiled artifacts given a model
 # tidlrunner-cli infer --model_path ./data/configs/samples/models/vision/classification/imagenet1k/torchvision/mobilenet_v2_tv.onnx --target_device ${TARGET_DEVICE}

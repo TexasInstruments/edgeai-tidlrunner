@@ -90,7 +90,7 @@ pip3 install -e ./tools
 
 
 ######################################################################
-# unsintall onnxruntime and install onnxruntime-tild along with tidl-tools
+# uninstall onnxruntime and install onnxruntime-tidl along with tidl-tools
 # pip3 uninstall -y onnxruntime onnxruntime-tidl
 
 
@@ -101,7 +101,7 @@ TIDL_TOOLS_TYPE=${TIDL_TOOLS_TYPE} TIDL_TOOLS_VERSION=${TIDL_TOOLS_VERSION} tidl
 
 
 ######################################################################
-echo "INFO: installing edgeai_tidirunner package..."
+echo "INFO: installing edgeai_tidlrunner package..."
 pip3 install -e ./tidlrunner[pc]
 
 #######################################################################
