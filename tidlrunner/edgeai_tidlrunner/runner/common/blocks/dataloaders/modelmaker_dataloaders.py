@@ -43,12 +43,18 @@ from . import dataset_base
 from . import coco_det
 from . import image_cls
 from . import coco_seg
+from ...settings.settings_help import register_help
 
 
 class ModelmakerDetectionDataset(coco_det.ObjectDetectionDataLoader):
     pass
 
 
+@register_help(
+    section='dataloader',
+    name='modelmaker_detection_dataloader',
+    task_type='detection'
+)
 def modelmaker_detection_dataloader(settings, name, path, label_path=None, **kwargs):
     is_images_path = os.path.split(path)[-1] in ('val', 'val2017') or os.path.split(path)[-1] == 'images'
     if is_images_path:
@@ -128,6 +134,11 @@ class ModelMakerClassificationDataset(image_cls.ImageClassificationDataLoader):
         return annotations_info_list
 
 
+@register_help(
+    section='dataloader',
+    name='modelmaker_classification_dataloader',
+    task_type='classification'
+)
 def modelmaker_classification_dataloader(settings, name, path, label_path, **kwargs):
     is_images_path = 'val' in os.path.split(path)[-1] or 'images' in os.path.split(path)[-1]
     if is_images_path:
@@ -145,6 +156,11 @@ class ModelMakerSegmentationDataset(coco_seg.SemanticSegmentationDataLoader):
         super().__init__(img_dir, annotation_file, with_background_class, **kwargs)
 
 
+@register_help(
+    section='dataloader',
+    name='modelmaker_segmentation_dataloader',
+    task_type='segmentation'
+)
 def modelmaker_segmentation_dataloader(settings, name, path, label_path, **kwargs):
     is_images_path = 'val' in os.path.split(path)[-1] or 'images' in os.path.split(path)[-1]
     if is_images_path:

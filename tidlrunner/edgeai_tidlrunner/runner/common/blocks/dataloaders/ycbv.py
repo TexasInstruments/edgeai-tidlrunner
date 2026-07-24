@@ -45,6 +45,7 @@ from sklearn.neighbors import KDTree
 from ... import utils
 from . import dataset_base
 from . import dataloader_utils
+from ...settings.settings_help import register_help
 
 
 __all__ = ['YCBV', '_get_mapping_id_name']
@@ -492,5 +493,10 @@ class CADModelsYCB():
         return class_to_sparse_model
 
 
+@register_help(
+    section='dataloader',
+    name='ycbv_object_6d_pose_dataloader',
+    task_type='6d-pose'
+)
 def ycbv_object_6d_pose_dataloader(settings, name, path, label_path=None, **kwargs):
     return YCBV(path=path, split='test', **kwargs)

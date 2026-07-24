@@ -260,6 +260,7 @@ from .nuscenes_object_eval_python.eval import NuScenesEval, TrackingEval
 
 from .dataset_base import DatasetBase
 from ....common.utils.logger_utils import log_color
+from ...settings.settings_help import register_help
 
 
 NuScenesNameMapping = {
@@ -1426,10 +1427,20 @@ def _nuscenes_dataloader(settings, name, path, num_classes=10, version='v1.0-min
     return NuScenesDataset(path=path, split='val', num_frames=num_frames, num_classes=num_classes, **kwargs)
 
 
+@register_help(
+    section='dataloader',
+    name='nuscenes_frame_dataloader',
+    task_type='3d-detection'
+)
 def nuscenes_frame_dataloader(settings, name, path, version='v1.0-mini', load_type='frame_based', **kwargs):
     return _nuscenes_dataloader(settings, name=name, path=path, version=version, load_type=load_type, **kwargs)
 
 
+@register_help(
+    section='dataloader',
+    name='nuscenes_mv_image_dataloader',
+    task_type='3d-detection'
+)
 def nuscenes_mv_image_dataloader(settings, name, path, version='v1.0-mini', load_type='mv_image_based', **kwargs):
     return _nuscenes_dataloader(settings, name=name, path=path, version=version, load_type=load_type, **kwargs)
 

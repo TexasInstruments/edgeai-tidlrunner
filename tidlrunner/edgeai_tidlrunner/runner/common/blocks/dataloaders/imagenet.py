@@ -34,6 +34,7 @@ import pickle
 from colorama import Fore
 from ....common import utils
 from .image_cls import ImageClassificationDataLoader
+from ...settings.settings_help import register_help
 
 
 class BaseImageNetCls(ImageClassificationDataLoader):
@@ -171,6 +172,11 @@ class ImageNetCls(BaseImageNetCls):
         return [dataset_path, extra_path]
 
 
+@register_help(
+    section='dataloader',
+    name='imagenet_dataloader',
+    task_type='classification'
+)
 def imagenet_dataloader(settings, name, path, label_path=None, **kwargs):
     split = kwargs.pop('split', 'val')
     split_file = label_path or os.path.join(path, f'{split}.txt')

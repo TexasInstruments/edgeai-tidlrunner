@@ -38,6 +38,7 @@ from colorama import Fore
 from ....common import utils
 from . import dataset_base
 from . import dataloader_utils
+from ...settings.settings_help import register_help
 
 
 class NYUDepthV2(dataset_base.DatasetBaseWithUtils):
@@ -236,5 +237,10 @@ class NYUDepthV2(dataset_base.DatasetBaseWithUtils):
         return metric
 
 
+@register_help(
+    section='dataloader',
+    name='nyudepthv2_dataloader',
+    task_type='depth-estimation'
+)
 def nyudepthv2_dataloader(settings, name, path, label_path=None, split='val', **kwargs):
     return NYUDepthV2(path=path, split=split, **kwargs)

@@ -30,6 +30,7 @@
 import os
 import numpy as np
 from .image_list import ImageFilesDataLoader
+from ...settings.settings_help import register_help
 
 
 #######################################################################
@@ -38,14 +39,29 @@ class ImageClassificationDataLoader(ImageFilesDataLoader):
         super().__init__(path, label_path=label_path, **kwargs)
 
 
+@register_help(
+    section='dataloader',
+    name='image_classification_dataloader',
+    task_type='classification'
+)
 def image_classification_dataloader(settings, name, path, label_path=None, **kwargs):
     return ImageClassificationDataLoader(path=path, label_path=label_path, **kwargs)
 
 
+@register_help(
+    section='dataloader',
+    name='imagenet_classification_dataloader',
+    task_type='classification'
+)
 def imagenet_classification_dataloader(*args, **kwargs):
     return image_classification_dataloader(*args, **kwargs)
 
 
+@register_help(
+    section='dataloader',
+    name='imagenetv2c_classification_dataloader',
+    task_type='classification'
+)
 def imagenetv2c_classification_dataloader(*args, **kwargs):
     return imagenet_classification_dataloader(*args, **kwargs)
 

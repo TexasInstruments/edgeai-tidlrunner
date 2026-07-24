@@ -1,313 +1,53 @@
-Note: the "Config Field" column uses the argparse `dest` value expressed as a flat name separated by '.' and ':' as used in `SETTINGS_DEFAULT`. This corresponds to the configuration dictionary using bracket notation. For example:
 
-- `session.model_path` corresponds to `session['model_path']` in the configuration dictionary.
-- `session.runtime_options.tensor_bits` corresponds to `session['runtime_options']['tensor_bits']`.
-- `session.runtime_options.advanced_options:calibration_frames` corresponds to `session['runtime_options']['advanced_options:calibration_frames']` in the flat dest notation.
+## Commands
+| Section | Name | Task | Required Args | Optional Args | Description |
+|---|---|---|---|---|---|
+| command | analyze |  |  | command, capture_log, parallel_processes, parallel_devices, target_machine, target_device, log_file, pipeline_type, verbose, model_path, config_path, work_path, run_label, run_dir, model_surgery, simplify_model, shape_inference, input_optimization, input_mean, input_scale, task_type, task_name, num_frames, input_dataset, display_step, upgrade_config, model_selection, model_shortlist, preset_selection, config_template, incremental, clear_run_dir, save_tensors, instance_timeout, overall_timeout, model_id, artifacts_folder, runtime_name, session_type_dict, dataset_type_dict, data_name, data_path, tidl_offload, graph_optimization_level, tensor_bits, debug_level, deny_list_layer_type, deny_list_layer_name, deny_list_layer_name_search, accuracy_level, enable_tfr_optimization, quantization_scale_type, calibration_frames, calibration_iterations, prequantized_model, quant_params_file_path, max_num_subgraph_nodes, add_data_convert_ops, output_feature_16bit_names_list, output_feature_16bit_names_search, meta_arch_type, meta_arch_file_path, detection_threshold, detection_top_k, nms_threshold, keep_top_k, runtime_options_dict, preprocess_name, resize, crop, data_layout, reverse_channels, resize_with_pad, sample_rate, audio_duration, audio_model_type, postprocess_enable, postprocess_name, display_benchmark, save_output, save_output_frames, show_output, analyze_level, act_data | Inspect model outputs and activation data |
+| command | compile |  |  | command, capture_log, parallel_processes, parallel_devices, target_machine, target_device, log_file, pipeline_type, verbose, model_path, config_path, work_path, run_label, run_dir, model_surgery, simplify_model, shape_inference, input_optimization, input_mean, input_scale, task_type, task_name, num_frames, input_dataset, display_step, upgrade_config, model_selection, model_shortlist, preset_selection, config_template, incremental, clear_run_dir, save_tensors, instance_timeout, overall_timeout, model_id, artifacts_folder, runtime_name, session_type_dict, dataset_type_dict, data_name, data_path, tidl_offload, graph_optimization_level, tensor_bits, debug_level, deny_list_layer_type, deny_list_layer_name, deny_list_layer_name_search, accuracy_level, enable_tfr_optimization, quantization_scale_type, calibration_frames, calibration_iterations, prequantized_model, quant_params_file_path, max_num_subgraph_nodes, add_data_convert_ops, output_feature_16bit_names_list, output_feature_16bit_names_search, meta_arch_type, meta_arch_file_path, detection_threshold, detection_top_k, nms_threshold, keep_top_k, runtime_options_dict, preprocess_name, resize, crop, data_layout, reverse_channels, resize_with_pad, sample_rate, audio_duration, audio_model_type, postprocess_enable, postprocess_name | Compile models and generate target-specific artifacts |
+| command | evaluate |  |  | command, capture_log, parallel_processes, parallel_devices, target_machine, target_device, log_file, pipeline_type, verbose, model_path, config_path, work_path, run_label, run_dir, model_surgery, simplify_model, shape_inference, input_optimization, input_mean, input_scale, task_type, task_name, num_frames, input_dataset, display_step, upgrade_config, model_selection, model_shortlist, preset_selection, config_template, incremental, clear_run_dir, save_tensors, instance_timeout, overall_timeout, model_id, artifacts_folder, runtime_name, session_type_dict, dataset_type_dict, data_name, data_path, tidl_offload, graph_optimization_level, tensor_bits, debug_level, deny_list_layer_type, deny_list_layer_name, deny_list_layer_name_search, accuracy_level, enable_tfr_optimization, quantization_scale_type, calibration_frames, calibration_iterations, prequantized_model, quant_params_file_path, max_num_subgraph_nodes, add_data_convert_ops, output_feature_16bit_names_list, output_feature_16bit_names_search, meta_arch_type, meta_arch_file_path, detection_threshold, detection_top_k, nms_threshold, keep_top_k, runtime_options_dict, preprocess_name, resize, crop, data_layout, reverse_channels, resize_with_pad, sample_rate, audio_duration, audio_model_type, postprocess_enable, postprocess_name, label_path, postprocess_resize_with_pad, postprocess_normalized_detections, postprocess_formatter, postprocess_shuffle_indices, postprocess_squeeze_axis, postprocess_reshape_list, postprocess_ignore_index, postprocess_logits_bbox_to_bbox_ls, postprocess_keypoint, save_output, save_output_frames, show_output | Evaluate model accuracy against ground truth labels |
+| command | extract |  |  | command, capture_log, parallel_processes, parallel_devices, target_machine, target_device, log_file, pipeline_type, verbose, model_path, config_path, work_path, run_label, run_dir, extract_mode, submodule_name, max_depth, start_names, end_names | Extract model submodules, operators, or layer ranges |
+| command | infer |  |  | command, capture_log, parallel_processes, parallel_devices, target_machine, target_device, log_file, pipeline_type, verbose, model_path, config_path, work_path, run_label, run_dir, model_surgery, simplify_model, shape_inference, input_optimization, input_mean, input_scale, task_type, task_name, num_frames, input_dataset, display_step, upgrade_config, model_selection, model_shortlist, preset_selection, config_template, incremental, clear_run_dir, save_tensors, instance_timeout, overall_timeout, model_id, artifacts_folder, runtime_name, session_type_dict, dataset_type_dict, data_name, data_path, tidl_offload, graph_optimization_level, tensor_bits, debug_level, deny_list_layer_type, deny_list_layer_name, deny_list_layer_name_search, accuracy_level, enable_tfr_optimization, quantization_scale_type, calibration_frames, calibration_iterations, prequantized_model, quant_params_file_path, max_num_subgraph_nodes, add_data_convert_ops, output_feature_16bit_names_list, output_feature_16bit_names_search, meta_arch_type, meta_arch_file_path, detection_threshold, detection_top_k, nms_threshold, keep_top_k, runtime_options_dict, preprocess_name, resize, crop, data_layout, reverse_channels, resize_with_pad, sample_rate, audio_duration, audio_model_type, postprocess_enable, postprocess_name, display_benchmark, save_output, save_output_frames, show_output | Run inference using compiled models |
+| command | inspect |  |  | command, capture_log, parallel_processes, parallel_devices, target_machine, target_device, log_file, pipeline_type, verbose, model_path, config_path, work_path, run_label, run_dir, model_surgery, simplify_model, shape_inference, input_optimization, input_mean, input_scale, task_type, task_name, num_frames, input_dataset, display_step, upgrade_config, model_selection, model_shortlist, preset_selection, config_template, incremental, clear_run_dir, save_tensors, instance_timeout, overall_timeout, model_id, artifacts_folder, runtime_name, session_type_dict, dataset_type_dict, data_name, data_path, tidl_offload, graph_optimization_level, tensor_bits, debug_level, deny_list_layer_type, deny_list_layer_name, deny_list_layer_name_search, accuracy_level, enable_tfr_optimization, quantization_scale_type, calibration_frames, calibration_iterations, prequantized_model, quant_params_file_path, max_num_subgraph_nodes, add_data_convert_ops, output_feature_16bit_names_list, output_feature_16bit_names_search, meta_arch_type, meta_arch_file_path, detection_threshold, detection_top_k, nms_threshold, keep_top_k, runtime_options_dict, preprocess_name, resize, crop, data_layout, reverse_channels, resize_with_pad, sample_rate, audio_duration, audio_model_type, postprocess_enable, postprocess_name, display_benchmark, save_output, save_output_frames, show_output, analyze_level, act_data | Analyze model runtime and layer-level statistics |
+| command | package |  |  | command, capture_log, parallel_processes, parallel_devices, target_machine, target_device, log_file, pipeline_type, verbose, tensor_bits, work_path, run_label, package_path, param_template | Package artifacts for deployment |
+| command | report |  |  | command, capture_log, parallel_processes, parallel_devices, target_machine, target_device, log_file, pipeline_type, verbose, report_mode, report_path, run_label, report_perfsim | Generate compile and performance reports |
+| command | surgery |  |  | command, capture_log, parallel_processes, parallel_devices, target_machine, target_device, log_file, pipeline_type, verbose, model_path, config_path, work_path, run_label, run_dir, model_surgery, simplify_model, shape_inference, input_optimization, input_mean, input_scale | Run model surgery optimizations on the input model |
 
-## compile
-Compile the model on PC.
+## Dataloaders
+Name and path can be used with data_name and data_path commanline arguments. These arguments can also be used in the `dataloader` section in  config file - for example name and path entries as in the [sample config files](../../data/configs/samples/models)
 
-| Option | Type | Default | Help | Config Field |
-|---|---:|---|---|---|
-| model_path | str | None | input model | session.model_path |
-| config_path | str | None | path to configuration file | common.config_path |
-| work_path | str | ./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}bits | work path | common.work_path |
-| run_dir | str | {work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext} | run_dir | session.run_dir |
-| pipeline_type | str | compile | type of pipeline to run | common.pipeline_type |
-| task_type | str | None | type of AI task (classification, detection, segmentation etc.) | common.task_type |
-| num_frames | int | 10 | number of frames to process | common.num_frames |
-| display_step | str | 0.1 | interval for displaying progress information | common.display_step |
-| upgrade_config | str | True | upgrade edgeai-benchmark config to work with tidlrunner | common.upgrade_config |
-| session_type_dict | str | None | mapping of model extensions to session names | common.session_type_dict |
-| model_selection | str | None | select a subset of models to run - path of the model is compared using this model_selection regex to select a particular model or not | common.model_selection |
-| model_shortlist | str | None | select a subset of models to run - models configs with model_shortlist value <= this specified value will be used | common.model_shortlist |
-| preset_selection | utils.str_or_none | None | select a preset for speed accuracy trade-off: None, SPEED, ACCURACY, BALANCED | common.preset_selection |
-| config_template | str | data/templates/configs/param_template_config.yaml | param template path | common.config_template |
-| incremental | utils.str_to_bool | False | param template path | common.incremental |
-| model_id | str | None | unique id of a model - optional | session.model_id |
-| artifacts_folder | str | None | folder to store compilation artifacts | session.artifacts_folder |
-| runtime_name | str | None | name of the runtime session | session.name |
-| data_name | str | None | name of the input dataset | dataloader.name |
-| data_path | str | None | path to the input data directory | dataloader.path |
-| target_device | str | TargetDeviceType.TARGET_DEVICE_AM62A | target device for inference (AM62A, AM69A, etc.) | session.target_device |
-| tidl_offload | utils.str_to_bool | True | enable TIDL acceleration for inference | session.tidl_offload |
-| graph_optimization_level | int | GraphOptimizationLevel.ORT_DISABLE_ALL | ONNX Runtime graph optimization level | session.onnxruntime:graph_optimization_level |
-| tensor_bits | int | 8 | quantization bit-width for tensors (8 or 16) | session.runtime_options.tensor_bits |
-| accuracy_level | int | 1 | accuracy level for TIDL offload (0, 1, 2) | session.runtime_options.accuracy_level |
-| debug_level | int | 0 | debug level for compile and infer | session.runtime_options.debug_level |
-| deny_list_layer_type | str | '' | comma separated layer types to exclude from TIDL offload | session.runtime_options.deny_list:layer_type |
-| deny_list_layer_name | str | '' | comma separated layer names to exclude from TIDL offload | session.runtime_options.deny_list:layer_name |
-| deny_list_start_end_dict | utils.aststr_to_object | '' | a dict containing start and end nodes - it will be used to generate deny_list:layer_name. example: {"/decoder/Concat_3":None, "/aux/Relu_5":None} | session.deny_list_start_end_dict |
-| output_16bit_names_start_end_dict | utils.aststr_to_object | '' | a dict containing start and end nodes - it will be used to generate advanced_options:output_feature_16bit_names_list. example: {"/decoder/Concat_3":None, "/aux/Relu_5":None} | session.output_16bit_names_start_end_dict |
-| quantization_scale_type | int | None | type of quantization scale to use | session.runtime_options.advanced_options:quantization_scale_type |
-| calibration_frames | int | 12 | number of frames for quantization calibration | session.runtime_options.advanced_options:calibration_frames |
-| calibration_iterations | int | 12 | number of calibration iterations | session.runtime_options.advanced_options:calibration_iterations |
-| prequantized_model | utils.int_or_none | argparse.SUPPRESS | whether prequantized model | session.runtime_options.advanced_options:prequantized_model |
-| quant_params_file_path | utils.str_or_none_or_bool | argparse.SUPPRESS | path to quantization parameters file | session.runtime_options.advanced_options:quant_params_proto_path |
-| max_num_subgraph_nodes | int | 3000 | maximum number of nodes in a subgraph | session.runtime_options.advanced_options:max_num_subgraph_nodes |
-| output_feature_16bit_names_list | str | argparse.SUPPRESS | list of output layers to keep in 16-bit precision | session.runtime_options.advanced_options:output_feature_16bit_names_list |
-| add_data_convert_ops | int | DataConvertOps.DATA_CONVERT_OPS_INPUT_OUTPUT | data convert in DSP (0: disable, 1: input, 2: output, 3: input and output) - otherwise it will happen in ARM | session.runtime_options.advanced_options:add_data_convert_ops |
-| meta_arch_type | int | argparse.SUPPRESS | meta architecture type for object detection | session.runtime_options.object_detection:meta_arch_type |
-| meta_arch_file_path | str | argparse.SUPPRESS | path to meta architecture file | session.runtime_options.object_detection:meta_layers_names_list |
-| detection_threshold | float | 0.3 | confidence threshold for object detection | session.runtime_options.object_detection:confidence_threshold |
-| detection_top_k | int | 200 | number of top detections to keep before NMS | session.runtime_options.object_detection:top_k |
-| nms_threshold | float | 0.45 | NMS threshold for object detection | session.runtime_options.object_detection:nms_threshold |
-| keep_top_k | int | 200 | number of top detections to keep after NMS | session.runtime_options.object_detection:keep_top_k |
-| preprocess_name | str | None | name of the preprocessing pipeline | preprocess.name |
-| resize | int | None | resize dimensions for input images (height width) | preprocess.resize |
-| crop | int | None | crop dimensions for input images (height width) | preprocess.crop |
-| data_layout | str | None | data layout format (NCHW, NHWC) | preprocess.data_layout |
-| reverse_channels | utils.str_to_bool | False | reverse color channel order (RGB to BGR) | preprocess.reverse_channels |
-| resize_with_pad | utils.str_to_bool | False | resize image with padding to maintain aspect ratio | preprocess.resize_with_pad |
-| postprocess_enable | utils.str_to_bool | False | enable postprocessing after inference | common.postprocess_enable |
-| postprocess_name | str | None | name of the postprocessing pipeline | postprocess.name |
-
-## infer
-Reun inference and measure performance.
-
-| Option | Type | Default | Help | Config Field |
-|---|---:|---|---|---|
-| model_path | str | None | input model | session.model_path |
-| config_path | str | None | path to configuration file | common.config_path |
-| work_path | str | ./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}bits | work path | common.work_path |
-| run_dir | str | {work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext} | run_dir | session.run_dir |
-| pipeline_type | str | infer | type of pipeline to run | common.pipeline_type |
-| task_type | str | None | type of AI task (classification, detection, segmentation etc.) | common.task_type |
-| num_frames | int | 10 | number of frames to process | common.num_frames |
-| display_step | str | 0.1 | interval for displaying progress information | common.display_step |
-| upgrade_config | str | True | upgrade edgeai-benchmark config to work with tidlrunner | common.upgrade_config |
-| session_type_dict | str | None | mapping of model extensions to session names | common.session_type_dict |
-| model_selection | str | None | select a subset of models to run - path of the model is compared using this model_selection regex to select a particular model or not | common.model_selection |
-| model_shortlist | str | None | select a subset of models to run - models configs with model_shortlist value <= this specified value will be used | common.model_shortlist |
-| preset_selection | utils.str_or_none | None | select a preset for speed accuracy trade-off: None, SPEED, ACCURACY, BALANCED | common.preset_selection |
-| config_template | str | data/templates/configs/param_template_config.yaml | param template path | common.config_template |
-| incremental | utils.str_to_bool | False | param template path | common.incremental |
-| model_id | str | None | unique id of a model - optional | session.model_id |
-| artifacts_folder | str | None | folder to store compilation artifacts | session.artifacts_folder |
-| runtime_name | str | None | name of the runtime session | session.name |
-| data_name | str | None | name of the input dataset | dataloader.name |
-| data_path | str | None | path to the input data directory | dataloader.path |
-| target_device | str | TargetDeviceType.TARGET_DEVICE_AM62A | target device for inference (AM62A, AM69A, etc.) | session.target_device |
-| tidl_offload | utils.str_to_bool | True | enable TIDL acceleration for inference | session.tidl_offload |
-| graph_optimization_level | int | GraphOptimizationLevel.ORT_DISABLE_ALL | ONNX Runtime graph optimization level | session.onnxruntime:graph_optimization_level |
-| tensor_bits | int | 8 | quantization bit-width for tensors (8 or 16) | session.runtime_options.tensor_bits |
-| accuracy_level | int | 1 | accuracy level for TIDL offload (0, 1, 2) | session.runtime_options.accuracy_level |
-| debug_level | int | 0 | debug level for compile and infer | session.runtime_options.debug_level |
-| deny_list_layer_type | str | '' | comma separated layer types to exclude from TIDL offload | session.runtime_options.deny_list:layer_type |
-| deny_list_layer_name | str | '' | comma separated layer names to exclude from TIDL offload | session.runtime_options.deny_list:layer_name |
-| deny_list_start_end_dict | utils.aststr_to_object | '' | a dict containing start and end nodes - it will be used to generate deny_list:layer_name. example: {"/decoder/Concat_3":None, "/aux/Relu_5":None} | session.deny_list_start_end_dict |
-| output_16bit_names_start_end_dict | utils.aststr_to_object | '' | a dict containing start and end nodes - it will be used to generate advanced_options:output_feature_16bit_names_list. example: {"/decoder/Concat_3":None, "/aux/Relu_5":None} | session.output_16bit_names_start_end_dict |
-| quantization_scale_type | int | None | type of quantization scale to use | session.runtime_options.advanced_options:quantization_scale_type |
-| calibration_frames | int | 12 | number of frames for quantization calibration | session.runtime_options.advanced_options:calibration_frames |
-| calibration_iterations | int | 12 | number of calibration iterations | session.runtime_options.advanced_options:calibration_iterations |
-| prequantized_model | utils.int_or_none | argparse.SUPPRESS | whether prequantized model | session.runtime_options.advanced_options:prequantized_model |
-| quant_params_file_path | utils.str_or_none_or_bool | argparse.SUPPRESS | path to quantization parameters file | session.runtime_options.advanced_options:quant_params_proto_path |
-| max_num_subgraph_nodes | int | 3000 | maximum number of nodes in a subgraph | session.runtime_options.advanced_options:max_num_subgraph_nodes |
-| output_feature_16bit_names_list | str | argparse.SUPPRESS | list of output layers to keep in 16-bit precision | session.runtime_options.advanced_options:output_feature_16bit_names_list |
-| add_data_convert_ops | int | DataConvertOps.DATA_CONVERT_OPS_INPUT_OUTPUT | data convert in DSP (0: disable, 1: input, 2: output, 3: input and output) - otherwise it will happen in ARM | session.runtime_options.advanced_options:add_data_convert_ops |
-| meta_arch_type | int | argparse.SUPPRESS | meta architecture type for object detection | session.runtime_options.object_detection:meta_arch_type |
-| meta_arch_file_path | str | argparse.SUPPRESS | path to meta architecture file | session.runtime_options.object_detection:meta_layers_names_list |
-| detection_threshold | float | 0.3 | confidence threshold for object detection | session.runtime_options.object_detection:confidence_threshold |
-| detection_top_k | int | 200 | number of top detections to keep before NMS | session.runtime_options.object_detection:top_k |
-| nms_threshold | float | 0.45 | NMS threshold for object detection | session.runtime_options.object_detection:nms_threshold |
-| keep_top_k | int | 200 | number of top detections to keep after NMS | session.runtime_options.object_detection:keep_top_k |
-| preprocess_name | str | None | name of the preprocessing pipeline | preprocess.name |
-| resize | int | None | resize dimensions for input images (height width) | preprocess.resize |
-| crop | int | None | crop dimensions for input images (height width) | preprocess.crop |
-| data_layout | str | None | data layout format (NCHW, NHWC) | preprocess.data_layout |
-| reverse_channels | utils.str_to_bool | False | reverse color channel order (RGB to BGR) | preprocess.reverse_channels |
-| resize_with_pad | utils.str_to_bool | False | resize image with padding to maintain aspect ratio | preprocess.resize_with_pad |
-| postprocess_enable | utils.str_to_bool | False | enable postprocessing after inference | common.postprocess_enable |
-| postprocess_name | str | None | name of the postprocessing pipeline | postprocess.name |
-| display_benchmark | utils.str_to_bool | False | display benchmark statistics after inference on EVM | common.display_benchmark |
-| target_machine | str | TARGET_MACHINE_PC_EMULATION | The machine this is running on, either "pc" or "evm" | session.target_machine |
-
-## evaluate
-Run inference and evaluate the accuracy and performance.
-
-| Option | Type | Default | Help | Config Field |
-|---|---:|---|---|---|
-| label_path | str | None | path to ground truth labels for accuracy evaluation | dataloader.label_path |
-| num_frames | int | 1000 | number of frames to process for accuracy evaluation | common.num_frames |
-| postprocess_enable | utils.str_to_bool | True | enable postprocessing after inference | common.postprocess_enable |
-| postprocess_resize_with_pad | utils.str_to_bool | False | resize output with padding to maintain aspect ratio | postprocess.resize_with_pad |
-| postprocess_normalized_detections | utils.str_to_bool | False | whether detections are normalized coordinates | postprocess.normalized_detections |
-| postprocess_formatter | str | None | format for postprocessing output | postprocess.formatter |
-| postprocess_shuffle_indices | int | None | indices for shuffling postprocess output | postprocess.shuffle_indices |
-| postprocess_squeeze_axis | utils.str_to_int | None | axis to squeeze from output tensor | postprocess.squeeze_axis |
-| postprocess_reshape_list | utils.str_to_list_of_tuples | None | list of reshape operations for output tensors | postprocess.reshape_list |
-| postprocess_ignore_index | str | None | index to ignore during accuracy calculation | postprocess.ignore_index |
-| postprocess_logits_bbox_to_bbox_ls | utils.str_to_bool | False | convert logits bounding box format to bounding box list | postprocess.logits_bbox_to_bbox_ls |
-| postprocess_keypoint | utils.str_to_bool | False | enable keypoint postprocessing | postprocess.keypoint |
-| postprocess_save_output | bool | True | save postprocessed output to files | postprocess.save_output |
-| postprocess_save_output_frames | int | 10 | number of output frames to save | postprocess.save_output_frames |
-
-## analyze
-Analyze model and write analyze.xlsx which indicates the correctness of individual layers.
-
-| Option | Type | Default | Help | Config Field |
-|---|---:|---|---|---|
-| model_path | str | None | input model | session.model_path |
-| config_path | str | None | path to configuration file | common.config_path |
-| work_path | str | ./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}bits | work path | common.work_path |
-| run_dir | str | {work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext} | run_dir | session.run_dir |
-| pipeline_type | str | analyze | type of pipeline to run | common.pipeline_type |
-| task_type | str | None | type of AI task (classification, detection, segmentation etc.) | common.task_type |
-| num_frames | int | 1 | number of frames to process for accuracy evaluation | common.num_frames |
-| display_step | str | 0.1 | interval for displaying progress information | common.display_step |
-| upgrade_config | str | True | upgrade edgeai-benchmark config to work with tidlrunner | common.upgrade_config |
-| session_type_dict | str | None | mapping of model extensions to session names | common.session_type_dict |
-| model_selection | str | None | select a subset of models to run - path of the model is compared using this model_selection regex to select a particular model or not | common.model_selection |
-| model_shortlist | str | None | select a subset of models to run - models configs with model_shortlist value <= this specified value will be used | common.model_shortlist |
-| preset_selection | utils.str_or_none | None | select a preset for speed accuracy trade-off: None, SPEED, ACCURACY, BALANCED | common.preset_selection |
-| config_template | str | data/templates/configs/param_template_config.yaml | param template path | common.config_template |
-| incremental | utils.str_to_bool | False | param template path | common.incremental |
-| model_id | str | None | unique id of a model - optional | session.model_id |
-| artifacts_folder | str | None | folder to store compilation artifacts | session.artifacts_folder |
-| runtime_name | str | None | name of the runtime session | session.name |
-| data_name | str | None | name of the input dataset | dataloader.name |
-| data_path | str | None | path to the input data directory | dataloader.path |
-| target_device | str | TargetDeviceType.TARGET_DEVICE_AM62A | target device for inference (AM62A, AM69A, etc.) | session.target_device |
-| tidl_offload | utils.str_to_bool | True | enable TIDL acceleration for inference | session.tidl_offload |
-| graph_optimization_level | int | GraphOptimizationLevel.ORT_DISABLE_ALL | ONNX Runtime graph optimization level | session.onnxruntime:graph_optimization_level |
-| tensor_bits | int | 8 | quantization bit-width for tensors (8 or 16) | session.runtime_options.tensor_bits |
-| accuracy_level | int | 1 | accuracy level for TIDL offload (0, 1, 2) | session.runtime_options.accuracy_level |
-| debug_level | int | 0 | debug level for compile and infer | session.runtime_options.debug_level |
-| deny_list_layer_type | str | '' | comma separated layer types to exclude from TIDL offload | session.runtime_options.deny_list:layer_type |
-| deny_list_layer_name | str | '' | comma separated layer names to exclude from TIDL offload | session.runtime_options.deny_list:layer_name |
-| deny_list_start_end_dict | utils.aststr_to_object | '' | a dict containing start and end nodes - it will be used to generate deny_list:layer_name. example: {"/decoder/Concat_3":None, "/aux/Relu_5":None} | session.deny_list_start_end_dict |
-| output_16bit_names_start_end_dict | utils.aststr_to_object | '' | a dict containing start and end nodes - it will be used to generate advanced_options:output_feature_16bit_names_list. example: {"/decoder/Concat_3":None, "/aux/Relu_5":None} | session.output_16bit_names_start_end_dict |
-| quantization_scale_type | int | None | type of quantization scale to use | session.runtime_options.advanced_options:quantization_scale_type |
-| calibration_frames | int | 12 | number of frames for quantization calibration | session.runtime_options.advanced_options:calibration_frames |
-| calibration_iterations | int | 12 | number of calibration iterations | session.runtime_options.advanced_options:calibration_iterations |
-| prequantized_model | utils.int_or_none | argparse.SUPPRESS | whether prequantized model | session.runtime_options.advanced_options:prequantized_model |
-| quant_params_file_path | utils.str_or_none_or_bool | argparse.SUPPRESS | path to quantization parameters file | session.runtime_options.advanced_options:quant_params_proto_path |
-| max_num_subgraph_nodes | int | 3000 | maximum number of nodes in a subgraph | session.runtime_options.advanced_options:max_num_subgraph_nodes |
-| output_feature_16bit_names_list | str | argparse.SUPPRESS | list of output layers to keep in 16-bit precision | session.runtime_options.advanced_options:output_feature_16bit_names_list |
-| add_data_convert_ops | int | DataConvertOps.DATA_CONVERT_OPS_INPUT_OUTPUT | data convert in DSP (0: disable, 1: input, 2: output, 3: input and output) - otherwise it will happen in ARM | session.runtime_options.advanced_options:add_data_convert_ops |
-| meta_arch_type | int | argparse.SUPPRESS | meta architecture type for object detection | session.runtime_options.object_detection:meta_arch_type |
-| meta_arch_file_path | str | argparse.SUPPRESS | path to meta architecture file | session.runtime_options.object_detection:meta_layers_names_list |
-| detection_threshold | float | 0.3 | confidence threshold for object detection | session.runtime_options.object_detection:confidence_threshold |
-| detection_top_k | int | 200 | number of top detections to keep before NMS | session.runtime_options.object_detection:top_k |
-| nms_threshold | float | 0.45 | NMS threshold for object detection | session.runtime_options.object_detection:nms_threshold |
-| keep_top_k | int | 200 | number of top detections to keep after NMS | session.runtime_options.object_detection:keep_top_k |
-| preprocess_name | str | None | name of the preprocessing pipeline | preprocess.name |
-| resize | int | None | resize dimensions for input images (height width) | preprocess.resize |
-| crop | int | None | crop dimensions for input images (height width) | preprocess.crop |
-| data_layout | str | None | data layout format (NCHW, NHWC) | preprocess.data_layout |
-| reverse_channels | utils.str_to_bool | False | reverse color channel order (RGB to BGR) | preprocess.reverse_channels |
-| resize_with_pad | utils.str_to_bool | False | resize image with padding to maintain aspect ratio | preprocess.resize_with_pad |
-| postprocess_enable | utils.str_to_bool | False | enable postprocessing after inference | common.postprocess_enable |
-| postprocess_name | str | None | name of the postprocessing pipeline | postprocess.name |
-
-## inspect
-Inspect and generate Model Inspector visualization (HTML)
-
-| Option | Type | Default | Help | Config Field |
-|---|---:|---|---|---|
-| model_path | str | None | input model | session.model_path |
-| config_path | str | None | path to configuration file | common.config_path |
-| work_path | str | ./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}bits | work path | common.work_path |
-| run_dir | str | {work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext} | run_dir | session.run_dir |
-| pipeline_type | str | compile | type of pipeline to run | common.pipeline_type |
-| task_type | str | None | type of AI task (classification, detection, segmentation etc.) | common.task_type |
-| num_frames | int | 1 | number of frames to process | common.num_frames |
-| display_step | str | 0.1 | interval for displaying progress information | common.display_step |
-| upgrade_config | str | True | upgrade edgeai-benchmark config to work with tidlrunner | common.upgrade_config |
-| session_type_dict | str | None | mapping of model extensions to session names | common.session_type_dict |
-| model_selection | str | None | select a subset of models to run - path of the model is compared using this model_selection regex to select a particular model or not | common.model_selection |
-| model_shortlist | str | None | select a subset of models to run - models configs with model_shortlist value <= this specified value will be used | common.model_shortlist |
-| preset_selection | utils.str_or_none | None | select a preset for speed accuracy trade-off: None, SPEED, ACCURACY, BALANCED | common.preset_selection |
-| config_template | str | data/templates/configs/param_template_config.yaml | param template path | common.config_template |
-| incremental | utils.str_to_bool | False | param template path | common.incremental |
-| model_id | str | None | unique id of a model - optional | session.model_id |
-| artifacts_folder | str | None | folder to store compilation artifacts | session.artifacts_folder |
-| runtime_name | str | None | name of the runtime session | session.name |
-| data_name | str | None | name of the input dataset | dataloader.name |
-| data_path | str | None | path to the input data directory | dataloader.path |
-| target_device | str | TargetDeviceType.TARGET_DEVICE_AM62A | target device for inference (AM62A, AM69A, etc.) | session.target_device |
-| tidl_offload | utils.str_to_bool | True | enable TIDL acceleration for inference | session.tidl_offload |
-| graph_optimization_level | int | GraphOptimizationLevel.ORT_DISABLE_ALL | ONNX Runtime graph optimization level | session.onnxruntime:graph_optimization_level |
-| tensor_bits | int | 8 | quantization bit-width for tensors (8 or 16) | session.runtime_options.tensor_bits |
-| accuracy_level | int | 1 | accuracy level for TIDL offload (0, 1, 2) | session.runtime_options.accuracy_level |
-| debug_level | int | 0 | debug level for compile and infer | session.runtime_options.debug_level |
-| deny_list_layer_type | str | '' | comma separated layer types to exclude from TIDL offload | session.runtime_options.deny_list:layer_type |
-| deny_list_layer_name | str | '' | comma separated layer names to exclude from TIDL offload | session.runtime_options.deny_list:layer_name |
-| deny_list_start_end_dict | utils.aststr_to_object | '' | a dict containing start and end nodes - it will be used to generate deny_list:layer_name. example: {"/decoder/Concat_3":None, "/aux/Relu_5":None} | session.deny_list_start_end_dict |
-| output_16bit_names_start_end_dict | utils.aststr_to_object | '' | a dict containing start and end nodes - it will be used to generate advanced_options:output_feature_16bit_names_list. example: {"/decoder/Concat_3":None, "/aux/Relu_5":None} | session.output_16bit_names_start_end_dict |
-| quantization_scale_type | int | None | type of quantization scale to use | session.runtime_options.advanced_options:quantization_scale_type |
-| calibration_frames | int | 12 | number of frames for quantization calibration | session.runtime_options.advanced_options:calibration_frames |
-| calibration_iterations | int | 12 | number of calibration iterations | session.runtime_options.advanced_options:calibration_iterations |
-| prequantized_model | utils.int_or_none | argparse.SUPPRESS | whether prequantized model | session.runtime_options.advanced_options:prequantized_model |
-| quant_params_file_path | utils.str_or_none_or_bool | argparse.SUPPRESS | path to quantization parameters file | session.runtime_options.advanced_options:quant_params_proto_path |
-| max_num_subgraph_nodes | int | 3000 | maximum number of nodes in a subgraph | session.runtime_options.advanced_options:max_num_subgraph_nodes |
-| output_feature_16bit_names_list | str | argparse.SUPPRESS | list of output layers to keep in 16-bit precision | session.runtime_options.advanced_options:output_feature_16bit_names_list |
-| add_data_convert_ops | int | DataConvertOps.DATA_CONVERT_OPS_INPUT_OUTPUT | data convert in DSP (0: disable, 1: input, 2: output, 3: input and output) - otherwise it will happen in ARM | session.runtime_options.advanced_options:add_data_convert_ops |
-| meta_arch_type | int | argparse.SUPPRESS | meta architecture type for object detection | session.runtime_options.object_detection:meta_arch_type |
-| meta_arch_file_path | str | argparse.SUPPRESS | path to meta architecture file | session.runtime_options.object_detection:meta_layers_names_list |
-| detection_threshold | float | 0.3 | confidence threshold for object detection | session.runtime_options.object_detection:confidence_threshold |
-| detection_top_k | int | 200 | number of top detections to keep before NMS | session.runtime_options.object_detection:top_k |
-| nms_threshold | float | 0.45 | NMS threshold for object detection | session.runtime_options.object_detection:nms_threshold |
-| keep_top_k | int | 200 | number of top detections to keep after NMS | session.runtime_options.object_detection:keep_top_k |
-| preprocess_name | str | None | name of the preprocessing pipeline | preprocess.name |
-| resize | int | None | resize dimensions for input images (height width) | preprocess.resize |
-| crop | int | None | crop dimensions for input images (height width) | preprocess.crop |
-| data_layout | str | None | data layout format (NCHW, NHWC) | preprocess.data_layout |
-| reverse_channels | utils.str_to_bool | False | reverse color channel order (RGB to BGR) | preprocess.reverse_channels |
-| resize_with_pad | utils.str_to_bool | False | resize image with padding to maintain aspect ratio | preprocess.resize_with_pad |
-| postprocess_enable | utils.str_to_bool | False | enable postprocessing after inference | common.postprocess_enable |
-| postprocess_name | str | None | name of the postprocessing pipeline | postprocess.name |
-
-## surgery
-Model surgery with tidl-onnx-model-optimizer
-
-| Option | Type | Default | Help | Config Field |
-|---|---:|---|---|---|
-| model_path | str | None | input model | session.model_path |
-| config_path | str | None | path to configuration file | common.config_path |
-| work_path | str | ./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}bits | work path | common.work_path |
-| run_dir | str | {work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext} | run_dir | session.run_dir |
-| pipeline_type | str | optimize | type of pipeline to run | common.pipeline_type |
-| model_surgery | utils.str_to_bool_or_none_or_dict | True | enable model surgery optimizations | common.surgery.model_surgery |
-| simplify_model | utils.str_to_bool | pre | enable model simplification optimizations | common.surgery.simplify_mode |
-| shape_inference | utils.str_or_none_or_bool | all | enable shape inference during surgery optimization | common.surgery.shape_inference_mode |
-| input_optimization | utils.str_to_bool | False | merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32 | session.input_optimization |
-| input_mean | float | (123.675, 116.28, 103.53) | mean values for input normalization (RGB channels) | session.input_mean |
-| input_scale | float | (0.017125, 0.017507, 0.017429) | scale values for input normalization (RGB channels) | session.input_scale |
-
-## extract
-Extract su-parts of the model
-
-| Option | Type | Default | Help | Config Field |
-|---|---:|---|---|---|
-| model_path | str | None | input model | session.model_path |
-| config_path | str | None | path to configuration file | common.config_path |
-| work_path | str | ./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}bits | work path | common.work_path |
-| run_dir | str | {work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext} | run_dir | session.run_dir |
-| pipeline_type | str | extract | type of pipeline to run | common.pipeline_type |
-| extract_mode | str | operators | extraction mode (submodules, submodule, start2end, operators) | common.extract.mode |
-| submodule_name | str | None | name of specific submodule to extract | common.extract.submodule_name |
-| max_depth | int | 3 | maximum depth for submodule extraction | common.extract.max_depth |
-| start_names | str | None | starting layer names for start2end extraction | common.extract.start_names |
-| end_names | str | None | ending layer names for start2end extraction | common.extract.end_names |
-
-## report
-Generate csv report
-
-| Option | Type | Default | Help | Config Field |
-|---|---:|---|---|---|
-| pipeline_type | str | compile | type of pipeline to run | common.pipeline_type |
-| report_mode | str | detailed | report generation mode (summary or detailed) | common.report.mode |
-| report_path | str | ./work_dirs/compile | path where reports will be generated | common.report.path |
-
-## package
-Package the compiled model artifacts to be used in EVM.
-
-| Option | Type | Default | Help | Config Field |
-|---|---:|---|---|---|
-| pipeline_type | str | package | type of pipeline to run | common.pipeline_type |
-| target_device | str | TargetDeviceType.TARGET_DEVICE_AM62A | target device for inference (AM62A, AM69A, etc.) | session.target_device |
-| tensor_bits | int | 8 | quantization bit-width for tensors (8 or 16) | session.runtime_options.tensor_bits |
-| work_path | str | ./work_dirs/compile/{target_device}/{tensor_bits}bits | work path | common.work_path |
-| package_path | str | ./work_dirs/{pipeline_type}/{target_device}/{tensor_bits}bits | packaged path | common.package_path |
-| param_template | str | data/templates/configs/param_template_package.yaml | param template path | common.param_template |
+| Section | Name | Task | Required Args | Optional Args | Description |
+|---|---|---|---|---|---|
+| dataloader | ade20k32_segmentation_dataloader | segmentation | path | label_path, split, num_classes |  |
+| dataloader | ade20k_segmentation_dataloader | segmentation | path | label_path, split |  |
+| dataloader | audio_classification_dataloader | audio_classification | path |  |  |
+| dataloader | camera_capture_dataloader | video-capture |  | source, num_frames |  |
+| dataloader | cityscapes_segmentation_dataloader | segmentation | path | label_path |  |
+| dataloader | coco_detection_dataloader | detection | path | label_path |  |
+| dataloader | coco_keypoint_detection_dataloader | keypoint_detection | path | label_path |  |
+| dataloader | coco_segmentation_dataloader | segmentation | path | label_path |  |
+| dataloader | image_classification_dataloader | classification | path | label_path |  |
+| dataloader | image_files_dataloader | classification | path | label_path |  |
+| dataloader | image_list_dataloader | classification | path |  |  |
+| dataloader | image_pix2pix_dataloader | image-to-image | path | label_path |  |
+| dataloader | image_segmentation_dataloader | segmentation | path | label_path |  |
+| dataloader | imagenet_classification_dataloader | classification |  |  |  |
+| dataloader | imagenet_dataloader | classification | path | label_path |  |
+| dataloader | imagenetv2c_classification_dataloader | classification |  |  |  |
+| dataloader | imagenetv2c_dataloader | classification | path | label_path, variant |  |
+| dataloader | modelmaker_classification_dataloader | classification | path, label_path |  |  |
+| dataloader | modelmaker_detection_dataloader | detection | path | label_path |  |
+| dataloader | modelmaker_segmentation_dataloader | segmentation | path, label_path |  |  |
+| dataloader | nuscenes_frame_dataloader | 3d-detection | path | version, load_type |  |
+| dataloader | nuscenes_mv_image_dataloader | 3d-detection | path | version, load_type |  |
+| dataloader | nyudepthv2_dataloader | depth-estimation | path | label_path, split |  |
+| dataloader | pandaset_frame_dataloader | 3d-detection | path | version, load_type |  |
+| dataloader | pandaset_mv_image_dataloader | 3d-detection | path | version, load_type |  |
+| dataloader | random_dataloader |  |  |  |  |
+| dataloader | robokit_segmentation_dataloader | segmentation | path | label_path |  |
+| dataloader | robokit_visloc_dataloader | visual-localization | path | label_path |  |
+| dataloader | speech_enhancement_dataloader | speech-enhancement | path |  |  |
+| dataloader | video_capture_dataloader | video-capture |  | source, num_frames |  |
+| dataloader | video_file_dataloader | video-capture | video_path | num_frames |  |
+| dataloader | voc_segmentation_dataloader | segmentation | path | label_path |  |
+| dataloader | widerface_detection_dataloader | detection | path | label_path, split |  |
+| dataloader | ycbv_object_6d_pose_dataloader | 6d-pose | path | label_path |  |

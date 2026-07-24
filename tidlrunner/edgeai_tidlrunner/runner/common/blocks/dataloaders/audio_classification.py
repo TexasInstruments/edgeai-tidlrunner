@@ -34,6 +34,7 @@ import random
 import numpy as np
 
 from .dataset_base import DatasetBase
+from ...settings.settings_help import register_help
 
 
 # UrbanSound8K class names, indexed by classID (0-9)
@@ -245,5 +246,10 @@ class UrbanSound8KDataLoader(DatasetBase):
         }
 
 
+@register_help(
+    section='dataloader',
+    name='audio_classification_dataloader',
+    task_type='audio_classification'
+)
 def audio_classification_dataloader(settings, name, path, **kwargs):
     return UrbanSound8KDataLoader(path=path, **kwargs)

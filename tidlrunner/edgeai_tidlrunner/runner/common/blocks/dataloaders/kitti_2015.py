@@ -246,6 +246,7 @@ from colorama import Fore
 from .. import utils
 from . import dataset_base
 from ..preprocess import functional as F
+from ...settings.settings_help import register_help
 
 
 class Kitti2015(dataset_base.DatasetBase):
@@ -336,5 +337,10 @@ class Kitti2015(dataset_base.DatasetBase):
         return {'disparity_error_%':accuracy}
 
 
+@register_help(
+    section='dataloader',
+    name='kitti_2015_dataloader',
+    task_type='stereo'
+)
 def kitti_2015_dataloader(settings, name, path, label_path=None, **kwargs):
     return Kitti2015(path=path, **kwargs)

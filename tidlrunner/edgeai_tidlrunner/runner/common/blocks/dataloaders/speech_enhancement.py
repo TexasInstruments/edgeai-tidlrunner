@@ -34,6 +34,7 @@ import random
 import numpy as np
 
 from .dataset_base import DatasetBase
+from ...settings.settings_help import register_help
 
 
 class VoiceBankDemandDataLoader(DatasetBase):
@@ -200,5 +201,10 @@ class VoiceBankDemandDataLoader(DatasetBase):
         }
 
 
+@register_help(
+    section='dataloader',
+    name='speech_enhancement_dataloader',
+    task_type='speech-enhancement'
+)
 def speech_enhancement_dataloader(settings, name, path, **kwargs):
     return VoiceBankDemandDataLoader(path=path, **kwargs)

@@ -33,6 +33,7 @@ import PIL
 
 from ....common import utils
 from .image_seg import ImageSegmentation
+from ...settings.settings_help import register_help
 
 
 class RobokitSegmentation(ImageSegmentation):
@@ -53,5 +54,10 @@ class RobokitSegmentation(ImageSegmentation):
         return
 
 
+@register_help(
+    section='dataloader',
+    name='robokit_segmentation_dataloader',
+    task_type='segmentation'
+)
 def robokit_segmentation_dataloader(settings, name, path, label_path=None, **kwargs):
     return RobokitSegmentation(path=path, split=os.path.join(path, 'val_img_gt_pair.txt'), num_classes=19, **kwargs)

@@ -39,6 +39,7 @@ from pycocotools.cocoeval import COCOeval
 from ....common.utils.config_utils import dataset_utils
 from . import dataset_base
 from . import dataloader_utils
+from ...settings.settings_help import register_help
 
 
 class ObjectDetectionDataLoader(dataset_base.DatasetBaseWithUtils):
@@ -202,6 +203,11 @@ class COCODetectionDataLoader(ObjectDetectionDataLoader):
         super().__init__(*args, **kwargs)
 
 
+@register_help(
+    section='dataloader',
+    name='coco_detection_dataloader',
+    task_type='detection'
+)
 def coco_detection_dataloader(settings, name, path, label_path=None, **kwargs):
     if 'val' in os.path.split(path)[-1]:
         data_path = path

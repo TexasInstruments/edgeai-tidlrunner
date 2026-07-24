@@ -80,7 +80,7 @@ SETTINGS_DEFAULT['commands.surgery'] = SETTINGS_DEFAULT['common.basic'] | {
 }
 
 register_help(
-    section='commands',
+    section='command',
     name='surgery',
     description='Run model surgery optimizations on the input model'
 )(SETTINGS_DEFAULT['commands.surgery'])
@@ -181,7 +181,7 @@ SETTINGS_DEFAULT['commands.compile'] = SETTINGS_DEFAULT['common.basic'] | SETTIN
 }
 
 register_help(
-    section='commands',
+    section='command',
     name='compile',
     description='Compile models and generate target-specific artifacts'
 )(SETTINGS_DEFAULT['commands.compile'])
@@ -205,7 +205,7 @@ SETTINGS_DEFAULT['commands.infer'] = SETTINGS_DEFAULT['commands.compile'] | {
 }
 
 register_help(
-    section='commands',
+    section='command',
     name='infer',
     description='Run inference using compiled models'
 )(SETTINGS_DEFAULT['commands.infer'])
@@ -239,7 +239,7 @@ SETTINGS_DEFAULT['commands.evaluate'] = SETTINGS_DEFAULT['commands.compile'] | {
 }
 
 register_help(
-    section='commands',
+    section='command',
     name='evaluate',
     description='Evaluate model accuracy against ground truth labels'
 )(SETTINGS_DEFAULT['commands.evaluate'])
@@ -257,7 +257,7 @@ SETTINGS_DEFAULT['commands.inspect'] = SETTINGS_DEFAULT['commands.infer'] | {
 }
 
 register_help(
-    section='commands',
+    section='command',
     name='inspect',
     description='Analyze model runtime and layer-level statistics'
 )(SETTINGS_DEFAULT['commands.inspect'])
@@ -272,7 +272,7 @@ SETTINGS_DEFAULT['commands.analyze'] = SETTINGS_DEFAULT['commands.inspect'] | {
 }
 
 register_help(
-    section='commands',
+    section='command',
     name='analyze',
     description='Inspect model outputs and activation data'
 )(SETTINGS_DEFAULT['commands.analyze'])
@@ -297,7 +297,7 @@ SETTINGS_DEFAULT['commands.extract'] = SETTINGS_DEFAULT['common.basic'] | {
 }
 
 register_help(
-    section='commands',
+    section='command',
     name='extract',
     description='Extract model submodules, operators, or layer ranges'
 )(SETTINGS_DEFAULT['commands.extract'])
@@ -318,7 +318,7 @@ SETTINGS_DEFAULT['commands.report'] = SETTINGS_DEFAULT['common.basic'] | {
 }
 
 register_help(
-    section='commands',
+    section='command',
     name='report',
     description='Generate compile and performance reports'
 )(SETTINGS_DEFAULT['commands.report'])
@@ -340,7 +340,7 @@ SETTINGS_DEFAULT['commands.package'] = SETTINGS_DEFAULT['common.basic'] | {
 }
 
 register_help(
-    section='commands',
+    section='command',
     name='package',
     description='Package artifacts for deployment'
 )(SETTINGS_DEFAULT['commands.package'])

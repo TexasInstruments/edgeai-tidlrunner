@@ -35,6 +35,7 @@ import numpy as np
 
 from . import dataset_base
 from . import dataloader_utils
+from ...settings.settings_help import register_help
 
 
 #######################################################################
@@ -108,6 +109,12 @@ class ImageListDataLoader(dataset_base.DatasetBaseWithUtils):
         files = [os.path.join(path, f) for f in files if (not file_types or os.path.splitext(f)[-1].lower() in file_types)]
         return files, labels
 
+
+@register_help(
+    section='dataloader',
+    name='image_list_dataloader',
+    task_type='classification'
+)
 def image_list_dataloader(name, path, **kwargs):
     return ImageListDataLoader(path, **kwargs)
 
@@ -153,5 +160,10 @@ class ImageFilesDataLoader(ImageListDataLoader):
         return accuracy
     
 
+@register_help(
+    section='dataloader',
+    name='image_files_dataloader',
+    task_type='classification'
+)
 def image_files_dataloader(settings, name, path, label_path=None, **kwargs):
     return ImageFilesDataLoader(path, label_path, **kwargs)
