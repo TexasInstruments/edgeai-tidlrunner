@@ -24,8 +24,12 @@ import sys
 import os
 import gzip
 import base64
+import logging
 from typing import Dict, Any, List, Optional
 from pathlib import Path
+
+logging.basicConfig(level=logging.INFO, format='%(message)s')
+logger = logging.getLogger(__name__)
 
 
 def generate_raw_text_from_parameters(layer_index: int, layer_type: str, layer_name: str,
@@ -64,7 +68,7 @@ def generate_raw_text_from_parameters(layer_index: int, layer_type: str, layer_n
 
 def build_hierarchical_tree(layer_details: Dict[str, Any], edges: List[Dict]) -> Dict[str, Any]:
     """Build hierarchical tree structure from layer details based on node naming"""
-    print("Building hierarchical tree structure...")
+    logger.debug("Building hierarchical tree structure...")
 
     node_topo_indices = {name: idx for idx, name in enumerate(layer_details.keys())}
 
@@ -115,7 +119,7 @@ def build_hierarchical_tree(layer_details: Dict[str, Any], edges: List[Dict]) ->
                     current_level[part]["children"] = {}
                 current_level = current_level[part]["children"]
 
-    print(f"  Built tree with {len(tree_dict)} top-level modules")
+    logger.debug(f"  Built tree with {len(tree_dict)} top-level modules")
 
     tree_dict = flatten_single_child_modules(tree_dict)
 
@@ -155,7 +159,7 @@ def calculate_node_depths_and_positions(nodes: Dict, edges: List[Dict], width=12
     Returns:
         Updated nodes dict with x, y, depth, horizontal_position
     """
-    print("Calculating node positions...")
+    logger.debug("Calculating node positions...")
 
     node_list = list(nodes.keys())
     node_to_idx = {name: idx for idx, name in enumerate(node_list)}
@@ -175,7 +179,7 @@ def calculate_node_depths_and_positions(nodes: Dict, edges: List[Dict], width=12
     if not roots:
         roots = [node_list[0]]
 
-    print(f"  Found {len(roots)} root nodes")
+    logger.debug(f"  Found {len(roots)} root nodes")
 
     depths = {}
 
@@ -201,8 +205,8 @@ def calculate_node_depths_and_positions(nodes: Dict, edges: List[Dict], width=12
     if not actual_roots:
         actual_roots = roots
 
-    print(f"  Actual roots: {len(actual_roots)}")
-    print(f"  Constant nodes: {len(constant_nodes)}")
+    logger.debug(f"  Actual roots: {len(actual_roots)}")
+    logger.debug(f"  Constant nodes: {len(constant_nodes)}")
 
     for root in actual_roots:
         assign_depth(root, 0)
@@ -220,7 +224,7 @@ def calculate_node_depths_and_positions(nodes: Dict, edges: List[Dict], width=12
             depths[name] = 0
 
     max_depth = max(depths.values()) if depths else 0
-    print(f"  Max depth: {max_depth}")
+    logger.debug(f"  Max depth: {max_depth}")
 
     depth_groups = {}
     for name, depth in depths.items():
@@ -253,7 +257,7 @@ def calculate_node_depths_and_positions(nodes: Dict, edges: List[Dict], width=12
                 horizontal_positions[name] = i
 
     max_width = max(len(nodes) for nodes in depth_groups.values()) if depth_groups else 1
-    print(f"  Max width: {max_width}")
+    logger.debug(f"  Max width: {max_width}")
 
     VERTICAL_SPACING = 150
     HORIZONTAL_SPACING = 200
@@ -271,7 +275,7 @@ def calculate_node_depths_and_positions(nodes: Dict, edges: List[Dict], width=12
         nodes[name]['depth'] = depth
         nodes[name]['horizontal_position'] = h_pos
 
-    print(f"  Calculated positions for {len(nodes)} nodes")
+    logger.debug(f"  Calculated positions for {len(nodes)} nodes")
 
     return nodes
 
@@ -287,10 +291,10 @@ def load_activation_data_from_model_dir(model_dir: str, tidl_data: Dict) -> Dict
     Returns:
         Dict mapping activation keys (subgraph_layer) to activation plot data
     """
-    print(f"\nLoading activation data from model directory: {model_dir}")
+    logger.debug(f"\nLoading activation data from model directory: {model_dir}")
 
     if not os.path.exists(model_dir):
-        print(f"  WARNING: Model directory not found: {model_dir}")
+        logger.debug(f"  WARNING: Model directory not found: {model_dir}")
         return {}
 
     try:
@@ -343,14 +347,14 @@ def load_activation_data_from_model_dir(model_dir: str, tidl_data: Dict) -> Dict
                     activation_data[activation_key] = layer_data
                     layers_loaded += 1
 
-        print(f"  Loaded activation data for {layers_loaded} layers")
+        logger.debug(f"  Loaded activation data for {layers_loaded} layers")
         return activation_data
 
     except ImportError as e:
-        print(f"  WARNING: Could not import ActivationDataParser: {e}")
+        logger.debug(f"  WARNING: Could not import ActivationDataParser: {e}")
         return {}
     except Exception as e:
-        print(f"  WARNING: Error loading activation data: {e}")
+        logger.debug(f"  WARNING: Error loading activation data: {e}")
         return {}
 
 
@@ -364,17 +368,17 @@ def load_metrics_from_model_dir(model_dir: str) -> Dict[str, List[Dict]]:
     Returns:
         Dict mapping subgraph_id to list of metric entries
     """
-    print(f"\nLoading metrics from model directory: {model_dir}")
+    logger.debug(f"\nLoading metrics from model directory: {model_dir}")
 
     if not os.path.exists(model_dir):
-        print(f"  WARNING: Model directory not found: {model_dir}")
+        logger.debug(f"  WARNING: Model directory not found: {model_dir}")
         return {}
 
     # Look for metrics file (generated by analyze pipeline)
     xlsx_path = os.path.join(model_dir, 'analyze.xlsx')
     if not os.path.exists(xlsx_path):
-        print(f"  WARNING: Metrics file not found: {xlsx_path}")
-        print(f"  Note: Metrics are only available after running analyze pipeline")
+        logger.debug(f"  WARNING: Metrics file not found: {xlsx_path}")
+        logger.debug(f"  Note: Metrics are only available after running analyze pipeline")
         return {}
 
     try:
@@ -393,20 +397,20 @@ def load_metrics_from_model_dir(model_dir: str) -> Dict[str, List[Dict]]:
         metrics_data = parser.get_metrics()
 
         total_metrics = sum(len(v) for v in metrics_data.values())
-        print(f"  Loaded metrics for {total_metrics} layers")
+        logger.debug(f"  Loaded metrics for {total_metrics} layers")
         return metrics_data
 
     except ImportError as e:
-        print(f"  WARNING: Could not import MetricsParser: {e}")
+        logger.debug(f"  WARNING: Could not import MetricsParser: {e}")
         return {}
     except Exception as e:
-        print(f"  WARNING: Error loading metrics: {e}")
+        logger.debug(f"  WARNING: Error loading metrics: {e}")
         return {}
 
 
 def load_json_data(json_path: str) -> Dict[str, Any]:
     """Load JSON data (supports both .json and .json.gz)"""
-    print(f"Loading JSON data from: {json_path}")
+    logger.debug(f"Loading JSON data from: {json_path}")
 
     try:
         if json_path.endswith('.gz'):
@@ -420,24 +424,24 @@ def load_json_data(json_path: str) -> Dict[str, Any]:
         if 'model' in data and 'runtime' in data:
             # New unified schema v1.0 with model.onnx and runtime.tidl_rt
             expected_keys = ['metadata', 'model', 'runtime']
-            print(f"  Detected: Unified Schema v1.0")
+            logger.debug(f"  Detected: Unified Schema v1.0")
         elif 'onnx' in data and 'tidl' in data:
             # Old unified schema (before restructuring)
             expected_keys = ['metadata', 'onnx', 'tidl']
-            print(f"  Detected: Unified Schema v1.0 (legacy paths)")
+            logger.debug(f"  Detected: Unified Schema v1.0 (legacy paths)")
         else:
             expected_keys = ['metadata', 'model', 'compilation']
-            print(f"  Detected: Legacy format")
+            logger.debug(f"  Detected: Legacy format")
 
         missing_keys = [k for k in expected_keys if k not in data]
         if missing_keys:
-            print(f"WARNING: JSON missing keys: {missing_keys}")
+            logger.debug(f"WARNING: JSON missing keys: {missing_keys}")
 
-        print(f"JSON data loaded successfully")
+        logger.debug(f"JSON data loaded successfully")
         return data
 
     except Exception as e:
-        print(f"ERROR: Failed to load JSON: {e}")
+        logger.debug(f"ERROR: Failed to load JSON: {e}")
         raise
 
 
@@ -452,7 +456,7 @@ def compress_activation_data_per_layer(activation_data: Dict[str, Any]) -> Dict[
     Returns:
         Dict mapping layer keys to base64-encoded compressed strings
     """
-    print("\nCompressing activation data (per-layer for lazy loading)...")
+    logger.debug("\nCompressing activation data (per-layer for lazy loading)...")
 
     compressed_data = {}
     total_original_size = 0
@@ -471,10 +475,10 @@ def compress_activation_data_per_layer(activation_data: Dict[str, Any]) -> Dict[
 
         compressed_data[layer_key] = layer_b64
 
-    print(f"  Original activation data size: {total_original_size / (1024*1024):.2f} MB")
-    print(f"  Compressed size (base64): {total_compressed_size / (1024*1024):.2f} MB")
-    print(f"  Compression ratio: {total_original_size / total_compressed_size:.2f}x")
-    print(f"  Total layers compressed: {len(compressed_data)}")
+    logger.debug(f"  Original activation data size: {total_original_size / (1024*1024):.2f} MB")
+    logger.debug(f"  Compressed size (base64): {total_compressed_size / (1024*1024):.2f} MB")
+    logger.debug(f"  Compression ratio: {total_original_size / total_compressed_size:.2f}x")
+    logger.debug(f"  Total layers compressed: {len(compressed_data)}")
 
     return compressed_data
 
@@ -490,20 +494,20 @@ def compress_activation_data(activation_data: Dict[str, Any]) -> str:
     Returns:
         Base64-encoded compressed string
     """
-    print("\nCompressing activation data...")
+    logger.debug("\nCompressing activation data...")
 
     activation_json_str = json.dumps(activation_data)
     activation_size_before = len(activation_json_str) / (1024 * 1024)
-    print(f"  Original activation data size: {activation_size_before:.2f} MB")
+    logger.debug(f"  Original activation data size: {activation_size_before:.2f} MB")
 
     activation_compressed = gzip.compress(activation_json_str.encode('utf-8'), compresslevel=9)
     activation_size_compressed = len(activation_compressed) / (1024 * 1024)
-    print(f"  Compressed size: {activation_size_compressed:.2f} MB")
+    logger.debug(f"  Compressed size: {activation_size_compressed:.2f} MB")
 
     activation_b64 = base64.b64encode(activation_compressed).decode('ascii')
     activation_size_b64 = len(activation_b64) / (1024 * 1024)
-    print(f"  Base64 encoded size: {activation_size_b64:.2f} MB")
-    print(f"  Compression ratio: {activation_size_before / activation_size_b64:.2f}x")
+    logger.debug(f"  Base64 encoded size: {activation_size_b64:.2f} MB")
+    logger.debug(f"  Compression ratio: {activation_size_before / activation_size_b64:.2f}x")
 
     return activation_b64
 
@@ -539,7 +543,7 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
         output_path: Path to output HTML file
         activations_data: Optional dict containing activation data (if None, will load from model_dir)
     """
-    print(f"\nReading template: {template_path}")
+    logger.debug(f"\nReading template: {template_path}")
 
     with open(template_path, 'r', encoding='utf-8') as f:
         template = f.read()
@@ -552,7 +556,7 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
     if not (has_new_schema or has_old_schema):
         raise ValueError("Invalid JSON format. Expected unified schema with 'metadata', 'model', 'runtime' keys")
 
-    print("  Processing: Unified Schema v1.0")
+    logger.debug("  Processing: Unified Schema v1.0")
 
     # Use provided activation data or default to empty dict
     if activations_data is None:
@@ -561,7 +565,7 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
     # Process unified schema format
     if True:  # Always process as unified schema
         # UNIFIED SCHEMA v1.0
-        print("  Detected: UNIFIED SCHEMA v1.0")
+        logger.debug("  Detected: UNIFIED SCHEMA v1.0")
         is_unified_schema = True
 
         metadata = json_data['metadata']
@@ -681,6 +685,7 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
                         })
 
         model_data['edges'] = edges
+        logger.debug(f"DEBUG: Built {len(edges)} ONNX edges")
 
         # Build node_support from ONNX layers
         # Unified schema uses runtime_assignment; legacy uses offload field
@@ -775,7 +780,7 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
         }
 
         # Calculate node positions for graph visualization
-        print("\nGenerating graph visualization data...")
+        logger.debug("\nGenerating graph visualization data...")
         layers_with_positions = calculate_node_depths_and_positions(
             nodes=transformed_layers.copy(),
             edges=edges,
@@ -788,7 +793,7 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
         tree_structure = build_hierarchical_tree(layers_with_positions, edges)
 
     # Extract TIDL subgraph data from unified schema
-    print("\nProcessing TIDL subgraph data...")
+    logger.debug("\nProcessing TIDL subgraph data...")
     tidl_data = {}
     tidl_subgraphs_raw = tidl_data_raw.get('subgraphs', {})
 
@@ -874,6 +879,59 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
                             })
                             edges_created.add(edge_key)
 
+            # Boundary Input/Output pill nodes — so a subgraph reads as a
+            # complete graph (tensor in -> ... -> tensor out) even when it
+            # has just one layer (e.g. a single-op TVM subgraph) instead of
+            # appearing as a disconnected floating box.
+            # Matched to layers by tensor name (works for any subgraph whose
+            # top-level inputs/outputs list is populated).
+            layer_input_names = {}   # tensor_name -> [layer_index, ...]
+            layer_output_names = {}  # tensor_name -> [layer_index, ...]
+            for tidl_layer in subgraph_info.get('layers', []):
+                idx = tidl_layer.get('layer_id', 0)
+                for inp in tidl_layer.get('inputs', []) or []:
+                    nm = inp.get('name')
+                    if nm:
+                        layer_input_names.setdefault(nm, []).append(idx)
+                for out in tidl_layer.get('outputs', []) or []:
+                    nm = out.get('name')
+                    if nm:
+                        layer_output_names.setdefault(nm, []).append(idx)
+
+            for i, sg_in in enumerate(subgraph_info.get('inputs', []) or []):
+                tensor_name = sg_in.get('name', f'input_{i}')
+                shape = sg_in.get('shape', [])
+                targets = layer_input_names.get(tensor_name, [])
+                if not targets:
+                    continue  # no layer in this subgraph consumes it — skip pill
+                pill_id = f'tidl_sg_{subgraph_id}_input_{i}'
+                graph_nodes.append({
+                    'id': pill_id, 'index': -1,
+                    'name': tensor_name, 'full_name': tensor_name, 'type': 'Input',
+                    'tidl_supported': True,
+                    'inputshape': 'N/A', 'outputshape': str(shape) if shape else 'N/A',
+                    'layer_data': {'raw_text': f'Input: {tensor_name}\nShape: {shape}'},
+                })
+                for target_idx in targets:
+                    graph_edges.append({'source': pill_id, 'target': f'tidl_layer_{target_idx}'})
+
+            for i, sg_out in enumerate(subgraph_info.get('outputs', []) or []):
+                tensor_name = sg_out.get('name', f'output_{i}')
+                shape = sg_out.get('shape', [])
+                sources = layer_output_names.get(tensor_name, [])
+                if not sources:
+                    continue  # no layer in this subgraph produces it — skip pill
+                pill_id = f'tidl_sg_{subgraph_id}_output_{i}'
+                graph_nodes.append({
+                    'id': pill_id, 'index': -1,
+                    'name': tensor_name, 'full_name': tensor_name, 'type': 'Output',
+                    'tidl_supported': True,
+                    'inputshape': str(shape) if shape else 'N/A', 'outputshape': 'N/A',
+                    'layer_data': {'raw_text': f'Output: {tensor_name}\nShape: {shape}'},
+                })
+                for source_idx in sources:
+                    graph_edges.append({'source': f'tidl_layer_{source_idx}', 'target': pill_id})
+
             # Collect ONNX nodes belonging to this subgraph (for ONNX view in Level 2)
             onnx_nodes_for_subgraph = []
             seen_onnx = set()
@@ -906,7 +964,7 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
             }
 
     # Extract performance and metrics data from unified schema
-    print("\nExtracting performance and metrics data...")
+    logger.debug("\nExtracting performance and metrics data...")
     if True:  # Always process as unified schema
         # UNIFIED SCHEMA v1.0: Extract from tidl.subgraphs
         # Activation data will be loaded from raw files when has_activation_data is true
@@ -930,7 +988,7 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
             if has_embedded:
                 # Already in JSON — skip raw .bin loading, will be read from layer loop below
                 activation_data = {}
-                print(f"  Using activation data embedded in JSON")
+                logger.debug(f"  Using activation data embedded in JSON")
             elif os.path.exists(model_dir):
                 activation_data = load_activation_data_from_model_dir(model_dir, tidl_data)
             else:
@@ -940,7 +998,6 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
             loaded_metrics = load_metrics_from_model_dir(model_dir) if os.path.exists(model_dir) else {}
 
         metrics_data = {}
-        proctime_data = {}
         cycles_data = {}
         memory_data = {}
 
@@ -950,7 +1007,6 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
             # Numeric-only subgraph ID for activation key (template uses e.g. "0_3" not "tidl_0_3")
             sg_num = ''.join(c for c in str(subgraph_id) if c.isdigit()) or '0'
             metrics_list = []
-            proctime_list = []
             cycles_list = []
             memory_list = []
 
@@ -982,7 +1038,7 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
                         if has_bin_files:
                             tidl_bin = layer_bin_files.get('tidl', 'N/A') if isinstance(layer_bin_files, dict) else 'N/A'
                             notidl_bin = layer_bin_files.get('notidl', 'N/A') if isinstance(layer_bin_files, dict) else 'N/A'
-                            print(f"  Layer {layer_id} ({layer_name}): using activation data from bin files")
+                            logger.debug(f"  Layer {layer_id} ({layer_name}): using activation data from bin files")
 
                 # Metrics/Accuracy data (only process if not null)
                 metrics = tidl_layer.get('metrics')
@@ -1003,14 +1059,6 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
                 # Performance data
                 if tidl_layer.get('performance'):
                     perf = tidl_layer['performance']
-
-                    # Only add to lists when values are actually present (not None)
-                    if perf.get('proctime_us') is not None:
-                        proctime_list.append({
-                            'layer_num': layer_id,
-                            'layer_type': layer_type,
-                            'proctime': perf['proctime_us']
-                        })
 
                     if perf.get('layer_cycles') is not None or perf.get('kernel_cycles') is not None:
                         cycles_list.append({
@@ -1055,7 +1103,7 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
                     if not corrupted:
                         clean.append(entry)
                     else:
-                        print(f"  Skipping corrupted metrics for layer {entry.get('tidl_layer_id')} "
+                        logger.debug(f"  Skipping corrupted metrics for layer {entry.get('tidl_layer_id')} "
                               f"({entry.get('onnx_layer')})")
                 metrics_data[sg_id] = clean
             elif metrics_list:
@@ -1069,8 +1117,6 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
                 json_data.get('metadata', {}).get('infer_time_subgraph_ms') is not None or
                 json_data.get('performance_source') == 'evm_hardware'
             )
-            if proctime_list and not _is_evm_src:
-                proctime_data[sg_id] = proctime_list
             if cycles_list:
                 cycles_data[sg_id] = cycles_list
             if memory_list and not _is_evm_src:
@@ -1126,9 +1172,11 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
             'inputs': sg_info.get('subgraph_inputs', []),
             'outputs': sg_info.get('subgraph_outputs', []),
         })
-        # Map ALL ONNX nodes in this subgraph to the subgraph overview node
+        # Map ONNX nodes to the first subgraph they appear in (FIRST ONE WINS)
+        # This prevents duplicates when nodes are mapped to multiple subgraphs
         for oname in sg_all_onnx_names:
-            onnx_to_overview_id[oname] = node_id
+            if oname not in onnx_to_overview_id:  # Only map if not already mapped
+                onnx_to_overview_id[oname] = node_id
 
     # Add ARM/unsupported ONNX nodes not covered by any subgraph.
     # A node that appears in subgraph_onnx_names is compiled into a TIDL/TVM layer
@@ -1170,14 +1218,13 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
     overview_data = {'nodes': overview_nodes, 'edges': overview_edges}
 
     # Convert data to JSON strings for template injection
-    print("\nConverting data to JSON strings...")
+    logger.debug("\nConverting data to JSON strings...")
     model_json = json.dumps(model_data, indent=2)
     subgraph_json = json.dumps(subgraph_data, indent=2)
     tidl_json = json.dumps(tidl_data, indent=2)
     overview_json = json.dumps(overview_data, indent=2)
     metrics_json = json.dumps(metrics_data, indent=2)
     config_json = json.dumps(config_data, indent=2)
-    proctime_json = json.dumps(proctime_data, indent=2)
     cycles_json = json.dumps(cycles_data, indent=2)
     memory_json = json.dumps(memory_data, indent=2)
     tree_json = json.dumps(tree_structure, indent=2)
@@ -1224,7 +1271,6 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
     # Force those flags off so the HTML never renders misleading charts.
     perf_availability = {
         'source':        performance_source,
-        'has_proctime':  False if is_evm else bool(proctime_data),
         'has_cycles':    bool(cycles_data),
         'has_kernel':    _has_kernel,
         'has_core':      _has_core,
@@ -1242,49 +1288,47 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
     }
     perf_availability_json = json.dumps(perf_availability, indent=2)
 
-    print(f"  model_json: {len(model_json) / 1024:.2f} KB")
-    print(f"  subgraph_json: {len(subgraph_json) / 1024:.2f} KB")
-    print(f"  tidl_json: {len(tidl_json) / 1024:.2f} KB")
-    print(f"  metrics_json: {len(metrics_json) / 1024:.2f} KB")
-    print(f"  config_json: {len(config_json) / 1024:.2f} KB")
-    print(f"  proctime_json: {len(proctime_json) / 1024:.2f} KB")
-    print(f"  cycles_json: {len(cycles_json) / 1024:.2f} KB")
-    print(f"  memory_json: {len(memory_json) / 1024:.2f} KB")
-    print(f"  tree_json: {len(tree_json) / 1024:.2f} KB")
-    print(f"  performance_source: {performance_source}")
+    logger.debug(f"  model_json: {len(model_json) / 1024:.2f} KB")
+    logger.debug(f"  subgraph_json: {len(subgraph_json) / 1024:.2f} KB")
+    logger.debug(f"  tidl_json: {len(tidl_json) / 1024:.2f} KB")
+    logger.debug(f"  metrics_json: {len(metrics_json) / 1024:.2f} KB")
+    logger.debug(f"  config_json: {len(config_json) / 1024:.2f} KB")
+    logger.debug(f"  cycles_json: {len(cycles_json) / 1024:.2f} KB")
+    logger.debug(f"  memory_json: {len(memory_json) / 1024:.2f} KB")
+    logger.debug(f"  tree_json: {len(tree_json) / 1024:.2f} KB")
+    logger.debug(f"  performance_source: {performance_source}")
 
     # Use per-layer compression for lazy loading (on-demand decompression)
     if activation_data:
         activation_compressed_per_layer = compress_activation_data_per_layer(activation_data)
         activation_json = json.dumps(activation_compressed_per_layer)
-        print(f"  Activation data compressed: {len(activation_json) / 1024:.2f} KB")
+        logger.debug(f"  Activation data compressed: {len(activation_json) / 1024:.2f} KB")
     else:
         activation_json = json.dumps({})
-        print(f"  No activation data provided (was --act_data=false used?)")
+        logger.debug(f"  No activation data provided (was --act_data=false used?)")
 
-    print("\nReplacing template placeholders...")
+    logger.debug("\nReplacing template placeholders...")
     compiled_html = template.replace('{{MODEL_DATA}}', model_json)
     compiled_html = compiled_html.replace('{{SUBGRAPH_DATA}}', subgraph_json)
     compiled_html = compiled_html.replace('{{TIDL_LAYER_DATA}}', tidl_json)
     compiled_html = compiled_html.replace('{{ACTIVATION_DATA}}', activation_json)
     compiled_html = compiled_html.replace('{{METRICS_DATA}}', metrics_json)
     compiled_html = compiled_html.replace('{{CONFIG_DATA}}', config_json)
-    compiled_html = compiled_html.replace('{{PROCTIME_DATA}}', proctime_json)
     compiled_html = compiled_html.replace('{{CYCLES_DATA}}', cycles_json)
     compiled_html = compiled_html.replace('{{MEMORY_DATA}}', memory_json)
     compiled_html = compiled_html.replace('{{TREE_DATA}}', tree_json)
     compiled_html = compiled_html.replace('{{OVERVIEW_DATA}}', overview_json)
     compiled_html = compiled_html.replace('{{PERF_AVAILABILITY}}', perf_availability_json)
 
-    print(f"\nWriting compiled HTML: {output_path}")
+    logger.debug(f"\nWriting compiled HTML: {output_path}")
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(compiled_html)
 
     file_size = os.path.getsize(output_path)
     file_size_mb = file_size / (1024 * 1024)
 
-    print(f"Compiled HTML generated successfully")
-    print(f"  File size: {file_size_mb:.2f} MB")
+    logger.info(f"Compiled HTML generated successfully")
+    logger.debug(f"  File size: {file_size_mb:.2f} MB")
 
     return json_data
 
@@ -1292,21 +1336,21 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
 def main(json_path, template_path, output_path, activations_json_path=None):
 
     if not os.path.exists(json_path):
-        print(f"ERROR: JSON file not found: {json_path}")
+        logger.debug(f"ERROR: JSON file not found: {json_path}")
         sys.exit(1)
 
     if not os.path.exists(template_path):
-        print(f"ERROR: Template file not found: {template_path}")
+        logger.debug(f"ERROR: Template file not found: {template_path}")
         sys.exit(1)
 
-    print("=" * 70)
-    print("HTML Generator - Generating Visualization")
-    print("=" * 70)
-    print(f"JSON Data:         {json_path}")
-    print(f"Activations Data:  {activations_json_path if activations_json_path else 'None (will show message in HTML)'}")
-    print(f"Template:          {template_path}")
-    print(f"Output HTML:       {output_path}")
-    print("=" * 70)
+    logger.info("=" * 70)
+    logger.info("HTML Generator - Generating Visualization")
+    logger.info("=" * 70)
+    logger.info(f"JSON Data:         {json_path}")
+    logger.info(f"Activations Data:  {activations_json_path if activations_json_path else 'None (will show message in HTML)'}")
+    logger.info(f"Template:          {template_path}")
+    logger.info(f"Output HTML:       {output_path}")
+    logger.info("=" * 70)
 
     try:
         json_data = load_json_data(json_path)
@@ -1314,39 +1358,39 @@ def main(json_path, template_path, output_path, activations_json_path=None):
         # Load activation data if provided
         activations_data = None
         if activations_json_path and os.path.exists(activations_json_path):
-            print(f"\nLoading activation data from: {activations_json_path}")
+            logger.debug(f"\nLoading activation data from: {activations_json_path}")
             activations_data = load_json_data(activations_json_path)
         elif activations_json_path:
-            print(f"\nWARNING: Activation data file not found: {activations_json_path}")
+            logger.debug(f"\nWARNING: Activation data file not found: {activations_json_path}")
         else:
-            print(f"\nNo activation data file specified (HTML will show instructions)")
+            logger.debug(f"\nNo activation data file specified (HTML will show instructions)")
 
         enriched_json_data = generate_html(json_data, template_path, output_path, activations_data, json_path=json_path)
 
         # Save the enriched JSON back to inspector.json with all embedded activation data + metadata
-        print(f"\nUpdating JSON with activation data and metadata...")
+        logger.debug(f"\nUpdating JSON with activation data and metadata...")
         updated_json_path = json_path
         with open(updated_json_path, 'w', encoding='utf-8') as f:
             json.dump(enriched_json_data, f, indent=2)
         json_size_mb = os.path.getsize(updated_json_path) / (1024 * 1024)
-        print(f"  Updated: {updated_json_path} ({json_size_mb:.2f} MB)")
+        logger.debug(f"  Updated: {updated_json_path} ({json_size_mb:.2f} MB)")
 
-        print("\n" + "=" * 70)
-        print("SUCCESS! HTML visualization generated.")
-        print("=" * 70)
-        print(f"\nOpen this file in your browser:")
-        print(f"  {os.path.abspath(output_path)}")
-        print("\nFeatures:")
-        print("  - Model Performance - View model overview and statistics")
-        print("  - Runtime Model - View complete ONNX graph")
-        print("  - TIDL Model - View subgraphs with support status")
-        print("  - TIDL Layer Details - Enhanced with GMACS, parameters")
-        print("  - Activation Analysis - Histogram & Scatter plots")
-        print("  - Metrics Analysis - Layer-wise accuracy metrics")
-        print("  - Performance Charts - Processing time, cycles, memory")
+        logger.debug("\n" + "=" * 70)
+        logger.debug("SUCCESS! HTML visualization generated.")
+        logger.info("=" * 70)
+        logger.debug(f"\nOpen this file in your browser:")
+        logger.debug(f"  {os.path.abspath(output_path)}")
+        logger.debug("\nFeatures:")
+        logger.debug("  - Model Performance - View model overview and statistics")
+        logger.debug("  - Runtime Model - View complete ONNX graph")
+        logger.debug("  - TIDL Model - View subgraphs with support status")
+        logger.debug("  - TIDL Layer Details - Enhanced with GMACS, parameters")
+        logger.debug("  - Activation Analysis - Histogram & Scatter plots")
+        logger.debug("  - Metrics Analysis - Layer-wise accuracy metrics")
+        logger.debug("  - Performance Charts - Processing time, cycles, memory")
 
     except Exception as e:
-        print(f"\nERROR: {e}")
+        logger.debug(f"\nERROR: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)
@@ -1368,7 +1412,7 @@ if __name__ == "__main__":
     # Legacy support: if 4 positional args, treat 2nd as activations
     if len(sys.argv) == 5 and not sys.argv[1].startswith('-'):
         # Old format: data.json activations.json template.html output.html
-        print("Detected legacy 4-argument format")
+        logger.debug("Detected legacy 4-argument format")
         main(json_path=sys.argv[1], activations_json_path=sys.argv[2],
              template_path=sys.argv[3], output_path=sys.argv[4])
     else:
