@@ -27,41 +27,19 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-import sys
 import os
-import copy
-import argparse
-import ast
-import yaml
+import sys
 import functools
-import subprocess
-import platform
-from colorama import Fore, Back, Style
+import copy
+import warnings
+import yaml
+import re
 
-from edgeai_tidlrunner import rtwrapper, runner
-from edgeai_tidlrunner.main import  _main as _tidlrunner_main
-from edgeai_tidlrunner.rtwrapper.options import presets
-from edgeai_tidloptimizer.start import start_with_proper_environment
+from edgeai_tidlrunner.runner import tidlrunner_manager
 
+from .common import pipelines
 
-def _main(**kwargs):
-    print(f"INFO: checking machine architecture...")
-    target_machine = presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION
-    target_machine = kwargs.get('target_machine') or target_machine
-    package_name = kwargs.pop('package_name', None)
-
-    # this is now not a requirement, but only a recommendation - and only in PC
-    if (package_name not in os.path.abspath(sys.executable)) and (target_machine == presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION):
-        print(f'{Back.WHITE}{Fore.YELLOW}WARNING: recommended to use a Python virtual environment with {package_name} in its name. This is to avoid using a wrong Python enviroment.{Style.RESET_ALL}')
-
-    print(f"INFO: setting target_machine to: {target_machine}")
-    start_with_proper_environment(target_machine=target_machine, **kwargs)
-
-
-def main(**kwargs):
-    _main(package_name='tidloptimizer', **kwargs)
-
-
-if __name__ == "__main__":
-    print(f'INFO: running {__file__} __main__')  
-    _main(package_name='tidloptimizer')
+class PipelineManager(tidlrunner_manager.PipelineManager):
+    ARGS_DICT = {}
+    COPY_ARGS = {}
+    PIPELINES = pipelines

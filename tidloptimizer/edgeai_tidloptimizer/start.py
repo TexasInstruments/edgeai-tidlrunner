@@ -35,33 +35,37 @@ import ast
 import yaml
 import functools
 import subprocess
-import platform
-from colorama import Fore, Back, Style
-
-from edgeai_tidlrunner import rtwrapper, runner
-from edgeai_tidlrunner.main import  _main as _tidlrunner_main
-from edgeai_tidlrunner.rtwrapper.options import presets
-from edgeai_tidloptimizer.start import start_with_proper_environment
 
 
-def _main(**kwargs):
-    print(f"INFO: checking machine architecture...")
-    target_machine = presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION
-    target_machine = kwargs.get('target_machine') or target_machine
-    package_name = kwargs.pop('package_name', None)
+import edgeai_tidlrunner
+from edgeai_tidlrunner import rtwrapper, runner, start
+from edgeai_tidlrunner.runner.common.settings.settings_help import export_help_markdown
+from edgeai_tidloptimizer import optimizer
 
-    # this is now not a requirement, but only a recommendation - and only in PC
-    if (package_name not in os.path.abspath(sys.executable)) and (target_machine == presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION):
-        print(f'{Back.WHITE}{Fore.YELLOW}WARNING: recommended to use a Python virtual environment with {package_name} in its name. This is to avoid using a wrong Python enviroment.{Style.RESET_ALL}')
-
-    print(f"INFO: setting target_machine to: {target_machine}")
-    start_with_proper_environment(target_machine=target_machine, **kwargs)
+SPECIAL_PIPELINE_NAMES = (,)
 
 
-def main(**kwargs):
-    _main(package_name='tidloptimizer', **kwargs)
+class StartOptimizer(start.StartRunner):
+    def run(self, command=None, **kwargs):
+        full_kwargs = self.kwargs | kwargs
+        command = command or full_kwargs.pop('command', None)
+        
+        if command not in SPECIAL_PIPELINE_NAMES:
+            return optimizer.run(command=command, argparse=True, **full_kwargs)
+        else:
+            return optimizer.run(command=command, argparse=True, model_id=command+'_model', **full_kwargs)
+
+
+def start():
+    print(f'INFO: running - {sys.argv}')
+    StartOptimizer.main()
+
+
+def start_with_proper_environment(START_CLS=StartOptimizer, **kwargs):
+    return start.start_with_proper_environment(START_CLS=START_CLS, **kwargs)
 
 
 if __name__ == "__main__":
-    print(f'INFO: running {__file__} __main__')  
-    _main(package_name='tidloptimizer')
+    print(f'INFO: running {__file__} __main__')
+    print(f'INFO: OR run tidlrunner-cli which is setup to call main:main() in pyproject.toml')    
+    start_with_proper_environment()
