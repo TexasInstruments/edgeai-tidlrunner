@@ -18,7 +18,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <!-- Professional Typography: SF Pro family (system fonts only) -->
 <script src="https://d3js.org/d3.v7.min.js"></script>
-<!-- Chart.js for proctime stairs plot -->
+<!-- Chart.js for cycles/memory charts -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
 <script>
 // Set global Chart.js defaults for consistent font across all charts
@@ -2367,6 +2367,27 @@ main {
     fill: white !important;
 }
 
+/* ARM pill styling */
+.node-rect.arm-pill {
+    fill: #FFE6E6;
+    stroke: #E63339;
+    stroke-width: 2;
+}
+
+[data-theme="dark"] .node-rect.arm-pill {
+    fill: #4d1b1b;
+    stroke: #E63339;
+}
+
+.graph-node:hover .node-rect.arm-pill {
+    stroke-width: 3;
+}
+
+.graph-node.selected .node-rect.arm-pill {
+    fill: #E63339 !important;
+    stroke: #990000;
+}
+
 /* Selected node name label */
 .selected-node-name {
     fill: white;
@@ -4418,26 +4439,13 @@ main {
                         </select>
                     </div>
                     <!-- Hidden mirrors for backward-compat with existing chart JS -->
-                    <select id="proctime-subgraph-selector" style="display:none;"></select>
                     <select id="cycles-subgraph-selector"  style="display:none;"></select>
                     <select id="memory-subgraph-selector"  style="display:none;"></select>
                     <select id="metrics-subgraph-selector" style="display:none;"></select>
-                    <div class="proctime-chart-section">
-                        <div class="perf-chart-header">
-                            <h3 title="Estimated processing time per TIDL layer in microseconds. Based on offline simulation.">Layer Processing Time (Estimated)</h3>
-                        </div>
-                        <div class="chart-scroll-wrapper" id="proctime-scroll-wrapper">
-                            <div class="chart-scroll-inner">
-                                <canvas id="proctime-chart"></canvas>
-                            </div>
-                        </div>
-                        <div class="chart-scroll-hint">← scroll to see all layers →</div>
-                        <p style="margin: 0.5rem 0 0; font-size: 0.75rem; color: var(--text-muted); font-style: italic;">* Offline simulation estimate. Actual on-device performance may vary depending on system load, memory bandwidth, and clock configuration.</p>
-                    </div>
-                    <div id="cycles-chart-section" class="cycles-chart-section" style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid rgba(128, 128, 128, 0.1);">
+                    <div id="cycles-chart-section" class="cycles-chart-section" style="margin-top: 0; padding-top: 0; border-top: none;">
                         <div class="perf-chart-header">
                             <h3 id="cycles-chart-title" title="Total layer cycles, IO cycles, and kernel-only cycles per TIDL layer shown side by side.">
-                                <span id="cycles-label-text">Cycles Per Layer (Estimated)</span>
+                                <span id="cycles-label-text">Cycles Per Layer (Roughly Approximated)</span>
                             </h3>
                             <div class="perf-chart-controls">
                                 <div class="memory-toggle-group">
@@ -4629,7 +4637,7 @@ syncThemeIcon();
 //   - INJECTED_MODEL_DATA: {model_details, layer_details, edges}
 //   - SUBGRAPH_DATA: {subgraphs, node_support}
 //   - TIDL_LAYER_DATA: {subgraph_id: {layers, total_gmacs, graph}}
-//   - METRICS_DATA, CONFIG_DATA, PROCTIME_DATA, CYCLES_DATA, MEMORY_DATA
+//   - METRICS_DATA, CONFIG_DATA, CYCLES_DATA, MEMORY_DATA
 //   - TREE_DATA: Hierarchical module structure
 //
 // - This transformation ensures existing visualizations continue to work
@@ -4657,7 +4665,6 @@ const TIDL_LAYER_DATA = {{TIDL_LAYER_DATA}};
 const OVERVIEW_DATA = {{OVERVIEW_DATA}};
 const METRICS_DATA = {{METRICS_DATA}};
 const CONFIG_DATA = {{CONFIG_DATA}};
-const PROCTIME_DATA = {{PROCTIME_DATA}};
 const CYCLES_DATA = {{CYCLES_DATA}};
 const MEMORY_DATA = {{MEMORY_DATA}};
 const PERF_AVAILABILITY = {{PERF_AVAILABILITY}};
@@ -4800,7 +4807,6 @@ function buildSubgraphPerfTable() {
 
     // Collect all subgraph IDs from available data sources
     const sgIds = new Set();
-    if (PROCTIME_DATA) Object.keys(PROCTIME_DATA).forEach(k => sgIds.add(k));
     if (CYCLES_DATA) Object.keys(CYCLES_DATA).forEach(k => sgIds.add(k));
     if (typeof TIDL_LAYER_DATA !== 'undefined' && TIDL_LAYER_DATA) {
         Object.keys(TIDL_LAYER_DATA).forEach(k => sgIds.add(k));
@@ -4817,9 +4823,6 @@ function buildSubgraphPerfTable() {
     // Compute per-subgraph metrics
     sgPerfData = [];
     for (const sgId of sortedIds) {
-        const proctimeArr = (PROCTIME_DATA && PROCTIME_DATA[sgId]) || [];
-        const estTime = proctimeArr.reduce((s, d) => s + (d.proctime || 0), 0);
-
         const cyclesArr = (CYCLES_DATA && CYCLES_DATA[sgId]) || [];
         const totalLayerCycles = cyclesArr.reduce((s, d) => s + (d.layerCycles || 0), 0);
 
@@ -4828,7 +4831,7 @@ function buildSubgraphPerfTable() {
             gmacs = TIDL_LAYER_DATA[sgId].total_gmacs || 0;
         }
 
-        const numLayers = Math.max(proctimeArr.length, cyclesArr.length,
+        const numLayers = Math.max(cyclesArr.length,
             (typeof TIDL_LAYER_DATA !== 'undefined' && TIDL_LAYER_DATA?.[sgId]?.num_layers) || 0);
         // Build a readable label: "TIDL — Subgraph 0", "TVM — Subgraph 1", etc.
         const sgInfo = (typeof TIDL_LAYER_DATA !== 'undefined' && TIDL_LAYER_DATA?.[sgId]) || {};
@@ -4836,7 +4839,7 @@ function buildSubgraphPerfTable() {
         const label = `${rt} — Subgraph ${sgIndex(sgId)}`;
         const evmTimeMs = sgInfo.evm_execution_time_ms_per_frame != null
             ? sgInfo.evm_execution_time_ms_per_frame : null;
-        sgPerfData.push({ sgId, label, sortKey: sgIndex(sgId), numLayers, estTime, totalLayerCycles, gmacs, evmTimeMs, isAccelerated: true });
+        sgPerfData.push({ sgId, label, sortKey: sgIndex(sgId), numLayers, totalLayerCycles, gmacs, evmTimeMs, isAccelerated: true });
     }
 
     // Collect non-accelerated layers (shown after subgraph rows)
@@ -4973,15 +4976,12 @@ function buildLayerLookups(subgraphNum) {
             }
         });
     }
-    // Source 2: proctime/cycles data (fallback for missing entries)
-    const sgProctime = (PROCTIME_DATA && PROCTIME_DATA[subgraphNum]) || [];
+    // Source 2: cycles data (fallback for missing entries)
     const sgCycles = (CYCLES_DATA && CYCLES_DATA[subgraphNum]) || [];
-    sgProctime.forEach(d => { if (!types[d.layer_num]) types[d.layer_num] = d.layer_type || ''; });
     sgCycles.forEach(d => { if (!types[d.layer_num]) types[d.layer_num] = d.layer_type || ''; });
     return { names, types };
 }
 
-// Initialize Proctime Chart
 // ── Unified subgraph selector for all per-layer charts ────────────
 function initPerfSubgraphSelector() {
     // Helper: true if a data object has at least one subgraph with real entries
@@ -4992,9 +4992,8 @@ function initPerfSubgraphSelector() {
 
     // Show/hide each section based on data availability AND PERF_AVAILABILITY.
     // PERF_AVAILABILITY flags are authoritative — they override raw data checks
-    // so EVM-specific overrides (hide proctime, memory) are always respected.
+    // so EVM-specific overrides (hide memory) are always respected.
     const _PA = (typeof PERF_AVAILABILITY !== 'undefined') ? PERF_AVAILABILITY : {};
-    const hasProctime = hasData(PROCTIME_DATA) && (_PA.has_proctime !== false);
     const hasCycles   = hasData(CYCLES_DATA);
     const hasMemory   = hasData(MEMORY_DATA)   && (_PA.has_memory   !== false);
     const hasMetrics  = hasData(METRICS_DATA);
@@ -5004,12 +5003,11 @@ function initPerfSubgraphSelector() {
         if (el) el.style.display = visible ? '' : 'none';
     };
 
-    show('.proctime-chart-section', hasProctime);
     show('.cycles-chart-section',   hasCycles);
     show('.memory-chart-section',   hasMemory);
     show('.metrics-graph-section',  hasMetrics);
 
-    const anyCharts = hasProctime || hasCycles || hasMemory;
+    const anyCharts = hasCycles || hasMemory;
     show('#per-layer-separator',    anyCharts);
     show('#per-layer-selector-row', anyCharts);
     if (!anyCharts && !hasMetrics) return;  // nothing to wire
@@ -5019,7 +5017,6 @@ function initPerfSubgraphSelector() {
 
     // Collect all available subgraph keys across visible data sources
     const allKeys = new Set([
-        ...(hasProctime ? Object.keys(PROCTIME_DATA) : []),
         ...(hasCycles   ? Object.keys(CYCLES_DATA)   : []),
         ...(hasMemory   ? Object.keys(MEMORY_DATA)   : []),
         ...(hasMetrics  ? Object.keys(METRICS_DATA)  : []),
@@ -5039,11 +5036,10 @@ function initPerfSubgraphSelector() {
 
     // Sync all hidden mirrors and re-render all charts
     const syncAll = (key) => {
-        ['proctime','cycles','memory','metrics'].forEach(id => {
+        ['cycles','memory','metrics'].forEach(id => {
             const el = document.getElementById(id + '-subgraph-selector');
             if (el) el.value = key;
         });
-        if (hasProctime && typeof updateProctimeChart === 'function') updateProctimeChart(key);
         if (hasCycles   && typeof updateCyclesChart   === 'function') updateCyclesChart(key);
         if (hasMemory   && typeof updateMemoryChart   === 'function') updateMemoryChart(key);
         if (hasMetrics  && typeof updateMetricsChart  === 'function') {
@@ -5055,194 +5051,6 @@ function initPerfSubgraphSelector() {
     unified.value = sortedKeys[0];
     unified.addEventListener('change', e => syncAll(e.target.value));
     syncAll(sortedKeys[0]);
-}
-
-let proctimeChart = null;
-
-function initProctimeChart() {
-    console.log('=== PROCTIME CHART INIT ===');
-    console.log('PROCTIME_DATA:', PROCTIME_DATA);
-
-    if (!PROCTIME_DATA || Object.keys(PROCTIME_DATA).length === 0) {
-        console.log('No proctime data available');
-        return;
-    }
-
-    // Populate dropdown with available subgraphs
-    const selector = document.getElementById('proctime-subgraph-selector');
-    if (!selector) return;
-
-    // Clear existing options
-    selector.innerHTML = '';
-
-    // Add options for each subgraph
-    const subgraphKeys = Object.keys(PROCTIME_DATA).sort((a, b) => parseInt(a) - parseInt(b));
-    subgraphKeys.forEach(key => {
-        const option = document.createElement('option');
-        option.value = key;
-        option.textContent = `Subgraph ${key}`;
-        selector.appendChild(option);
-    });
-
-    // Set first subgraph as selected
-    if (subgraphKeys.length > 0) {
-        selector.value = subgraphKeys[0];
-        updateProctimeChart(subgraphKeys[0]);
-    }
-
-    // Add change event listener
-    selector.addEventListener('change', (e) => {
-        updateProctimeChart(e.target.value);
-    });
-
-}
-
-function updateProctimeChart(subgraphNum) {
-    const rawData = PROCTIME_DATA[subgraphNum];
-    if (!rawData || rawData.length === 0) {
-        console.log(`No data for subgraph ${subgraphNum}`);
-        return;
-    }
-
-    // Sort by layer_num to ensure correct ordering
-    const data = [...rawData].sort((a, b) => a.layer_num - b.layer_num);
-    const labels = data.map(d => d.layer_num);
-    const proctimes = data.map(d => d.proctime);
-    const layerNames = data.map(d => d.layer_type);
-    const lkp = buildLayerLookups(subgraphNum);
-    // Show total subgraph time in card
-    // const totalTime = proctimes.reduce((sum, t) => sum + (t || 0), 0);
-    // const totalCard = document.getElementById('proctime-total-card');
-    // const totalLabel = document.getElementById('proctime-total-label');
-    // const totalValue = document.getElementById('proctime-total-value');
-    // if (totalCard && totalLabel && totalValue) {
-    //     totalLabel.textContent = `Subgraph ${subgraphNum} Total:`;
-    //     totalValue.textContent = `${totalTime.toFixed(2)} μs`;
-    //     totalCard.style.display = 'block';
-    // }
-
-    const ctx = document.getElementById('proctime-chart');
-    if (!ctx) return;
-
-    if (proctimeChart) {
-        proctimeChart.destroy();
-    }
-
-    // Horizontal scroll
-    applyChartScroll('proctime-scroll-wrapper', data.length, 1, 15);
-
-    proctimeChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    label: 'Processing Time (μs)',
-                    data: proctimes,
-                    backgroundColor: 'rgba(75, 192, 192, 0.7)',
-                    borderColor: 'rgb(75, 192, 192)',
-                    borderWidth: 1,
-                    borderRadius: 2,
-                    order: 2
-                },
-                {
-                    label: 'Trend',
-                    data: proctimes,
-                    type: 'line',
-                    borderColor: 'rgba(0, 128, 128, 0.8)',
-                    backgroundColor: 'transparent',
-                    borderWidth: 1.5,
-                    pointRadius: 0,
-                    pointHoverRadius: 4,
-                    tension: 0.3,
-                    fill: false,
-                    order: 1
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-                intersect: false,
-                mode: 'index'
-            },
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top',
-                    labels: {
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim() || '#333',
-                        font: { size: 12 },
-                        filter: function(item) { return item.text !== 'Trend'; }
-                    }
-                },
-                tooltip: {
-                    callbacks: {
-                        title: function(context) {
-                            const idx = context[0].dataIndex;
-                            const num = labels[idx];
-                            return [
-                                `Layer Number: ${num}`,
-                                `Layer Name: ${lkp.names[num] || layerNames[idx] || '-'}`,
-                                `Layer Type: ${lkp.types[num] || '-'}`
-                            ];
-                        },
-                        label: function(context) {
-                            if (context.dataset.label === 'Trend') return null;
-                            return `Processing Time: ${context.parsed.y.toFixed(2)} μs`;
-                        }
-                    },
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    titleColor: '#fff',
-                    bodyColor: '#fff',
-                    borderColor: 'rgb(75, 192, 192)',
-                    borderWidth: 1,
-                    padding: 10,
-                    displayColors: false
-                }
-            },
-            scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Layer Number',
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim() || '#666',
-                        font: { size: 13, weight: 'bold' }
-                    },
-                    ticks: {
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim() || '#666'
-                    },
-                    grid: {
-                        color: 'rgba(128, 128, 128, 0.1)'
-                    }
-                },
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Processing Time (μs)',
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim() || '#666',
-                        font: {
-                            size: 13,
-                            weight: 'bold'
-                        }
-                    },
-                    ticks: {
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim() || '#666',
-                        callback: function(value) {
-                            return formatWithPrefix(value);
-                        }
-                    },
-                    grid: {
-                        color: 'rgba(128, 128, 128, 0.1)'
-                    },
-                    beginAtZero: true
-                }
-            }
-        }
-    });
-
-    console.log(`Chart updated for subgraph ${subgraphNum} with ${data.length} layers`);
 }
 
 // Initialize Cycles Chart (Grouped: Total Layer Cycles and IO Cycles side by side)
@@ -7303,10 +7111,8 @@ function renderMetricsCharts() {
             }
         });
     }
-    // Source 2: proctime/cycles data (fallback)
-    const sgProctime = (PROCTIME_DATA && PROCTIME_DATA[subgraphId]) || [];
+    // Source 2: cycles data (fallback)
     const sgCycles = (CYCLES_DATA && CYCLES_DATA[subgraphId]) || [];
-    sgProctime.forEach(d => { if (!layerTypeLookup[d.layer_num]) layerTypeLookup[d.layer_num] = d.layer_type; });
     sgCycles.forEach(d => { if (!layerTypeLookup[d.layer_num]) layerTypeLookup[d.layer_num] = d.layer_type; });
 
     const chartData = subgraphMetrics.map((m, idx) => {
@@ -7324,7 +7130,7 @@ function renderMetricsCharts() {
         };
     });
 
-    // Use the static canvas — same approach as memory/proctime/cycles charts
+    // Use the static canvas — same approach as memory/cycles charts
     applyChartScroll('metrics-scroll-wrapper', chartData.length, 1, 18);
     renderChartJSBar('metrics-chart', chartData, subgraphId);
 }
@@ -7587,6 +7393,17 @@ function renderSubgraphONNX(subgraphId) {
     const idxToName = {};
     allNamesWithOrigIdx.forEach(({name, origIdx}) => { idxToName[origIdx] = name; });
 
+    // Build reverse map: ONNX layer name → TIDL layer that maps to it
+    const onnxToTidlMap = {};
+    if (sg) {
+        (sg.layers || []).forEach(tidlLayer => {
+            const onnxNames = tidlLayer.layer_data?.onnx_node_names || [];
+            onnxNames.forEach(name => {
+                onnxToTidlMap[name] = tidlLayer.layer_index;
+            });
+        });
+    }
+
     // Build nodes for this subgraph
     const nodes = activeNamesWithIdx.map(({name: layerName, origIdx}) => {
         const detail = allLayerDetails[layerName] || {};
@@ -7601,16 +7418,22 @@ function renderSubgraphONNX(subgraphId) {
         const inMeta = detail.input_metadata || [];
         const inShape = inMeta.filter(i => !i.is_constant).length > 0
             ? (inMeta.find(i => !i.is_constant)?.shape || []).filter(v => v > 0).join(', ') : 'N/A';
+
+        // Find TIDL layer this ONNX node maps to
+        const mappedTidlLayer = onnxToTidlMap[layerName];
+
         return {
             id: 'onnx_' + layerName, index: layerName,
-            name: layerName.length > 20 ? layerName.slice(-20) : layerName,
+            name: mappedTidlLayer ? `${layerName}\n(→L${mappedTidlLayer})` : layerName,
             full_name: layerName, type: nodeType,
             tidl_supported: supportInfo.supported !== false,
+            mapped_tidl_layer: mappedTidlLayer,
             inputshape: inShape, outputshape: outShape,
             onnx_name: layerName, is_onnx_view: true,
             layer_data: {
                 raw_text: '', layer_name: layerName, layer_type: nodeType,
                 onnx_node_names: [layerName], onnx_node_indices: [], gmacs: 0,
+                mapped_tidl_layer: mappedTidlLayer,
                 runtime_assignment: runtimeAssignment,
                 input_metadata: inMeta, output_metadata: outMeta,
                 attributes: detail.attributes || {},
@@ -7648,13 +7471,30 @@ function renderSubgraphONNX(subgraphId) {
         const _nsMap = {};  // node_name → support info (built once for fast lookup)
         Object.values(SUBGRAPH_DATA?.node_support || {}).forEach(s => { _nsMap[s.node_name] = s; });
 
-        const _makeBoundary = (id, label, fullName, nodeType) => {
+        // Tensor → shape lookup (model-level I/O + every ONNX layer's own
+        // output) so boundary pills (Tensor/Input/Output/ARM) can show the
+        // real shape on their edge label instead of always being 'N/A'.
+        const _tensorShapeMap = {};
+        (INJECTED_MODEL_DATA.model_details?.input_shape  || []).forEach(i => { _tensorShapeMap[i.name] = (i.shape||[]).filter(v=>v>0).join(', '); });
+        (INJECTED_MODEL_DATA.model_details?.output_shape || []).forEach(o => { _tensorShapeMap[o.name] = (o.shape||[]).filter(v=>v>0).join(', '); });
+        Object.values(INJECTED_MODEL_DATA.layer_details || {}).forEach(detail => {
+            (detail.output_metadata || []).forEach(m => {
+                const t = m.tensor_name || m.name || '';
+                if (t && !_tensorShapeMap[t]) {
+                    const shp = (m.shape || []).filter(v => v > 0).join(', ');
+                    if (shp) _tensorShapeMap[t] = shp;
+                }
+            });
+        });
+
+        const _makeBoundary = (id, label, fullName, nodeType, shape) => {
             nodes.push({
                 id, index: id, name: label, full_name: fullName,
                 type: nodeType, tidl_supported: true, is_onnx_view: true,
-                inputshape: 'N/A', outputshape: 'N/A',
+                inputshape:  (nodeType === 'Output' || nodeType === 'Tensor') ? (shape || 'N/A') : 'N/A',
+                outputshape: (nodeType === 'Input'  || nodeType === 'Tensor') ? (shape || 'N/A') : 'N/A',
                 layer_data: { raw_text: '', layer_name: fullName, layer_type: nodeType,
-                    onnx_node_names: [], onnx_node_indices: [], gmacs: 0, attributes: {} }
+                    onnx_node_names: [], onnx_node_indices: [], gmacs: 0, attributes: { shape } }
             });
         };
 
@@ -7675,7 +7515,7 @@ function renderSubgraphONNX(subgraphId) {
                     const nodeType = isArm ? 'ARM' : isMOut ? 'Output' : 'Tensor';
                     const label    = isArm ? tgt.slice(-22)
                                    : (tensor.length > 18 ? tensor.slice(-18) : tensor);
-                    _makeBoundary(bId, label, isArm ? tgt : tensor, nodeType);
+                    _makeBoundary(bId, label, isArm ? tgt : tensor, nodeType, _tensorShapeMap[tensor] || '');
                 }
                 const edgeKey = 'onnx_' + src + '|' + bId;
                 if (!edgesSet.has(edgeKey)) {
@@ -7697,7 +7537,7 @@ function renderSubgraphONNX(subgraphId) {
                     const nodeType = isArm ? 'ARM' : isMIn ? 'Input' : 'Tensor';
                     const label    = isArm ? src.slice(-22)
                                    : (tensor.length > 18 ? tensor.slice(-18) : tensor);
-                    _makeBoundary(bId, label, isArm ? src : tensor, nodeType);
+                    _makeBoundary(bId, label, isArm ? src : tensor, nodeType, _tensorShapeMap[tensor] || '');
                 }
                 const edgeKey = bId + '|onnx_' + tgt;
                 if (!edgesSet.has(edgeKey)) {
@@ -7805,7 +7645,7 @@ function renderSubgraphONNX(subgraphId) {
     window.tidlGraph.renderGraph(nodes, edges, false);
 }
 
-// Overview graph rendering (Level 1)
+// Overview graph rendering (Level 1: Subgraph-level view)
 function renderOverview() {
     if (!window.tidlGraph || !OVERVIEW_DATA) return;
     const nodes = (OVERVIEW_DATA.nodes || []).map(n => {
@@ -7856,13 +7696,40 @@ function renderOverview() {
         }
     });
 
-    // Root nodes = overview nodes with no incoming edges (graph entry points)
-    const nodesWithIncoming = new Set(edges.map(e => e.target));
-    const rootNodes = nodes.filter(n => !nodesWithIncoming.has(n.id));
+    // Root/leaf detection via edge topology is NOT reliable here: when the
+    // same ONNX node gets claimed by more than one subgraph upstream (a
+    // known data-quality issue), the overview edge set can contain cycles
+    // (e.g. subgraph_2 -> subgraph_0), which makes every node appear to
+    // have both incoming and outgoing edges — starving root/leaf detection
+    // to empty arrays and silently dropping the Input/Output pills.
+    //
+    // Instead, match nodes directly by the model's declared input/output
+    // TENSOR NAMES against each node's own boundary tensors. This is
+    // immune to bogus/cyclic edges since it never looks at `edges` at all.
+    const allLayerDetails = INJECTED_MODEL_DATA.layer_details || {};
+    const modelInputNames  = new Set(modelInputs.map(t => t.name));
+    const modelOutputNames = new Set(modelOutputs.map(t => t.name));
 
-    // Leaf nodes = overview nodes with no outgoing edges (graph exit points)
+    const inputTargets = nodes.filter(n => {
+        const od = n.overview_data || {};
+        if (od.type === 'subgraph') return (od.inputs || []).some(t => modelInputNames.has(t.name));
+        const detail = allLayerDetails[od.label] || {};
+        return (detail.input || []).some(name => modelInputNames.has(name));
+    });
+    const outputSources = nodes.filter(n => {
+        const od = n.overview_data || {};
+        if (od.type === 'subgraph') return (od.outputs || []).some(t => modelOutputNames.has(t.name));
+        const detail = allLayerDetails[od.label] || {};
+        return (detail.output || []).some(name => modelOutputNames.has(name));
+    });
+
+    // Fallback to topological root/leaf detection only if tensor-name
+    // matching found nothing (e.g. subgraph inputs/outputs weren't
+    // populated upstream) — better than never showing a pill at all.
+    const nodesWithIncoming = new Set(edges.map(e => e.target));
+    const rootNodes = inputTargets.length > 0 ? inputTargets : nodes.filter(n => !nodesWithIncoming.has(n.id));
     const nodesWithOutgoing = new Set(edges.map(e => e.source));
-    const leafNodes = nodes.filter(n => !nodesWithOutgoing.has(n.id));
+    const leafNodes = outputSources.length > 0 ? outputSources : nodes.filter(n => !nodesWithOutgoing.has(n.id));
 
     if (rootNodes.length > 0 && modelInputs.length > 0) {
         const inputNode = makeOverviewIONode('Input', modelInputs);
@@ -7942,7 +7809,12 @@ function initializeSubgraphSelector() {
     // Do NOT auto-select or auto-render — the overview graph is the entry point
 }
 function updateSubgraphInfo(subgraphIdx) {
+    if (!graphData || !graphData.nodes || !SUBGRAPH_DATA || !SUBGRAPH_DATA.subgraphs) {
+        console.warn('Graph data not ready for updateSubgraphInfo');
+        return;
+    }
     const subgraph = SUBGRAPH_DATA.subgraphs[subgraphIdx];
+    if (!subgraph) return;
     const nodesInSubgraph = graphData.nodes.filter(n => subgraph.nodes.includes(n.index));
     const supportedCount = nodesInSubgraph.filter(n => n.tidl_supported).length;
     const nonAcceleratedCount = nodesInSubgraph.length - supportedCount;
@@ -8149,25 +8021,44 @@ class Graph {
 
         console.log('V3: Using Dagre layout algorithm');
 
-        // Create Dagre graph
+        // Create Dagre graph with improved compact layout
         const g = new dagre.graphlib.Graph();
         g.setGraph({
             rankdir: 'TB',      // Top to Bottom layout
-            nodesep: 200,       // Horizontal spacing between nodes
-            ranksep: 150,       // Vertical spacing between ranks (layers)
-            edgesep: 20,        // Spacing between edges
-            marginx: 50,        // Horizontal margin
-            marginy: 50         // Vertical margin
+            nodesep: 110,       // Horizontal spacing between sibling nodes
+            ranksep: 140,       // Vertical spacing between ranks
+            edgesep: 15,
+            marginx: 30,
+            marginy: 30
         });
         g.setDefaultEdgeLabel(() => ({}));
 
-        // Add nodes to Dagre with dimensions
+        // Regular (non-IO) nodes render their type label to the RIGHT of the
+        // icon box (x=60 offset, see node-type-label below), un-truncated.
+        // A fixed dagre width (previously 140) doesn't account for that text,
+        // so long labels like "TIDL_DataConvertLayer" bleed into the next
+        // sibling node when they're on the same rank. Measure the actual
+        // label text so dagre reserves enough horizontal room per node.
+        const _measureCtx = document.createElement('canvas').getContext('2d');
+        _measureCtx.font = "700 20px -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif";
+        const measureLabelWidth = (text) => _measureCtx.measureText(text || '').width;
+
+        // Add nodes to Dagre with dimensions (compact)
         Array.from(nodeMap.values()).forEach(node => {
             const isIONode = node.type === 'Input' || node.type === 'Output' || node.type === 'Tensor' || node.type === 'ARM';
+            let width;
+            if (isIONode) {
+                width = 100;
+            } else {
+                const labelText = (node.is_overview && node.overview_data?.subgraph_id) ? node.overview_data.subgraph_id : node.type;
+                // 60 = label's x-offset from node center, plus measured text
+                // width, plus right-side padding so labels never touch.
+                width = Math.max(140, 60 + measureLabelWidth(labelText) + 40);
+            }
             g.setNode(node.id, {
                 label: node.name,
-                width: isIONode ? 120 : 160,
-                height: isIONode ? 40  : 70
+                width,
+                height: isIONode ? 35 : 60
             });
         });
 
@@ -8420,7 +8311,7 @@ class Graph {
         // Pill/oval for Input/Output nodes — same style as other nodes
         nodeG.filter(d => isIO(d))
             .append('rect')
-            .attr('class', 'node-rect')
+            .attr('class', d => d.type === 'ARM' ? 'node-rect arm-pill' : 'node-rect')
             .attr('width', 110)
             .attr('height', 28)
             .attr('x', -55)
@@ -11571,18 +11462,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (title) title.textContent = isEVM ? 'Hardware Performance Metrics' : 'Estimated Performance Metrics';
 
-        // Proctime chart: hide on EVM — Layer Cycles at debug_level>1 include
-        // profiling overhead so proctime_us derived from them is unreliable.
-        const proctimeSec = document.querySelector('.proctime-chart-section');
-        if (proctimeSec) proctimeSec.style.display = isEVM ? 'none' : '';
-
         // Cycles: hide the whole section if no cycles data at all
         const cyclesSec = document.getElementById('cycles-chart-section');
         if (cyclesSec) cyclesSec.style.display = PA.has_cycles ? '' : 'none';
 
-        // Cycles label: show "(Estimated)" for PC, no suffix for EVM
+        // Cycles label: show "(Roughly Approximated)" for PC, no suffix for EVM
         const cyclesLabel = document.getElementById('cycles-label-text');
-        if (cyclesLabel) cyclesLabel.textContent = isEVM ? 'Cycles Per Layer' : 'Cycles Per Layer (Estimated)';
+        if (cyclesLabel) cyclesLabel.textContent = isEVM ? 'Cycles Per Layer' : 'Cycles Per Layer (Roughly Approximated)';
 
         // Cycles toggle buttons:
         // - IO button: dmaPipeupCycles is DMA setup only, not true IO — hide on EVM.
@@ -11620,7 +11506,6 @@ document.addEventListener('DOMContentLoaded', function() {
     })();
 
     // Initialize per-layer charts + unified subgraph selector
-    initProctimeChart();
     initCyclesChart();
     initMemoryChart();
     initPerfSubgraphSelector();
@@ -12147,7 +12032,6 @@ function init() {
                 // Chart.js cannot calculate dimensions on hidden canvases
                 if (targetTab === 'performance') {
                     setTimeout(() => {
-                        initProctimeChart();
                         initCyclesChart();
                         initMemoryChart();
                         renderMetricsCharts();
@@ -12469,8 +12353,6 @@ function initializeViewTabs() {
     const graphCanvas = document.getElementById('runtime-canvas');
     const treeContainer = document.getElementById('tree-view-container');
     const searchContainer = document.querySelector('.graph-search-container');
-    const acceleratedDropdown = document.querySelector('.accelerated-layers-dropdown');
-    const nonAcceleratedDropdown = document.querySelector('.non-accelerated-layers-dropdown');
     const detailsPanel = document.getElementById('runtime-details-panel');
 
     if (!graphTab || !treeTab || !graphCanvas || !treeContainer) {
@@ -12489,9 +12371,36 @@ function initializeViewTabs() {
             graphTab.classList.add('active');
             treeTab.classList.remove('active');
 
-            // Show graph-specific controls
-            if (acceleratedDropdown) acceleratedDropdown.style.display = 'block';
-            if (nonAcceleratedDropdown) nonAcceleratedDropdown.style.display = 'block';
+            // Show graph-specific controls.
+            // NOTE: .accelerated-layers-dropdown / .non-accelerated-layers-dropdown
+            // are legacy elements holding empty <select>s that are never
+            // populated (the real UI is #runtime-dropdowns-container via
+            // initRuntimeDropdowns()) — do not toggle them here, or two
+            // empty boxes appear over the graph.
+            // Also do NOT force the search box open here — .graph-search-container
+            // starts hidden and is only meant to toggle via the search button;
+            // forcing display:block on every switch reopens it even if the
+            // user had closed it, so just leave its current state alone.
+
+            // Refresh canvas size after visibility change. Do NOT call
+            // fitToView() here — for large models (100+ layers) that zooms
+            // all the way out to fit the entire graph, discarding whatever
+            // zoom/pan the user had before switching to tree view (looks
+            // like node spacing suddenly grew a lot). Just resize the SVG
+            // to the now-visible canvas and leave the existing zoom/pan.
+            setTimeout(() => {
+                if (window.runtimeGraph && window.runtimeGraph.canvas) {
+                    const canvas = window.runtimeGraph.canvas;
+                    const svg = window.runtimeGraph.svg;
+                    if (canvas && svg) {
+                        const width = canvas.clientWidth;
+                        const height = canvas.clientHeight;
+                        if (width > 0 && height > 0) {
+                            svg.attr('width', width).attr('height', height);
+                        }
+                    }
+                }
+            }, 50);
 
             // Restore graph's selected node details
             if (window.runtimeGraph && window.runtimeGraph.selectedNode) {
@@ -12508,8 +12417,6 @@ function initializeViewTabs() {
 
             // Hide graph-specific controls
             if (searchContainer) searchContainer.style.display = 'none';
-            if (acceleratedDropdown) acceleratedDropdown.style.display = 'none';
-            if (nonAcceleratedDropdown) nonAcceleratedDropdown.style.display = 'none';
 
             // Render tree if not already rendered
             if (!treeContainer.hasAttribute('data-rendered')) {

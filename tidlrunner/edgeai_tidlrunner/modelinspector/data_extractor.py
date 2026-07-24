@@ -24,9 +24,13 @@ import sys
 import os
 import re
 import gzip
+import logging
 import numpy as np
 from pathlib import Path
 from typing import Dict, List, Any, Tuple, Optional
+
+logging.basicConfig(level=logging.INFO, format='%(message)s')
+logger = logging.getLogger(__name__)
 
 # Python 3.10+ compatibility: collections.Callable moved to collections.abc.Callable
 import collections
@@ -41,8 +45,8 @@ try:
     HAS_GRAPHSURGEON = True
 except ImportError:
     HAS_GRAPHSURGEON = False
-    print("WARNING: onnx-graphsurgeon not installed. Using raw ONNX API (slower).")
-    print("  Install with: pip install onnx-graphsurgeon")
+    logger.warning(" onnx-graphsurgeon not installed. Using raw ONNX API (slower).")
+    logger.debug("  Install with: pip install onnx-graphsurgeon")
 
 
 class ActivationDataParser:
@@ -76,22 +80,27 @@ class ActivationDataParser:
         """Build activation mapping from layer_info.txt files"""
         import glob
 
-        print(f"Building activation mapping from layer_info.txt files...")
+        logger.debug(f"Building activation mapping from layer_info.txt files...")
 
-        layer_info_pattern = os.path.join(self.model_dir, 'tidl/artifacts/tempDir/subgraph_*_tidl_net.bin.layer_info.txt')
+        # Try both paths: artifacts/tempDir (modern) and tidl/artifacts/tempDir (legacy)
+        layer_info_pattern = os.path.join(self.model_dir, 'artifacts/tempDir/subgraph_*_tidl_net.bin.layer_info.txt')
         layer_info_files = glob.glob(layer_info_pattern, recursive=False)
 
         if not layer_info_files:
-            print(f"  WARNING: No layer_info.txt files found in {layer_info_pattern}")
+            layer_info_pattern = os.path.join(self.model_dir, 'tidl/artifacts/tempDir/subgraph_*_tidl_net.bin.layer_info.txt')
+            layer_info_files = glob.glob(layer_info_pattern, recursive=False)
+
+        if not layer_info_files:
+            logger.debug(f"  WARNING: No layer_info.txt files found in {layer_info_pattern}")
             return
 
-        print(f"  Found {len(layer_info_files)} layer_info.txt files")
+        logger.debug(f"  Found {len(layer_info_files)} layer_info.txt files")
 
         notidl_outputs_dir = self._find_notidl_outputs()
         tidl_traces_dir = self._find_tidl_traces()
 
         if not notidl_outputs_dir or not tidl_traces_dir:
-            print(f"  WARNING: Could not find output directories")
+            logger.debug(f"  WARNING: Could not find output directories")
             return
 
         total_layers = 0
@@ -134,15 +143,15 @@ class ActivationDataParser:
                         }
                         total_mapped += 1
 
-        print(f"  Total layers in layer_info.txt: {total_layers}")
-        print(f"  Layers with activation files: {total_mapped}")
+        logger.debug(f"  Total layers in layer_info.txt: {total_layers}")
+        logger.debug(f"  Layers with activation files: {total_mapped}")
 
         for sg_id in sorted(self.mapping.keys()):
-            print(f"    Subgraph {sg_id}: {len(self.mapping[sg_id])} layers")
+            logger.debug(f"    Subgraph {sg_id}: {len(self.mapping[sg_id])} layers")
 
     def _build_layer_to_onnx_mapping(self, tidl_data: Dict):
         """Build lightweight mapping from (subgraph_id, layer_index) to onnx_node_index"""
-        print("  Building layer_index to onnx_node_index mapping...")
+        logger.debug("  Building layer_index to onnx_node_index mapping...")
         for subgraph_id, subgraph_info in tidl_data.items():
             if 'layers' not in subgraph_info:
                 continue
@@ -155,7 +164,7 @@ class ActivationDataParser:
                     key = (subgraph_id, str(layer_index))
                     self.layer_to_onnx_node[key] = onnx_node_index
 
-        print(f"    Mapped {len(self.layer_to_onnx_node)} layer indices to ONNX node indices")
+        logger.debug(f"    Mapped {len(self.layer_to_onnx_node)} layer indices to ONNX node indices")
 
     def _find_notidl_outputs(self) -> Optional[str]:
         """Find NotIDL outputs directory"""
@@ -174,7 +183,7 @@ class ActivationDataParser:
             pattern = os.path.join(self.model_dir, f'{subdir}/traces_/{self.frame_idx}')
             matches = glob.glob(pattern, recursive=False)
             if matches:
-                print(f"  Found TIDL traces in {subdir}/traces_/{self.frame_idx}")
+                logger.debug(f"  Found TIDL traces in {subdir}/traces_/{self.frame_idx}")
                 return matches[0]
         return None
 
@@ -209,7 +218,7 @@ class ActivationDataParser:
 
         try:
             if not os.path.exists(bin_path):
-                print(f"    Warning: File not found: {bin_path}")
+                logger.debug(f"    Warning: File not found: {bin_path}")
                 return None
 
             data = np.fromfile(bin_path, dtype=float)
@@ -217,7 +226,7 @@ class ActivationDataParser:
             return data
 
         except Exception as e:
-            print(f"    Error loading {bin_path}: {e}")
+            logger.debug(f"    Error loading {bin_path}: {e}")
             return None
 
     def _smart_sample_scatter_points(self, tidl_data: np.ndarray, notidl_data: np.ndarray,
@@ -350,13 +359,13 @@ class ActivationDataParser:
 
             # Print sampling summary
             reduction_pct = (1 - len(selected_indices) / total_points) * 100
-            print(f"    Smart sampling: {total_points} -> {len(selected_indices)} points ({reduction_pct:.1f}% reduction, min: {min_points})")
-            print(f"    Best-fit line: y = {slope:.4f}*x + {intercept:.4f}")
+            logger.debug(f"    Smart sampling: {total_points} -> {len(selected_indices)} points ({reduction_pct:.1f}% reduction, min: {min_points})")
+            logger.debug(f"    Best-fit line: y = {slope:.4f}*x + {intercept:.4f}")
 
             return sampled_tidl, sampled_notidl
 
         except Exception as e:
-            print(f"    Warning: Smart sampling failed ({e}), using random sampling")
+            logger.debug(f"    Warning: Smart sampling failed ({e}), using random sampling")
             # Fallback to simple random sampling
             np.random.seed(42)
             indices = np.random.choice(total_points, max_points, replace=False)
@@ -403,7 +412,7 @@ class ActivationDataParser:
             }
 
         except Exception as e:
-            print(f"    Error calculating statistics: {e}")
+            logger.debug(f"    Error calculating statistics: {e}")
             return {}
 
     def _generate_histogram_json(self, notidl_data: np.ndarray, tidl_data: np.ndarray,
@@ -420,7 +429,7 @@ class ActivationDataParser:
 
             # Check if we have valid data after filtering
             if len(notidl_data) == 0 or len(tidl_data) == 0:
-                print(f"    Warning: No finite values available for histogram generation")
+                logger.debug(f"    Warning: No finite values available for histogram generation")
                 return {}
 
             notidl_counts, notidl_edges = np.histogram(notidl_data, bins=100)
@@ -438,7 +447,7 @@ class ActivationDataParser:
             tidl_counts_list = tidl_counts.tolist()
 
         except Exception as e:
-            print(f"    Error generating histogram bins: {e}")
+            logger.debug(f"    Error generating histogram bins: {e}")
             import traceback
             traceback.print_exc()
             return {'traces': [], 'layout': {}}
@@ -506,7 +515,7 @@ class ActivationDataParser:
             return scatter_data
 
         except Exception as e:
-            print(f"    Error generating D3 scatter plot: {e}")
+            logger.debug(f"    Error generating D3 scatter plot: {e}")
             import traceback
             traceback.print_exc()
             return {'x': [], 'y': [], 'sample_size': 0, 'total_points': 0}
@@ -540,7 +549,7 @@ class ActivationDataParser:
             return None
 
         if len(notidl_data) != len(tidl_data):
-            print(f"  Warning: Size mismatch for subgraph {subgraph_id} layer {tidl_layer_id} (NoTIDL: {len(notidl_data)}, TIDL: {len(tidl_data)})")
+            logger.debug(f"  Warning: Size mismatch for subgraph {subgraph_id} layer {tidl_layer_id} (NoTIDL: {len(notidl_data)}, TIDL: {len(tidl_data)})")
             return None
 
         try:
@@ -549,7 +558,7 @@ class ActivationDataParser:
             scatter_data = self._generate_scatter_plot_d3(notidl_data, tidl_data, stats)
 
         except Exception as e:
-            print(f"  Error processing layer {tidl_layer_id}: {e}")
+            logger.debug(f"  Error processing layer {tidl_layer_id}: {e}")
             import traceback
             traceback.print_exc()
             return None
@@ -577,13 +586,13 @@ class ActivationDataParser:
             Dict with keys "subgraphId_tidlLayerId" -> plot data
         """
         if not self.mapping:
-            print("  No activation mapping available, skipping activation analysis")
+            logger.debug("  No activation mapping available, skipping activation analysis")
             return {}
 
-        print("\nProcessing activation data...")
+        logger.debug("\nProcessing activation data...")
 
         total_layers = sum(len(layers) for layers in self.mapping.values())
-        print(f"  Found {total_layers} TIDL layers with activation files")
+        logger.debug(f"  Found {total_layers} TIDL layers with activation files")
 
         activation_data = {}
         total_processed = 0
@@ -593,7 +602,7 @@ class ActivationDataParser:
         for subgraph_id in sorted(self.mapping.keys()):
             sorted_tidl_ids = sorted(self.mapping[subgraph_id].keys(), key=lambda x: int(x))
             layer_count = len(sorted_tidl_ids)
-            print(f"\n  Subgraph {subgraph_id}: Processing {layer_count} layers")
+            logger.debug(f"\n  Subgraph {subgraph_id}: Processing {layer_count} layers")
 
             for tidl_layer_id in sorted_tidl_ids:
                 result = self.process_layer(subgraph_id, tidl_layer_id)
@@ -608,16 +617,16 @@ class ActivationDataParser:
                     if total_processed <= 10 or total_processed % 10 == 0:
                         layer_info = self.mapping[subgraph_id][tidl_layer_id]
                         onnx_name = layer_info.get('onnx_name', 'unknown')
-                        print(f"    Layer {tidl_layer_id} ({onnx_name}): Processed")
+                        logger.debug(f"    Layer {tidl_layer_id} ({onnx_name}): Processed")
                 else:
                     total_failed += 1
 
-        print(f"\nActivation processing complete:")
+        logger.debug(f"\nActivation processing complete:")
         for sg_id in sorted(subgraph_stats.keys()):
-            print(f"  Subgraph {sg_id}: {subgraph_stats[sg_id]} layers processed")
-        print(f"  Total Processed: {total_processed}")
-        print(f"  Total Failed: {total_failed}")
-        print(f"  Data size: {len(json.dumps(activation_data)) / (1024*1024):.2f} MB")
+            logger.debug(f"  Subgraph {sg_id}: {subgraph_stats[sg_id]} layers processed")
+        logger.debug(f"  Total Processed: {total_processed}")
+        logger.debug(f"  Total Failed: {total_failed}")
+        logger.debug(f"  Data size: {len(json.dumps(activation_data)) / (1024*1024):.2f} MB")
 
         return activation_data
 
@@ -637,16 +646,16 @@ class MetricsParser:
 
         if self.xlsx_path.exists():
             self._load_metrics()
-            print(f"Loaded metrics from: {xlsx_path}")
+            logger.debug(f"Loaded metrics from: {xlsx_path}")
         else:
-            print(f"WARNING: Metrics file not found: {xlsx_path}")
+            logger.debug(f"WARNING: Metrics file not found: {xlsx_path}")
 
     def _load_metrics(self):
         """Load metrics from Excel file"""
         try:
             import openpyxl
         except ImportError:
-            print("  Error: openpyxl not installed. Run: pip install openpyxl")
+            logger.debug("  Error: openpyxl not installed. Run: pip install openpyxl")
             return
 
         try:
@@ -700,12 +709,12 @@ class MetricsParser:
                             self.metrics_data[subgraph_id].append(metric_entry)
 
             for sg_id, metrics in self.metrics_data.items():
-                print(f"  Loaded {len(metrics)} metrics for subgraph {sg_id}")
+                logger.debug(f"  Loaded {len(metrics)} metrics for subgraph {sg_id}")
 
             wb.close()
 
         except Exception as e:
-            print(f"  Error loading metrics: {e}")
+            logger.debug(f"  Error loading metrics: {e}")
             self.metrics_data = {}
 
     def get_metrics(self) -> Dict[str, List[Dict[str, Any]]]:
@@ -721,7 +730,7 @@ class TIDLNetLogParser:
 
     def parse(self) -> Dict[str, Any]:
         """Parse netLog.txt file and extract MACS information"""
-        print(f"  Parsing netLog: {os.path.basename(self.filepath)}")
+        logger.debug(f"  Parsing netLog: {os.path.basename(self.filepath)}")
 
         layer_macs = {}
         total_gmacs = 0.0
@@ -779,7 +788,7 @@ class TIDLNetLogParser:
                     if match:
                         total_gmacs = float(match.group(1))
 
-            print(f"    Found MACS info for {len(layer_macs)} layers, Total: {total_gmacs} GMACS")
+            logger.debug(f"    Found MACS info for {len(layer_macs)} layers, Total: {total_gmacs} GMACS")
 
             return {
                 'layer_macs': layer_macs,
@@ -787,7 +796,7 @@ class TIDLNetLogParser:
             }
 
         except Exception as e:
-            print(f"    Warning: Failed to parse netLog file: {e}")
+            logger.debug(f"    Warning: Failed to parse netLog file: {e}")
             return {
                 'layer_macs': {},
                 'total_gmacs': 0.0
@@ -801,28 +810,54 @@ class TIDLSubgraphParser:
     def __init__(self, base_dir: str, node_support: Dict[int, Dict[str, Any]] = None):
         self.base_dir = base_dir
         self.node_support = node_support or {}
+        # ONNX node indices already claimed by an earlier-processed TIDL layer
+        # (within this subgraph, or an earlier subgraph — parse_all_subgraphs
+        # processes subgraphs in ascending id order on this same instance).
+        # _detect_layer_fusion's backtracking must stop at these boundaries,
+        # the same way it already stops at ARM nodes, so two subgraphs never
+        # both claim the same ONNX node.
+        self.owned_onnx_nodes = set()
 
     def _parse_layer_info_file(self, subgraph_id: int) -> Dict[int, str]:
-        """Parse layer_info.txt to get TIDL layer index → ONNX tensor name mapping"""
-        layer_info_path = os.path.join(self.base_dir, f'subgraph_{subgraph_id}_tidl_net.bin.layer_info.txt')
-        mapping = {}  # tidl_layer_index → onnx_tensor_name
-        if not os.path.exists(layer_info_path):
+        """Parse netLog file to get TIDL layer index → ONNX tensor mapping
+
+        This uses netLog.txt (which is more reliable) instead of layer_info.txt,
+        extracting the "Out Data Name" column which contains the ONNX output tensor reference.
+        """
+        netlog_path = os.path.join(self.base_dir, f'subgraph_{subgraph_id}_tidl_net.bin_netLog.txt')
+        mapping = {}  # tidl_layer_index → onnx_output_tensor_name
+
+        if not os.path.exists(netlog_path):
             return mapping
-        with open(layer_info_path, 'r') as f:
-            for line in f:
-                parts = line.strip().split()
-                if len(parts) < 3:
-                    continue
-                tidl_idx = int(parts[0])
-                buffer_id = int(parts[1])
-                tensor_name = parts[2]
-                # Skip buffer reuse entries and model input
-                if tidl_idx != buffer_id or tensor_name == 'images':
-                    continue
-                # Strip _netFormat suffix to get the base ONNX tensor name
-                if tensor_name.endswith('_netFormat'):
-                    tensor_name = tensor_name[:-10]
-                mapping[tidl_idx] = tensor_name
+
+        try:
+            with open(netlog_path, 'r') as f:
+                for line_num, line in enumerate(f):
+                    # Skip header lines (until we see "Num|TIDL Layer")
+                    if '|TIDL Layer' not in line and 'Num of Layer' not in line:
+                        # Check if this is a data row (not a separator)
+                        if line.startswith('    ') and '|' in line:
+                            # Parse the columns: Num|TIDL Layer Name|Out Data Name|...
+                            cols = line.split('|')
+                            if len(cols) >= 3:
+                                try:
+                                    tidl_idx_str = cols[0].strip()
+                                    if tidl_idx_str.isdigit():
+                                        tidl_idx = int(tidl_idx_str)
+                                        tidl_layer_name = cols[1].strip()
+                                        out_data_name = cols[2].strip()
+
+                                        # Skip data layers
+                                        if tidl_layer_name in ['TIDL_DataLayer', 'TIDL_DataConvertLayer']:
+                                            continue
+
+                                        if out_data_name:
+                                            mapping[tidl_idx] = out_data_name
+                                except (ValueError, IndexError):
+                                    continue
+        except Exception as e:
+            logger.debug(f"Warning: Failed to parse netLog file: {e}")
+
         return mapping
 
     def _map_tidl_to_onnx_node(self, tidl_output_name: str) -> Optional[int]:
@@ -1010,6 +1045,12 @@ class TIDLSubgraphParser:
         # Parse layer_info.txt to get TIDL layer → output tensor mapping
         layer_info_mapping = self._parse_layer_info_file(subgraph_id)
 
+        # Build set of ARM (unsupported) ONNX nodes as boundary conditions
+        arm_nodes = set()
+        for node_idx, node_info in self.node_support.items():
+            if not node_info.get('supported', True):
+                arm_nodes.add(node_idx)
+
         # Build reverse map: tensor → TIDL layer that produces it
         tidl_tensor_map = {}
         for tidl_idx, tensor_name in layer_info_mapping.items():
@@ -1034,9 +1075,26 @@ class TIDLSubgraphParser:
             if layer.get('layer_type') in ['TIDL_DataLayer', 'TIDL_DataConvertLayer']:
                 continue
 
-            # Find which ONNX node produces this output tensor
-            output_onnx_idx = self.tensor_to_node_map.get(output_tensor)
+            # Find which ONNX node produces this output tensor.
+            # netLog "Out Data Name" values can carry a "_output_0"/"_netFormat"
+            # suffix (added by TIDL for DataConvert/reformat buffers) that never
+            # matches a real ONNX tensor name — use the same suffix-stripping
+            # lookup as the netLog 1-to-1 path (_map_tidl_to_onnx_node) instead
+            # of a raw tensor_to_node_map lookup, or fusion detection silently
+            # no-ops for every such layer (e.g. a Conv fused with its Relu,
+            # whose combined output is reported as "<tensor>_netFormat").
+            output_onnx_idx = self._map_tidl_to_onnx_node(output_tensor)
             if output_onnx_idx is None:
+                continue
+
+            # BOUNDARY: Skip if starting node itself is ARM (unsupported)
+            if output_onnx_idx in arm_nodes:
+                continue
+
+            # BOUNDARY: Skip if starting node is already owned by an earlier
+            # TIDL layer (same or earlier-processed subgraph) — avoids two
+            # TIDL layers both claiming the same ONNX node as their output.
+            if output_onnx_idx in self.owned_onnx_nodes:
                 continue
 
             # Determine the starting runtime (TIDL or TVM/ARM)
@@ -1052,6 +1110,10 @@ class TIDLSubgraphParser:
                 if onnx_node_idx in visited:
                     return
                 visited.add(onnx_node_idx)
+
+                # BOUNDARY: ARM nodes (unsupported) - stop here, don't include them
+                if onnx_node_idx in arm_nodes:
+                    return
 
                 fused_onnx_nodes.add(onnx_node_idx)
 
@@ -1070,6 +1132,17 @@ class TIDLSubgraphParser:
                     if producer_node_idx is None:
                         continue
 
+                    # Stop: producer node is ARM (don't backtrack through unsupported nodes)
+                    if producer_node_idx in arm_nodes:
+                        continue
+
+                    # Stop: producer node already owned by an earlier TIDL
+                    # layer (same or earlier-processed subgraph) — this is
+                    # the cross-subgraph analogue of the tidl_tensor_map
+                    # check above, which only covers the current subgraph.
+                    if producer_node_idx in self.owned_onnx_nodes:
+                        continue
+
                     # Stop: runtime changes (TIDL→TVM, TVM→TIDL, TVM→ARM, etc.)
                     producer_runtime = self.node_support.get(producer_node_idx, {}).get('supported', True)
                     if producer_runtime != start_runtime:
@@ -1082,6 +1155,11 @@ class TIDLSubgraphParser:
 
             # Convert set to sorted list
             fused_indices = sorted(list(fused_onnx_nodes))
+
+            # Claim these ONNX nodes for this TIDL layer so no later layer
+            # (in this subgraph or a later-processed subgraph) can re-absorb
+            # them via trace_backwards above.
+            self.owned_onnx_nodes.update(fused_indices)
 
             # Get ONNX node names
             fused_names = []
@@ -1386,7 +1464,7 @@ class TIDLSubgraphParser:
 
     def parse_subgraph_html(self, filepath: str, netlog_filepath: str = None, subgraph_id: int = 0) -> Dict[str, Any]:
         """Parse a single subgraph HTML file and its netLog file"""
-        print(f"  Parsing: {os.path.basename(filepath)}")
+        logger.debug(f"  Parsing: {os.path.basename(filepath)}")
 
         with open(filepath, 'r', encoding='utf-8') as f:
             content = f.read()
@@ -1406,7 +1484,7 @@ class TIDLSubgraphParser:
 
         layers.sort(key=lambda x: x['layer_index'])
 
-        print(f"    Found {len(layers)} TIDL layers")
+        logger.debug(f"    Found {len(layers)} TIDL layers")
 
         macs_data = {'layer_macs': {}, 'total_gmacs': 0.0}
         if netlog_filepath and os.path.exists(netlog_filepath):
@@ -1429,21 +1507,187 @@ class TIDLSubgraphParser:
                         if onnx_node_idx is not None:
                             layer['onnx_node_index'] = onnx_node_idx
 
-        # Note: ONNX mapping is now done in _extract_graph_structure using layer_info.txt
-
         # Detect fusion and expansion patterns
         reverse_map = self._build_reverse_onnx_mapping(layers)
         expansion_map = self._detect_layer_expansion(reverse_map, layers)
         fusion_map = self._detect_layer_fusion(layers, subgraph_id)
 
         if fusion_map:
-            print(f"    Detected {len(fusion_map)} fused layers")
+            logger.debug(f"    Detected {len(fusion_map)} fused layers")
         if expansion_map:
-            print(f"    Detected {len(expansion_map)} expanded ONNX nodes")
+            logger.debug(f"    Detected {len(expansion_map)} expanded ONNX nodes")
 
         graph_nodes, graph_edges = self._extract_graph_structure(soup, layers, subgraph_id)
 
-        print(f"    Extracted graph: {len(graph_nodes)} nodes, {len(graph_edges)} edges")
+        logger.debug(f"    Extracted graph: {len(graph_nodes)} nodes, {len(graph_edges)} edges")
+
+        # Parse layer_info.txt to get authoritative ONNX node mapping for every TIDL layer
+        # Format: layer_index tidl_layer_index onnx_node_name
+        layer_info_mapping = self._parse_layer_info_file(subgraph_id)  # Maps layer_idx → onnx_node_name
+
+        # Pass 1: Add ONNX mapping to layers
+        for layer in layers:
+            layer_idx = layer.get('layer_index')
+            layer_type = layer.get('layer_type', '')
+            layer_name = layer.get('layer_name', '')
+
+            # Initialize onnx_mapping for all layers
+            onnx_indices = []
+            onnx_names = []
+            mapping_type = 'none'
+
+            # Priority 1: Check if this layer is involved in fusion (multiple ONNX nodes)
+            fusion_info = fusion_map.get(layer_idx)
+            if fusion_info and fusion_info.get('fused_onnx_indices'):
+                onnx_indices = fusion_info['fused_onnx_indices']
+                onnx_names = fusion_info['fused_onnx_names']
+                mapping_type = 'fusion' if len(onnx_indices) > 1 else '1-to-1'
+
+            # Priority 2: Use netLog-parsed onnx_node_index if available
+            # (skip if that ONNX node is already owned by an earlier-processed
+            # layer/subgraph — this path doesn't backtrack, so it has no other
+            # boundary check against cross-subgraph duplication)
+            elif layer.get('onnx_node_index') is not None and layer.get('onnx_node_index') not in self.owned_onnx_nodes:
+                onnx_indices = [layer['onnx_node_index']]
+                onnx_node_name = layer.get('onnx_node_name', '')
+                onnx_names = [onnx_node_name] if onnx_node_name else []
+                mapping_type = '1-to-1'
+
+            # Priority 3: Extract ONNX node name from TIDL layer_name
+            # Many TIDL layer names embed the ONNX node name with output/buffer suffixes
+            # Try removing suffixes in order: _output_N__M → _output_N → __N__M
+            if not onnx_names and layer_name and hasattr(self, 'onnx_layer_names'):
+                import re
+                base_name = layer_name
+
+                # Pattern 1: remove _output_\d+__\d+ (operation output + buffer suffix)
+                # e.g., "LayerNormalization_output_0__0" → "LayerNormalization"
+                temp = re.sub(r'_output_\d+__\d+$', '', base_name)
+                if temp != base_name:
+                    base_name = temp
+                else:
+                    # Pattern 2: remove _output_\d+ (just operation output, no buffer)
+                    # e.g., "Transpose_output_0" → "Transpose"
+                    temp = re.sub(r'_output_\d+$', '', base_name)
+                    if temp != base_name:
+                        base_name = temp
+                    else:
+                        # Pattern 3: remove __\d+__\d+ (just buffer IDs)
+                        # e.g., "input.1__164__170" → "input.1"
+                        temp = re.sub(r'__\d+__\d+$', '', base_name)
+                        if temp != base_name:
+                            base_name = temp
+
+                if base_name != layer_name:
+                    try:
+                        # onnx_layer_names could be dict keys or a list
+                        if isinstance(self.onnx_layer_names, dict):
+                            onnx_names_list = list(self.onnx_layer_names.keys())
+                        else:
+                            onnx_names_list = list(self.onnx_layer_names)
+
+                        onnx_idx = onnx_names_list.index(base_name)
+                        # Skip if already owned by an earlier-processed layer/subgraph
+                        if onnx_idx not in self.owned_onnx_nodes:
+                            onnx_indices = [onnx_idx]
+                            onnx_names = [base_name]
+                            mapping_type = '1-to-1'
+                    except (ValueError, AttributeError, IndexError):
+                        pass
+
+            if layer_type == 'TIDL_DataLayer':
+                mapping_type = 'data_input'
+
+            layer['onnx_mapping'] = {
+                'onnx_node_names': onnx_names,
+                'onnx_node_indices': onnx_indices,
+                'mapping_type': mapping_type,
+            }
+            # Claim these nodes so priority 2/3 on a later layer (in this
+            # subgraph or a later-processed one) can't re-claim them too.
+            self.owned_onnx_nodes.update(onnx_indices)
+
+        # Pass 2: For unmapped ConstDataLayer/DataConvertLayer, inherit from consuming layers
+        for layer in layers:
+            layer_idx = layer.get('layer_index')
+            layer_type = layer.get('layer_type', '')
+            current_mapping = layer.get('onnx_mapping', {})
+
+            # Only process unmapped infrastructure layers
+            if current_mapping.get('onnx_node_names') or layer_type not in ['TIDL_ConstDataLayer', 'TIDL_DataConvertLayer']:
+                continue
+
+            # Find layers that consume this layer (outputs list)
+            for other_layer in layers:
+                outputs = other_layer.get('outputs', [])
+                if not isinstance(outputs, list):
+                    continue
+                for out_conn in outputs:
+                    if isinstance(out_conn, dict) and out_conn.get('node_id') == layer_idx:
+                        # Found a consumer layer
+                        other_mapping = other_layer.get('onnx_mapping', {})
+                        other_names = other_mapping.get('onnx_node_names', [])
+                        if other_names:
+                            layer['onnx_mapping'] = {
+                                'onnx_node_names': other_names,
+                                'onnx_node_indices': other_mapping.get('onnx_node_indices', []),
+                                'mapping_type': other_mapping.get('mapping_type', '1-to-1'),
+                            }
+                            break
+                if layer.get('onnx_mapping', {}).get('onnx_node_names'):
+                    break
+
+        # Pass 3: For any remaining unmapped computational layers, extract from layer_name
+        # This is a fallback for layers where extraction in Priority 3 didn't work
+        if hasattr(self, 'onnx_layer_details') and self.onnx_layer_details:
+            onnx_layer_names = list(self.onnx_layer_details.keys())
+        else:
+            onnx_layer_names = []
+
+        for layer in layers:
+            current_mapping = layer.get('onnx_mapping', {})
+            # Skip already-mapped layers and infrastructure layers
+            if current_mapping.get('onnx_node_names'):
+                continue
+
+            layer_name = layer.get('layer_name', '')
+            layer_type = layer.get('layer_type', '')
+            if layer_type in ['TIDL_ConstDataLayer', 'TIDL_DataConvertLayer', 'TIDL_DataLayer']:
+                continue
+            if not layer_name or not onnx_layer_names:
+                continue
+
+            import re
+            base_name = layer_name
+
+            # Try removing suffixes: _output_\d+__\d+ → _output_\d+ → __\d+__\d+
+            temp = re.sub(r'_output_\d+__\d+$', '', base_name)
+            if temp != base_name:
+                base_name = temp
+            else:
+                temp = re.sub(r'_output_\d+$', '', base_name)
+                if temp != base_name:
+                    base_name = temp
+                else:
+                    temp = re.sub(r'__\d+__\d+$', '', base_name)
+                    if temp != base_name:
+                        base_name = temp
+
+            if base_name != layer_name and base_name in onnx_layer_names:
+                try:
+                    onnx_idx = onnx_layer_names.index(base_name)
+                    # Skip if already owned by an earlier-processed layer/subgraph
+                    if onnx_idx in self.owned_onnx_nodes:
+                        continue
+                    layer['onnx_mapping'] = {
+                        'onnx_node_names': [base_name],
+                        'onnx_node_indices': [onnx_idx],
+                        'mapping_type': '1-to-1',
+                    }
+                    self.owned_onnx_nodes.add(onnx_idx)
+                    logger.debug(f"    Layer {layer.get('layer_index')} ({layer_type}): extracted ONNX mapping → {base_name}")
+                except (ValueError, IndexError):
+                    pass
 
         return {
             'filepath': filepath,
@@ -1460,15 +1704,15 @@ class TIDLSubgraphParser:
 
     def parse_all_subgraphs(self) -> Dict[int, Dict[str, Any]]:
         """Parse all subgraph HTML files and netLog files"""
-        print("\nParsing TIDL subgraph HTML and netLog files...")
+        logger.debug("\nParsing TIDL subgraph HTML and netLog files...")
 
         subgraph_files = self.find_subgraph_files()
 
         if not subgraph_files:
-            print("  No subgraph HTML files found")
+            logger.debug("  No subgraph HTML files found")
             return {}
 
-        print(f"  Found {len(subgraph_files)} subgraph HTML files")
+        logger.debug(f"  Found {len(subgraph_files)} subgraph HTML files")
 
         tidl_data = {}
 
@@ -1476,10 +1720,10 @@ class TIDLSubgraphParser:
             try:
                 tidl_data[subgraph_idx] = self.parse_subgraph_html(html_filepath, netlog_filepath, subgraph_idx)
             except Exception as e:
-                print(f"  Warning: Failed to parse {html_filepath}: {e}")
+                logger.debug(f"  Warning: Failed to parse {html_filepath}: {e}")
                 continue
 
-        print(f"Successfully parsed {len(tidl_data)} subgraph files")
+        logger.debug(f"Successfully parsed {len(tidl_data)} subgraph files")
 
         return tidl_data
 
@@ -1494,7 +1738,7 @@ class GraphVizParser:
         """Parse graphvizInfo.txt and extract support status"""
         node_support = {}
 
-        print(f"Parsing graphvizInfo.txt: {self.filepath}")
+        logger.debug(f"Parsing graphvizInfo.txt: {self.filepath}")
 
         with open(self.filepath, 'r', encoding='utf-8') as f:
             for line in f:
@@ -1524,15 +1768,15 @@ class GraphVizParser:
                     }
 
                 except (ValueError, IndexError) as e:
-                    print(f"  Warning: Could not parse line: {line[:50]}...")
+                    logger.debug(f"  Warning: Could not parse line: {line[:50]}...")
                     continue
 
         supported_count = sum(1 for n in node_support.values() if n['supported'])
         unsupported_count = len(node_support) - supported_count
 
-        print(f"Parsed {len(node_support)} nodes")
-        print(f"  Supported: {supported_count}")
-        print(f"  Unsupported: {unsupported_count}")
+        logger.debug(f"Parsed {len(node_support)} nodes")
+        logger.debug(f"  Supported: {supported_count}")
+        logger.debug(f"  Unsupported: {unsupported_count}")
 
         return node_support
 
@@ -1545,18 +1789,18 @@ class AllowedNodeParser:
 
     def parse(self) -> List[Dict[str, Any]]:
         """Parse allowednode.txt and extract subgraph information"""
-        print(f"Parsing allowednode.txt: {self.filepath}")
+        logger.debug(f"Parsing allowednode.txt: {self.filepath}")
 
         with open(self.filepath, 'r', encoding='utf-8') as f:
             lines = [line.strip() for line in f if line.strip()]
 
         if not lines:
-            print("  Warning: Empty allowednode.txt")
+            logger.debug("  Warning: Empty allowednode.txt")
             return []
 
         try:
             num_subgraphs = int(lines[0])
-            print(f"  Number of subgraphs: {num_subgraphs}")
+            logger.debug(f"  Number of subgraphs: {num_subgraphs}")
 
             subgraphs = []
             line_idx = 1
@@ -1580,13 +1824,13 @@ class AllowedNodeParser:
                     'nodes': nodes
                 })
 
-                print(f"  Subgraph {sg_idx}: {num_nodes} nodes")
+                logger.debug(f"  Subgraph {sg_idx}: {num_nodes} nodes")
 
-            print(f"Parsed {len(subgraphs)} subgraphs")
+            logger.debug(f"Parsed {len(subgraphs)} subgraphs")
             return subgraphs
 
         except (ValueError, IndexError) as e:
-            print(f"  Error parsing allowednode.txt: {e}")
+            logger.debug(f"  Error parsing allowednode.txt: {e}")
             return []
 
 
@@ -1622,7 +1866,7 @@ def calculate_node_depths_and_positions(nodes, edges, width=1200, height=800):
     if not roots:
         roots = [node_list[0]]
 
-    print(f"  Found {len(roots)} root nodes")
+    logger.debug(f"  Found {len(roots)} root nodes")
 
     depths = {}
 
@@ -1648,8 +1892,8 @@ def calculate_node_depths_and_positions(nodes, edges, width=1200, height=800):
     if not actual_roots:
         actual_roots = roots
 
-    print(f"  Actual roots: {len(actual_roots)}")
-    print(f"  Constant nodes: {len(constant_nodes)}")
+    logger.debug(f"  Actual roots: {len(actual_roots)}")
+    logger.debug(f"  Constant nodes: {len(constant_nodes)}")
 
     for root in actual_roots:
         assign_depth(root, 0)
@@ -1667,7 +1911,7 @@ def calculate_node_depths_and_positions(nodes, edges, width=1200, height=800):
             depths[name] = 0
 
     max_depth = max(depths.values()) if depths else 0
-    print(f"  Max depth: {max_depth}")
+    logger.debug(f"  Max depth: {max_depth}")
 
     depth_groups = {}
     for name, depth in depths.items():
@@ -1700,7 +1944,7 @@ def calculate_node_depths_and_positions(nodes, edges, width=1200, height=800):
                 horizontal_positions[name] = i
 
     max_width = max(len(nodes) for nodes in depth_groups.values()) if depth_groups else 1
-    print(f"  Max width: {max_width}")
+    logger.debug(f"  Max width: {max_width}")
 
     VERTICAL_SPACING = 150
     HORIZONTAL_SPACING = 200
@@ -1718,7 +1962,7 @@ def calculate_node_depths_and_positions(nodes, edges, width=1200, height=800):
         nodes[name]['depth'] = depth
         nodes[name]['horizontal_position'] = h_pos
 
-    print(f"  Calculated positions for {len(nodes)} nodes")
+    logger.debug(f"  Calculated positions for {len(nodes)} nodes")
 
     return nodes
 
@@ -1734,15 +1978,15 @@ class ONNXParser:
 
     def load_model(self):
         """Load ONNX model using GraphSurgeon or raw ONNX"""
-        print(f"Loading ONNX model: {self.model_path}")
+        logger.debug(f"Loading ONNX model: {self.model_path}")
         self.model = onnx.load(self.model_path)
         onnx.checker.check_model(self.model)
 
         if self.use_gs:
             self.gs_graph = gs.import_onnx(self.model)
-            print(f"Model loaded with GraphSurgeon (nodes: {len(self.gs_graph.nodes)}, tensors: {len(self.gs_graph.tensors())})")
+            logger.debug(f"Model loaded with GraphSurgeon (nodes: {len(self.gs_graph.nodes)}, tensors: {len(self.gs_graph.tensors())})")
         else:
-            print("Model loaded with raw ONNX API")
+            logger.info("Model loaded with raw ONNX API")
 
     def get_tensor_shape(self, tensor) -> List:
         """Extract shape from GraphSurgeon tensor or ONNX ValueInfo
@@ -1885,7 +2129,7 @@ class ONNXParser:
             if isinstance(tensor, gs.Constant) and tensor.values is not None:
                 total_params += tensor.values.size
 
-        print(f"Total parameters: {total_params:,}")
+        logger.debug(f"Total parameters: {total_params:,}")
 
         tensor_metadata = {}
         tensor_dict = graph.tensors()
@@ -1926,7 +2170,7 @@ class ONNXParser:
                     'dtype': dtype,
                     'is_constant': False
                 }
-                print(f"Input: {inp.name} -> {shape} ({dtype})")
+                logger.debug(f"Input: {inp.name} -> {shape} ({dtype})")
 
         for out in graph.outputs:
             shape = self.get_tensor_shape(out)
@@ -1944,7 +2188,7 @@ class ONNXParser:
                     'dtype': dtype,
                     'is_constant': False
                 }
-            print(f"Output: {out.name} -> {shape} ({dtype})")
+            logger.debug(f"Output: {out.name} -> {shape} ({dtype})")
 
         for tensor_name, tensor in tensor_dict.items():
             if tensor_name not in tensor_metadata and not isinstance(tensor, gs.Constant):
@@ -1963,7 +2207,7 @@ class ONNXParser:
                     'is_constant': False
                 }
 
-        print(f"Total tensors tracked: {len(tensor_metadata)} (constants: {len(constant_names)})")
+        logger.debug(f"Total tensors tracked: {len(tensor_metadata)} (constants: {len(constant_names)})")
 
         shape_lookup = {name: meta['shape'] for name, meta in tensor_metadata.items()}
 
@@ -2016,7 +2260,7 @@ class ONNXParser:
         layer_details = {}
         edges = []
 
-        print(f"\nProcessing {len(graph.nodes)} nodes...")
+        logger.debug(f"\nProcessing {len(graph.nodes)} nodes...")
 
         for idx, node in enumerate(graph.nodes):
             node_name = node.name if node.name else f"{node.op}_{idx}"
@@ -2082,11 +2326,11 @@ class ONNXParser:
                     })
 
             if (idx + 1) % 10 == 0:
-                print(f"  Processed {idx + 1}/{len(graph.nodes)} nodes")
+                logger.debug(f"  Processed {idx + 1}/{len(graph.nodes)} nodes")
 
-        print(f"Extracted {len(layer_details)} layers and {len(edges)} edges")
+        logger.debug(f"Extracted {len(layer_details)} layers and {len(edges)} edges")
 
-        print("\nCalculating node positions...")
+        logger.debug("\nCalculating node positions...")
         layer_details = calculate_node_depths_and_positions(
             layer_details,
             edges,
@@ -2113,7 +2357,7 @@ class ONNXParser:
                     size *= dim
                 total_params += size
 
-        print(f"Total parameters: {total_params:,}")
+        logger.debug(f"Total parameters: {total_params:,}")
 
         tensor_metadata = {}
         initializer_names = set()
@@ -2154,7 +2398,7 @@ class ONNXParser:
                     'dtype': self.get_tensor_dtype(inp),
                     'is_constant': False
                 }
-                print(f"Input: {inp.name} -> {shape} ({self.get_tensor_dtype(inp)})")
+                logger.debug(f"Input: {inp.name} -> {shape} ({self.get_tensor_dtype(inp)})")
 
         for out in graph.output:
             shape = self.get_tensor_shape(out)
@@ -2164,7 +2408,7 @@ class ONNXParser:
                     'dtype': self.get_tensor_dtype(out),
                     'is_constant': False
                 }
-            print(f"Output: {out.name} -> {shape} ({self.get_tensor_dtype(out)})")
+            logger.debug(f"Output: {out.name} -> {shape} ({self.get_tensor_dtype(out)})")
 
         for vi in graph.value_info:
             shape = self.get_tensor_shape(vi)
@@ -2175,7 +2419,7 @@ class ONNXParser:
                     'is_constant': False
                 }
 
-        print(f"Total tensors tracked: {len(tensor_metadata)} (constants: {len(initializer_names)})")
+        logger.debug(f"Total tensors tracked: {len(tensor_metadata)} (constants: {len(initializer_names)})")
 
         shape_lookup = {name: meta['shape'] for name, meta in tensor_metadata.items()}
 
@@ -2229,7 +2473,7 @@ class ONNXParser:
         layer_details = {}
         edges = []
 
-        print(f"\nProcessing {len(graph.node)} nodes...")
+        logger.debug(f"\nProcessing {len(graph.node)} nodes...")
 
         for idx, node in enumerate(graph.node):
             node_name = node.name if node.name else f"{node.op_type}_{idx}"
@@ -2292,11 +2536,11 @@ class ONNXParser:
                     })
 
             if (idx + 1) % 10 == 0:
-                print(f"  Processed {idx + 1}/{len(graph.node)} nodes")
+                logger.debug(f"  Processed {idx + 1}/{len(graph.node)} nodes")
 
-        print(f"Extracted {len(layer_details)} layers and {len(edges)} edges")
+        logger.debug(f"Extracted {len(layer_details)} layers and {len(edges)} edges")
 
-        print("\nCalculating node positions...")
+        logger.debug("\nCalculating node positions...")
         layer_details = calculate_node_depths_and_positions(
             layer_details,
             edges,
@@ -2313,7 +2557,7 @@ class ONNXParser:
 
 def build_hierarchical_tree(layer_details: Dict[str, Any], edges: List[Dict]) -> Dict[str, Any]:
     """Build hierarchical tree structure from layer details based on node naming"""
-    print("\nBuilding hierarchical tree structure...")
+    logger.debug("\nBuilding hierarchical tree structure...")
 
     node_topo_indices = {name: idx for idx, name in enumerate(layer_details.keys())}
 
@@ -2364,7 +2608,7 @@ def build_hierarchical_tree(layer_details: Dict[str, Any], edges: List[Dict]) ->
                     current_level[part]["children"] = {}
                 current_level = current_level[part]["children"]
 
-    print(f"  Built tree with {len(tree_dict)} top-level modules")
+    logger.debug(f"  Built tree with {len(tree_dict)} top-level modules")
 
     tree_dict = flatten_single_child_modules(tree_dict)
 
@@ -2415,38 +2659,38 @@ def discover_files_from_workdir(model_dir_path: str) -> Dict[str, str]:
     """Auto-discover all required files from model directory structure"""
     discovered = {}
 
-    print(f"\nAuto-discovering files in: {model_dir_path}")
-    print("=" * 70)
+    logger.debug(f"\nAuto-discovering files in: {model_dir_path}")
+    logger.debug("=" * 70)
 
     import glob
 
     onnx_files = glob.glob(os.path.join(model_dir_path, 'model/*.onnx'), recursive=False)
     if onnx_files:
         discovered['onnx'] = onnx_files[0]
-        print(f"[FOUND] ONNX model: {os.path.relpath(discovered['onnx'])}")
+        logger.debug(f"[FOUND] ONNX model: {os.path.relpath(discovered['onnx'])}")
     else:
-        print("[NOT FOUND] ONNX model not found")
+        logger.debug("[NOT FOUND] ONNX model not found")
 
     graphviz_files = glob.glob(os.path.join(model_dir_path, 'artifacts/tempDir/graphvizInfo.txt'), recursive=False)
     if graphviz_files:
         discovered['graphviz'] = graphviz_files[0]
-        print(f"[FOUND] graphvizInfo: {os.path.relpath(discovered['graphviz'])}")
+        logger.debug(f"[FOUND] graphvizInfo: {os.path.relpath(discovered['graphviz'])}")
     else:
-        print("[NOT FOUND] graphvizInfo.txt not found")
+        logger.debug("[NOT FOUND] graphvizInfo.txt not found")
 
     allowednode_files = glob.glob(os.path.join(model_dir_path, 'artifacts/allowedNode.txt'), recursive=False)
     if allowednode_files:
         discovered['allowednode'] = allowednode_files[0]
-        print(f"[FOUND] allowedNode: {os.path.relpath(discovered['allowednode'])}")
+        logger.debug(f"[FOUND] allowedNode: {os.path.relpath(discovered['allowednode'])}")
     else:
-        print("[NOT FOUND] allowedNode.txt not found")
+        logger.debug("[NOT FOUND] allowedNode.txt not found")
 
     subgraph_dir = None
     subgraph_html_files = glob.glob(os.path.join(model_dir_path, 'artifacts/tempDir/subgraph_*_tidl_net.bin.html'), recursive=False)
     if subgraph_html_files:
         subgraph_dir = os.path.dirname(subgraph_html_files[0])
         discovered['subgraph_dir'] = subgraph_dir
-        print(f"[FOUND] {len(subgraph_html_files)} subgraph HTML files in: {os.path.relpath(subgraph_dir)}")
+        logger.debug(f"[FOUND] {len(subgraph_html_files)} subgraph HTML files in: {os.path.relpath(subgraph_dir)}")
     else:
         # Check if SVG files exist (TIDL Tools < 11.02 generates SVG instead of HTML)
         subgraph_svg_files = glob.glob(os.path.join(model_dir_path, 'artifacts/tempDir/subgraph_*_tidl_net.bin.svg'), recursive=False)
@@ -2477,14 +2721,14 @@ Note: Model Inspector cannot parse SVG format - HTML format is required.
 """
             raise RuntimeError(error_msg.strip())
         else:
-            print("[NOT FOUND] Subgraph HTML files not found")
+            logger.debug("[NOT FOUND] Subgraph HTML files not found")
 
     xlsx_files = glob.glob(os.path.join(model_dir_path, 'analyze.xlsx'), recursive=False)
     if xlsx_files:
         discovered['xlsx'] = xlsx_files[0]
-        print(f"[FOUND] analyze.xlsx: {os.path.relpath(discovered['xlsx'])}")
+        logger.debug(f"[FOUND] analyze.xlsx: {os.path.relpath(discovered['xlsx'])}")
     else:
-        print("[NOT FOUND] analyze.xlsx not found")
+        logger.debug("[NOT FOUND] analyze.xlsx not found")
 
     mapping_files = glob.glob(os.path.join(model_dir_path, 'layer_output_mapping*.yaml'), recursive=False)
     if mapping_files:
@@ -2493,11 +2737,11 @@ Note: Model Inspector cannot parse SVG format - HTML format is required.
             discovered['activation_yaml'] = notidl_tidl_files[0]
         else:
             discovered['activation_yaml'] = mapping_files[0]
-        print(f"[FOUND] activation mapping: {os.path.relpath(discovered['activation_yaml'])}")
+        logger.debug(f"[FOUND] activation mapping: {os.path.relpath(discovered['activation_yaml'])}")
     else:
-        print("WARNING: Activation mapping YAML not found (optional)")
+        logger.warning(" Activation mapping YAML not found (optional)")
 
-    print("=" * 70)
+    logger.debug("=" * 70)
     return discovered
 
 
@@ -2552,9 +2796,9 @@ def load_config_data(model_dir_path: str) -> Dict[str, Any]:
             else:
                 config_data['accuracy'] = 'N/A'
 
-            print(f"Loaded config data from: {config_path}")
+            logger.debug(f"Loaded config data from: {config_path}")
         except Exception as e:
-            print(f"WARNING: Failed to load config.yaml: {e}")
+            logger.debug(f"WARNING: Failed to load config.yaml: {e}")
 
     if result_path and os.path.exists(result_path):
         try:
@@ -2569,14 +2813,14 @@ def load_config_data(model_dir_path: str) -> Dict[str, Any]:
             config_data['perfsim_gmacs'] = result_data.get('perfsim_gmacs', 'N/A')
             config_data['perfsim_time_ms'] = result_data.get('perfsim_time_ms', 'N/A')
 
-            print(f"Loaded result data from: {result_path}")
-            print(f"  -> num_frames: {config_data.get('num_frames')}")
-            print(f"  -> num_subgraphs: {config_data.get('num_subgraphs')}")
-            print(f"  -> perfsim_ddr_transfer_mb: {config_data.get('perfsim_ddr_transfer_mb')}")
-            print(f"  -> perfsim_gmacs: {config_data.get('perfsim_gmacs')}")
-            print(f"  -> perfsim_time_ms: {config_data.get('perfsim_time_ms')}")
+            logger.debug(f"Loaded result data from: {result_path}")
+            logger.debug(f"  -> num_frames: {config_data.get('num_frames')}")
+            logger.debug(f"  -> num_subgraphs: {config_data.get('num_subgraphs')}")
+            logger.debug(f"  -> perfsim_ddr_transfer_mb: {config_data.get('perfsim_ddr_transfer_mb')}")
+            logger.debug(f"  -> perfsim_gmacs: {config_data.get('perfsim_gmacs')}")
+            logger.debug(f"  -> perfsim_time_ms: {config_data.get('perfsim_time_ms')}")
         except Exception as e:
-            print(f"WARNING: Failed to load result.yaml: {e}")
+            logger.debug(f"WARNING: Failed to load result.yaml: {e}")
 
     return config_data
 
@@ -2640,7 +2884,7 @@ def load_accuracy_from_result_yaml(run_dir: str) -> Dict[str, Any]:
                 if key in r:
                     accuracy[key] = r[key]
         else:
-            print(f'  NOTE: result.yaml is from target_machine={target_machine!r} '
+            logger.debug(f'  NOTE: result.yaml is from target_machine={target_machine!r} '
                   f'— skipping timing fields (only valid on EVM)')
 
         # Accuracy metrics are valid from any pipeline (evaluate always writes them)
@@ -2649,10 +2893,10 @@ def load_accuracy_from_result_yaml(run_dir: str) -> Dict[str, Any]:
                 accuracy[key] = val
 
         accuracy['_result_path'] = result_path
-        print(f'  Loaded result.yaml from: {result_path}')
+        logger.debug(f'  Loaded result.yaml from: {result_path}')
         return accuracy
     except Exception as exc:
-        print(f'  WARNING: Failed to read result.yaml: {exc}')
+        logger.debug(f'  WARNING: Failed to read result.yaml: {exc}')
         return {}
 
 # C7x DSP clock on J721E/AM6xA in MHz — used to convert cycles → µs.
@@ -2696,7 +2940,7 @@ def load_evm_perf_csv(csv_path: str) -> Dict[int, Dict[str, Any]]:
                     'ddr_write_bytes':    _int('DDRBWWriteInBytes'),
                 }
     except Exception as exc:
-        print(f'WARNING: Failed to load EVM perf CSV {csv_path}: {exc}')
+        logger.debug(f'WARNING: Failed to load EVM perf CSV {csv_path}: {exc}')
     return result
 
 
@@ -2712,7 +2956,7 @@ def update_with_evm_perf(json_path: str) -> bool:
 
     csv_files = _glob.glob('/tmp/tidl_trace_subgraph_*_perf.csv')
     if not csv_files:
-        print('  No /tmp/tidl_trace_subgraph_*_perf.csv files found on this device')
+        logger.debug('  No /tmp/tidl_trace_subgraph_*_perf.csv files found on this device')
         return False
 
     with open(json_path, 'r', encoding='utf-8') as fh:
@@ -2733,7 +2977,7 @@ def update_with_evm_perf(json_path: str) -> bool:
         subgraphs = data.get('runtime', {}).get('subgraphs', {})
         subgraph = subgraphs.get(f'tidl_{sg_num}') or subgraphs.get(str(sg_num))
         if not subgraph:
-            print(f'  WARNING: subgraph {sg_num} not found in JSON, skipping')
+            logger.debug(f'  WARNING: subgraph {sg_num} not found in JSON, skipping')
             continue
 
         matched = 0
@@ -2758,7 +3002,7 @@ def update_with_evm_perf(json_path: str) -> bool:
             matched += 1
             updated = True
 
-        print(f'  Subgraph {sg_num}: matched {matched}/{len(perf_map)} layers '
+        logger.debug(f'  Subgraph {sg_num}: matched {matched}/{len(perf_map)} layers '
               f'from {os.path.basename(csv_path)}')
 
     if updated:
@@ -2785,7 +3029,7 @@ def update_with_evm_perf(json_path: str) -> bool:
             if acc.get('num_frames'):
                 meta['num_frames'] = acc['num_frames']
             if timing_written:
-                print(f'  EVM timing written to metadata')
+                logger.debug(f'  EVM timing written to metadata')
 
         # Clean up any old-format keys left from previous runs
         data.pop('performance_source', None)  # remove from root if present
@@ -2796,7 +3040,7 @@ def update_with_evm_perf(json_path: str) -> bool:
 
         with open(json_path, 'w', encoding='utf-8') as fh:
             json.dump(data, fh, indent=2)
-        print(f'  EVM perf data written to {json_path}')
+        logger.debug(f'  EVM perf data written to {json_path}')
 
     return updated
 
@@ -2855,10 +3099,10 @@ def load_proctime_data(model_dir_path: str) -> Dict[int, List[Dict[str, Any]]]:
                 if layer_data:
                     proctime_data[subgraph_num] = layer_data
                     processed_subgraphs.add(subgraph_num)
-                    print(f"Loaded proctime data for subgraph {subgraph_num}: {len(layer_data)} layers")
+                    logger.debug(f"Loaded proctime data for subgraph {subgraph_num}: {len(layer_data)} layers")
 
         except Exception as e:
-            print(f"WARNING: Failed to load proctime CSV {csv_path}: {e}")
+            logger.debug(f"WARNING: Failed to load proctime CSV {csv_path}: {e}")
 
     return proctime_data
 
@@ -2932,10 +3176,10 @@ def load_cycles_data(model_dir_path: str) -> Dict[int, List[Dict[str, Any]]]:
                 if layer_data:
                     cycles_data[subgraph_num] = layer_data
                     processed_subgraphs.add(subgraph_num)
-                    print(f"Loaded cycles data for subgraph {subgraph_num}: {len(layer_data)} layers")
+                    logger.debug(f"Loaded cycles data for subgraph {subgraph_num}: {len(layer_data)} layers")
 
         except Exception as e:
-            print(f"WARNING: Failed to load cycles CSV {csv_path}: {e}")
+            logger.debug(f"WARNING: Failed to load cycles CSV {csv_path}: {e}")
 
     return cycles_data
 
@@ -3019,10 +3263,10 @@ def load_memory_data(model_dir_path: str) -> Dict[int, List[Dict[str, Any]]]:
                 if layer_data:
                     memory_data[subgraph_num] = layer_data
                     processed_subgraphs.add(subgraph_num)
-                    print(f"Loaded memory data for subgraph {subgraph_num}: {len(layer_data)} layers")
+                    logger.debug(f"Loaded memory data for subgraph {subgraph_num}: {len(layer_data)} layers")
 
         except Exception as e:
-            print(f"WARNING: Failed to load memory CSV {csv_path}: {e}")
+            logger.debug(f"WARNING: Failed to load memory CSV {csv_path}: {e}")
 
     return memory_data
 
@@ -3030,27 +3274,27 @@ def load_memory_data(model_dir_path: str) -> Dict[int, List[Dict[str, Any]]]:
 def main(work_dirs_path, output_json_path, extract_activations=False):
     """Main function to extract all artifact data to JSON"""
     if len(sys.argv) < 3:
-        print("=" * 70)
-        print("Data Extractor - Extract TIDL Artifacts to JSON")
-        print("=" * 70)
-        print("\nUsage: python data_extractor.py <model_dir/> <output.json> [--act_data=false]")
-        print("\nArguments:")
-        print("  model_dir/   - Direct path to model directory (e.g., work_dirs/compile/AM69A/cl_onnx_model_name/)")
-        print("  output.json  - Output JSON file path (will be compressed)")
-        print("  --act_data   - Extract activations data to separate file (enabled by default, use --act_data=false to disable)")
-        print("\nExample:")
-        print("  python data_extractor.py work_dirs/compile/AM69A/cl-ort-resnet18/ model_data.json")
-        print("  python data_extractor.py work_dirs/compile/AM69A/cl-ort-resnet18/ model_data.json --act_data=false")
-        print("\nThe script will automatically discover and parse:")
-        print("  - ONNX model from <model_dir>/model/*.onnx")
-        print("  - GraphViz info from <model_dir>/artifacts/tempDir/graphvizInfo.txt")
-        print("  - Allowed nodes from <model_dir>/artifacts/allowedNode.txt")
-        print("  - Subgraph files from <model_dir>/artifacts/tempDir/")
-        print("  - Metrics from <model_dir>/analyze.xlsx")
-        print("  - Activation data from layer_info.txt and binary files (enabled by default)")
-        print("  - Config/Result from <model_dir>/tidl/*.yaml")
-        print("  - Performance data from <model_dir>/tidl/artifacts/tempDir/**/*.csv")
-        print("=" * 70)
+        logger.debug("=" * 70)
+        logger.debug("Data Extractor - Extract TIDL Artifacts to JSON")
+        logger.debug("=" * 70)
+        logger.debug("\nUsage: python data_extractor.py <model_dir/> <output.json> [--act_data=false]")
+        logger.debug("\nArguments:")
+        logger.debug("  model_dir/   - Direct path to model directory (e.g., work_dirs/compile/AM69A/cl_onnx_model_name/)")
+        logger.debug("  output.json  - Output JSON file path (will be compressed)")
+        logger.debug("  --act_data   - Extract activations data to separate file (enabled by default, use --act_data=false to disable)")
+        logger.debug("\nExample:")
+        logger.debug("  python data_extractor.py work_dirs/compile/AM69A/cl-ort-resnet18/ model_data.json")
+        logger.debug("  python data_extractor.py work_dirs/compile/AM69A/cl-ort-resnet18/ model_data.json --act_data=false")
+        logger.debug("\nThe script will automatically discover and parse:")
+        logger.debug("  - ONNX model from <model_dir>/model/*.onnx")
+        logger.debug("  - GraphViz info from <model_dir>/artifacts/tempDir/graphvizInfo.txt")
+        logger.debug("  - Allowed nodes from <model_dir>/artifacts/allowedNode.txt")
+        logger.debug("  - Subgraph files from <model_dir>/artifacts/tempDir/")
+        logger.debug("  - Metrics from <model_dir>/analyze.xlsx")
+        logger.debug("  - Activation data from layer_info.txt and binary files (enabled by default)")
+        logger.debug("  - Config/Result from <model_dir>/tidl/*.yaml")
+        logger.debug("  - Performance data from <model_dir>/tidl/artifacts/tempDir/**/*.csv")
+        logger.debug("=" * 70)
         sys.exit(1)
 
     # Use the function parameters (passed when called programmatically)
@@ -3060,29 +3304,29 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
     # Check if intermediate JSON already exists
     if os.path.exists(output_json_path):
         file_size = os.path.getsize(output_json_path) / (1024 * 1024)
-        print("=" * 70)
-        print("Intermediate JSON already exists")
-        print("=" * 70)
-        print(f"File: {output_json_path} ({file_size:.2f} MB)")
-        print("Skipping data extraction (file already present)")
-        print("\nTo regenerate, delete the existing file and run again:")
-        print(f"  rm {output_json_path}")
-        print("=" * 70)
+        logger.debug("=" * 70)
+        logger.debug("Intermediate JSON already exists")
+        logger.debug("=" * 70)
+        logger.debug(f"File: {output_json_path} ({file_size:.2f} MB)")
+        logger.debug("Skipping data extraction (file already present)")
+        logger.debug("\nTo regenerate, delete the existing file and run again:")
+        logger.debug(f"  rm {output_json_path}")
+        logger.debug("=" * 70)
         return
 
     if not os.path.exists(model_dir_path):
-        print(f"ERROR: Model directory not found: {model_dir_path}")
+        logger.debug(f"ERROR: Model directory not found: {model_dir_path}")
         sys.exit(1)
 
     if not os.path.isdir(model_dir_path):
-        print(f"ERROR: {model_dir_path} is not a directory")
+        logger.debug(f"ERROR: {model_dir_path} is not a directory")
         sys.exit(1)
 
     discovered = discover_files_from_workdir(model_dir_path)
 
     # ONNX model is required; TIDL artifacts are optional and skipped gracefully
     if 'onnx' not in discovered:
-        print(f"\nERROR: ONNX model not found")
+        logger.debug(f"\nERROR: ONNX model not found")
         sys.exit(1)
 
     onnx_path = discovered['onnx']
@@ -3092,24 +3336,24 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
 
     # Log missing optional TIDL artifacts as info (not error)
     if not graphviz_path:
-        print("[INFO] GraphViz info not found (optional) - TIDL support info will be unavailable")
+        logger.debug("[INFO] GraphViz info not found (optional) - TIDL support info will be unavailable")
     if not allowednode_path:
-        print("[INFO] allowedNode.txt not found (optional) - using all nodes as allowed")
+        logger.debug("[INFO] allowedNode.txt not found (optional) - using all nodes as allowed")
     if not subgraph_dir:
-        print("[INFO] Subgraph directory not found (optional) - assuming single subgraph")
+        logger.debug("[INFO] Subgraph directory not found (optional) - assuming single subgraph")
 
-    print("\n" + "=" * 70)
-    print("Data Extractor - Parsing Artifacts")
-    print("=" * 70)
-    print(f"ONNX Model:      {onnx_path}")
-    print(f"GraphViz Info:   {graphviz_path}")
-    print(f"Allowed Nodes:   {allowednode_path}")
-    print(f"Subgraph Dir:    {subgraph_dir}")
-    print(f"Output JSON:     {output_json_path}")
-    print("=" * 70)
+    logger.debug("\n" + "=" * 70)
+    logger.debug("Data Extractor - Parsing Artifacts")
+    logger.debug("=" * 70)
+    logger.debug(f"ONNX Model:      {onnx_path}")
+    logger.debug(f"GraphViz Info:   {graphviz_path}")
+    logger.debug(f"Allowed Nodes:   {allowednode_path}")
+    logger.debug(f"Subgraph Dir:    {subgraph_dir}")
+    logger.debug(f"Output JSON:     {output_json_path}")
+    logger.debug("=" * 70)
 
     try:
-        print("\n[1/8] Parsing ONNX model...")
+        logger.debug("\n[1/8] Parsing ONNX model...")
         onnx_parser = ONNXParser(onnx_path)
         model_data = onnx_parser.parse()
 
@@ -3124,23 +3368,23 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
             'node_support': {}
         }
 
-        print("\n[2/8] Parsing GraphViz info...")
+        logger.debug("\n[2/8] Parsing GraphViz info...")
         if graphviz_path and os.path.exists(graphviz_path):
             graphviz_parser = GraphVizParser(graphviz_path)
             subgraph_data['node_support'] = graphviz_parser.parse()
         else:
-            print(f"WARNING: GraphViz info not found (optional)")
+            logger.debug(f"WARNING: GraphViz info not found (optional)")
             subgraph_data['node_support'] = {}
 
-        print("\n[3/8] Parsing allowed nodes...")
+        logger.debug("\n[3/8] Parsing allowed nodes...")
         if allowednode_path and os.path.exists(allowednode_path):
             allowednode_parser = AllowedNodeParser(allowednode_path)
             subgraph_data['subgraphs'] = allowednode_parser.parse()
         else:
-            print(f"WARNING: allowedNode.txt not found (optional)")
+            logger.debug(f"WARNING: allowedNode.txt not found (optional)")
             subgraph_data['subgraphs'] = {}
 
-        print("\n[4/8] Parsing TIDL subgraph HTML files...")
+        logger.debug("\n[4/8] Parsing TIDL subgraph HTML files...")
         # Build tensor name → ONNX node index map for TIDL-to-ONNX mapping
         tensor_to_node_map = {}
         for idx, (layer_name, layer_info) in enumerate(model_data.get('layer_details', {}).items()):
@@ -3151,7 +3395,7 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
 
         # Handle missing subgraph directory gracefully
         if subgraph_dir is None:
-            print("[WARNING] Subgraph directory not found (optional) - no TIDL subgraph data available")
+            logger.debug("[WARNING] Subgraph directory not found (optional) - no TIDL subgraph data available")
             tidl_data = {}
         else:
             tidl_parser = TIDLSubgraphParser(subgraph_dir, subgraph_data['node_support'])
@@ -3160,7 +3404,7 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
             tidl_parser.onnx_layer_details = model_data.get('layer_details', {})
             tidl_data = tidl_parser.parse_all_subgraphs()
 
-        print("\n[5/8] Parsing activation data...")
+        logger.debug("\n[5/8] Parsing activation data...")
         activation_data = {}
         if extract_activations:
             try:
@@ -3170,29 +3414,29 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
                     tidl_data=tidl_data
                 )
                 activation_data = activation_parser.process_all_layers()
-                print(f"  Loaded activation data for {len(activation_data)} layers")
+                logger.debug(f"  Loaded activation data for {len(activation_data)} layers")
             except Exception as e:
-                print(f"  WARNING: Could not load activation data: {e}")
+                logger.debug(f"  WARNING: Could not load activation data: {e}")
                 activation_data = {}
         else:
-            print("  Skipping activation data - JSON contains only model structure")
+            logger.debug("  Skipping activation data - JSON contains only model structure")
 
-        print("\n[6/8] Parsing metrics data...")
+        logger.debug("\n[6/8] Parsing metrics data...")
         metrics_data = {}
         metrics_xlsx_path = discovered.get('xlsx', None)
         if metrics_xlsx_path and os.path.exists(metrics_xlsx_path):
             metrics_parser = MetricsParser(metrics_xlsx_path)
             metrics_data = metrics_parser.get_metrics()
         else:
-            print("WARNING: No analyze.xlsx file found")
+            logger.warning(" No analyze.xlsx file found")
 
-        print("\n[7/8] Loading configuration and performance data...")
+        logger.debug("\n[7/8] Loading configuration and performance data...")
         config_data = load_config_data(model_dir_path)
         proctime_data = load_proctime_data(model_dir_path)
         cycles_data = load_cycles_data(model_dir_path)
         memory_data = load_memory_data(model_dir_path)
 
-        print("\n[8/8] Combining and saving data...")
+        logger.debug("\n[8/8] Combining and saving data...")
 
         performance_data = {}
         all_subgraphs = set(proctime_data.keys()) | set(cycles_data.keys()) | set(memory_data.keys())
@@ -3525,14 +3769,14 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
         tvmrt_artifacts_path = os.path.join(model_dir_path, 'tvmrt_artifacts')
 
         if os.path.exists(tvm_artifacts_path) or os.path.exists(tvmrt_artifacts_path):
-            print("  TVM artifacts detected, parsing TVM data...")
+            logger.debug("  TVM artifacts detected, parsing TVM data...")
             # TODO: Parse TVM artifacts similar to TIDL
             # For now, create placeholder structure
             tvm_data = {
                 'subgraphs': {}
             }
         else:
-            print("  No TVM artifacts found, skipping TVM section")
+            logger.debug("  No TVM artifacts found, skipping TVM section")
             tvm_data = {}
 
         # Build subgraphs dict in the format: tidl_0, tidl_1, tvm_0, etc.
@@ -3584,7 +3828,7 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
             }
         }
 
-        print(f"Writing unified JSON to: {output_json_path}")
+        logger.debug(f"Writing unified JSON to: {output_json_path}")
 
         class _JSONSafeEncoder(json.JSONEncoder):
             """Fallback encoder: converts any non-serializable object to its str()."""
@@ -3595,30 +3839,30 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
                     return str(obj)
 
         # Write single unified JSON for inspection (activation data embedded in TIDL layers)
-        print("  Serializing unified data...")
+        logger.debug("  Serializing unified data...")
         with open(output_json_path, 'w', encoding='utf-8') as f:
             json.dump(combined_data, f, indent=2, cls=_JSONSafeEncoder)
 
         file_size = os.path.getsize(output_json_path) / (1024 * 1024)
-        print(f"Unified JSON saved: {output_json_path} ({file_size:.2f} MB)")
-        print(f"  Model structure only (no activation data)")
+        logger.debug(f"Unified JSON saved: {output_json_path} ({file_size:.2f} MB)")
+        logger.debug(f"  Model structure only (no activation data)")
 
-        print("\n" + "=" * 70)
-        print("SUCCESS! Data extraction complete - Unified Schema v1.0")
-        print("=" * 70)
-        print(f"\nExtracted data summary:")
-        print(f"  - ONNX layers: {len(combined_data['model']['onnx']['layers'])}")
+        logger.debug("\n" + "=" * 70)
+        logger.info("SUCCESS! Data extraction complete - Unified Schema v1.0")
+        logger.debug("=" * 70)
+        logger.debug(f"\nExtracted data summary:")
+        logger.debug(f"  - ONNX layers: {len(combined_data['model']['onnx']['layers'])}")
         tidl_subgraphs = combined_data.get('runtime', {}).get('subgraphs', {})
-        print(f"  - TIDL subgraphs: {len(tidl_subgraphs)}")
+        logger.debug(f"  - TIDL subgraphs: {len(tidl_subgraphs)}")
         if tvm_data and 'subgraphs' in tvm_data:
-            print(f"  - TVM subgraphs: {len(tvm_data['subgraphs'])}")
+            logger.debug(f"  - TVM subgraphs: {len(tvm_data['subgraphs'])}")
 
         # Activation data not included in JSON - only model structure
 
         # Note: metrics and activation_data are set to null
         # They will be populated by html_generator based on --activation_data flag
-        print(f"  - Metrics: null (to be filled by html_generator)")
-        print(f"  - Activation data: null (to be filled by html_generator)")
+        logger.debug(f"  - Metrics: null (to be filled by html_generator)")
+        logger.debug(f"  - Activation data: null (to be filled by html_generator)")
 
         total_perf_layers = 0
         for subgraph_id, subgraph in combined_data['runtime']['subgraphs'].items():
@@ -3628,25 +3872,25 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
                 total_perf_layers += sum(1 for layer in layers if isinstance(layer, dict) and 'performance' in layer)
             elif isinstance(layers, dict):
                 total_perf_layers += sum(1 for layer in layers.values() if 'performance' in layer)
-        print(f"  - Layers with performance data: {total_perf_layers}")
+        logger.debug(f"  - Layers with performance data: {total_perf_layers}")
 
-        print(f"\nMetadata:")
-        print(f"  - Model: {combined_data['metadata']['model_name']}")
+        logger.debug(f"\nMetadata:")
+        logger.debug(f"  - Model: {combined_data['metadata']['model_name']}")
         # Get device from first subgraph (moved from metadata to subgraph level)
         first_sg = next(iter(combined_data['runtime']['subgraphs'].values()), {})
         target_device = first_sg.get('target_device', 'Unknown')
         tensor_bits = first_sg.get('tensor_bits', 'Unknown')
-        print(f"  - Device: {target_device}")
-        print(f"  - Precision: {tensor_bits}-bit")
-        print(f"  - Task: {combined_data['metadata']['task_type']}")
-        print(f"  - Inputs: {len(combined_data['metadata']['inputs'])}")
-        print(f"  - Outputs: {len(combined_data['metadata']['outputs'])}")
+        logger.debug(f"  - Device: {target_device}")
+        logger.debug(f"  - Precision: {tensor_bits}-bit")
+        logger.debug(f"  - Task: {combined_data['metadata']['task_type']}")
+        logger.debug(f"  - Inputs: {len(combined_data['metadata']['inputs'])}")
+        logger.debug(f"  - Outputs: {len(combined_data['metadata']['outputs'])}")
 
-        print(f"\nNext step:")
-        print(f"  python html_generator.py {output_json_path} template.html output.html")
+        logger.debug(f"\nNext step:")
+        logger.debug(f"  python html_generator.py {output_json_path} template.html output.html")
 
     except Exception as e:
-        print(f"\nERROR: {e}")
+        logger.debug(f"\nERROR: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)
@@ -3662,10 +3906,10 @@ def update_with_activations(work_dirs_path, json_path):
     Returns True if at least one layer was updated, False otherwise.
     """
     if not os.path.exists(json_path):
-        print(f'INFO: JSON not found, cannot update activations: {json_path}')
+        logger.debug(f'INFO: JSON not found, cannot update activations: {json_path}')
         return False
 
-    print(f'INFO: Loading inspector JSON for activation update: {json_path}')
+    logger.debug(f'INFO: Loading inspector JSON for activation update: {json_path}')
     with open(json_path, encoding='utf-8') as f:
         data = json.load(f)
 
@@ -3673,11 +3917,11 @@ def update_with_activations(work_dirs_path, json_path):
         activation_parser = ActivationDataParser(model_dir=work_dirs_path, frame_idx=0)
         activation_data = activation_parser.process_all_layers()
     except Exception as e:
-        print(f'WARNING: Could not parse activation data: {e}')
+        logger.debug(f'WARNING: Could not parse activation data: {e}')
         return False
 
     if not activation_data:
-        print('INFO: No activation data found, JSON not updated')
+        logger.debug('INFO: No activation data found, JSON not updated')
         return False
 
     skip_types = {'TIDL_DataLayer', 'TIDL_DataConvertLayer'}
@@ -3706,12 +3950,12 @@ def update_with_activations(work_dirs_path, json_path):
                 }
                 updated_count += 1
 
-    print(f'INFO: Updated {updated_count} layers with activation data')
+    logger.debug(f'INFO: Updated {updated_count} layers with activation data')
 
     with open(json_path, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=2)
 
-    print(f'INFO: Saved updated JSON to: {json_path}')
+    logger.debug(f'INFO: Saved updated JSON to: {json_path}')
     return updated_count > 0
 
 

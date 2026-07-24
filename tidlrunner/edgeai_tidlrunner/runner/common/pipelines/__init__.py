@@ -35,7 +35,7 @@ from .report import GenReport
 from .surgery import ModelSurgery
 from .extract import ExtractNodes
 from .package import PackageArtifacts
-from .inspector import GenerateModelInspectorJSON, GenerateModelInspectorHTML, UpdateModelInspectorEVMPerfJSON, UpdateModelInspectorEVMAccuracyJSON
+from .inspect import GenerateModelInspectorJSON, GenerateModelInspectorHTML, UpdateModelInspectorEVMPerfJSON, UpdateModelInspectorEVMAccuracyJSON
 from .help import HelpRunner
 
 
