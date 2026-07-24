@@ -48,7 +48,7 @@ def _main(**kwargs):
     target_machine = rtwrapper.core.presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION \
         if 'x86' in arch or 'amd64' in arch else rtwrapper.core.presets.TargetMachineType.TARGET_MACHINE_EVM
 
-    target_machine = kwargs.get('target_machine')
+    target_machine = kwargs.get('target_machine') or target_machine
     package_name = kwargs.pop('package_name', None)
 
     # this is now not a requirement, but only a recommendation - and only in PC

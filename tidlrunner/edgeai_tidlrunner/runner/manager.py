@@ -153,14 +153,11 @@ class PipelineManager(PipelineBase):
                             os.symlink(benchmark_dependencies_path, local_dependencies_path)
                         except:
                             print(f"INFO: could not create symlink to: {benchmark_dependencies_path}")
-                        #
-                    #
-                #
+
                 print(f'settings: {settings}')
                 if settings.model_shortlist is not None:
                     print('INFO', 'model_shortlist has been set', 'it will cause only a subset of models to run:')
                     print('INFO', 'model_shortlist', f'{settings.model_shortlist}')
-                #
 
                 work_path = kwargs['common.work_path']
                 print(f'\nINFO: work_path: {work_path}')
@@ -171,15 +168,15 @@ class PipelineManager(PipelineBase):
                 for model_id, pipeline_config in pipeline_configs.items():
                     combined_config = upgrade_config | pipeline_config | {'common.pipeline_config': pipeline_config}
                     configs[model_id] = combined_config
-                #
+
             else:
                 raise RuntimeError(f'ERROR: invalid config_path: {config_path}')
-            #
+
         elif isinstance(config_path, dict):
             configs = config_path
         else:
             raise RuntimeError(f'ERROR: invalid config_path: {config_path}')
-        #
+
         return configs, is_aggregate_config_file
 
     def create_run_dict(self, ignore_unknown_args=False, model_id=None, **kwargs):
@@ -188,7 +185,7 @@ class PipelineManager(PipelineBase):
         selected_models = []
         rest_args_list = []
         run_dict = {}
-        for pipeline_name in self.pipeline_names:
+        for pipeline_idx, pipeline_name in enumerate(self.pipeline_names):
             command_module = getattr(pipelines, pipeline_name)
             command_args, rest_args = command_module.get_arg_parser().parse_known_args()    
             rest_args_list.append(rest_args)
@@ -204,14 +201,14 @@ class PipelineManager(PipelineBase):
                 configs, is_aggregate_config_file = self._get_configs(config_path, **kwargs_with_defaults)
                 if is_aggregate_config_file:
                     print(f'INFO: aggregate config file given - config_path: {config_path}')
-                #
+
             else:
                 if model_id is None:
                     print('WARNING: model_id is not given, generating randomly')
                     model_id = f"{pipeline_type}-" + utils.generate_unique_id(model_path, num_characters=8) if model_path else "x-x"
-                #
+
                 configs = {model_id:{'session.model_id':model_id}}
-            #
+
 
             selected_models = []
             for model_id, config_entry in configs.items():
@@ -221,15 +218,15 @@ class PipelineManager(PipelineBase):
                     if is_aggregate_config_file and not (config_entry.startswith('/') or config_entry.startswith('.')):
                         config_base_path = os.path.dirname(config_path)
                         config_entry = os.path.join(config_base_path, config_entry)
-                    #
+
                     with open(config_entry) as fp:
                         kwargs_cfg = yaml.safe_load(fp)
-                    #         
+  
                 elif isinstance(config_entry, dict):
                     kwargs_cfg = utils.pretty_object(config_entry)
                 else:
                     kwargs_cfg = dict()
-                #
+
                 kwargs_cfg.get('session', {}).pop('run_dir', None)
 
                 # create preliminary args (without upgrade) - for some basic checks - model_shortlist, model_selection
@@ -249,7 +246,6 @@ class PipelineManager(PipelineBase):
                     selected_model = self._model_selection(model_selection, config_entry, model_path, model_id)
                 else:
                     selected_model = shortlisted_model = True
-                #
 
                 if shortlisted_model and selected_model:
                     # now systematically create the final kwargs
@@ -275,16 +271,14 @@ class PipelineManager(PipelineBase):
                     model_command_list.append((self.command,pipeline_name,kwargs_model))
                     run_dict[model_id] = model_command_list
                     selected_models.append(model_id)
-                    print(f'INFO: shortlisted/selected - model_id: {kwargs_model.get("session.model_id",None)}, config_path: {kwargs_model.get("common.config_path",None)}, model_path: {kwargs_model.get("session.model_path",None)}')
+                    if pipeline_idx == 0:
+                        print(f'INFO: shortlisted/selected - model_id: {kwargs_model.get("session.model_id",None)}, config_path: {kwargs_model.get("common.config_path",None)}, model_path: {kwargs_model.get("session.model_path",None)}')
                 elif verbose > 0:
-                    if config_entry_path:
-                        print(f'INFO: skipping entry: {config_entry_path} - does not match model_shortlist: {model_shortlist}, model_selection: {model_selection}')
-                    else:
-                        print(f'INFO: skipping entry: {model_path} - does not match model_shortlist: {model_shortlist}, model_selection: {model_selection}')
-                    #
-                #
-            #
-        #
+                    if pipeline_idx == 0:
+                        if config_entry_path:
+                            print(f'INFO: skipping entry: {config_entry_path} - does not match model_shortlist: {model_shortlist}, model_selection: {model_selection}')
+                        else:
+                            print(f'INFO: skipping entry: {model_path} - does not match model_shortlist: {model_shortlist}, model_selection: {model_selection}')
 
         rest_args = rest_args_list[0]        
         for rest_args_i in rest_args_list[1:]:

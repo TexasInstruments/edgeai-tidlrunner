@@ -98,7 +98,7 @@ class StartRunner(runner.common.bases.PipelineBase):
             print('============================================================')
             sys.argv = [sys.argv[0], 'help']
             
-            parser = cls.get_arg_parser(exit_on_error=False)
+            parser = cls.get_arg_parser()
             command_choices = list(runner.get_command_pipelines().keys())
             parser.print_help()
             
@@ -117,24 +117,10 @@ class StartRunner(runner.common.bases.PipelineBase):
                 print(help_markdown)
 
         else:
-            parser = cls.get_arg_parser(exit_on_error=False)
+            parser = cls.get_arg_parser()
             command = sys.argv[1]
-            main_runner = cls()
+            main_runner = cls(**kwargs)
             main_runner.run(command, **kwargs)
-
-        # elif has_help_arg:
-        #     parser = cls.get_arg_parser(exit_on_error=False)
-        #     command = sys.argv[1]
-        #     main_runner = cls()
-        #     main_runner.run(command)
-
-        # else:
-        #     parser = cls.get_arg_parser(exit_on_error=False)
-        #     command_args, rest_args = parser.parse_known_args()
-        #     kwargs = vars(command_args)
-        #     command = sys.argv[1]
-        #     main_runner = cls(**kwargs)
-        #     main_runner.run(command)
 
 
 def start():
@@ -154,10 +140,7 @@ def start_with_proper_environment(**kwargs):
 
     if (not has_help_arg) and target_machine == rtwrapper.core.presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION and (not is_tidl_tools_path_defined):
         print("INFO: TIDL_TOOLS_PATH or LD_LIBRARY_PATH is not set, restarting with proper environment...")
-
-        parser = StartRunner.get_arg_parser(exit_on_error=False)
-        command_choices = list(runner.get_command_pipelines().keys())
-        parser.add_argument('command', choices=command_choices, help='command to run (compile, infer, etc.)')
+        parser = StartRunner.get_arg_parser()
         command_args, rest_args = parser.parse_known_args()
         command_kwargs = vars(command_args)
         if 'session.target_device' not in command_kwargs:
