@@ -31,6 +31,7 @@ import cv2
 import numpy as np
 
 from . import dataset_base
+from ...settings.settings_help import register_help
 
 
 class VideoCaptureDataLoader(dataset_base.DatasetBase):
@@ -122,13 +123,28 @@ class VideoFileDataLoader(VideoCaptureDataLoader):
         super().__init__(source=video_path, num_frames=num_frames, bgr_to_rgb=bgr_to_rgb, **kwargs)
 
 
+@register_help(
+    section='dataloader',
+    name='video_capture_dataloader',
+    task_type='video-capture'
+)
 def video_capture_dataloader(settings, name, source=0, num_frames=None, **kwargs):
     return VideoCaptureDataLoader(source=source, num_frames=num_frames, **kwargs)
 
 
+@register_help(
+    section='dataloader',
+    name='camera_capture_dataloader',
+    task_type='video-capture'
+)
 def camera_capture_dataloader(settings, name, source=0, num_frames=None, **kwargs):
     return CameraCaptureDataLoader(source=source, num_frames=num_frames, **kwargs)
 
 
+@register_help(
+    section='dataloader',
+    name='video_file_dataloader',
+    task_type='video-capture'
+)
 def video_file_dataloader(settings, name, video_path, num_frames=None, **kwargs):
     return VideoFileDataLoader(video_path=video_path, num_frames=num_frames, **kwargs)

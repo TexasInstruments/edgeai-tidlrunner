@@ -32,6 +32,7 @@ import PIL
 
 from ....common import utils
 from .image_pix2pix import ImagePixel2Pixel
+from ...settings.settings_help import register_help
 
 
 class ImageSegmentation(ImagePixel2Pixel):
@@ -71,5 +72,10 @@ class ImageSegmentation(ImagePixel2Pixel):
         return dataset_store
 
 
+@register_help(
+    section='dataloader',
+    name='image_segmentation_dataloader',
+    task_type='segmentation'
+)
 def image_segmentation_dataloader(settings, name, path, label_path=None, **kwargs):
     return ImageSegmentation(path=path, **kwargs)

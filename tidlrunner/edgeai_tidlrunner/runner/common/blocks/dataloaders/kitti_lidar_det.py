@@ -241,12 +241,15 @@
 import os
 import random
 from colorama import Fore
+import numpy as np
+import cv2
+
 from .. import utils
 from . import dataset_base
 from .kitti_object_eval_python import kitti_common as kitti
 from .kitti_object_eval_python.eval import get_official_eval_result, get_coco_eval_result
-import numpy as np
-import cv2
+from ...settings.settings_help import register_help
+
 
 class KittiLidar3D(dataset_base.DatasetBase):
     def __init__(self, download=False, read_anno=True, dest_dir=None, num_frames=None, name='kitti_lidar_det', **kwargs):
@@ -800,5 +803,10 @@ class KittiLidar3D(dataset_base.DatasetBase):
             return points_new
 
 
+@register_help(
+    section='dataloader',
+    name='kitti_lidar_det_dataloader',
+    task_type='3d-detection'
+)
 def kitti_lidar_det_dataloader(settings, name, path, label_path=None, **kwargs):
     return KittiLidar3D(path=path, **kwargs)

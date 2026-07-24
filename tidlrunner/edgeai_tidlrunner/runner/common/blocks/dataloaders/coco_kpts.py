@@ -120,6 +120,7 @@ from ....common.utils.config_utils import dataset_utils
 from ....common import utils
 from . import dataset_base
 from . import dataloader_utils
+from ...settings.settings_help import register_help
 
 
 __all__ = ['COCOKeypoints', '_get_mapping_id_name']
@@ -377,6 +378,11 @@ class COCOKeypointDetectionDataLoader(dataset_base.DatasetBaseWithUtils):
         return valid_kpts
 
 
+@register_help(
+    section='dataloader',
+    name='coco_keypoint_detection_dataloader',
+    task_type='keypoint_detection'
+)
 def coco_keypoint_detection_dataloader(settings, name, path, label_path=None, **kwargs):
     if 'val' in os.path.split(path)[-1]:
         data_path = path

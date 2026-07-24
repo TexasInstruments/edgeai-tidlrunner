@@ -41,6 +41,7 @@ from pycocotools import mask as coco_mask
 
 from . import dataset_base
 from . import dataloader_utils
+from ...settings.settings_help import register_help
 
 
 class SemanticSegmentationDataLoader(dataset_base.DatasetBaseWithUtils):
@@ -241,6 +242,11 @@ class COCOSegmentationDataLoader(SemanticSegmentationDataLoader):
         super().__init__(*args, categories=categories, **kwargs)
 
 
+@register_help(
+    section='dataloader',
+    name='coco_segmentation_dataloader',
+    task_type='segmentation'
+)
 def coco_segmentation_dataloader(settings, name, path, label_path=None, **kwargs):
     if 'val' in os.path.split(path)[-1]:
         data_path = path

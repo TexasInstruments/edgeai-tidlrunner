@@ -49,6 +49,8 @@ from colorama import Fore
 from ....common import utils
 from . import dataset_base
 from . import dataloader_utils
+from ...settings.settings_help import register_help
+
 
 __all__ = ['ADE20KSegmentation']
 
@@ -226,10 +228,20 @@ class ADE20KSegmentation(dataset_base.DatasetBaseWithUtils):
         #
 
 
+@register_help(
+    section='dataloader',
+    name='ade20k_segmentation_dataloader',
+    task_type='segmentation'
+)
 def ade20k_segmentation_dataloader(settings, name, path, label_path=None, split='val', **kwargs):
     return ADE20KSegmentation(path=path, split=('validation' if split == 'val' else 'training'), **kwargs)
 
 
+@register_help(
+    section='dataloader',
+    name='ade20k32_segmentation_dataloader',
+    task_type='segmentation'
+)
 def ade20k32_segmentation_dataloader(settings, name, path, label_path=None, split='val', num_classes=32, **kwargs):
     return ADE20KSegmentation(path=path, split=('validation' if split == 'val' else 'training'), num_classes=num_classes, **kwargs)
 

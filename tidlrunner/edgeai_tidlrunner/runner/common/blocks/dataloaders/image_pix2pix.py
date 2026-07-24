@@ -34,6 +34,7 @@ import PIL.Image
 from ....common import utils
 from . import dataset_base
 from . import dataloader_utils
+from ...settings.settings_help import register_help
 
 
 class ImagePixel2Pixel(dataset_base.DatasetBaseWithUtils):
@@ -99,5 +100,10 @@ class ImagePixel2Pixel(dataset_base.DatasetBaseWithUtils):
         raise NotImplementedError('evaluate() not implemented for ImagePixel2Pixel')
 
 
+@register_help(
+    section='dataloader',
+    name='image_pix2pix_dataloader',
+    task_type='image-to-image'
+)
 def image_pix2pix_dataloader(settings, name, path, label_path=None, **kwargs):
     return ImagePixel2Pixel(path=path, **kwargs)

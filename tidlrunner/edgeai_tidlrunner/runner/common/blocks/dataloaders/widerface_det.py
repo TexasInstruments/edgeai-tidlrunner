@@ -52,6 +52,8 @@ from pycocotools.cocoeval import COCOeval
 from ....common import utils
 from . import dataset_base
 from . import coco_det
+from ...settings.settings_help import register_help
+
 
 __all__ = ['WiderFaceDetection', 'widerfacedet_det_label_offset_1to1']
 
@@ -232,5 +234,10 @@ def widerfacedet_det_label_offset_1to1(label_offset=1, num_classes=1):
     return coco_label_offset
 
 
+@register_help(
+    section='dataloader',
+    name='widerface_detection_dataloader',
+    task_type='detection'
+)
 def widerface_detection_dataloader(settings, name, path, label_path=None, split='val', **kwargs):
     return WiderFaceDetection(path=path, split=split, **kwargs)

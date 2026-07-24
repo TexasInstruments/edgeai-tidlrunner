@@ -44,6 +44,7 @@ import PIL
 from colorama import Fore
 from ....common import utils
 from . import dataset_base
+from ...settings.settings_help import register_help
 
 __all__ = ['CityscapesSegmentation']
 
@@ -152,5 +153,10 @@ class CityscapesSegmentation(dataset_base.DatasetBase):
         #
 
 
+@register_help(
+    section='dataloader',
+    name='cityscapes_segmentation_dataloader',
+    task_type='segmentation'
+)
 def cityscapes_segmentation_dataloader(settings, name, path, label_path=None, **kwargs):
     return CityscapesSegmentation(path=path, **kwargs)

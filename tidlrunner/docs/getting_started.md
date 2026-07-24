@@ -6,9 +6,14 @@ Welcome to the **edgeai-tidlrunner** repository! This guide will help you quickl
 
 edgeai-tidlrunner is a comprehensive toolkit that provides easy-to-use interfaces for compiling AI models to run on TI Processors devices with the C7 NPU accelerator. It supports various operations including model compilation, inference, evaluate evaluation, and performance analysis.
 
-## Usage - compile & evaluate on PC
+## Interface
 
-It is generally assumed that the `tidlrunner-cli` tool will be run from the root of this repository, but it is not an explicit requirement. Outputs of the tool will be placed into [work_dirs](../../work_dirs) by default.
+`tidlrunner-cli` is the primary commandline tool interface that can be used. It is generally assumed that the `tidlrunner-cli` tool will be run from the root of this repository, but it is not an explicit requirement. Outputs of the tool will be placed into [work_dirs](../../work_dirs) by default.
+
+Note: alternatively, you can choose to run this script with python and provide arguments [tidlrunner/edgeai_tidlrunner/main.py](../edgeai_tidlrunner/main.py)
+
+
+## Usage - compile & evaluate on PC
 
 There are two primary ways to use this tool:
 
@@ -56,30 +61,17 @@ This command will:
 
 Because this uses random inputs by default, it **may not produce correct outputs during inference**. To be able to generate correct outputs, actual data has to be used by specifying dataloader arguments - eg: data_name, data_path.
 
-More details are here: [commandline_interface.md](./commandline_interface.md)
+For complete list of commands and arguments, see [command_line_arguments.md](./command_line_arguments.md) or use:
 
-For complete list of available command line arguments, see [command_line_arguments.md](./command_line_arguments.md).
+```bash
+tidlrunner-cli --help
+```
 
+More details on the commandline interface is here: [commandline_interface.md](./commandline_interface.md)
 
 ## Usage - actual infer or evaluate on EVM
 To run the compiled model artifacts on EVM, follow these instructions:
 [running_on_evm](./running_on_evm.md)
-
-
-## List of commands supported
-
-| Command          | Description                                                               |
-|------------------|---------------------------------------------------------------------------|
-| compile          | Compile the given model(s)                                                |
-| infer            | Run inference using using already compiled model artifacts                |
-| evaluate         | Analyze compiled artifacts, run inference and analyze layer-wise deviations|
-| compile+infer    | compile the model and run inference                                       |
-| compile+analyze  | Compile the model and analyze the outputs of different layers             |
-| compile+evaluate | Compile the model, run inference and compute accuracy                     |
-| analyze          | Analyze TIDL layer outputs, compare them to onnxruntime outputs and write statistics - can be used to identify layer level issues |
-| report           | Generate overall csv report of infer or accuracy                          |
-| surgery          | Perform model surgery - simplifier, layer optimizations, shape inference (included in compile)|
-| extract          | Extract layers or submodules from a model                                 |
 
 
 ## Compiling models for a specific device
@@ -98,7 +90,7 @@ If you need more details, please refer to [this script that downloads tidl_tools
 
 ## Getting Help
 
-For command-specific help, use:
+For basic help, use:
 ```bash
 tidlrunner-cli --help
 ```

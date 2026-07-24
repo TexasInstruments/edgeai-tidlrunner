@@ -30,6 +30,7 @@
 import numpy as np
 
 from . import dataset_base
+from ...settings.settings_help import register_help
 
 
 class RandomDataLoader(dataset_base.DatasetBase):
@@ -102,5 +103,11 @@ class RandomDataLoader(dataset_base.DatasetBase):
         self.kwargs['dataset_info'] = dataset_info
         return dataset_info
 
+
+@register_help(
+    section='dataloader',
+    name='random_dataloader',
+    task_type=None
+)
 def random_dataloader(settings, name, **kwargs):
     return RandomDataLoader(**kwargs)

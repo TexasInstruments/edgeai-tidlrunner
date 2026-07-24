@@ -33,6 +33,7 @@ import PIL
 
 from ....common import utils
 from .robokit_seg import RobokitSegmentation
+from ...settings.settings_help import register_help
 
 
 class RobokitVisualLocalization(RobokitSegmentation):
@@ -43,5 +44,10 @@ class RobokitVisualLocalization(RobokitSegmentation):
         return {'accuracy_localization%': None}
 
 
+@register_help(
+    section='dataloader',
+    name='robokit_visloc_dataloader',
+    task_type='visual-localization'
+)
 def robokit_visloc_dataloader(settings, name, path, label_path=None, **kwargs):
     return RobokitVisualLocalization(path=path, split=os.path.join(path, 'val_img_gt_pair.txt'), num_classes=19, **kwargs)

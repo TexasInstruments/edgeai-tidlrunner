@@ -40,6 +40,7 @@ import shutil
 from colorama import Fore
 from .image_cls import ImageClassificationDataLoader
 from ....common import utils
+from ...settings.settings_help import register_help
 
 
 class ImageNetV2(ImageClassificationDataLoader):
@@ -119,6 +120,11 @@ class ImageNetV2C(ImageNetV2):
         super().__init__(*args, url=url, name=name, **kwargs)
 
 
+@register_help(
+    section='dataloader',
+    name='imagenetv2c_dataloader',
+    task_type='classification'
+)
 def imagenetv2c_dataloader(settings, name, path, label_path=None, variant='imagenetv2c', **kwargs):
     split = kwargs.pop('split', 'val')
     split_file = label_path or os.path.join(path, f'{split}.txt')
