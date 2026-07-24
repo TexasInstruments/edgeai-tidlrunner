@@ -39,24 +39,28 @@ TIDL_TOOLS_TYPE=${TIDL_TOOLS_TYPE} ./setup_runner_pc.sh
 
 
 ######################################################################
-# NVIDIA-HPC-SDK
-NVIDIA_HPC_SDK_VERSION="23.7"
-NVIDIA_HPC_SDK_PATH="/opt/nvidia/hpc_sdk/Linux_x86_64/${NVIDIA_HPC_SDK_VERSION}"
-NVIDIA_HPC_SDK_APT_NAME="nvhpc-23-7"
+# NVIDIA-HPC-SDK is no longer required for TIDL tools 11.02.16.00 onwards
+# so the installation is commented out. 
+#
+# NVIDIA_HPC_SDK_VERSION="23.7"
+# NVIDIA_HPC_SDK_PATH="/opt/nvidia/hpc_sdk/Linux_x86_64/${NVIDIA_HPC_SDK_VERSION}"
+# NVIDIA_HPC_SDK_APT_NAME="nvhpc-23-7"
+#
+# echo "INFO: checking whether NVIDIA_HPC_SDK version ${NVIDIA_HPC_SDK_VERSION} is installed:"
+# if [ ! -d "${NVIDIA_HPC_SDK_PATH}" ]; then
+#   echo "${NVIDIA_HPC_SDK_PATH} does not exist. installing it ..."
+#   # https://developer.nvidia.com/nvidia-hpc-sdk-237-downloads
+#   curl https://developer.download.nvidia.com/hpc-sdk/ubuntu/DEB-GPG-KEY-NVIDIA-HPC-SDK | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-hpcsdk-archive-keyring.gpg
+#   echo 'deb [signed-by=/usr/share/keyrings/nvidia-hpcsdk-archive-keyring.gpg] https://developer.download.nvidia.com/hpc-sdk/ubuntu/amd64 /' | sudo tee /etc/apt/sources.list.d/nvhpc.list
+#   sudo apt-get update -y
+#   # sudo apt install -y "${NVIDIA_HPC_SDK_APT_NAME}-cuda-multi"
+#   sudo apt install -y "${NVIDIA_HPC_SDK_APT_NAME}"
+# else
+#   echo "${NVIDIA_HPC_SDK_PATH} already exists - skipping installation."
+# fi
 
-echo "INFO: checking whether NVIDIA_HPC_SDK version ${NVIDIA_HPC_SDK_VERSION} is installed:"
-if [ ! -d "${NVIDIA_HPC_SDK_PATH}" ]; then
-  echo "${NVIDIA_HPC_SDK_PATH} does not exist. installing it ..."
-  # https://developer.nvidia.com/nvidia-hpc-sdk-237-downloads
-  curl https://developer.download.nvidia.com/hpc-sdk/ubuntu/DEB-GPG-KEY-NVIDIA-HPC-SDK | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-hpcsdk-archive-keyring.gpg
-  echo 'deb [signed-by=/usr/share/keyrings/nvidia-hpcsdk-archive-keyring.gpg] https://developer.download.nvidia.com/hpc-sdk/ubuntu/amd64 /' | sudo tee /etc/apt/sources.list.d/nvhpc.list
-  sudo apt-get update -y
-  # sudo apt install -y "${NVIDIA_HPC_SDK_APT_NAME}-cuda-multi"
-  sudo apt install -y "${NVIDIA_HPC_SDK_APT_NAME}"
-else
-  echo "${NVIDIA_HPC_SDK_PATH} already exists - skipping installation."
-fi
 
+######################################################################
 echo "============================================================"
 echo "INFO: please make sure that NVIDIA GPU drivers are installed."
 echo "INFO: this can be ignored if the latest NVIDIA GPU driver is already installed:"
@@ -65,12 +69,13 @@ echo "Option 1 - for ubuntu only - details are here: https://ubuntu.com/server/d
 echo "  sudo ubuntu-drivers list"
 echo "  sudo ubuntu-drivers install"
 echo "  or a specific version can be installed with additional argument - for example:"
-echo "  sudo ubuntu-drivers install nvidia:570"
+echo "  sudo ubuntu-drivers install nvidia:595"
 echo "Option 2: To install the legacy official flavor:"
-echo "  sudo apt-get install -y nvidia-driver-570"
+echo "  sudo apt update -y"
+echo "  sudo apt install -y nvidia-driver-595"
 echo "Option 3: To install the open flavor - better compatibility for older GPUs"
-echo "  (see more details: https://developer.nvidia.com/datacenter-driver-570-download-archive)"
-echo "  sudo apt-get install -y nvidia-open-570"
+echo "  sudo apt update -y"
+echo "  sudo apt install -y nvidia-driver-595-open"
 echo "============================================================"
 
 
