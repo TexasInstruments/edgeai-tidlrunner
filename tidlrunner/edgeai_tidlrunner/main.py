@@ -36,17 +36,19 @@ import yaml
 import functools
 import subprocess
 import platform
+from colorama import Fore, Back, Style
 
 from edgeai_tidlrunner import rtwrapper, runner
-from edgeai_tidlrunner.start import StartRunner, start_with_proper_environment
+from edgeai_tidlrunner.start import start_with_proper_environment
+from edgeai_tidlrunner.rtwrapper.options import presets
 
 
 def _main(**kwargs):
     print(f"INFO: checking machine architecture...")
     arch = platform.machine()
     print(f"INFO: machine architecture found: {arch}")
-    target_machine = rtwrapper.core.presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION \
-        if 'x86' in arch or 'amd64' in arch else rtwrapper.core.presets.TargetMachineType.TARGET_MACHINE_EVM
+    target_machine = presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION \
+        if 'x86' in arch or 'amd64' in arch else presets.TargetMachineType.TARGET_MACHINE_EVM
 
     target_machine = kwargs.get('target_machine') or target_machine
     package_name = kwargs.pop('package_name', None)

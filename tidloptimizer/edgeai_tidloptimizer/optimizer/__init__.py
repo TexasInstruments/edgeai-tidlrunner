@@ -27,21 +27,5 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from . import common
-
-
-def get_target_modules():
-    return {
-        'common': common,
-    }
-    
-    
-def get_command_pipelines(**kwargs):
-    command_pipelines = {}
-    target_modules = get_target_modules()
-    for module_name, module in target_modules.items():
-        module_pipelines = module.get_command_pipelines(**kwargs)
-        command_pipelines.update({f'{module_name}.{k}':v for k,v in module_pipelines.items()})
-    #
-    return command_pipelines
+from .interfaces import *
 

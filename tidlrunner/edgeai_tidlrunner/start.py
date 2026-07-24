@@ -128,7 +128,7 @@ def start():
     StartRunner.main()
 
 
-def start_with_proper_environment(**kwargs):
+def start_with_proper_environment(START_CLS=StartRunner, **kwargs):
     if len(sys.argv) == 1:
         sys.argv.append('help')
     
@@ -163,7 +163,7 @@ def start_with_proper_environment(**kwargs):
     else:
         # TIDL_TOOLS_PATH is not needed in EVM, but just set it to empty to pass through checks for it
         os.environ['TIDL_TOOLS_PATH'] = os.environ.get('TIDL_TOOLS_PATH', '')
-        StartRunner.main(**kwargs)
+        START_CLS.main(**kwargs)
 
 
 if __name__ == "__main__":

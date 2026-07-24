@@ -42,6 +42,7 @@ from .common.bases.pipeline_base import PipelineBase
 class PipelineManager(PipelineBase):
     ARGS_DICT = {}
     COPY_ARGS = {}
+    PIPELINES = pipelines
 
     def __init__(self, command, pipeline_names, **kwargs):
         super().__init__()
@@ -52,7 +53,7 @@ class PipelineManager(PipelineBase):
         command_kwargs = copy.deepcopy(command_kwargs)
         command_kwargs['common.capture_log'] = capture_log
 
-        command_module = getattr(pipelines, pipeline_name)
+        command_module = getattr(self.PIPELINES, pipeline_name)
 
         runner_obj = command_module(**command_kwargs)
         try:
@@ -186,7 +187,7 @@ class PipelineManager(PipelineBase):
         rest_args_list = []
         run_dict = {}
         for pipeline_idx, pipeline_name in enumerate(self.pipeline_names):
-            command_module = getattr(pipelines, pipeline_name)
+            command_module = getattr(self.PIPELINES, pipeline_name)
             command_args, rest_args = command_module.get_arg_parser().parse_known_args()    
             rest_args_list.append(rest_args)
 

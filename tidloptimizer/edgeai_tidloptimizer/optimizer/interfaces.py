@@ -27,41 +27,51 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-import sys
 import os
+import sys
 import copy
-import argparse
-import ast
 import yaml
+import difflib
+import warnings
 import functools
-import subprocess
-import platform
-from colorama import Fore, Back, Style
+import re
+import importlib
 
-from edgeai_tidlrunner import rtwrapper, runner
-from edgeai_tidlrunner.main import  _main as _tidlrunner_main
-from edgeai_tidlrunner.rtwrapper.options import presets
-from edgeai_tidloptimizer.start import start_with_proper_environment
+from edgeai_tidloptimizer.optimizer import common, manager
 
 
-def _main(**kwargs):
-    print(f"INFO: checking machine architecture...")
-    target_machine = presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION
-    target_machine = kwargs.get('target_machine') or target_machine
-    package_name = kwargs.pop('package_name', None)
-
-    # this is now not a requirement, but only a recommendation - and only in PC
-    if (package_name not in os.path.abspath(sys.executable)) and (target_machine == presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION):
-        print(f'{Back.WHITE}{Fore.YELLOW}WARNING: recommended to use a Python virtual environment with {package_name} in its name. This is to avoid using a wrong Python enviroment.{Style.RESET_ALL}')
-
-    print(f"INFO: setting target_machine to: {target_machine}")
-    start_with_proper_environment(target_machine=target_machine, **kwargs)
+def get_package_names():
+    return ['edgeai_tidlrunner.runner']
 
 
-def main(**kwargs):
-    _main(package_name='tidloptimizer', **kwargs)
+def get_command_pipelines(**kwargs):
+    command_pipelines_dict = common.get_command_pipelines(**kwargs)
+    return command_pipelines_dict
 
 
-if __name__ == "__main__":
-    print(f'INFO: running {__file__} __main__')  
-    _main(package_name='tidloptimizer')
+def get_pipeline(pipeline_name):
+    return common.get_pipeline(pipeline_name)
+
+
+def get_pipeline_manager(command, **kwargs):
+    command_pipelines_dict = get_command_pipelines(**kwargs)
+    supported_pipeline_names = list(command_pipelines_dict.keys())
+    assert command in command_pipelines_dict, f"ERROR: invalid command: {command} - must be one of {supported_pipeline_names}"
+    pipeline_names = command_pipelines_dict[command]
+    return manager.PipelineManager(command, pipeline_names, **kwargs)
+
+
+def run(command=None, **kwargs):
+    """
+    Run the given command with the provided keyword arguments.
+    
+    :param command: The command to run, can be a string or a dictionary.
+    :param kwargs: Additional keyword arguments to pass to the command.
+    :return: The result of the command execution.
+    """
+    if command is None or not isinstance(command, str):
+        raise RuntimeError(f"ERROR: run() got unexpected command {command} with type {type(command)}. Expected str.")
+
+    pipeline_manager = get_pipeline_manager(command)
+    run_dict = pipeline_manager.create_run_dict(**kwargs)
+    return pipeline_manager.run(run_dict)
