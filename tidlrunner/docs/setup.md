@@ -79,6 +79,3 @@ Run this on the EVM to setup on the EVM
 ./setup_runner_evm.sh
 ```
 
-## Audio Models
-
-To run audio inference pipelines — sound classification (VGGish11, YAMNet on UrbanSound8K) and speech enhancement (GTCRN, GCRN on VoiceBank-DEMAND-16k) — see the [Audio Models and Datasets](audio_models_and_datasets.md) guide. 
