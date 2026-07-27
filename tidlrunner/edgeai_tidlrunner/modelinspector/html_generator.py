@@ -28,7 +28,7 @@ import logging
 from typing import Dict, Any, List, Optional
 from pathlib import Path
 
-logging.basicConfig(level=logging.INFO, format='%(message)s')
+logging.basicConfig(level=logging.INFO, format='%(message)s', force=True)
 logger = logging.getLogger(__name__)
 
 
@@ -1327,7 +1327,7 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
     file_size = os.path.getsize(output_path)
     file_size_mb = file_size / (1024 * 1024)
 
-    logger.info(f"Compiled HTML generated successfully")
+    logger.debug(f"Compiled HTML generated successfully")
     logger.debug(f"  File size: {file_size_mb:.2f} MB")
 
     return json_data
@@ -1343,14 +1343,14 @@ def main(json_path, template_path, output_path, activations_json_path=None):
         logger.debug(f"ERROR: Template file not found: {template_path}")
         sys.exit(1)
 
-    logger.info("=" * 70)
-    logger.info("HTML Generator - Generating Visualization")
-    logger.info("=" * 70)
-    logger.info(f"JSON Data:         {json_path}")
-    logger.info(f"Activations Data:  {activations_json_path if activations_json_path else 'None (will show message in HTML)'}")
-    logger.info(f"Template:          {template_path}")
-    logger.info(f"Output HTML:       {output_path}")
-    logger.info("=" * 70)
+    logger.debug("-" * 70)
+    logger.debug("HTML Generator - Generating Visualization")
+    logger.debug("-" * 70)
+    logger.debug(f"JSON Data:         {json_path}")
+    logger.debug(f"Activations Data:  {activations_json_path if activations_json_path else 'None (will show message in HTML)'}")
+    logger.debug(f"Template:          {template_path}")
+    logger.debug(f"Output HTML:       {output_path}")
+    logger.debug("-" * 70)
 
     try:
         json_data = load_json_data(json_path)
@@ -1377,7 +1377,7 @@ def main(json_path, template_path, output_path, activations_json_path=None):
 
         logger.debug("\n" + "=" * 70)
         logger.debug("SUCCESS! HTML visualization generated.")
-        logger.info("=" * 70)
+        logger.debug("-" * 70)
         logger.debug(f"\nOpen this file in your browser:")
         logger.debug(f"  {os.path.abspath(output_path)}")
         logger.debug("\nFeatures:")
