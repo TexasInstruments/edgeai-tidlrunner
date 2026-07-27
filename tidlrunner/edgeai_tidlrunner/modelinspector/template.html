@@ -4445,7 +4445,7 @@ main {
                     <div id="cycles-chart-section" class="cycles-chart-section" style="margin-top: 0; padding-top: 0; border-top: none;">
                         <div class="perf-chart-header">
                             <h3 id="cycles-chart-title" title="Total layer cycles, IO cycles, and kernel-only cycles per TIDL layer shown side by side.">
-                                <span id="cycles-label-text">Cycles Per Layer (Roughly Approximated)</span>
+                                <span id="cycles-label-text">Cycles Per Layer (Rough Estimates)</span>
                             </h3>
                             <div class="perf-chart-controls">
                                 <div class="memory-toggle-group">
@@ -11466,9 +11466,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const cyclesSec = document.getElementById('cycles-chart-section');
         if (cyclesSec) cyclesSec.style.display = PA.has_cycles ? '' : 'none';
 
-        // Cycles label: show "(Roughly Approximated)" for PC, no suffix for EVM
+        // Cycles label: show "(Rough Estimates)" for PC, no suffix for EVM
         const cyclesLabel = document.getElementById('cycles-label-text');
-        if (cyclesLabel) cyclesLabel.textContent = isEVM ? 'Cycles Per Layer' : 'Cycles Per Layer (Roughly Approximated)';
+        if (cyclesLabel) cyclesLabel.textContent = isEVM ? 'Cycles Per Layer' : 'Cycles Per Layer (Rough Estimates)';
 
         // Cycles toggle buttons:
         // - IO button: dmaPipeupCycles is DMA setup only, not true IO — hide on EVM.
