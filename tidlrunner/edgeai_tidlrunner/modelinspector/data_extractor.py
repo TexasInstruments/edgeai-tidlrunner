@@ -29,7 +29,7 @@ import numpy as np
 from pathlib import Path
 from typing import Dict, List, Any, Tuple, Optional
 
-logging.basicConfig(level=logging.INFO, format='%(message)s')
+logging.basicConfig(level=logging.INFO, format='%(message)s', force=True)
 logger = logging.getLogger(__name__)
 
 # Python 3.10+ compatibility: collections.Callable moved to collections.abc.Callable
@@ -45,8 +45,8 @@ try:
     HAS_GRAPHSURGEON = True
 except ImportError:
     HAS_GRAPHSURGEON = False
-    logger.warning(" onnx-graphsurgeon not installed. Using raw ONNX API (slower).")
-    logger.debug("  Install with: pip install onnx-graphsurgeon")
+    logger.warning("WARNING: onnx-graphsurgeon not installed. Using raw ONNX API (slower).")
+    logger.warning("WARNING: Install with: pip install onnx-graphsurgeon")
 
 
 class ActivationDataParser:
@@ -1986,7 +1986,7 @@ class ONNXParser:
             self.gs_graph = gs.import_onnx(self.model)
             logger.debug(f"Model loaded with GraphSurgeon (nodes: {len(self.gs_graph.nodes)}, tensors: {len(self.gs_graph.tensors())})")
         else:
-            logger.info("Model loaded with raw ONNX API")
+            logger.debug("Model loaded with raw ONNX API")
 
     def get_tensor_shape(self, tensor) -> List:
         """Extract shape from GraphSurgeon tensor or ONNX ValueInfo
@@ -2739,7 +2739,7 @@ Note: Model Inspector cannot parse SVG format - HTML format is required.
             discovered['activation_yaml'] = mapping_files[0]
         logger.debug(f"[FOUND] activation mapping: {os.path.relpath(discovered['activation_yaml'])}")
     else:
-        logger.warning(" Activation mapping YAML not found (optional)")
+        logger.info("INFO: Activation mapping YAML not found (optional)")
 
     logger.debug("=" * 70)
     return discovered
@@ -3428,7 +3428,7 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
             metrics_parser = MetricsParser(metrics_xlsx_path)
             metrics_data = metrics_parser.get_metrics()
         else:
-            logger.warning(" No analyze.xlsx file found")
+            logger.info("INFO: No analyze.xlsx file from inspect is found (optional)")
 
         logger.debug("\n[7/8] Loading configuration and performance data...")
         config_data = load_config_data(model_dir_path)
@@ -3848,7 +3848,7 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
         logger.debug(f"  Model structure only (no activation data)")
 
         logger.debug("\n" + "=" * 70)
-        logger.info("SUCCESS! Data extraction complete - Unified Schema v1.0")
+        logger.debug("SUCCESS! Data extraction complete - Unified Schema v1.0")
         logger.debug("=" * 70)
         logger.debug(f"\nExtracted data summary:")
         logger.debug(f"  - ONNX layers: {len(combined_data['model']['onnx']['layers'])}")
