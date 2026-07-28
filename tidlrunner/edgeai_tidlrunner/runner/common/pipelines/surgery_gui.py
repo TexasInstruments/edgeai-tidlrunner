@@ -59,7 +59,7 @@ class ModelSurgeryGUI(common_base.CommonPipelineBase):
             print(f'INFO: clearing run_dir folder before compile: {output_path}')
             shutil.rmtree(output_path, ignore_errors=True)
         #
-        from osrt_model_tools.onnx_tools.tidl_onnx_model_optimizer.optimize import get_optimizers, optimize
+        from tidl_onnx_model_optimizer.optimize import get_optimizers, optimize
         optimize(model_path, output_path, **kwargs)
 
 
@@ -133,9 +133,9 @@ class ModelSurgeryGUI(common_base.CommonPipelineBase):
             else:
                 st.session_state.model_path = os.path.join(folder_path, selected_path)
 
-        from osrt_model_tools.onnx_tools.tidl_onnx_model_optimizer.optimize import get_optimizers, optimize
+        from tidl_onnx_model_optimizer.optimize import get_optimizers, optimize
         try:
-            from  osrt_model_tools.onnx_tools.tidl_onnx_model_optimizer.optimize import print_node_count_table
+            from  tidl_onnx_model_optimizer.optimize import print_node_count_table
         except:
             print("WARNING: print_node_count_table is not found in osrt_model_tools")
             print_node_count_table = None

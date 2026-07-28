@@ -111,7 +111,7 @@ class ModelSurgery(common_base.CommonPipelineBase):
             #
             if not model_surgery:
                 # model_surgery is false, but shape_inference and input_optimization may still be required
-                from osrt_model_tools.onnx_tools import tidl_onnx_model_optimizer
+                import tidl_onnx_model_optimizer
                 custom_optimizers = {
                     'shape_inference_mode': kwargs.get('shape_inference_mode', 'pre'),
                     'simplify_mode': kwargs.get('simplify_mode', None),
@@ -123,7 +123,7 @@ class ModelSurgery(common_base.CommonPipelineBase):
                 if isinstance(model_surgery, dict):
                     kwargs.update(model_surgery)
                 #
-                from osrt_model_tools.onnx_tools import tidl_onnx_model_optimizer
+                import tidl_onnx_model_optimizer
                 tidl_onnx_model_optimizer.optimize(model_path, model_path, **kwargs)
             #
             # check onnx model IR version
