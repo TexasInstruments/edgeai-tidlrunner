@@ -231,15 +231,11 @@ These dataloaders are defined in the [dataloaders module](../../tidlrunner/edgea
 | dataloader | ycbv_object_6d_pose_dataloader | 6d-pose | path | label_path |  |
 
 
-# Audio Models and Datasets
-To run audio inference pipelines — sound classification (VGGish11, YAMNet on UrbanSound8K) and speech enhancement (GTCRN, GCRN on VoiceBank-DEMAND-16k) — see the [Audio Models and Datasets](audio_models_and_datasets.md) guide. 
-
-
 # Advanced Documentation (for experts)
 
-[Generic datasets](docs/generic_datasets.md): More details on some of the generic dataset formats supported.
+[Generic datasets](./generic_datasets.md): More details on some of the generic dataset formats supported.
 
-[Deep dive](docs/deep_dive.md) documentation for internal details.
+[Deep dive](./deep_dive.md) documentation for internal details.
 
 
 # Help & Support
