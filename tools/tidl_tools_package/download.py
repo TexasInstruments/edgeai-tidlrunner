@@ -405,7 +405,7 @@ def download_tidl_tools_package_11_02_01(install_path, tools_version, tools_type
 
     print(f"INFO: you have chosen to install tidl_tools version: {tidl_tools_release_id}")
     print(f"INFO: models compiled with a specific version of tidl_tools needs a compatible TIDL firmware in the SDK on device")
-    print(f"INFO: check the version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/version_compatibility_table.md")
+    print(f"INFO: check the version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/sdk_version_compatibility_table.md")
     print(f"INFO: and see if you need to update the TIDL firmware on device: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/scripts/setup/README.md")
     time.sleep(5)
 
@@ -447,7 +447,7 @@ def download_tidl_tools_package_11_02(install_path, tools_version, tools_type, t
 
     print(f"INFO: you have chosen to install tidl_tools version: {tidl_tools_release_id}")
     print(f"INFO: models compiled with a specific version of tidl_tools needs a compatible TIDL firmware in the SDK on device")
-    print(f"INFO: check the version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/version_compatibility_table.md")
+    print(f"INFO: check the version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/sdk_version_compatibility_table.md")
     print(f"INFO: and see if you need to update the TIDL firmware on device: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/scripts/setup/README.md")
     time.sleep(5)
 
@@ -488,7 +488,7 @@ def download_tidl_tools_package_11_01_01(install_path, tools_version, tools_type
 
     print(f"INFO: you have chosen to install tidl_tools version: {tidl_tools_release_id} - this is a patch release tidl_tools for 11.1 SDK and will need firmware update on SDK/device (odd number in 3rd field indicates patch release for previous SDK)")
     print(f"INFO: models compiled with a specific version of tidl_tools needs a compatible TIDL firmware in the SDK on device")
-    print(f"INFO: check the version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/version_compatibility_table.md")
+    print(f"INFO: check the version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/sdk_version_compatibility_table.md")
     print(f"INFO: and see if you need to update the TIDL firmware on device: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/scripts/setup/README.md")
     time.sleep(5)
 
@@ -528,7 +528,7 @@ def download_tidl_tools_package_11_01(install_path, tools_version, tools_type, t
 
     print(f"INFO: you have chosen to install tidl_tools version: {tidl_tools_release_id}")
     print(f"INFO: models compiled with a specific version of tidl_tools needs a compatible TIDL firmware in the SDK on device")
-    print(f"INFO: check the version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/version_compatibility_table.md")
+    print(f"INFO: check the version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/sdk_version_compatibility_table.md")
     print(f"INFO: and see if you need to update the TIDL firmware on device: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/scripts/setup/README.md")
     time.sleep(5)
 
@@ -568,7 +568,7 @@ def download_tidl_tools_package_11_00(install_path, tools_version, tools_type, t
 
     print(f"INFO: you have chosen to install tidl_tools version: {tidl_tools_release_id}")
     print(f"INFO: models compiled with a specific version of tidl_tools needs a compatible TIDL firmware in the SDK on device")
-    print(f"INFO: check the version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/version_compatibility_table.md")
+    print(f"INFO: check the version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/sdk_version_compatibility_table.md")
     print(f"INFO: and see if you need to update the TIDL firmware on device: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/scripts/setup/README.md")
     time.sleep(5)
 
