@@ -201,11 +201,13 @@ class PipelineManager(PipelineBase):
             if config_path:
                 configs, is_aggregate_config_file = self._get_configs(config_path, **kwargs_with_defaults)
                 if is_aggregate_config_file:
-                    print(f'INFO: aggregate config file given - config_path: {config_path}')
+                    if pipeline_idx == 0:
+                        print(f'INFO: aggregate config file given - config_path: {config_path}')
 
             else:
                 if model_id is None:
-                    print('WARNING: model_id is not given, generating randomly')
+                    if pipeline_idx == 0:
+                        print('WARNING: model_id is not given, generating randomly')
                     model_id = f"{pipeline_type}-" + utils.generate_unique_id(model_path, num_characters=8) if model_path else "x-x"
 
                 configs = {model_id:{'session.model_id':model_id}}
