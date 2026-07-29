@@ -45,7 +45,7 @@ import time
 
 ###############################################################################
 TIDL_TOOLS_TYPE_DEFAULT = "cpu"
-TIDL_TOOLS_VERSION_DEFAULT = "11.2.1"
+TIDL_TOOLS_VERSION_DEFAULT = "11.2.x"
 
 
 TARGET_DEVICE_MAP = {
@@ -394,12 +394,12 @@ def download_tidl_tools(download_url, download_path, **tidl_version_dict):
 
 
 ###############################################################################
-def download_tidl_tools_package_11_02_01(install_path, tools_version, tools_type, tidl_tools_download_base, gcc_arm_download_base, c7x_compiler_download_base):
-    """Download TIDL tools package version 11.2.1"""
-    expected_tools_version = ("11.2.1",)
+def download_tidl_tools_package_11_02_x(install_path, tools_version, tools_type, tidl_tools_download_base, gcc_arm_download_base, c7x_compiler_download_base):
+    """Download TIDL tools package version 11.2.x"""
+    expected_tools_version = ("11.2.x",)
     assert tools_version in expected_tools_version, f"ERROR: incorrect tools_version passed:{tools_version} - expected:{expected_tools_version}"
     tidl_tools_version_name = tools_version
-    tidl_tools_release_label = "r11.2.1"
+    tidl_tools_release_label = "r11.2.x"
     tidl_tools_release_id = "11_02_16_00"
     c7x_compiler_version = "5.0.0.LTS"  # Needed for TVM (needs update based on release version)
 
@@ -416,11 +416,11 @@ def download_tidl_tools_package_11_02_01(install_path, tools_version, tools_type
     tidl_tools_type_suffix = ("_gpu" if isinstance(tools_type, str) and "gpu" in tools_type else "")
     target_soc_download_urls = {
         "AM62A": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM62A",
-        "J722S": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM67A",
-        "J721E": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/TDA4VM",
-        "J721S2": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM68A",
-        "J742S2": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
-        "J784S4": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
+        "J722S": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/J722S",
+        "J721E": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/J721E",
+        "J721S2": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/J721S2",
+        "J742S2": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/J784S4", # Note: J742S2 and J784S4 share the same tools
+        "J784S4": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/J784S4",
     }
     tidl_version_dict = dict(version=tidl_tools_version_name, release_label=tidl_tools_release_label,
                              release_id=tidl_tools_release_id, tools_type=tidl_tools_type_suffix)
@@ -431,7 +431,7 @@ def download_tidl_tools_package_11_02_01(install_path, tools_version, tools_type
         download_tidl_tools(download_url, download_path, **tidl_version_dict, target_device=target_soc)
     
     _make_target_device_symlinks(tidl_tools_package_bin_path, TARGET_DEVICE_MAP)
-    requirements_file = os.path.realpath(os.path.join(os.path.dirname(__file__), f'requirements/requirements_11.2.1.txt'))
+    requirements_file = os.path.realpath(os.path.join(os.path.dirname(__file__), f'requirements/requirements_11.2.x.txt'))
     return requirements_file
 
 
@@ -458,11 +458,11 @@ def download_tidl_tools_package_11_02(install_path, tools_version, tools_type, t
     tidl_tools_type_suffix = ("_gpu" if isinstance(tools_type, str) and "gpu" in tools_type else "")
     target_soc_download_urls = {
         "AM62A": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM62A",
-        "J722S": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM67A",
-        "J721E": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/TDA4VM",
-        "J721S2": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM68A",
-        "J742S2": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
-        "J784S4": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
+        "J722S": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/J722S",
+        "J721E": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/J721E",
+        "J721S2": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/J721S2",
+        "J742S2": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/J784S4", # Note: J742S2 and J784S4 share the same tools
+        "J784S4": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/J784S4",
     }
     tidl_version_dict = dict(version=tidl_tools_version_name, release_label=tidl_tools_release_label,
                              release_id=tidl_tools_release_id, tools_type=tidl_tools_type_suffix)
@@ -478,12 +478,12 @@ def download_tidl_tools_package_11_02(install_path, tools_version, tools_type, t
 
 
 ###############################################################################
-def download_tidl_tools_package_11_01_01(install_path, tools_version, tools_type, tidl_tools_download_base, gcc_arm_download_base, c7x_compiler_download_base):
+def download_tidl_tools_package_11_01_x(install_path, tools_version, tools_type, tidl_tools_download_base, gcc_arm_download_base, c7x_compiler_download_base):
     """Download TIDL tools package version 11.01."""
-    expected_tools_version = ("11.1.1",)
+    expected_tools_version = ("11.1.x",)
     assert tools_version in expected_tools_version, f"ERROR: incorrect tools_version passed:{tools_version} - expected:{expected_tools_version}"
     tidl_tools_version_name = tools_version
-    tidl_tools_release_label = "r11.1.1"
+    tidl_tools_release_label = "r11.1.x"
     tidl_tools_release_id = "11_02_17_00"
 
     print(f"INFO: you have chosen to install tidl_tools version: {tidl_tools_release_id} - this is a patch release tidl_tools for 11.1 SDK and will need firmware update on SDK/device (odd number in 3rd field indicates patch release for previous SDK)")
@@ -498,11 +498,11 @@ def download_tidl_tools_package_11_01_01(install_path, tools_version, tools_type
     tidl_tools_type_suffix = ("_gpu" if isinstance(tools_type, str) and "gpu" in tools_type else "")
     target_soc_download_urls = {
         "AM62A": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM62A",
-        "J722S": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM67A",
-        "J721E": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/TDA4VM",
-        "J721S2": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM68A",
-        "J742S2": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
-        "J784S4": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
+        "J722S": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/J722S",
+        "J721E": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/J721E",
+        "J721S2": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/J721S2",
+        "J742S2": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/J784S4", # Note: J742S2 and J784S4 share the same tools
+        "J784S4": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/J784S4",
     }
     tidl_version_dict = dict(version=tidl_tools_version_name, release_label=tidl_tools_release_label,
                              release_id=tidl_tools_release_id, tools_type=tidl_tools_type_suffix)
@@ -513,7 +513,7 @@ def download_tidl_tools_package_11_01_01(install_path, tools_version, tools_type
         download_tidl_tools(download_url, download_path, **tidl_version_dict, target_device=target_soc)
     
     _make_target_device_symlinks(tidl_tools_package_bin_path, TARGET_DEVICE_MAP)
-    requirements_file = os.path.realpath(os.path.join(os.path.dirname(__file__), f'requirements/requirements_11.1.txt'))
+    requirements_file = os.path.realpath(os.path.join(os.path.dirname(__file__), f'requirements/requirements_11.1.x.txt'))
     return requirements_file
 
 
@@ -538,11 +538,11 @@ def download_tidl_tools_package_11_01(install_path, tools_version, tools_type, t
     tidl_tools_type_suffix = ("_gpu" if isinstance(tools_type, str) and "gpu" in tools_type else "")
     target_soc_download_urls = {
         "AM62A": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM62A",
-        "J722S": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM67A",
-        "J721E": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/TDA4VM",
-        "J721S2": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM68A",
-        "J742S2": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
-        "J784S4": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
+        "J722S": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/J722S",
+        "J721E": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/J721E",
+        "J721S2": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/J721S2",
+        "J742S2": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/J784S4", # Note: J742S2 and J784S4 share the same tools
+        "J784S4": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/J784S4",
     }
     tidl_version_dict = dict(version=tidl_tools_version_name, release_label=tidl_tools_release_label,
                              release_id=tidl_tools_release_id, tools_type=tidl_tools_type_suffix)
@@ -678,9 +678,9 @@ def download_tidl_tools_package_10_00(install_path, tools_version, tools_type, t
 
 ###############################################################################
 down_tidl_tools_package_dict = {
-    "11.2.1": download_tidl_tools_package_11_02_01,
+    "11.2.x": download_tidl_tools_package_11_02_x,
     "11.2": download_tidl_tools_package_11_02,
-    "11.1.1": download_tidl_tools_package_11_01_01,
+    "11.1.x": download_tidl_tools_package_11_01_x,
     "11.1": download_tidl_tools_package_11_01,
     "11.0": download_tidl_tools_package_11_00,
     "10.1": download_tidl_tools_package_10_01,
