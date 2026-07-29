@@ -275,18 +275,18 @@ class BboxObject6dPoseReformat():
 
 
 class Object6dPoseImageSave:
-    def __init__(self, save_output=False, num_output_frames=None, show_output=False):
+    def __init__(self, save_output=False, save_output_frames=None, show_output=False):
         self.cadmodels = None
         self.camera_matrix = None
         self.class_to_cuboid = None
         self.color_map = None
-        self.num_output_frames = num_output_frames
+        self.save_output_frames = save_output_frames
         self.save_output = save_output
         self.output_frame_idx = 0
         self.show_output = show_output
         
     def __call__(self, result, info_dict):
-        if self.output_frame_idx >= self.num_output_frames:
+        if self.output_frame_idx >= self.save_output_frames:
             self.output_frame_idx += 1
             return result, info_dict
         #

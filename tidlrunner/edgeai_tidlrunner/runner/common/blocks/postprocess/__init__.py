@@ -101,7 +101,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     def create_transforms_classification(cls, settings, save_output=False, save_output_frames=50, show_output=False, **kwargs):
         transforms_list = [SqueezeAxis(), ArgMax(axis=-1)]
         if save_output or show_output:
-            transforms_list += [ClassificationImageSave(save_output=save_output, num_output_frames=save_output_frames, show_output=show_output)]
+            transforms_list += [ClassificationImageSave(save_output=save_output, save_output_frames=save_output_frames, show_output=show_output)]
         #
         return transforms_list, dict(**kwargs)
 
@@ -168,11 +168,11 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
 
         if save_output and save_output_frames:
             if keypoint:
-                transforms_list += [HumanPoseImageSave(save_output_frames, show_output=show_output)]
+                transforms_list += [HumanPoseImageSave(save_output_frames, save_output_frames=save_output_frames, show_output=show_output)]
             elif object6dpose:
-                transforms_list += [Object6dPoseImageSave(save_output=save_output, num_output_frames=save_output_frames, show_output=show_output)]
+                transforms_list += [Object6dPoseImageSave(save_output=save_output, save_output_frames=save_output_frames, show_output=show_output)]
             else:
-                transforms_list += [DetectionImageSave(save_output=save_output, num_output_frames=save_output_frames, show_output=show_output)]
+                transforms_list += [DetectionImageSave(save_output=save_output, save_output_frames=save_output_frames, show_output=show_output)]
         #
         return transforms_list, dict(reshape_list=reshape_list, detection_threshold=detection_threshold,
                                     formatter=formatter, resize_with_pad=resize_with_pad,
@@ -229,7 +229,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
                                      SegmentationImageResize(),
                                      SegmentationImagetoBytes()]
         if save_output:
-            transforms_list += [SegmentationImageSave(save_output=save_output, num_output_frames=save_output_frames, show_output=show_output)]
+            transforms_list += [SegmentationImageSave(save_output=save_output, save_output_frames=save_output_frames, show_output=show_output)]
         #
         return transforms_list, dict(data_layout=data_layout, with_argmax=with_argmax, **kwargs)
 
@@ -252,7 +252,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
                            KeypointsProject2Image(use_udp=with_udp)]
 
         if save_output:
-            transforms_list += [HumanPoseImageSave(save_output=save_output, num_output_frames=save_output_frames, show_output=show_output)]
+            transforms_list += [HumanPoseImageSave(save_output=save_output, save_output_frames=save_output_frames, show_output=show_output)]
         #
         return transforms_list, dict(data_layout=data_layout, with_udp=with_udp, **kwargs)
 
@@ -269,7 +269,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
                            NPTensorToImage(data_layout=data_layout),
                            DepthImageResize()]
         if save_output:
-            transforms_list += [DepthImageSave(save_output=save_output, num_output_frames=save_output_frames, show_output=show_output)]
+            transforms_list += [DepthImageSave(save_output=save_output, save_output_frames=save_output_frames, show_output=show_output)]
         #
         return transforms_list, dict(data_layout=data_layout, **kwargs)
 
@@ -290,7 +290,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         
         # To REVISIT!
         #if save_output:
-        #    transforms_list += [DepthImageSave(save_output=save_output, num_output_frames=save_output_frames, show_output=show_output)]
+        #    transforms_list += [DepthImageSave(save_output=save_output, save_output_frames=save_output_frames, show_output=show_output)]
         return transforms_list, dict(data_layout=data_layout, **kwargs)
 
     @classmethod
@@ -313,7 +313,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         if save_output:
             # To be updated
             try:
-                postprocess_bev_detection_base += [BEVImageSave(save_output=save_output, num_output_frames=save_output_frames, show_output=show_output,
+                postprocess_bev_detection_base += [BEVImageSave(save_output=save_output, save_output_frames=save_output_frames, show_output=show_output,
                                                                 score_threshold=0.5,
                                                                 mode='frame')]
             except Exception as message:
@@ -338,7 +338,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         if save_output:
             # To be updated
             try:
-                postprocess_bev_detection_bevdet += [BEVImageSave(save_output=save_output, num_output_frames=save_output_frames, show_output=show_output,
+                postprocess_bev_detection_bevdet += [BEVImageSave(save_output=save_output, save_output_frames=save_output_frames, show_output=show_output,
                                                                 score_threshold=0.5,
                                                                 mode='frame')]
             except Exception as message:
@@ -357,7 +357,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         if save_output:
             # To be updated
             try:
-                postprocess_fcos3d += [BEVImageSave(save_output=save_output, num_output_frames=save_output_frames, show_output=show_output,
+                postprocess_fcos3d += [BEVImageSave(save_output=save_output, save_output_frames=save_output_frames, show_output=show_output,
                                                     score_threshold=0.2,
                                                     mode='mv_image')]
             except Exception as message:
@@ -383,7 +383,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
         if save_output:
             # To be updated
             try:
-                postprocess_bev_detection_fastbev += [BEVImageSave(save_output=save_output, num_output_frames=save_output_frames, show_output=show_output,
+                postprocess_bev_detection_fastbev += [BEVImageSave(save_output=save_output, save_output_frames=save_output_frames, show_output=show_output,
                                                                     score_threshold=0.5,
                                                                     mode='frame')]
             except Exception as message:

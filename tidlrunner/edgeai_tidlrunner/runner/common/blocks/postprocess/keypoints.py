@@ -985,7 +985,7 @@ class BboxKeypointsConfReformat():
 
 
 class HumanPoseImageSave:
-    def __init__(self, save_output=False, num_output_frames=None, show_output=False):
+    def __init__(self, save_output=False, save_output_frames=None, show_output=False):
         self.pose_nms_thr = 0.9
         self.kpt_score_thr = 0.5
         self.palette = np.array([[255, 128, 0], [255, 153, 51], [255, 178, 102],
@@ -999,7 +999,7 @@ class HumanPoseImageSave:
         self.thickness = 2
         self.font_scale = 0.5
         self.show_keypoint_weight = False
-        self.num_output_frames = num_output_frames
+        self.save_output_frames = save_output_frames
         self.output_frame_idx = 0
         self.save_output = save_output
         self.show_output = show_output
@@ -1169,7 +1169,7 @@ class HumanPoseImageSave:
         self.skeleton = info_dict['dataset_info']['categories'][0]['skeleton']
         self.pose_limb_color = self.palette[[16]*len(self.skeleton)]
         self.pose_kpt_color = self.palette[[16]*num_keypoints]
-        if self.output_frame_idx >= self.num_output_frames:
+        if self.output_frame_idx >= self.save_output_frames:
             self.output_frame_idx += 1
             return result, info_dict
         #

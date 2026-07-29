@@ -2112,8 +2112,8 @@ class UpdateTemporalQueue():
 
 
 class BEVImageSave():
-    def __init__(self, save_output=False, num_output_frames=None, show_output=False, score_threshold=0.2, mode='frame'):
-        self.num_output_frames = num_output_frames
+    def __init__(self, save_output=False, save_output_frames=None, show_output=False, score_threshold=0.2, mode='frame'):
+        self.save_output_frames = save_output_frames
         self.output_frame_idx = 0
         self.score_threshold = score_threshold
         self.max_label= 10
@@ -2175,7 +2175,7 @@ class BEVImageSave():
 
 
     def __call__(self, detections, info_dict):
-        if self.output_frame_idx >= self.num_output_frames:
+        if self.output_frame_idx >= self.save_output_frames:
             self.output_frame_idx += 1
             return detections, info_dict
 

@@ -245,20 +245,20 @@ class IgnoreIndex():
 
 
 class ClassificationImageSave():
-    def __init__(self, save_output=False, num_output_frames=None, show_output=False):
+    def __init__(self, save_output=False, save_output_frames=None, show_output=False):
         self.thickness = 2
         self.thickness_txt = 1
         self.dataset_info = None
         self.dataset_categories_map = None
         self.label_offset_pred = None
-        self.num_output_frames = num_output_frames
+        self.save_output_frames = save_output_frames
         self.output_frame_idx = 0
         self.color_map = None
         self.save_output = save_output
         self.show_output = show_output
 
     def __call__(self, output, info_dict):
-        if self.output_frame_idx >= self.num_output_frames:
+        if self.output_frame_idx >= self.save_output_frames:
             self.output_frame_idx += 1
             return output, info_dict
         #
@@ -355,9 +355,9 @@ class SegmentationImagetoBytes():
 
 
 class SegmentationImageSave():
-    def __init__(self, save_output=False, num_output_frames=None, num_classes=None, show_output=False):
+    def __init__(self, save_output=False, save_output_frames=None, num_classes=None, show_output=False):
         self.num_classes = num_classes
-        self.num_output_frames = num_output_frames
+        self.save_output_frames = save_output_frames
         self.output_frame_idx = 0
         self.color_map = None
         self.palette = None
@@ -375,7 +375,7 @@ class SegmentationImageSave():
         self.palette = np.array(self.palette)
 
     def __call__(self, tensor, info_dict):
-        if self.output_frame_idx >= self.num_output_frames:
+        if self.output_frame_idx >= self.save_output_frames:
             self.output_frame_idx += 1
             return tensor, info_dict
         #
@@ -636,20 +636,20 @@ class LogitsToLabelScore():
     
 
 class DetectionImageSave():
-    def __init__(self, save_output=False, num_output_frames=None, show_output=False):
+    def __init__(self, save_output=False, save_output_frames=None, show_output=False):
         self.thickness = 2
         self.thickness_txt = 1
         self.dataset_info = None
         self.dataset_categories_map = None
         self.label_offset_pred = None
-        self.num_output_frames = num_output_frames
+        self.save_output_frames = save_output_frames
         self.output_frame_idx = 0
         self.color_map = None
         self.save_output = save_output
         self.show_output = show_output
 
     def __call__(self, bbox, info_dict):
-        if self.output_frame_idx >= self.num_output_frames:
+        if self.output_frame_idx >= self.save_output_frames:
             self.output_frame_idx += 1
             return bbox, info_dict
         #
@@ -774,8 +774,8 @@ class DepthImageResize():
 
 
 class DepthImageSave():
-    def __init__(self, save_output=False, num_output_frames=None, show_output=False):
-        self.num_output_frames = num_output_frames
+    def __init__(self, save_output=False, save_output_frames=None, show_output=False):
+        self.save_output_frames = save_output_frames
         self.output_frame_idx = 0
         self.save_output = save_output
         self.show_output = show_output
@@ -820,7 +820,7 @@ class DepthImageSave():
             image.tofile(file)
 
     def _call_(self, result, info_dict):
-        if self.output_frame_idx >= self.num_output_frames:
+        if self.output_frame_idx >= self.save_output_frames:
             self.output_frame_idx += 1
             return result, info_dict
         #
