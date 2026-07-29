@@ -45,7 +45,7 @@ import time
 
 ###############################################################################
 TIDL_TOOLS_TYPE_DEFAULT = "cpu"
-TIDL_TOOLS_VERSION_DEFAULT = "11.2.x"
+TIDL_TOOLS_VERSION_DEFAULT = "11.1.x"
 
 
 TARGET_DEVICE_MAP = {

@@ -31,7 +31,7 @@
 
 ######################################################################
 # change the default here if needed - supported options: 11.2.x 11.2 11.1.x 11.1 11.0 10.1 10.0
-TIDL_TOOLS_VERSION=${TIDL_TOOLS_VERSION-"11.2.x"}
+TIDL_TOOLS_VERSION=${TIDL_TOOLS_VERSION-"11.1.x"}
 
 # change the default here if needed - supported options: cpu gpu
 # if you are invoking the script setup_runner_pc_gpu.sh, 
