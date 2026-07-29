@@ -70,7 +70,7 @@ echo "Option 2: To install the legacy official flavor:"
 echo "  sudo apt-get install -y nvidia-driver-570"
 echo "Option 3: To install the open flavor - better compatibility for older GPUs"
 echo "  (see more details: https://developer.nvidia.com/datacenter-driver-570-download-archive)"
-echo "  sudo apt-get install -y nvidia-open-570"
+echo "  sudo apt-get install -y nvidia-driver-570-open"
 echo "============================================================"
 
 

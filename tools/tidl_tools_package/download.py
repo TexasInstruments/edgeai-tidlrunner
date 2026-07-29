@@ -405,7 +405,7 @@ def download_tidl_tools_package_11_02(install_path, tools_version, tools_type, t
 
     print(f"INFO: you have chosen to install tidl_tools version: {tidl_tools_release_id}")
     print(f"INFO: models compiled with a specific version of tidl_tools needs a compatible TIDL firmware in the SDK on device")
-    print(f"INFO: check the version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/version_compatibility_table.md")
+    print(f"INFO: check the version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/sdk_version_compatibility_table.md")
     print(f"INFO: and see if you need to update the TIDL firmware on device: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/scripts/setup/README.md")
     time.sleep(5)
 
@@ -436,17 +436,17 @@ def download_tidl_tools_package_11_02(install_path, tools_version, tools_type, t
 
 
 ###############################################################################
-def download_tidl_tools_package_11_01_01(install_path, tools_version, tools_type, tidl_tools_download_base, gcc_arm_download_base, c7x_compiler_download_base):
+def download_tidl_tools_package_11_01_x(install_path, tools_version, tools_type, tidl_tools_download_base, gcc_arm_download_base, c7x_compiler_download_base):
     """Download TIDL tools package version 11.01."""
-    expected_tools_version = ("11.1.1",)
+    expected_tools_version = ("11.1.x",)
     assert tools_version in expected_tools_version, f"ERROR: incorrect tools_version passed:{tools_version} - expected:{expected_tools_version}"
     tidl_tools_version_name = tools_version
-    tidl_tools_release_label = "r11.1.1"
+    tidl_tools_release_label = "r11.1.x"
     tidl_tools_release_id = "11_02_17_00"
 
     print(f"INFO: you have chosen to install tidl_tools version: {tidl_tools_release_id} - this is a patch release tidl_tools for 11.1 SDK and will need firmware update on SDK/device (odd number in 3rd field indicates patch release for previous SDK)")
     print(f"INFO: models compiled with a specific version of tidl_tools needs a compatible TIDL firmware in the SDK on device")
-    print(f"INFO: check the version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/version_compatibility_table.md")
+    print(f"INFO: check the version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/sdk_version_compatibility_table.md")
     print(f"INFO: and see if you need to update the TIDL firmware on device: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/scripts/setup/README.md")
     time.sleep(5)
 
@@ -471,7 +471,7 @@ def download_tidl_tools_package_11_01_01(install_path, tools_version, tools_type
         download_tidl_tools(download_url, download_path, **tidl_version_dict, target_device=target_soc)
     
     _make_target_device_symlinks(tidl_tools_package_bin_path, TARGET_DEVICE_MAP)
-    requirements_file = os.path.realpath(os.path.join(os.path.dirname(__file__), f'requirements/requirements_11.1.txt'))
+    requirements_file = os.path.realpath(os.path.join(os.path.dirname(__file__), f'requirements/requirements_11.1.x.txt'))
     return requirements_file
 
 
@@ -486,7 +486,7 @@ def download_tidl_tools_package_11_01(install_path, tools_version, tools_type, t
 
     print(f"INFO: you have chosen to install tidl_tools version: {tidl_tools_release_id}")
     print(f"INFO: models compiled with a specific version of tidl_tools needs a compatible TIDL firmware in the SDK on device")
-    print(f"INFO: check the version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/version_compatibility_table.md")
+    print(f"INFO: check the version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/sdk_version_compatibility_table.md")
     print(f"INFO: and see if you need to update the TIDL firmware on device: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/scripts/setup/README.md")
     time.sleep(5)
 
@@ -526,7 +526,7 @@ def download_tidl_tools_package_11_00(install_path, tools_version, tools_type, t
 
     print(f"INFO: you have chosen to install tidl_tools version: {tidl_tools_release_id}")
     print(f"INFO: models compiled with a specific version of tidl_tools needs a compatible TIDL firmware in the SDK on device")
-    print(f"INFO: check the version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/version_compatibility_table.md")
+    print(f"INFO: check the version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/sdk_version_compatibility_table.md")
     print(f"INFO: and see if you need to update the TIDL firmware on device: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/scripts/setup/README.md")
     time.sleep(5)
 
@@ -637,7 +637,7 @@ def download_tidl_tools_package_10_00(install_path, tools_version, tools_type, t
 ###############################################################################
 down_tidl_tools_package_dict = {
     "11.2": download_tidl_tools_package_11_02,
-    "11.1.1": download_tidl_tools_package_11_01_01,
+    "11.1.x": download_tidl_tools_package_11_01_x,
     "11.1": download_tidl_tools_package_11_01,
     "11.0": download_tidl_tools_package_11_00,
     "10.1": download_tidl_tools_package_10_01,

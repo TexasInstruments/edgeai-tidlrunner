@@ -32,4 +32,5 @@ The core documentation for TIDL software is available in the [edgeai-tidl-tools 
 Frequently asked questions and their solutions are in the [tidlrunner FAQ](./tidlrunner/docs/faq.md) or in the [edgeai-tidl-tools FAQ](https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/faq.md).
 
 ## What is new?
+* 2026-July-29: configs for models in edgeai-modelzoo has been added in [modelzoo configs](./data/configs/modelzoo/)
 * 2026-April-04: [Model Inspector](./tidlrunner/edgeai_tidlrunner/modelinspector/README.md) is an interactive HTML visualization tool for analyzing ONNX models compiled with TIDL. Model Inspector provides comprehensive insights into model structure, performance, accuracy, and hardware acceleration. A modelinspector.html file is generated when you invoke compile, infer or inspect commands in tidlrunner.
