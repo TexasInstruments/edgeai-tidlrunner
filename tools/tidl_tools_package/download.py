@@ -478,6 +478,46 @@ def download_tidl_tools_package_11_02(install_path, tools_version, tools_type, t
 
 
 ###############################################################################
+def download_tidl_tools_package_11_01_01(install_path, tools_version, tools_type, tidl_tools_download_base, gcc_arm_download_base, c7x_compiler_download_base):
+    """Download TIDL tools package version 11.01."""
+    expected_tools_version = ("11.1.1",)
+    assert tools_version in expected_tools_version, f"ERROR: incorrect tools_version passed:{tools_version} - expected:{expected_tools_version}"
+    tidl_tools_version_name = tools_version
+    tidl_tools_release_label = "r11.1.1"
+    tidl_tools_release_id = "11_02_17_00"
+
+    print(f"INFO: you have chosen to install tidl_tools version: {tidl_tools_release_id} - this is a patch release tidl_tools for 11.1 SDK and will need firmware update on SDK/device (odd number in 3rd field indicates patch release for previous SDK)")
+    print(f"INFO: models compiled with a specific version of tidl_tools needs a compatible TIDL firmware in the SDK on device")
+    print(f"INFO: check the version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/version_compatibility_table.md")
+    print(f"INFO: and see if you need to update the TIDL firmware on device: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/scripts/setup/README.md")
+    time.sleep(5)
+
+    tidl_tools_package_bin_path = os.path.join(install_path, 'bin')
+    download_arm_gcc(tidl_tools_package_bin_path, gcc_arm_download_base)
+
+    tidl_tools_type_suffix = ("_gpu" if isinstance(tools_type, str) and "gpu" in tools_type else "")
+    target_soc_download_urls = {
+        "AM62A": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM62A",
+        "J722S": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM67A",
+        "J721E": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/TDA4VM",
+        "J721S2": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM68A",
+        "J742S2": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
+        "J784S4": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
+    }
+    tidl_version_dict = dict(version=tidl_tools_version_name, release_label=tidl_tools_release_label,
+                             release_id=tidl_tools_release_id, tools_type=tidl_tools_type_suffix)
+    for target_soc in target_soc_download_urls:
+        download_url_base = target_soc_download_urls[target_soc]
+        download_url = f"{download_url_base}/tidl_tools{tidl_tools_type_suffix}.tar.gz"
+        download_path = os.path.join(tidl_tools_package_bin_path, target_soc, tidl_tools_release_id)
+        download_tidl_tools(download_url, download_path, **tidl_version_dict, target_device=target_soc)
+    
+    _make_target_device_symlinks(tidl_tools_package_bin_path, TARGET_DEVICE_MAP)
+    requirements_file = os.path.realpath(os.path.join(os.path.dirname(__file__), f'requirements/requirements_11.1.txt'))
+    return requirements_file
+
+
+###############################################################################
 def download_tidl_tools_package_11_01(install_path, tools_version, tools_type, tidl_tools_download_base, gcc_arm_download_base, c7x_compiler_download_base):
     """Download TIDL tools package version 11.1"""
     expected_tools_version = ("11.1",)
@@ -640,6 +680,7 @@ def download_tidl_tools_package_10_00(install_path, tools_version, tools_type, t
 down_tidl_tools_package_dict = {
     "11.2.1": download_tidl_tools_package_11_02_01,
     "11.2": download_tidl_tools_package_11_02,
+    "11.1.1": download_tidl_tools_package_11_01_01,
     "11.1": download_tidl_tools_package_11_01,
     "11.0": download_tidl_tools_package_11_00,
     "10.1": download_tidl_tools_package_10_01,
