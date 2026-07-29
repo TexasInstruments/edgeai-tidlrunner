@@ -40,6 +40,7 @@ import hashlib
 import urllib.request
 import urllib.error
 import gzip
+import time
 
 
 ###############################################################################
@@ -400,13 +401,13 @@ def download_tidl_tools_package_11_02(install_path, tools_version, tools_type, t
     tidl_tools_version_name = tools_version
     tidl_tools_release_label = "r11.2"
     tidl_tools_release_id = "11_02_04_00"
-    c7x_firmware_version = "11_02_04_00"
     c7x_compiler_version = "5.0.0.LTS"  # Needed for TVM (needs update based on release version)
-    c7x_firmware_version_possible_update = None
-    print(f"INFO: you have chosen to install tidl_tools version: {tidl_tools_release_id} with default SDK firmware version set to: {c7x_firmware_version}")
-    if c7x_firmware_version_possible_update:
-        print(f"INFO: to leverage more features, set advanced_options:c7x_firmware_version while model compialtion and update firmware version in SDK to: {c7x_firmware_version_possible_update}")
-        print(f"INFO: for more info, see version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/version_compatibility_table.md")
+
+    print(f"INFO: you have chosen to install tidl_tools version: {tidl_tools_release_id}")
+    print(f"INFO: models compiled with a specific version of tidl_tools needs a compatible TIDL firmware in the SDK on device")
+    print(f"INFO: check the version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/version_compatibility_table.md")
+    print(f"INFO: and see if you need to update the TIDL firmware on device: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/scripts/setup/README.md")
+    time.sleep(5)
 
     tidl_tools_package_bin_path = os.path.join(install_path, 'bin')
     download_arm_gcc(tidl_tools_package_bin_path, gcc_arm_download_base)
@@ -422,8 +423,7 @@ def download_tidl_tools_package_11_02(install_path, tools_version, tools_type, t
         "J784S4": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
     }
     tidl_version_dict = dict(version=tidl_tools_version_name, release_label=tidl_tools_release_label,
-                             release_id=tidl_tools_release_id, tools_type=tidl_tools_type_suffix,
-                             c7x_firmware_version=c7x_firmware_version)
+                             release_id=tidl_tools_release_id, tools_type=tidl_tools_type_suffix)
     for target_soc in target_soc_download_urls:
         download_url_base = target_soc_download_urls[target_soc]
         download_url = f"{download_url_base}/tidl_tools{tidl_tools_type_suffix}.tar.gz"
@@ -443,12 +443,12 @@ def download_tidl_tools_package_11_01(install_path, tools_version, tools_type, t
     tidl_tools_version_name = tools_version
     tidl_tools_release_label = "r11.1"
     tidl_tools_release_id = "11_01_06_00"
-    c7x_firmware_version = "11_01_06_00"
-    c7x_firmware_version_possible_update = None
-    print(f"INFO: you have chosen to install tidl_tools version: {tidl_tools_release_id} with default SDK firmware version set to: {c7x_firmware_version}")
-    if c7x_firmware_version_possible_update:
-        print(f"INFO: to leverage more features, set advanced_options:c7x_firmware_version while model compialtion and update firmware version in SDK to: {c7x_firmware_version_possible_update}")
-        print(f"INFO: for more info, see version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/version_compatibility_table.md")
+
+    print(f"INFO: you have chosen to install tidl_tools version: {tidl_tools_release_id}")
+    print(f"INFO: models compiled with a specific version of tidl_tools needs a compatible TIDL firmware in the SDK on device")
+    print(f"INFO: check the version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/version_compatibility_table.md")
+    print(f"INFO: and see if you need to update the TIDL firmware on device: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/scripts/setup/README.md")
+    time.sleep(5)
 
     tidl_tools_package_bin_path = os.path.join(install_path, 'bin')
     download_arm_gcc(tidl_tools_package_bin_path, gcc_arm_download_base)
@@ -463,8 +463,7 @@ def download_tidl_tools_package_11_01(install_path, tools_version, tools_type, t
         "J784S4": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
     }
     tidl_version_dict = dict(version=tidl_tools_version_name, release_label=tidl_tools_release_label,
-                             release_id=tidl_tools_release_id, tools_type=tidl_tools_type_suffix,
-                             c7x_firmware_version=c7x_firmware_version, c7x_compiler_version=None)
+                             release_id=tidl_tools_release_id, tools_type=tidl_tools_type_suffix)
     for target_soc in target_soc_download_urls:
         download_url_base = target_soc_download_urls[target_soc]
         download_url = f"{download_url_base}/tidl_tools{tidl_tools_type_suffix}.tar.gz"
@@ -484,12 +483,12 @@ def download_tidl_tools_package_11_00(install_path, tools_version, tools_type, t
     tidl_tools_version_name = tools_version
     tidl_tools_release_label = "r11.0"
     tidl_tools_release_id = "11_00_06_00" #using 11_00_06_00 to match with SDK, but 11_00_08_00 is also available
-    c7x_firmware_version = "11_00_00_00"  # TODO - update this for 11.0
-    c7x_firmware_version_possible_update = None  # TODO - update this for 11.0
-    print(f"INFO: you have chosen to install tidl_tools version: {tidl_tools_release_id} with default SDK firmware version set to: {c7x_firmware_version}")
-    if c7x_firmware_version_possible_update:
-        print(f"INFO: to leverage more features, set advanced_options:c7x_firmware_version while model compialtion and update firmware version in SDK to: {c7x_firmware_version_possible_update}")
-        print(f"INFO: for more info, see version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/version_compatibility_table.md")
+
+    print(f"INFO: you have chosen to install tidl_tools version: {tidl_tools_release_id}")
+    print(f"INFO: models compiled with a specific version of tidl_tools needs a compatible TIDL firmware in the SDK on device")
+    print(f"INFO: check the version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/version_compatibility_table.md")
+    print(f"INFO: and see if you need to update the TIDL firmware on device: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/scripts/setup/README.md")
+    time.sleep(5)
 
     tidl_tools_package_bin_path = os.path.join(install_path, 'bin')
     download_arm_gcc(tidl_tools_package_bin_path)
@@ -504,8 +503,7 @@ def download_tidl_tools_package_11_00(install_path, tools_version, tools_type, t
         "J784S4": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
     }
     tidl_version_dict = dict(version=tidl_tools_version_name, release_label=tidl_tools_release_label,
-                             release_id=tidl_tools_release_id, tools_type=tidl_tools_type_suffix,
-                             c7x_firmware_version=c7x_firmware_version)
+                             release_id=tidl_tools_release_id, tools_type=tidl_tools_type_suffix)
     for target_soc in target_soc_download_urls:
         download_url_base = target_soc_download_urls[target_soc]
         download_url = f"{download_url_base}/tidl_tools{tidl_tools_type_suffix}.tar.gz"
@@ -525,11 +523,12 @@ def download_tidl_tools_package_10_01(install_path, tools_version, tools_type, t
     tidl_tools_version_name = tools_version
     tidl_tools_release_label = "r10.1"
     tidl_tools_release_id = "10_01_04_01"
-    c7x_firmware_version = "10_01_03_00"
-    c7x_firmware_version_possible_update = "10_01_04_00"
-    print(f"INFO: you have chosen to install tidl_tools version: {tidl_tools_release_id} with default SDK firmware version set to: {c7x_firmware_version}")
-    print(f"INFO: to leverage more features, set advanced_options:c7x_firmware_version while model compialtion and update firmware version in SDK to: {c7x_firmware_version_possible_update}")
-    print(f"INFO: for more info, see version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/version_compatibility_table.md")
+
+    print(f"INFO: you have chosen to install tidl_tools version: {tidl_tools_release_id}")
+    print(f"INFO: models compiled with a specific version of tidl_tools needs a compatible TIDL firmware in the SDK on device")
+    print(f"INFO: check the version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/version_compatibility_table.md")
+    print(f"INFO: and see if you need to update the TIDL firmware on device: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/scripts/setup/README.md")
+    time.sleep(5)
 
     tidl_tools_package_bin_path = os.path.join(install_path, 'bin')
     download_arm_gcc(tidl_tools_package_bin_path, gcc_arm_download_base)
@@ -544,8 +543,7 @@ def download_tidl_tools_package_10_01(install_path, tools_version, tools_type, t
         "J784S4": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
     }
     tidl_version_dict = dict(version=tidl_tools_version_name, release_label=tidl_tools_release_label,
-                             release_id=tidl_tools_release_id, tools_type=tidl_tools_type_suffix,
-                             c7x_firmware_version=c7x_firmware_version)
+                             release_id=tidl_tools_release_id, tools_type=tidl_tools_type_suffix)
     for target_soc in target_soc_download_urls:
         download_url_base = target_soc_download_urls[target_soc]
         download_url = f"{download_url_base}/tidl_tools{tidl_tools_type_suffix}.tar.gz"
@@ -564,8 +562,12 @@ def download_tidl_tools_package_10_00(install_path, tools_version, tools_type, t
     tidl_tools_version_name = tools_version
     tidl_tools_release_label = "r10.0"
     tidl_tools_release_id = "10_00_08_00"
-    c7x_firmware_version = ""
-    print(f"INFO: you have chosen to install tidl_tools version: {tidl_tools_release_id} with default SDK firmware version: {c7x_firmware_version}")
+
+    print(f"INFO: you have chosen to install tidl_tools version: {tidl_tools_release_id}")
+    print(f"INFO: models compiled with a specific version of tidl_tools needs a compatible TIDL firmware in the SDK on device")
+    print(f"INFO: check the version compatibiltiy table: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/version_compatibility_table.md")
+    print(f"INFO: and see if you need to update the TIDL firmware on device: https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/scripts/setup/README.md")
+    time.sleep(5)
 
     tidl_tools_package_bin_path = os.path.join(install_path, 'bin')
     download_arm_gcc(tidl_tools_package_bin_path, gcc_arm_download_base)
@@ -580,8 +582,7 @@ def download_tidl_tools_package_10_00(install_path, tools_version, tools_type, t
         "J784S4": f"{tidl_tools_download_base}/{tidl_tools_release_id}/TIDL_TOOLS/AM69A",
     }
     tidl_version_dict = dict(version=tidl_tools_version_name, release_label=tidl_tools_release_label,
-                             release_id=tidl_tools_release_id, tools_type=tidl_tools_type_suffix,
-                             c7x_firmware_version=c7x_firmware_version)
+                             release_id=tidl_tools_release_id, tools_type=tidl_tools_type_suffix)
     for target_soc in target_soc_download_urls:
         download_url_base = target_soc_download_urls[target_soc]
         download_url = f"{download_url_base}/tidl_tools{tidl_tools_type_suffix}.tar.gz"
