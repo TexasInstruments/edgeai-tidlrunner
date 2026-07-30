@@ -3,11 +3,11 @@
 Bring Your Edge AI Models For Compilation, Inference, Analysis or Benchmark (BYOM) using TI Deep Learning (TIDL) - for TI MPU Processors for Edge AI. More details are in the [Edge AI developer landing page](https://github.com/TexasInstruments/edgeai).
 
 
-### Notice
-#### Purpose
+##### Notice
+###### Purpose
 The basic functionality in this repository is similar to that of [edgeai-benchmark](https://github.com/TexasInstruments/edgeai-tensorlab/tree/main/edgeai-benchmark). edgeai-benchmark is primarily focused on compiling and benchmarking models in [edgeai-modelzoo](https://github.com/TexasInstruments/edgeai-modelzoo), but the focus of the tool in this repository is a simpler user interface and support for compiling user's models and datasets. This makes it easy to compile and benchmark custom models.
 
-#### Current status and limitations
+###### Current status and limitations
 This is a work in progress with the following status and limitations 
 * onnx models and tflite models are supported. onnx models will use onnxruntime with TIDL by default and tflite models will use tidlruntime with TIDL by default. 
 * Other runtimes are not yet supported, but there is a work in progress to support tvm runtime for better offloading capability to DSP(C7x/MMA)
@@ -19,13 +19,13 @@ This is a work in progress with the following status and limitations
 
 This package provides a wrapper over the core [edgeai-tidl-tools runtimes and model compilation](https://github.com/TexasInstruments/edgeai-tidl-tools) to make  model compilation, inference and benchmark easy to use.
 
-### Steps in TIDL model compilation and inference
+##### Steps in TIDL model compilation and inference
 This package provides all the resources to enables all these steps. This will be installed as **edgeai_tidlrunner** Python package.
 * TIDL model compilation is done in a PC (Ubuntu Linux typically). 
 * The inference can be verified on PC Host emulation (for checking the correctness of output). 
 * Finally the artifacts can be mounted on, or copied to an EVM/device and the actual inference can be done on the EVM/device. 
 
-### Interfaces in edgeai_tidlrunner package
+##### Interfaces in edgeai_tidlrunner package
 
 * **edgeai_tidlrunner.runner** (high level interface) - runner has additional pipeline functionalities such as data loaders and preprocess required to run the entire pipeline correctly. This is a high level interface that hides most of the details and provides a Pythonic and command line APIs. (Recommended for beginners)
 

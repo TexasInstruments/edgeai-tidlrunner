@@ -15,7 +15,7 @@ There are two packages in this repository with different purposes.
 
 ## Documentation for tidlrunner
 
-### Setup quick selector
+##### Setup quick selector
 
 Use these scripts based on where and how you run:
 - PC CPU setup: `./setup_runner_pc.sh`
@@ -23,7 +23,7 @@ Use these scripts based on where and how you run:
 - EVM setup: `./setup_runner_evm.sh`
 - Optional dataset extras: `./setup_runner_extra_pc.sh`
 
-### Getting started
+##### Getting started
 
 Please go through the documentation of [tidlrunner](tidlrunner) to get started with this repository.
 

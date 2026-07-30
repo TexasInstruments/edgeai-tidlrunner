@@ -1,3 +1,4 @@
+# Options 
 
 These options have a short form that is easy to use in the commandline and an equivalent long form that can be used in the config file. To understand how these short options maps to the structured options used in config files, see the "Config Fields" entry given in square brackets below. 
 

@@ -9,11 +9,11 @@ First refer to the docs in [edgeai-tidl-tools/docs](https://github.com/TexasInst
 There are several documents present in that repo that will help with general TIDL tips, behavior, and debugging recommendations. Those documents cover compilation, inference, and the corresponding options in detail. Some questions may even be covered by the [FAQ in that repository](https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/faq.md).
 
 
-#### What format of models are supported? 
+###### What format of models are supported? 
 
 TI Deep Learning primarily support ONNX and Tensorflow-Lite (LiteRT) format models. This generally requires a trained model be export to one of the two formats, typically .ONNX from pytorch and .TFLITE from TensorFlow or Keras. For other training frameworks, typically ONNX is the best choice. ONNX is the preferred format for TIDL.
 
-#### How can I compile my Torch model?
+###### How can I compile my Torch model?
 
 Torch models are not directly supported for compilation, and must be exported first. Export like so: 
 ```
@@ -34,7 +34,7 @@ torch.onnx.export(mymodel, sample_input, 'mymodel.onnx', \
 ```
 Note that it is important to use static tensor dimensions throughout the model.
 
-#### TIDL failed to compile my model due to unknown dimensions
+###### TIDL failed to compile my model due to unknown dimensions
 
 TIDL has detected dynamic shapes in your model, meaning that some dimensions are not yet known. For example, you might see:
 
@@ -59,7 +59,7 @@ Isolate which layers are not accelerated, and find a suitable change so that the
 
 If they are not accelerated, common layers like activation functions will cause many breaks in the model graph. If there are more than 16 subgraphs, the layers that would go into more subgraphs will be not be accelerated by TIDL, and slow the model further. 
 
-#### What models and NN operators does TIDL support?
+###### What models and NN operators does TIDL support?
 
 For the list of supported operators, please see the [operators.md](https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/operators.md) document in edgeai-tidl-tools. This a version-specific document.
 
@@ -67,13 +67,13 @@ Many models are supported, and TI provided models from the [modelzoo](https://gi
 
 Support nominally covers vision models and the operators typical in such models, but this list grows upon each release. 
 
-#### The model is showing that a particular layer is causing issues. What should I do? Can the Deny-list help?
+###### The model is showing that a particular layer is causing issues. What should I do? Can the Deny-list help?
 
 Use the deny_list feature! You can designate specific layers to run on Arm cores rather than with TIDL. Layers can be denied based on the layer name or the layer type. 
 
 For specific layer names, the name will depend on how TIDL parsed the model, especially if it fused multiple layers together. If you run `compile` once, check the contents in the artifacts/tempDir directory for your model, looking for a file ending with "tidl_net.bin_netLog.txt". This will contain "Out Data Names" that correspond to how the parsed layers. The *tidl_net.bin.layer_info.txt filecontains similar information. 
 
-#### Can I get more verbose logs out of the core TIDL software? What do the different options do?
+###### Can I get more verbose logs out of the core TIDL software? What do the different options do?
 
 The `--debug_level` setting gives more detailed insight to what is happening within TIDL. From [debugging.md in edgeai-tidl-tools/docs](https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/debugging.md):
   - 0 - No Debug Prints
@@ -89,13 +89,13 @@ For level-2 prints, it is recommended to run /opt/vision_apps/vision_apps_init.s
 
 ## Model Accuracy
 
-#### My model's accuracy is not good, but it's fine in my own scripts. Why might this be?
+###### My model's accuracy is not good, but it's fine in my own scripts. Why might this be?
 
 Most often, preprocessing is not handled the same as your training environment. 
 
 Testing without any TIDL acceleration using the argument `--tidl_offload False` can help isolate this scenario. If the outputs between TIDL and No-TIDL are similar to each other but do not near the expected values, it is likely an issue with preprocessing parameters. See the [runtime_settings.md section on this](./runtime_settings.md#input_mean-and-input_scale)
 
-#### My accuracy was fine for the original model, but it's worse with the compiled model. What can I do?
+###### My accuracy was fine for the original model, but it's worse with the compiled model. What can I do?
 
 Models trained in 32-bit floating point will lose accuracy when quantized to run on fixed-point accelerators. This process is inherently lossy, but error can generally be kept within a few percent or less. Models using quantization-aware training (QAT) typically have the lowest impact on accuracy when accelerated with TIDL. 
 
@@ -112,11 +112,11 @@ Note that accuracy on the EVM (assuming the model is initializing and running in
 
 Frequently, models with continuous value output (e.g. regression models or bounding box coordinates) see more accuracy loss than classification tasks. The typical solution is to selectively run layers near the end of the model as 16-bit using the `--output_feature_16bit_names_list` setting (and sometimes also the `advanced_options:params_16bit_names_list` in the runtime_options).
 
-#### I pre-quantized my model and want to use that rather than TIDL's quantization. How do I configure this?
+###### I pre-quantized my model and want to use that rather than TIDL's quantization. How do I configure this?
 
 Please refer to [quantization documentation](https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/quantization.md#pre-quantized-models). TFLite and ONNX QDQ models are both supported, but use different arguments. 
 
-#### How should I use tensor bits setting and 8-bit vs. 16-bit modes?
+###### How should I use tensor bits setting and 8-bit vs. 16-bit modes?
 
 The precision used by TIDL is controlled by the --tensor_bits argument. Best performance with TIDL is from 8-bit mode, but sometimes accuracy drops too much and we need to use 16-bit to mitigate quantization error. Typically, the whole network doesn't need to run in a 16-bit mode, just a few layers towards the end of the network (and more rarely, the start). 
 
@@ -124,12 +124,12 @@ Use the `--output_feature_16bit_names_list` and/or `advanced_options:params_16bi
 
 ## FAQ on usage for tidlrunner-cli
 
-#### Unrecognized configuration option
+###### Unrecognized configuration option
 
 Use --help as part of your call to see a larger list of command line options. The full set can be found from [the command_line_arguments.md document](./command_line_arguments.md).
 
 
-#### What should be my development flow?
+###### What should be my development flow?
 
 There are multiple applications within tidlrunner. The following diagram and steps will help understand the sequence and circumstances of their usage:
 
@@ -198,7 +198,7 @@ graph TD
 6. **Deployment** - Deploy using end-to-end tools like edgeai-gst-apps, edgeai-tiovx-apps, or custom pipelines
    * Note that system-level load (especially memory/DDR) can reduce model performance on large images or with intensive concurrent applications
 
-#### How do I see my models performance?
+###### How do I see my models performance?
 
 When [running on evm](./running_on_evm.md), the benchmark results will automatically save into the model artifacts directory as part of a result.yaml within the work_dir for your model. See the same document for an explanation of the results.
 
@@ -214,7 +214,7 @@ Note that the benchmark data may make assumptions about the clock frequency for 
 
 ```
 
-#### What do these performance statistics in result.yaml mean?
+###### What do these performance statistics in result.yaml mean?
 
 The performance statistics are nominally in milliseconds
 * infer_time_invoke_ms is the wall clock time from userspace, meaning the latency from before and after the inference call within this tool (in Python). This will carry additional overhead, and best case performance is likely substantially better than this
@@ -228,7 +228,7 @@ The performance statistics are nominally in milliseconds
 
 The default TIDL version will be the TIDL_TOOLS_VERSION value in setup_runner_pc.sh, unless manually changed or if the repo is pulled after installation.
 
-#### What SDK version or branch do I need to use?
+###### What SDK version or branch do I need to use?
 
 SDK version and the branch should align, e.g. 11.1.7.5 SDK release for AM62A should be accompanied by rel_11_01, r11.1, or suitably similar tag. The first two version numbers (e.g. 11.1) are the most important. Compiled model artifacts can only be used in the SDK with matching version. 
 
@@ -236,7 +236,7 @@ For new users, pick up the latest SDK version on your device and choose the suit
 
 Please see our [dedicated e2e FAQ on this topic](https://e2e.ti.com/support/processors-group/processors/f/processors-forum/1455079/faq-edge-ai-studio-is-sdk-version-important-for-edge-ai-and-ti-deep-learning-tidl-with-c7x-on-am6xa-socs-am62a-am67a-am68a-am68pa-am69a) and the [version compatibility table in edgeai-tidl-tools](https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/docs/sdk_version_compatibility_table.md)
 
-#### How do I know which version of TIDL is used?
+###### How do I know which version of TIDL is used?
 
 This gets printed during compilation: 
 
@@ -264,13 +264,13 @@ file ./tools/tidl_tools_package/bin/AM62A/tidl_tools
 
 This tells that the installed tools will default to version 11_01_06_00 (which should have an equivalently tagged release through [edgeai-tidl-tools repo](https://github.com/TexasInstruments/edgeai-tidl-tools/releases)). It is okay to have multiple tools installed at this location, and either manually set TIDL_TOOLS_PATH in your environment or change the symbolic link above to point to your chosen tidl_tools directory
 
-#### How do I use a specific TIDL version with these tools?
+###### How do I use a specific TIDL version with these tools?
 
 The versioned tidl-tools will be downloaded as part of the installation process to [tools/tidl_tools_package](../..//tools/tidl_tools_package) under `bin/$SOC`. Multiple versions can reside here at the same time, and can be explicitly set with the `TIDL_TOOLS_PATH` environment variable.
 
 A different set of tools for a specific version can be downloaded using the appropriate PC-side setup scripts, e.g. [setup_runner_pc.sh](../../setup_runner_pc.sh) with environment variable `TIDL_TOOLS_VERSION` set using major-minor version as X.Y, e.g. "11.1" or "10.0". See [tidl_tools_package's download.py script](../../tools/tidl_tools_package/download.py). Multiple tools packages can be held locally, but they may require different runtime versions, so it is advised to have a virtual python environment to distinguish them. 
 
-#### Can I have multiple versions of tidl-tools installed?
+###### Can I have multiple versions of tidl-tools installed?
 
 Yes, but using a version other than the default tools will require setting the TIDL_TOOLS_PATH environment variable. 
 
@@ -282,7 +282,7 @@ ln -sf tools/tidl_tools_package/bin/AM62A/11_02_00_00/tidl_tools tools/tidl_tool
 
 ## Errors on the target processor / EVM
 
-#### I cannot connect my board / EVM to clone the repo
+###### I cannot connect my board / EVM to clone the repo
 
 Often, proxies are the cause of EVM's not being able to clone repositories on Github or external sites. Setting the HTTPS_PROXY environment variable is often sufficient to work around this, but some proxies may take more effort or require alternate settings.
 
@@ -290,7 +290,7 @@ Otherwise, the best option is to follow the [NFS setup instructions](./running_o
 
 * Note that initializing your model that is provided over NFS may be slow, but this should not persist once the model starts running. Model runtime on the NPU will not be impacted by this.
 
-#### The model does not initialize and throws errors with VX_ZONE_ERROR
+###### The model does not initialize and throws errors with VX_ZONE_ERROR
 
 This means that the vision framework TIOVX caught a fundamental error and did not correctly setup the network on the accelerator
 

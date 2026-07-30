@@ -9,7 +9,7 @@ Model **compilation** is performed on a PC (Ubuntu Linux). Once compiled, the re
 
 ## Prerequisites
 
-### On PC
+##### On PC
 
 Compile the model on the PC first. The compiled artifacts will be written to `work_dirs/` by default:
 
@@ -21,7 +21,7 @@ tidlrunner-cli compile \
 
 > **Important:** The target_device setting must match the EVM and the version of `tidl-tools` used for compilation must match the SDK version on the EVM. See [setup.md](./setup.md) for details on installing the correct version.
 
-### On EVM
+##### On EVM
 
 The edgeai-tidlrunner tool files must be accessible on the target EVM and installed using the `./setup_runner_evm.sh`. Then, the model + model-artifacts must be accessible to run inference on the compiled model.
 
@@ -32,7 +32,7 @@ The edgeai-tidlrunner tool files must be accessible on the target EVM and instal
 
 Use `git clone` to retrieve the repository (or just the relevant subdirectories) from the network.
 
-### Copy the full repository
+##### Copy the full repository
 
 ```bash
 # Run on PC
@@ -49,7 +49,7 @@ This runs:
 pip3 install -e ./tidlrunner[evm]
 ```
 
-### Copy the compiled artifacts and models
+##### Copy the compiled artifacts and models
 
 Once edgeai-tidlrunner is installed on the EVM, you only need to transfer the model artifacts and input data:
 
@@ -61,7 +61,7 @@ scp -r work_dirs/ root@<EVM_IP>:/opt/edgeai-tidlrunner/work_dirs/
 scp -r data/ root@<EVM_IP>:/opt/edgeai-tidlrunner/data/
 ```
 
-### Run inference on the EVM
+##### Run inference on the EVM
 
 SSH into the EVM and run inference from the copied directory:
 
@@ -81,7 +81,7 @@ See [example_runner_evm.sh](../../examples/example_runner_evm.sh) for more infer
 
 NFS lets the EVM access the PC's filesystem directly over the network — no manual file copying needed. This is convenient during development since changes on the PC are immediately visible on the EVM.
 
-### On PC — export the directory via NFS
+##### On PC — export the directory via NFS
 
 1. Install the NFS server:
     ```bash
@@ -99,7 +99,7 @@ NFS lets the EVM access the PC's filesystem directly over the network — no man
     sudo systemctl restart nfs-kernel-server
     ```
 
-### On EVM — mount the NFS share
+##### On EVM — mount the NFS share
 
 1. Create a mount point and mount the share. Replace `<PC_IP>` with the PC's IP address:
     ```bash
@@ -112,7 +112,7 @@ NFS lets the EVM access the PC's filesystem directly over the network — no man
     <PC_IP>:/path/to/edgeai-tidlrunner  /opt/edgeai-tidlrunner  nfs  defaults  0  0
     ```
 
-### Run inference on the EVM
+##### Run inference on the EVM
 
 With the directory mounted, run inference the same way as on PC:
 
@@ -123,7 +123,7 @@ tidlrunner-cli infer \
     --target_device AM62A --data_name random_dataloader
 ```
 
-### Viewing Benchmark Results on EVM
+##### Viewing Benchmark Results on EVM
 
 To display detailed performance benchmark statistics after inference, use the `--display_benchmark` flag:
 

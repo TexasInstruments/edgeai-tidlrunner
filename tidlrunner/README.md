@@ -54,12 +54,12 @@ See the [user guide](docs/user_guide.md)
 
 ## Quick start with benchmark sripts
 
-#### Vision models in Model Zoo
+###### Vision models in Model Zoo
 Easy to use benchmark script wrappers are in [../scripts](../scripts/) to try out and benchmark example configs in this repository. Use these wrapper scripts for preset-based runs using the [configs for models in the modelzoo](../data/configs/modelzoo/).
 
 The benchmark wrappers under `scripts/run_benchmark_*.sh` are thin entry points that call internal helpers (`scripts/_run_benchmark_pc.sh` and `scripts/_run_benchmark_evm.sh`) with preset arguments.
 
-#### Audio Models and Datasets
+###### Audio Models and Datasets
 To run audio inference pipelines — sound classification (VGGish11, YAMNet on UrbanSound8K) and speech enhancement (GTCRN, GCRN on VoiceBank-DEMAND-16k).
 
 See the [Audio Models and Datasets](audio_models_and_datasets.md) guide. 

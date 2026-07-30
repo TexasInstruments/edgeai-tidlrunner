@@ -23,13 +23,13 @@ and speech enhancement.
 
 ## Prerequisites
 
-### 1. Activate the virtual environment
+##### 1. Activate the virtual environment
 
 ```bash
 pyenv activate tidlrunner
 ```
 
-### 2. Install audio dependencies
+##### 2. Install audio dependencies
 
 > **Note:** Complete the Python virtual environment setup described in [setup.md](setup.md) before running this step.
 
@@ -41,7 +41,7 @@ This installs: `librosa`, `soundfile`, `scipy`, `pesq`, `pystoi`, `scikit-learn`
 
 ## Download Datasets
 
-### UrbanSound8K (~5.6 GB) — sound classification
+##### UrbanSound8K (~5.6 GB) — sound classification
 
 To download the UrbanSound8K dataset, run the script:
 
@@ -61,7 +61,7 @@ data/datasets/UrbanSound8K/
     UrbanSound8K.csv
 ```
 
-### VoiceBank-DEMAND-16k (~2 GB) — speech enhancement
+##### VoiceBank-DEMAND-16k (~2 GB) — speech enhancement
 
 To download the VoiceBank-DEMAND-16k dataset, run the script:
 
@@ -127,7 +127,7 @@ data/configs/samples/models/audio/
 
 All commands are run from the repo root (`edgeai-tidlrunner/`).
 
-### VGGish11 — Sound Classification
+##### VGGish11 — Sound Classification
 
 ```bash
 tidlrunner-cli compile --config_path data/configs/samples/models/audio/audio_classification/urbansound8k/vggish11_20250324-1807_config.yaml
@@ -135,7 +135,7 @@ tidlrunner-cli infer --config_path data/configs/samples/models/audio/audio_class
 tidlrunner-cli evaluate --config_path data/configs/samples/models/audio/audio_classification/urbansound8k/vggish11_20250324-1807_config.yaml
 ```
 
-### YAMNet — Sound Classification
+##### YAMNet — Sound Classification
 
 ```bash
 tidlrunner-cli compile --config_path data/configs/samples/models/audio/audio_classification/urbansound8k/yamnet_combined_config.yaml
@@ -143,7 +143,7 @@ tidlrunner-cli infer --config_path data/configs/samples/models/audio/audio_class
 tidlrunner-cli evaluate --config_path data/configs/samples/models/audio/audio_classification/urbansound8k/yamnet_combined_config.yaml
 ```
 
-### GTCRN — Speech Enhancement
+##### GTCRN — Speech Enhancement
 
 ```bash
 tidlrunner-cli compile --config_path data/configs/samples/models/audio/speech_enhancement/voicebank_demand_16k/gtcrn_dns3_config.yaml
@@ -151,7 +151,7 @@ tidlrunner-cli infer --config_path data/configs/samples/models/audio/speech_enha
 tidlrunner-cli evaluate --config_path data/configs/samples/models/audio/speech_enhancement/voicebank_demand_16k/gtcrn_dns3_config.yaml
 ```
 
-### GCRN — Speech Enhancement
+##### GCRN — Speech Enhancement
 
 ```bash
 tidlrunner-cli compile --config_path data/configs/samples/models/audio/speech_enhancement/voicebank_demand_16k/gcrn_fixed_4sec_config.yaml

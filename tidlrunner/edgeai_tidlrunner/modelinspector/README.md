@@ -33,7 +33,7 @@ Model Inspector is an **all-in-one analysis tool** that:
 
 ## Key Features
 
-### 📊 Comprehensive Analysis
+##### 📊 Comprehensive Analysis
 
 | Feature | What You Get |
 |---------|-------------|
@@ -44,14 +44,14 @@ Model Inspector is an **all-in-one analysis tool** that:
 | **SNR Metrics** | Signal-to-noise ratio for each layer |
 | **Tree View** | Hierarchical model structure navigation |
 
-### 🎨 User-Friendly Interface
+##### 🎨 User-Friendly Interface
 
 - **Tabbed Navigation** - Switch between Model Graph, TIDL Subgraphs and Performance
 - **Click-to-Explore** - Click any layer to see detailed information
 - **Search & Filter** - Find layers quickly by name or type
 - **Export-Ready** - Share HTML files with your team (no server needed!)
 
-### 🚀 Automated Workflow
+##### 🚀 Automated Workflow
 
 One command does it all - no need to run compile and infer separately!
 
@@ -59,7 +59,7 @@ One command does it all - no need to run compile and infer separately!
 
 ## Quick Start
 
-### Basic Usage
+##### Basic Usage
 
 The simplest way to generate Model Inspector:
 
@@ -75,7 +75,7 @@ tidlrunner-cli inspect \
 3. Compare TIDL vs ONNX reference outputs
 4. Generate interactive HTML report
 
-### Output Location
+##### Output Location
 
 The HTML file is generated at:
 ```
@@ -86,7 +86,7 @@ work_dirs/compile/AM62A/8bits/{model_id}/inspector/modelinspector.html
 
 ## Usage Examples
 
-### Example 1: Image Classification
+##### Example 1: Image Classification
 
 ```bash
 tidlrunner-cli inspect \
@@ -94,7 +94,7 @@ tidlrunner-cli inspect \
   --target_device AM62A
 ```
 
-### Example 2: Object Detection
+##### Example 2: Object Detection
 
 ```bash
 tidlrunner-cli inspect \
@@ -102,7 +102,7 @@ tidlrunner-cli inspect \
   --target_device AM62A
 ```
 
-### Example 3: With Custom Settings
+##### Example 3: With Custom Settings
 
 ```bash
 tidlrunner-cli inspect \
@@ -117,7 +117,7 @@ tidlrunner-cli inspect \
 - `--data_name`: Dataloader type (see Available Dataloaders below)
 - `--data_path`: Path to your dataset
 
-### Example 4: Disable Activation Data (Faster, Smaller HTML)
+##### Example 4: Disable Activation Data (Faster, Smaller HTML)
 
 ```bash
 tidlrunner-cli inspect \
@@ -136,7 +136,7 @@ tidlrunner-cli inspect \
 
 The Model Inspector HTML has **3 main tabs** for different analysis views:
 
-### 1️⃣ **Model Summary Tab**
+##### 1️⃣ **Model Summary Tab**
 
 ![Model Summary](assets/model_summary.png)
 
@@ -150,7 +150,7 @@ The Model Inspector HTML has **3 main tabs** for different analysis views:
 - **Output Specification** - Output shape and task type
 - **Operator Summary** - List of operations used in the ONNX model
 
-#### Model Visualization Section
+###### Model Visualization Section
 
 ![Model Visualization](assets/model_visualization.png)
 
@@ -198,7 +198,7 @@ When you click on a node in the graph, the right panel shows 2 tabs:
 
 ---
 
-### 2️⃣ **Subgraphs Tab**
+##### 2️⃣ **Subgraphs Tab**
 
 ![Subgraph Layer Details](assets/subgraph_layer_details.png)
 
@@ -247,7 +247,7 @@ This tab shows quantization analysis (only available for layers with matched tra
 
 ---
 
-### 3️⃣ **Performance Tab**
+##### 3️⃣ **Performance Tab**
 
 ![Performance](assets/performance.png)
 
@@ -273,7 +273,7 @@ This tab shows quantization analysis (only available for layers with matched tra
 
 **Additional Performance Charts:**
 
-#### Cycle Per Layer Chart
+###### Cycle Per Layer Chart
 
 ![Cycle Per Layer](assets/cycle_per_layer.png)
 
@@ -297,7 +297,7 @@ This tab shows quantization analysis (only available for layers with matched tra
 
 ---
 
-#### Memory Usage Chart
+###### Memory Usage Chart
 
 ![Memory Usage](assets/memory_usage.png)
 
@@ -326,7 +326,7 @@ This tab shows quantization analysis (only available for layers with matched tra
 
 ---
 
-#### SNR Metrics Graph
+###### SNR Metrics Graph
 
 ![Metrics Graph](assets/matrics_graph.png)
 
@@ -417,7 +417,7 @@ The `inspect` command is a **complete analysis pipeline** that runs multiple sta
 
 ## Requirements
 
-### TIDL Tools Version
+##### TIDL Tools Version
 
 ⚠️ **Critical Requirement:** TIDL Tools **11.02 or later**
 
@@ -448,7 +448,7 @@ Solution:
 ```
 
 
-### Browser Compatibility
+##### Browser Compatibility
 
 | Browser | Support |
 |---------|---------|
