@@ -168,67 +168,11 @@ tidlrunner-cli compile --config_path data/configs/samples/models/vision/classifi
 If you need more details, please refer to [this script that downloads tidl_tools](../../tools/tidl_tools_package/download.py)
 
 
-# Commandline arguments
+# Commandline and configfile options
 
-## Commands
+Supported commands and the options that can be used with them are listed. 
 
-Supported commands and the options that can be used with them are listed below. These options have a short form that is easy to use in the commandline and an equivalent long form that can be used in the config file. to understand how these short options maps to the structured options used in config files, see the default settings [](../edgeai_tidlrunner/runner/common/settings/settings_default.py) and the [example config files](../../data/configs/)
-
-
-| Section | Name | Task | Required Args | Optional Args | Description |
-|---|---|---|---|---|---|
-| command | analyze |  |  | command, capture_log, parallel_processes, parallel_devices, target_machine, target_device, log_file, pipeline_type, verbose, model_path, config_path, work_path, run_label, run_dir, model_surgery, simplify_model, shape_inference, input_optimization, input_mean, input_scale, task_type, task_name, num_frames, input_dataset, display_step, upgrade_config, model_selection, model_shortlist, preset_selection, config_template, incremental, clear_run_dir, save_tensors, instance_timeout, overall_timeout, model_id, artifacts_folder, runtime_name, session_type_dict, dataset_type_dict, data_name, data_path, tidl_offload, graph_optimization_level, tensor_bits, debug_level, deny_list_layer_type, deny_list_layer_name, deny_list_layer_name_search, accuracy_level, enable_tfr_optimization, quantization_scale_type, calibration_frames, calibration_iterations, prequantized_model, quant_params_file_path, max_num_subgraph_nodes, add_data_convert_ops, output_feature_16bit_names_list, output_feature_16bit_names_search, meta_arch_type, meta_arch_file_path, detection_threshold, detection_top_k, nms_threshold, keep_top_k, runtime_options_dict, preprocess_name, resize, crop, data_layout, reverse_channels, resize_with_pad, sample_rate, audio_duration, audio_model_type, postprocess_enable, postprocess_name, display_benchmark, save_output, save_output_frames, show_output, analyze_level, act_data | Inspect model outputs and activation data |
-| command | compile |  |  | command, capture_log, parallel_processes, parallel_devices, target_machine, target_device, log_file, pipeline_type, verbose, model_path, config_path, work_path, run_label, run_dir, model_surgery, simplify_model, shape_inference, input_optimization, input_mean, input_scale, task_type, task_name, num_frames, input_dataset, display_step, upgrade_config, model_selection, model_shortlist, preset_selection, config_template, incremental, clear_run_dir, save_tensors, instance_timeout, overall_timeout, model_id, artifacts_folder, runtime_name, session_type_dict, dataset_type_dict, data_name, data_path, tidl_offload, graph_optimization_level, tensor_bits, debug_level, deny_list_layer_type, deny_list_layer_name, deny_list_layer_name_search, accuracy_level, enable_tfr_optimization, quantization_scale_type, calibration_frames, calibration_iterations, prequantized_model, quant_params_file_path, max_num_subgraph_nodes, add_data_convert_ops, output_feature_16bit_names_list, output_feature_16bit_names_search, meta_arch_type, meta_arch_file_path, detection_threshold, detection_top_k, nms_threshold, keep_top_k, runtime_options_dict, preprocess_name, resize, crop, data_layout, reverse_channels, resize_with_pad, sample_rate, audio_duration, audio_model_type, postprocess_enable, postprocess_name | Compile models and generate target-specific artifacts |
-| command | evaluate |  |  | command, capture_log, parallel_processes, parallel_devices, target_machine, target_device, log_file, pipeline_type, verbose, model_path, config_path, work_path, run_label, run_dir, model_surgery, simplify_model, shape_inference, input_optimization, input_mean, input_scale, task_type, task_name, num_frames, input_dataset, display_step, upgrade_config, model_selection, model_shortlist, preset_selection, config_template, incremental, clear_run_dir, save_tensors, instance_timeout, overall_timeout, model_id, artifacts_folder, runtime_name, session_type_dict, dataset_type_dict, data_name, data_path, tidl_offload, graph_optimization_level, tensor_bits, debug_level, deny_list_layer_type, deny_list_layer_name, deny_list_layer_name_search, accuracy_level, enable_tfr_optimization, quantization_scale_type, calibration_frames, calibration_iterations, prequantized_model, quant_params_file_path, max_num_subgraph_nodes, add_data_convert_ops, output_feature_16bit_names_list, output_feature_16bit_names_search, meta_arch_type, meta_arch_file_path, detection_threshold, detection_top_k, nms_threshold, keep_top_k, runtime_options_dict, preprocess_name, resize, crop, data_layout, reverse_channels, resize_with_pad, sample_rate, audio_duration, audio_model_type, postprocess_enable, postprocess_name, label_path, postprocess_resize_with_pad, postprocess_normalized_detections, postprocess_formatter, postprocess_shuffle_indices, postprocess_squeeze_axis, postprocess_reshape_list, postprocess_ignore_index, postprocess_logits_bbox_to_bbox_ls, postprocess_keypoint, save_output, save_output_frames, show_output | Evaluate model accuracy against ground truth labels |
-| command | extract |  |  | command, capture_log, parallel_processes, parallel_devices, target_machine, target_device, log_file, pipeline_type, verbose, model_path, config_path, work_path, run_label, run_dir, extract_mode, submodule_name, max_depth, start_names, end_names | Extract model submodules, operators, or layer ranges |
-| command | infer |  |  | command, capture_log, parallel_processes, parallel_devices, target_machine, target_device, log_file, pipeline_type, verbose, model_path, config_path, work_path, run_label, run_dir, model_surgery, simplify_model, shape_inference, input_optimization, input_mean, input_scale, task_type, task_name, num_frames, input_dataset, display_step, upgrade_config, model_selection, model_shortlist, preset_selection, config_template, incremental, clear_run_dir, save_tensors, instance_timeout, overall_timeout, model_id, artifacts_folder, runtime_name, session_type_dict, dataset_type_dict, data_name, data_path, tidl_offload, graph_optimization_level, tensor_bits, debug_level, deny_list_layer_type, deny_list_layer_name, deny_list_layer_name_search, accuracy_level, enable_tfr_optimization, quantization_scale_type, calibration_frames, calibration_iterations, prequantized_model, quant_params_file_path, max_num_subgraph_nodes, add_data_convert_ops, output_feature_16bit_names_list, output_feature_16bit_names_search, meta_arch_type, meta_arch_file_path, detection_threshold, detection_top_k, nms_threshold, keep_top_k, runtime_options_dict, preprocess_name, resize, crop, data_layout, reverse_channels, resize_with_pad, sample_rate, audio_duration, audio_model_type, postprocess_enable, postprocess_name, display_benchmark, save_output, save_output_frames, show_output | Run inference using compiled models |
-| command | inspect |  |  | command, capture_log, parallel_processes, parallel_devices, target_machine, target_device, log_file, pipeline_type, verbose, model_path, config_path, work_path, run_label, run_dir, model_surgery, simplify_model, shape_inference, input_optimization, input_mean, input_scale, task_type, task_name, num_frames, input_dataset, display_step, upgrade_config, model_selection, model_shortlist, preset_selection, config_template, incremental, clear_run_dir, save_tensors, instance_timeout, overall_timeout, model_id, artifacts_folder, runtime_name, session_type_dict, dataset_type_dict, data_name, data_path, tidl_offload, graph_optimization_level, tensor_bits, debug_level, deny_list_layer_type, deny_list_layer_name, deny_list_layer_name_search, accuracy_level, enable_tfr_optimization, quantization_scale_type, calibration_frames, calibration_iterations, prequantized_model, quant_params_file_path, max_num_subgraph_nodes, add_data_convert_ops, output_feature_16bit_names_list, output_feature_16bit_names_search, meta_arch_type, meta_arch_file_path, detection_threshold, detection_top_k, nms_threshold, keep_top_k, runtime_options_dict, preprocess_name, resize, crop, data_layout, reverse_channels, resize_with_pad, sample_rate, audio_duration, audio_model_type, postprocess_enable, postprocess_name, display_benchmark, save_output, save_output_frames, show_output, analyze_level, act_data | Analyze model runtime and layer-level statistics |
-| command | package |  |  | command, capture_log, parallel_processes, parallel_devices, target_machine, target_device, log_file, pipeline_type, verbose, tensor_bits, work_path, run_label, package_path, param_template | Package artifacts for deployment |
-| command | report |  |  | command, capture_log, parallel_processes, parallel_devices, target_machine, target_device, log_file, pipeline_type, verbose, report_mode, report_path, run_label, report_perfsim | Generate compile and performance reports |
-| command | surgery |  |  | command, capture_log, parallel_processes, parallel_devices, target_machine, target_device, log_file, pipeline_type, verbose, model_path, config_path, work_path, run_label, run_dir, model_surgery, simplify_model, shape_inference, input_optimization, input_mean, input_scale | Run model surgery optimizations on the input model |
-
-## Dataloaders
-
-Name and path can be used with data_name and data_path commanline arguments. These arguments can also be used in the `dataloader` section in  config file - for example name and path entries as in the [sample config files](../../data/configs/samples/models)
-
-These dataloaders are defined in the [dataloaders module](../../tidlrunner/edgeai_tidlrunner/runner/common/blocks/dataloaders/)
-
-| Section | Name | Task | Required Args | Optional Args | Description |
-|---|---|---|---|---|---|
-| dataloader | ade20k32_segmentation_dataloader | segmentation | path | label_path, split, num_classes |  |
-| dataloader | ade20k_segmentation_dataloader | segmentation | path | label_path, split |  |
-| dataloader | audio_classification_dataloader | audio_classification | path |  |  |
-| dataloader | camera_capture_dataloader | video-capture |  | source, num_frames |  |
-| dataloader | cityscapes_segmentation_dataloader | segmentation | path | label_path |  |
-| dataloader | coco_detection_dataloader | detection | path | label_path |  |
-| dataloader | coco_keypoint_detection_dataloader | keypoint_detection | path | label_path |  |
-| dataloader | coco_segmentation_dataloader | segmentation | path | label_path |  |
-| dataloader | image_classification_dataloader | classification | path | label_path |  |
-| dataloader | image_files_dataloader | classification | path | label_path |  |
-| dataloader | image_list_dataloader | classification | path |  |  |
-| dataloader | image_pix2pix_dataloader | image-to-image | path | label_path |  |
-| dataloader | image_segmentation_dataloader | segmentation | path | label_path |  |
-| dataloader | imagenet_classification_dataloader | classification |  |  |  |
-| dataloader | imagenet_dataloader | classification | path | label_path |  |
-| dataloader | imagenetv2c_classification_dataloader | classification |  |  |  |
-| dataloader | imagenetv2c_dataloader | classification | path | label_path, variant |  |
-| dataloader | modelmaker_classification_dataloader | classification | path, label_path |  |  |
-| dataloader | modelmaker_detection_dataloader | detection | path | label_path |  |
-| dataloader | modelmaker_segmentation_dataloader | segmentation | path, label_path |  |  |
-| dataloader | nuscenes_frame_dataloader | 3d-detection | path | version, load_type |  |
-| dataloader | nuscenes_mv_image_dataloader | 3d-detection | path | version, load_type |  |
-| dataloader | nyudepthv2_dataloader | depth-estimation | path | label_path, split |  |
-| dataloader | pandaset_frame_dataloader | 3d-detection | path | version, load_type |  |
-| dataloader | pandaset_mv_image_dataloader | 3d-detection | path | version, load_type |  |
-| dataloader | random_dataloader |  |  |  |  |
-| dataloader | robokit_segmentation_dataloader | segmentation | path | label_path |  |
-| dataloader | robokit_visloc_dataloader | visual-localization | path | label_path |  |
-| dataloader | speech_enhancement_dataloader | speech-enhancement | path |  |  |
-| dataloader | video_capture_dataloader | video-capture |  | source, num_frames |  |
-| dataloader | video_file_dataloader | video-capture | video_path | num_frames |  |
-| dataloader | voc_segmentation_dataloader | segmentation | path | label_path |  |
-| dataloader | widerface_detection_dataloader | detection | path | label_path, split |  |
-| dataloader | ycbv_object_6d_pose_dataloader | 6d-pose | path | label_path |  |
+See [options and their descrption](./options.md)
 
 
 # Advanced Documentation (for experts)

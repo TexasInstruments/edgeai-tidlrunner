@@ -105,8 +105,8 @@ def register_help(
             if (entry_name in SETTINGS_HELP[section]) and not overwrite:
                 return fn
 
-            dict_required_args = [k for k, v in fn.items() if v.get('required')]
-            dict_optional_args = {k: v.get('default') for k, v in fn.items() if not v.get('required')}
+            dict_required_args = [f"{k} [{v.get('dest')}] ({v.get('help')})" for k, v in fn.items() if v.get('required') and v.get('dest')]
+            dict_optional_args = {f"{k} [{v.get('dest')}] ({v.get('help')})": v.get('default') for k, v in fn.items() if not v.get('required') and v.get('dest')}
             merged_required = _merge_unique(dict_required_args, required_args)
             merged_optional = dict(dict_optional_args)
             merged_optional.update(optional_args)
@@ -155,7 +155,7 @@ def list_help_names(section: str) -> List[str]:
 def export_help_markdown() -> str:
     """Export registered help metadata for a given section as a markdown table."""
     lines = [
-        '| Section | Name | Task | Required Args | Optional Args | Description |',
+        '| Section | Name | Task | Required Args [Config Fields] (Help) | Optional Args [Config Fields] (Help) | Description |',
         '|---|---|---|---|---|---|',
     ]
 

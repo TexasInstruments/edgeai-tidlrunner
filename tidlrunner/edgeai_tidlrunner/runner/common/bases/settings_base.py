@@ -47,8 +47,8 @@ class SettingsBaseDefaults:
 
 SETTING_PIPELINE_RUNNER_ARGS_BASE = {
     'command': {'default': None, 'type': str, 'positional':True, 'metavar': 'command', 'help': 'command to run (compile, infer, etc.)'},
-    'capture_log':              {'dest': 'common.capture_log', 'default': SettingsBaseDefaults.CAPTURE_LOG_MODE, 'type': utils.str_or_none_or_bool, 'metavar': 'value'},
-    'parallel_processes':       {'dest': 'common.parallel_processes', 'default': SettingsBaseDefaults.NUM_PARALLEL_PROCESSES, 'type': int, 'metavar': 'value'},
+    'capture_log':              {'dest': 'common.capture_log', 'default': SettingsBaseDefaults.CAPTURE_LOG_MODE, 'type': utils.str_or_none_or_bool, 'metavar': 'value', 'help': 'capture log mode (True, False, adaptive)'},
+    'parallel_processes':       {'dest': 'common.parallel_processes', 'default': SettingsBaseDefaults.NUM_PARALLEL_PROCESSES, 'type': int, 'metavar': 'value', 'help': 'number of parallel processes to use'},
     'parallel_devices':         {'dest': 'common.parallel_devices', 'default': None, 'type': int, 'metavar': 'value', 'help': 'number of parallel gpu devices to use for compilation (used only if gpu based tidl-tools is installed)'},
     'target_machine':           {'dest': 'session.target_machine', 'default': presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION, 'type': str, 'metavar': 'value', 'help': 'target machine for running the inference (pc, evm)'},
     'target_device':            {'dest': 'session.target_device', 'default': presets.TargetDeviceType.TARGET_DEVICE_AM62A, 'type': str, 'metavar': 'value', 'help': 'target device for inference (AM62A, AM69A, etc.)'},
