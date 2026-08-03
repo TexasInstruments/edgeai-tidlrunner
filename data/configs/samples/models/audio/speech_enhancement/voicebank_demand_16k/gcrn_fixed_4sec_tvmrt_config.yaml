@@ -1,0 +1,45 @@
+# GCRN speech enhancement -- TVM runtime (tvmrt) AM62D feasibility variant (C7x TIDL offload)
+# Usage: bash agent_ws/am62d-run.sh "tidlrunner-cli {compile,infer,evaluate} --config_path data/configs/samples/models/audio/speech_enhancement/voicebank_demand_16k/gcrn_fixed_4sec_tvmrt_config.yaml"
+#
+# Feasibility trial of the AM62D TVM 12.01 RC toolchain (bundled x86 TIDL tools 11.02.16.00)
+# driven through this repo's tvmrt pipeline. Unlike the AM62A ARM-only variant, this offloads
+# to the AM62D C7x DSP (tidl_offload: true) and quantizes to 16-bit (matches the RC reference).
+# Requires the env wrapper agent_ws/am62d-run.sh so TIDL_TOOLS_PATH/LD_LIBRARY_PATH/ARM64_GCC_PATH/
+# CGT7X_ROOT/SOC point at the wheel-bundled AM62D tools before Python starts.
+# Note: GCRN expects fixed 4-second input; GCRNSTFTTransform pads/truncates to audio_duration*sample_rate samples
+task_type: audio_speechenhancement
+common:
+  capture_log: true  # capture stdout into a timestamped run.log for stage-by-stage compile logs
+dataloader:
+  name: speech_enhancement_dataloader
+  path: ./data/datasets/VoiceBank-DEMAND-16k
+preprocess:
+  sample_rate: 16000
+  audio_model_type: gcrn  # dispatches GCRNSTFTTransform (Hamming window, n_fft=320, hop=160, center=True)
+  audio_duration: 4.0     # pad/truncate to 4s; GCRN expects exactly (1, 2, 401, 161)
+postprocess: {}  # dispatched via PostProcessTransforms.from_kwargs() using task_type
+model_surgery: false
+session:
+  session_name: tvmrt
+  target_device: AM62D
+  tidl_offload: true  # offload to AM62D C7x DSP via bundled TIDL tools
+  input_optimization: false  # disable image-specific input normalization
+  input_mean: null  # override image default (123.675, 116.28, 103.53)
+  input_scale: null  # override image default (0.017125, 0.017507, 0.017429)
+  runtime_options:
+    tensor_bits: 16  # RC reference default for GCRN on AM62D
+    advanced_options:calibration_frames: 12  # TVM import path runs calibration during TIDL import
+    advanced_options:calibration_iterations: 2
+
+  model_path: gcrn_fixed_4sec.onnx
+  model_id: ase-0201
+  input_details: null
+  output_details: null
+  num_inputs: 1
+model_info:
+  metric_reference:
+    pesq: 2.246     # GCRN 4sec, ARM CPU FP32, VoiceBank-DEMAND-16k test set (824 files)
+    stoi: 0.922
+    si_sdr_db: 17.7
+  compact_name: gcrn_4sec_tvmrt
+  shortlisted: false

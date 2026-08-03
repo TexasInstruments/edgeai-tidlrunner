@@ -108,6 +108,7 @@ class TargetDeviceType:
     TARGET_DEVICE_TDA4AH = 'TDA4AH'
     TARGET_DEVICE_AM62 = 'AM62'
     TARGET_DEVICE_AM62X = 'AM62X'
+    TARGET_DEVICE_AM62D = 'AM62D'
     TARGET_DEVICE_DEFAULT = TARGET_DEVICE_AM62A
 
 
@@ -186,4 +187,3 @@ ULTRA_CONST = 1e6
 # this constant is used to convert cycles to time : time = cycles / DSP_FREQ
 # in future, this will need to be device dependent
 DSP_FREQ = 1e9
-

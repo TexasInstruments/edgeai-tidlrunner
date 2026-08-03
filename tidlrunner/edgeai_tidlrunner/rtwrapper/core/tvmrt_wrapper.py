@@ -47,6 +47,7 @@ class TVMRuntimeWrapper(BaseRuntimeWrapper):
         self.platform_mapping_dict = {
             'AM62'   : 'AM62',
             'AM62X'   : 'AM62',
+            'AM62D'  : 'AM62D',  # feasibility: lowercased to 'am62d' when passed to tidl.compile_model
             'AM62A'  : 'AM62A',
             'AM62AX'  : 'AM62A',
             'J722S'  : 'AM67A',

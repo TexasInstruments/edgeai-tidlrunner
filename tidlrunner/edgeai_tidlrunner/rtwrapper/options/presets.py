@@ -68,6 +68,10 @@ TARGET_DEVICE_SETTINGS_PRESETS = {
         'runtime_options': {},
         'tidl_offload': False,
     },
+    # AM62D (C7x DSP) mirrors the AM62A family quantization preset
+    TargetDeviceType.TARGET_DEVICE_AM62D : {
+        'runtime_options': {'advanced_options:quantization_scale_type': QUANTScaleType.QUANT_SCALE_TYPE_NP2_PERCHAN},
+    },
 }
 
 
