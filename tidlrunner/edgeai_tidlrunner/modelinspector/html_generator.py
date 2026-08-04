@@ -184,11 +184,18 @@ def calculate_node_depths_and_positions(nodes: Dict, edges: List[Dict], width=12
     depths = {}
 
     def assign_depth(node_name, depth):
-        current_depth = depths.get(node_name, -1)
-        if depth > current_depth:
-            depths[node_name] = depth
-            for child_name in children[node_name]:
-                assign_depth(child_name, depth + 1)
+        # Iterative DFS (explicit stack) instead of recursion — large models
+        # (e.g. RT-DETRv2-X with 1400+ nodes) can have a longest path deeper
+        # than Python's default recursion limit (~1000), which blew up as
+        # RecursionError in calculate_node_depths_and_positions.
+        stack = [(node_name, depth)]
+        while stack:
+            name, d = stack.pop()
+            current_depth = depths.get(name, -1)
+            if d > current_depth:
+                depths[name] = d
+                for child_name in children[name]:
+                    stack.append((child_name, d + 1))
 
     actual_roots = []
     constant_nodes = []
