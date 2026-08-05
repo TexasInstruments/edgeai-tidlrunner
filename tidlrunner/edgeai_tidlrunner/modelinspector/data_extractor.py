@@ -1758,7 +1758,18 @@ class GraphVizParser:
                     diag_match = re.search(r'diagInfo\s+(.+)$', line)
                     diag_info = diag_match.group(1) if diag_match else ''
 
-                    is_supported = 'SUPPORTED' in diag_info and 'UNSUPPORTED' not in diag_info
+                    # Case-insensitive: TIDL emits both an uppercase-tagged
+                    # "SUPPORTED: Layers type supported by TIDL" diagnostic
+                    # AND a "[PARSER] INFORMATION: ... supported via fusion,
+                    # individually might not be supported" diagnostic for
+                    # ops fused into a single TIDL layer (e.g. LayerNorm's
+                    # ReduceMean/Sub/Pow/Sqrt/Div/Add). The latter's "supported"
+                    # is lowercase, so the old case-sensitive check treated
+                    # every fused op as unsupported/ARM even though it runs
+                    # on TIDL — matching this case-insensitively fixes that
+                    # while still excluding genuine "UNSUPPORTED:" lines.
+                    diag_lower = diag_info.lower()
+                    is_supported = 'supported' in diag_lower and 'unsupported' not in diag_lower
 
                     node_support[node_id] = {
                         'supported': is_supported,
@@ -1871,11 +1882,18 @@ def calculate_node_depths_and_positions(nodes, edges, width=1200, height=800):
     depths = {}
 
     def assign_depth(node_name, depth):
-        current_depth = depths.get(node_name, -1)
-        if depth > current_depth:
-            depths[node_name] = depth
-            for child_name in children[node_name]:
-                assign_depth(child_name, depth + 1)
+        # Iterative DFS (explicit stack) instead of recursion — large models
+        # (e.g. RT-DETRv2-X with 1400+ nodes) can have a longest path deeper
+        # than Python's default recursion limit (~1000), which blew up as
+        # RecursionError in calculate_node_depths_and_positions.
+        stack = [(node_name, depth)]
+        while stack:
+            name, d = stack.pop()
+            current_depth = depths.get(name, -1)
+            if d > current_depth:
+                depths[name] = d
+                for child_name in children[name]:
+                    stack.append((child_name, d + 1))
 
     actual_roots = []
     constant_nodes = []
