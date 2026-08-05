@@ -33,6 +33,7 @@ import argparse
 
 import edgeai_tidlrunner
 from edgeai_tidlrunner.runner.common import utils
+from edgeai_tidlrunner.runner.common.utils.download_utils import _download_file as _utils_download_file
 
 
 def _get_root(path):
@@ -67,7 +68,7 @@ def download_imagenetv2(path, split='val', force_download=False):
     split_file=os.path.join(root, f'{split}.txt')
     download_root = os.path.join(root, 'download')
     extract_root = os.path.join(download_root, 'rawdata')
-    extract_path = utils.download_file(url, root=download_root, extract_root=extract_root, mode='r',
+    extract_path = _utils_download_file(url, root=download_root, extract_root=extract_root, mode='r',
                                         force_download=force_download)
     split_path = os.path.join(root, split)
 
@@ -133,8 +134,8 @@ def download_coco(path, split='val', force_download=False):
     dataset_url = 'http://images.cocodataset.org/zips/val2017.zip'
     extra_url = 'http://images.cocodataset.org/annotations/annotations_trainval2017.zip'
     download_root = os.path.join(root, 'download')
-    dataset_path = utils.download_file(dataset_url, root=download_root, extract_root=root)
-    extra_path = utils.download_file(extra_url, root=download_root, extract_root=root)
+    dataset_path = _utils_download_file(dataset_url, root=download_root, extract_root=root)
+    extra_path = _utils_download_file(extra_url, root=download_root, extract_root=root)
     print(f'INFO: dataset ready: {path}')
     return path
 
