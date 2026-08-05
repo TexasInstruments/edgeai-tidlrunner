@@ -886,59 +886,6 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
                             })
                             edges_created.add(edge_key)
 
-            # Boundary Input/Output pill nodes — so a subgraph reads as a
-            # complete graph (tensor in -> ... -> tensor out) even when it
-            # has just one layer (e.g. a single-op TVM subgraph) instead of
-            # appearing as a disconnected floating box.
-            # Matched to layers by tensor name (works for any subgraph whose
-            # top-level inputs/outputs list is populated).
-            layer_input_names = {}   # tensor_name -> [layer_index, ...]
-            layer_output_names = {}  # tensor_name -> [layer_index, ...]
-            for tidl_layer in subgraph_info.get('layers', []):
-                idx = tidl_layer.get('layer_id', 0)
-                for inp in tidl_layer.get('inputs', []) or []:
-                    nm = inp.get('name')
-                    if nm:
-                        layer_input_names.setdefault(nm, []).append(idx)
-                for out in tidl_layer.get('outputs', []) or []:
-                    nm = out.get('name')
-                    if nm:
-                        layer_output_names.setdefault(nm, []).append(idx)
-
-            for i, sg_in in enumerate(subgraph_info.get('inputs', []) or []):
-                tensor_name = sg_in.get('name', f'input_{i}')
-                shape = sg_in.get('shape', [])
-                targets = layer_input_names.get(tensor_name, [])
-                if not targets:
-                    continue  # no layer in this subgraph consumes it — skip pill
-                pill_id = f'tidl_sg_{subgraph_id}_input_{i}'
-                graph_nodes.append({
-                    'id': pill_id, 'index': -1,
-                    'name': tensor_name, 'full_name': tensor_name, 'type': 'Input',
-                    'tidl_supported': True,
-                    'inputshape': 'N/A', 'outputshape': str(shape) if shape else 'N/A',
-                    'layer_data': {'raw_text': f'Input: {tensor_name}\nShape: {shape}'},
-                })
-                for target_idx in targets:
-                    graph_edges.append({'source': pill_id, 'target': f'tidl_layer_{target_idx}'})
-
-            for i, sg_out in enumerate(subgraph_info.get('outputs', []) or []):
-                tensor_name = sg_out.get('name', f'output_{i}')
-                shape = sg_out.get('shape', [])
-                sources = layer_output_names.get(tensor_name, [])
-                if not sources:
-                    continue  # no layer in this subgraph produces it — skip pill
-                pill_id = f'tidl_sg_{subgraph_id}_output_{i}'
-                graph_nodes.append({
-                    'id': pill_id, 'index': -1,
-                    'name': tensor_name, 'full_name': tensor_name, 'type': 'Output',
-                    'tidl_supported': True,
-                    'inputshape': str(shape) if shape else 'N/A', 'outputshape': 'N/A',
-                    'layer_data': {'raw_text': f'Output: {tensor_name}\nShape: {shape}'},
-                })
-                for source_idx in sources:
-                    graph_edges.append({'source': f'tidl_layer_{source_idx}', 'target': pill_id})
-
             # Collect ONNX nodes belonging to this subgraph (for ONNX view in Level 2)
             onnx_nodes_for_subgraph = []
             seen_onnx = set()
@@ -1185,43 +1132,76 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
             if oname not in onnx_to_overview_id:  # Only map if not already mapped
                 onnx_to_overview_id[oname] = node_id
 
-    # Add ARM/unsupported ONNX nodes not covered by any subgraph.
+    # Add fallback overview nodes for ONNX nodes not covered by any subgraph.
     # A node that appears in subgraph_onnx_names is compiled into a TIDL/TVM layer
     # (even if graphvizInfo.txt / JSON runtime_assignment says 'arm') so it must NOT
     # appear as an ARM overview node.  The subgraph_onnx_names check is the authoritative
     # source; ra.assigned_runtime from the JSON is a secondary hint only.
+    #
+    # Two distinct cases land here:
+    #   1. Genuinely unaccelerated (arm) — rendered as a red ARM pill, as before.
+    #   2. assigned_runtime IS tidl_rt/tvm_rt but the node never showed up in any
+    #      layer's onnx_mapping.onnx_node_names — a mapping-coverage gap (seen e.g.
+    #      on LSTM/LayerNorm sub-ops that get fused into a composite TIDL layer
+    #      without every sub-op being recorded). Previously these were silently
+    #      dropped from the overview entirely, which also silently dropped any
+    #      edge passing through them — making a perfectly-connected downstream
+    #      TVM/TIDL subgraph look like it had no input. Give them a distinct
+    #      "unmapped" node so the edge chain stays connected and the gap is
+    #      visible instead of invisible.
     if is_unified_schema:
         for layer_name, layer_info in onnx_layers.items():
+            if layer_name in subgraph_onnx_names:
+                continue
             ra = layer_info.get('runtime_assignment', {})
-            if layer_name not in subgraph_onnx_names and ra.get('assigned_runtime') not in ('tidl_rt', 'tvm_rt'):
-                node_id = f'arm_{layer_name}'
-                overview_nodes.append({
-                    'id': node_id,
-                    'type': 'arm',
-                    'label': layer_name,
-                    'op_type': layer_info.get('type', 'Unknown'),
-                    'reason': ra.get('reason', ''),
-                })
-                onnx_to_overview_id[layer_name] = node_id
+            assigned_runtime = ra.get('assigned_runtime')
+            is_accelerated = assigned_runtime in ('tidl_rt', 'tvm_rt')
+            node_id = f'{"unmapped" if is_accelerated else "arm"}_{layer_name}'
+            overview_nodes.append({
+                'id': node_id,
+                'type': 'unmapped' if is_accelerated else 'arm',
+                'label': layer_name,
+                'op_type': layer_info.get('type', 'Unknown'),
+                'reason': ra.get('reason', '') if not is_accelerated else
+                          f'Runs on {assigned_runtime} but not captured in any subgraph layer mapping',
+            })
+            onnx_to_overview_id[layer_name] = node_id
 
-    # Build overview edges by following ONNX data flow
-    # For each ONNX edge, map source/target ONNX nodes to overview nodes and create edge
+    seen_overview_edges = set()
+
+    def _add_overview_edge(src_id, tgt_id):
+        if src_id and tgt_id and src_id != tgt_id and (src_id, tgt_id) not in seen_overview_edges:
+            seen_overview_edges.add((src_id, tgt_id))
+            overview_edges.append({'source': src_id, 'target': tgt_id})
+
+    # Primary: build overview edges directly from each subgraph's own
+    # inputs/outputs. data_extractor.py (and merge_inspector_json.py, once
+    # TVM is merged) already resolves each boundary tensor to the
+    # neighboring subgraph's id when it can (e.g. "tidl_5") — far more
+    # direct/robust than re-deriving ownership by tracing the full ONNX
+    # node graph below. Entries that DIDN'T resolve to a subgraph are left
+    # as the raw tensor name instead (an ARM/unmapped connection) — those
+    # are picked up by the ONNX ownership fallback below, same as before.
+    subgraph_node_id = {sg_id: f'subgraph_{sg_id}' for sg_id in tidl_data}
+    for sg_id, sg_info in tidl_data.items():
+        this_id = subgraph_node_id[sg_id]
+        for v in sg_info.get('subgraph_inputs', []) or []:
+            if v in subgraph_node_id:
+                _add_overview_edge(subgraph_node_id[v], this_id)
+        for v in sg_info.get('subgraph_outputs', []) or []:
+            if v in subgraph_node_id:
+                _add_overview_edge(this_id, subgraph_node_id[v])
+
+    # Fallback: also trace ONNX data flow through node ownership, for
+    # anything the tensor-name matching above doesn't cover yet — e.g. ARM
+    # node connections, or a boundary tensor whose connected_subgraph is
+    # still None because it crosses into TVM before a merge has resolved
+    # it. Only adds edges not already found above (seen_overview_edges).
     if is_unified_schema:
-        seen_overview_edges = set()
         for edge in model_data.get('edges', []):
             src_onnx = edge.get('source_node_name')
             tgt_onnx = edge.get('target_node_name')
-            src_overview_id = onnx_to_overview_id.get(src_onnx)
-            tgt_overview_id = onnx_to_overview_id.get(tgt_onnx)
-            # Only create overview edge if both nodes are in overview and they're different
-            if src_overview_id and tgt_overview_id and src_overview_id != tgt_overview_id:
-                edge_key = (src_overview_id, tgt_overview_id)
-                if edge_key not in seen_overview_edges:
-                    seen_overview_edges.add(edge_key)
-                    overview_edges.append({
-                        'source': src_overview_id,
-                        'target': tgt_overview_id
-                    })
+            _add_overview_edge(onnx_to_overview_id.get(src_onnx), onnx_to_overview_id.get(tgt_onnx))
     overview_data = {'nodes': overview_nodes, 'edges': overview_edges}
 
     # Convert data to JSON strings for template injection

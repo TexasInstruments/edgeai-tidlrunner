@@ -835,10 +835,19 @@ class TIDLSubgraphParser:
                 for line_num, line in enumerate(f):
                     # Skip header lines (until we see "Num|TIDL Layer")
                     if '|TIDL Layer' not in line and 'Num of Layer' not in line:
-                        # Check if this is a data row (not a separator)
-                        if line.startswith('    ') and '|' in line:
+                        # Check if this is a data row (not a separator). The
+                        # layer index column is right-justified to a fixed
+                        # width, so its leading-space count varies with the
+                        # number of digits (e.g. "    8|" for single-digit
+                        # vs "   48|" for double-digit) — checking for an
+                        # exact 4-space prefix silently skipped every layer
+                        # index >= 10, which broke fusion detection for any
+                        # subgraph with more than ~10 layers. Strip first and
+                        # check the first column is actually numeric instead.
+                        stripped = line.strip()
+                        if stripped and '|' in stripped:
                             # Parse the columns: Num|TIDL Layer Name|Out Data Name|...
-                            cols = line.split('|')
+                            cols = stripped.split('|')
                             if len(cols) >= 3:
                                 try:
                                     tidl_idx_str = cols[0].strip()
@@ -1792,59 +1801,6 @@ class GraphVizParser:
         return node_support
 
 
-class AllowedNodeParser:
-    """Parser for allowednode.txt"""
-
-    def __init__(self, filepath: str):
-        self.filepath = filepath
-
-    def parse(self) -> List[Dict[str, Any]]:
-        """Parse allowednode.txt and extract subgraph information"""
-        logger.debug(f"Parsing allowednode.txt: {self.filepath}")
-
-        with open(self.filepath, 'r', encoding='utf-8') as f:
-            lines = [line.strip() for line in f if line.strip()]
-
-        if not lines:
-            logger.debug("  Warning: Empty allowednode.txt")
-            return []
-
-        try:
-            num_subgraphs = int(lines[0])
-            logger.debug(f"  Number of subgraphs: {num_subgraphs}")
-
-            subgraphs = []
-            line_idx = 1
-
-            for sg_idx in range(num_subgraphs):
-                if line_idx >= len(lines):
-                    break
-
-                num_nodes = int(lines[line_idx])
-                line_idx += 1
-
-                nodes = []
-                for _ in range(num_nodes):
-                    if line_idx >= len(lines):
-                        break
-                    nodes.append(int(lines[line_idx]))
-                    line_idx += 1
-
-                subgraphs.append({
-                    'id': sg_idx,
-                    'nodes': nodes
-                })
-
-                logger.debug(f"  Subgraph {sg_idx}: {num_nodes} nodes")
-
-            logger.debug(f"Parsed {len(subgraphs)} subgraphs")
-            return subgraphs
-
-        except (ValueError, IndexError) as e:
-            logger.debug(f"  Error parsing allowednode.txt: {e}")
-            return []
-
-
 def calculate_node_depths_and_positions(nodes, edges, width=1200, height=800):
     """
     Calculate optimal x,y positions for nodes using Netron-style layout
@@ -2696,13 +2652,6 @@ def discover_files_from_workdir(model_dir_path: str) -> Dict[str, str]:
     else:
         logger.debug("[NOT FOUND] graphvizInfo.txt not found")
 
-    allowednode_files = glob.glob(os.path.join(model_dir_path, 'artifacts/allowedNode.txt'), recursive=False)
-    if allowednode_files:
-        discovered['allowednode'] = allowednode_files[0]
-        logger.debug(f"[FOUND] allowedNode: {os.path.relpath(discovered['allowednode'])}")
-    else:
-        logger.debug("[NOT FOUND] allowedNode.txt not found")
-
     subgraph_dir = None
     subgraph_html_files = glob.glob(os.path.join(model_dir_path, 'artifacts/tempDir/subgraph_*_tidl_net.bin.html'), recursive=False)
     if subgraph_html_files:
@@ -3306,7 +3255,6 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
         logger.debug("\nThe script will automatically discover and parse:")
         logger.debug("  - ONNX model from <model_dir>/model/*.onnx")
         logger.debug("  - GraphViz info from <model_dir>/artifacts/tempDir/graphvizInfo.txt")
-        logger.debug("  - Allowed nodes from <model_dir>/artifacts/allowedNode.txt")
         logger.debug("  - Subgraph files from <model_dir>/artifacts/tempDir/")
         logger.debug("  - Metrics from <model_dir>/analyze.xlsx")
         logger.debug("  - Activation data from layer_info.txt and binary files (enabled by default)")
@@ -3349,14 +3297,11 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
 
     onnx_path = discovered['onnx']
     graphviz_path = discovered.get('graphviz')
-    allowednode_path = discovered.get('allowednode')
     subgraph_dir = discovered.get('subgraph_dir')
 
     # Log missing optional TIDL artifacts as info (not error)
     if not graphviz_path:
         logger.debug("[INFO] GraphViz info not found (optional) - TIDL support info will be unavailable")
-    if not allowednode_path:
-        logger.debug("[INFO] allowedNode.txt not found (optional) - using all nodes as allowed")
     if not subgraph_dir:
         logger.debug("[INFO] Subgraph directory not found (optional) - assuming single subgraph")
 
@@ -3365,13 +3310,12 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
     logger.debug("=" * 70)
     logger.debug(f"ONNX Model:      {onnx_path}")
     logger.debug(f"GraphViz Info:   {graphviz_path}")
-    logger.debug(f"Allowed Nodes:   {allowednode_path}")
     logger.debug(f"Subgraph Dir:    {subgraph_dir}")
     logger.debug(f"Output JSON:     {output_json_path}")
     logger.debug("=" * 70)
 
     try:
-        logger.debug("\n[1/8] Parsing ONNX model...")
+        logger.debug("\n[1/7] Parsing ONNX model...")
         onnx_parser = ONNXParser(onnx_path)
         model_data = onnx_parser.parse()
 
@@ -3382,11 +3326,10 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
         model_data['tree_structure'] = tree_structure
 
         subgraph_data = {
-            'subgraphs': [],
             'node_support': {}
         }
 
-        logger.debug("\n[2/8] Parsing GraphViz info...")
+        logger.debug("\n[2/7] Parsing GraphViz info...")
         if graphviz_path and os.path.exists(graphviz_path):
             graphviz_parser = GraphVizParser(graphviz_path)
             subgraph_data['node_support'] = graphviz_parser.parse()
@@ -3394,15 +3337,7 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
             logger.debug(f"WARNING: GraphViz info not found (optional)")
             subgraph_data['node_support'] = {}
 
-        logger.debug("\n[3/8] Parsing allowed nodes...")
-        if allowednode_path and os.path.exists(allowednode_path):
-            allowednode_parser = AllowedNodeParser(allowednode_path)
-            subgraph_data['subgraphs'] = allowednode_parser.parse()
-        else:
-            logger.debug(f"WARNING: allowedNode.txt not found (optional)")
-            subgraph_data['subgraphs'] = {}
-
-        logger.debug("\n[4/8] Parsing TIDL subgraph HTML files...")
+        logger.debug("\n[3/7] Parsing TIDL subgraph HTML files...")
         # Build tensor name → ONNX node index map for TIDL-to-ONNX mapping
         tensor_to_node_map = {}
         for idx, (layer_name, layer_info) in enumerate(model_data.get('layer_details', {}).items()):
@@ -3422,7 +3357,7 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
             tidl_parser.onnx_layer_details = model_data.get('layer_details', {})
             tidl_data = tidl_parser.parse_all_subgraphs()
 
-        logger.debug("\n[5/8] Parsing activation data...")
+        logger.debug("\n[4/7] Parsing activation data...")
         activation_data = {}
         if extract_activations:
             try:
@@ -3439,7 +3374,7 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
         else:
             logger.debug("  Skipping activation data - JSON contains only model structure")
 
-        logger.debug("\n[6/8] Parsing metrics data...")
+        logger.debug("\n[5/7] Parsing metrics data...")
         metrics_data = {}
         metrics_xlsx_path = discovered.get('xlsx', None)
         if metrics_xlsx_path and os.path.exists(metrics_xlsx_path):
@@ -3448,13 +3383,13 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
         else:
             logger.info("INFO: No analyze.xlsx file from inspect is found (optional)")
 
-        logger.debug("\n[7/8] Loading configuration and performance data...")
+        logger.debug("\n[6/7] Loading configuration and performance data...")
         config_data = load_config_data(model_dir_path)
         proctime_data = load_proctime_data(model_dir_path)
         cycles_data = load_cycles_data(model_dir_path)
         memory_data = load_memory_data(model_dir_path)
 
-        logger.debug("\n[8/8] Combining and saving data...")
+        logger.debug("\n[7/7] Combining and saving data...")
 
         performance_data = {}
         all_subgraphs = set(proctime_data.keys()) | set(cycles_data.keys()) | set(memory_data.keys())
@@ -3797,12 +3732,95 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
             logger.debug("  No TVM artifacts found, skipping TVM section")
             tvm_data = {}
 
+        # Compute each TIDL subgraph's boundary inputs/outputs — the tensors
+        # that cross the subgraph's boundary (enter from outside / exit to
+        # outside). Derived directly from each layer's own input/output
+        # tensor names (already collected per-layer above), so the Overview
+        # graph can connect subgraphs by matching tensor names directly
+        # instead of tracing ownership through the full ONNX node graph.
+        subgraph_produced = {}
+        subgraph_consumed = {}
+        for subgraph_id, tidl_subgraph in enhanced_tidl_data.items():
+            produced, consumed = set(), set()
+            for layer in tidl_subgraph['layers']:
+                for inp in layer.get('inputs', []):
+                    t = inp.get('tensor_name')
+                    if t:
+                        consumed.add(t)
+                # TIDL_DataLayer's "output" represents external data flowing
+                # INTO the subgraph (the model/subgraph input placeholder),
+                # not something computed internally — counting it as
+                # "produced" would cancel it out of consumed - produced
+                # below, hiding it as a boundary input.
+                if layer.get('layer_type') == 'TIDL_DataLayer':
+                    continue
+                for out in layer.get('outputs', []):
+                    t = out.get('tensor_name')
+                    if t:
+                        produced.add(t)
+            subgraph_produced[subgraph_id] = produced
+            subgraph_consumed[subgraph_id] = consumed
+
+        # Which subgraphs consume a given tensor — used to decide if a
+        # produced tensor actually crosses this subgraph's boundary (i.e.
+        # some OTHER subgraph also consumes it), vs. being purely internal.
+        consumers_of_tensor = {}
+        for sid, consumed in subgraph_consumed.items():
+            for t in consumed:
+                consumers_of_tensor.setdefault(t, set()).add(sid)
+
+        model_output_tensor_names = {o.get('name') for o in onnx_outputs if o.get('name')}
+
+        # Producer/consumer subgraph per tensor (TIDL<->TIDL only — TVM
+        # isn't known yet at this stage; merge_inspector_json.py resolves
+        # those once TVM subgraphs are merged in).
+        tensor_producer_ref = {}
+        for sid, produced in subgraph_produced.items():
+            for t in produced:
+                tensor_producer_ref[t] = f'tidl_{sid}'
+        tensor_consumer_refs = {}
+        for sid, consumed in subgraph_consumed.items():
+            for t in consumed:
+                tensor_consumer_refs.setdefault(t, []).append(f'tidl_{sid}')
+
+        # Each boundary entry is a single value: the neighboring subgraph's
+        # id (e.g. "tidl_0") when it resolves to one, otherwise just the
+        # tensor name itself — which is what identifies an ARM/unresolved
+        # connection (a consumer can match it against ONNX node tensors
+        # directly instead of needing a separate id/reference field).
+        def _boundary_input_value(tensor_name, self_ref):
+            producer = tensor_producer_ref.get(tensor_name)
+            return producer if producer and producer != self_ref else tensor_name
+
+        def _boundary_output_value(tensor_name, self_ref):
+            consumers = [c for c in tensor_consumer_refs.get(tensor_name, []) if c != self_ref]
+            return consumers[0] if consumers else tensor_name
+
+        def _dedupe_preserve_order(values):
+            # Two distinct boundary tensors resolving to the same neighbor
+            # subgraph would otherwise show that subgraph id twice.
+            seen = set()
+            result = []
+            for v in values:
+                if v not in seen:
+                    seen.add(v)
+                    result.append(v)
+            return result
+
         # Build subgraphs dict in the format: tidl_0, tidl_1, tvm_0, etc.
         unified_subgraphs = {}
 
         # Add TIDL subgraphs with correct field order
         for subgraph_id, tidl_subgraph in enhanced_tidl_data.items():
             subgraph_key = f'tidl_{subgraph_id}'
+
+            produced = subgraph_produced[subgraph_id]
+            consumed = subgraph_consumed[subgraph_id]
+            boundary_inputs = sorted(consumed - produced)
+            boundary_outputs = sorted(
+                t for t in produced
+                if t in model_output_tensor_names or (consumers_of_tensor.get(t, set()) - {subgraph_id})
+            )
 
             # Build TIDL subgraph with correct field order matching unified schema
             ordered_tidl_subgraph = {
@@ -3812,8 +3830,8 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
                 'tensor_bits': config_data.get('tensor_bits', 8),
                 'total_gmacs': tidl_subgraph['total_gmacs'],
                 'num_layers': tidl_subgraph['num_layers'],
-                'inputs': [],
-                'outputs': [],
+                'inputs': _dedupe_preserve_order(_boundary_input_value(t, subgraph_key) for t in boundary_inputs),
+                'outputs': _dedupe_preserve_order(_boundary_output_value(t, subgraph_key) for t in boundary_outputs),
                 'layers': tidl_subgraph['layers'],
                 'target_device': target_device,
             }

@@ -2383,6 +2383,24 @@ main {
     stroke-width: 3;
 }
 
+/* Accelerated (tidl_rt/tvm_rt) node not captured in any subgraph's layer
+   mapping — distinct from ARM (unaccelerated) so it isn't mistaken for a
+   CPU fallback; amber signals "gap in mapping data", not "not accelerated". */
+.node-rect.unmapped-pill {
+    fill: #FFF3E0;
+    stroke: #E68A00;
+    stroke-width: 2;
+}
+
+[data-theme="dark"] .node-rect.unmapped-pill {
+    fill: #4d3a1b;
+    stroke: #E68A00;
+}
+
+.graph-node:hover .node-rect.unmapped-pill {
+    stroke-width: 3;
+}
+
 .graph-node.selected .node-rect.arm-pill {
     fill: #E63339 !important;
     stroke: #990000;
@@ -7303,7 +7321,7 @@ function _highlightNodeById(nodeId) {
     // Expand the selected node visually
     const nodeName = targetNode.full_name || targetNode.name || targetNode.type;
     const expandedW = Math.max(120, Math.min(nodeName.length, 18) * 7 + 40);
-    if (targetNode.type === 'Input' || targetNode.type === 'Output' || targetNode.type === 'Tensor' || targetNode.type === 'ARM') {
+    if (targetNode.type === 'Input' || targetNode.type === 'Output' || targetNode.type === 'Tensor' || targetNode.type === 'ARM' || targetNode.type === 'Unmapped') {
         targetEl.select('.node-rect').attr('width', 120).attr('height', 32).attr('x', -60).attr('y', -16).attr('rx', 16).attr('ry', 16);
     } else {
         targetEl.select('.node-rect').attr('width', expandedW).attr('height', 110).attr('x', -expandedW / 2).attr('y', -55).attr('rx', 12);
@@ -7650,19 +7668,21 @@ function renderOverview() {
     if (!window.tidlGraph || !OVERVIEW_DATA) return;
     const nodes = (OVERVIEW_DATA.nodes || []).map(n => {
         const isSubgraph = n.type === 'subgraph';
+        const isUnmapped = n.type === 'unmapped';
+        const nodeType = isSubgraph ? 'Subgraph' : isUnmapped ? 'Unmapped' : 'ARM';
         return {
             id: n.id,
             index: n.id,
             name: n.label,
             full_name: n.label,
-            type: isSubgraph ? 'Subgraph' : 'ARM',
+            type: nodeType,
             tidl_supported: isSubgraph,
             inputshape: 'N/A',
             outputshape: 'N/A',
             is_overview: true,
             overview_data: n,
-            subgraph_color: isSubgraph ? (n.runtime === 'tvm_rt' ? '#2e7d32' : '#0072ce') : '#c62828',
-            subgraph_border_color: isSubgraph ? (n.runtime === 'tvm_rt' ? '#1b5e20' : '#004a99') : '#b71c1c',
+            subgraph_color: isSubgraph ? (n.runtime === 'tvm_rt' ? '#2e7d32' : '#0072ce') : isUnmapped ? '#E68A00' : '#c62828',
+            subgraph_border_color: isSubgraph ? (n.runtime === 'tvm_rt' ? '#1b5e20' : '#004a99') : isUnmapped ? '#a35f00' : '#b71c1c',
             layer_data: { raw_text: '', layer_name: n.label, layer_type: n.type, gmacs: n.total_gmacs || 0, overview_data: n }
         };
     });
@@ -7710,15 +7730,18 @@ function renderOverview() {
     const modelInputNames  = new Set(modelInputs.map(t => t.name));
     const modelOutputNames = new Set(modelOutputs.map(t => t.name));
 
+    // od.inputs/outputs entries are simple values now — either a
+    // neighboring subgraph's id or the raw tensor name — so match
+    // directly against the tensor name string, no .name lookup needed.
     const inputTargets = nodes.filter(n => {
         const od = n.overview_data || {};
-        if (od.type === 'subgraph') return (od.inputs || []).some(t => modelInputNames.has(t.name));
+        if (od.type === 'subgraph') return (od.inputs || []).some(t => modelInputNames.has(t));
         const detail = allLayerDetails[od.label] || {};
         return (detail.input || []).some(name => modelInputNames.has(name));
     });
     const outputSources = nodes.filter(n => {
         const od = n.overview_data || {};
-        if (od.type === 'subgraph') return (od.outputs || []).some(t => modelOutputNames.has(t.name));
+        if (od.type === 'subgraph') return (od.outputs || []).some(t => modelOutputNames.has(t));
         const detail = allLayerDetails[od.label] || {};
         return (detail.output || []).some(name => modelOutputNames.has(name));
     });
@@ -7822,6 +7845,68 @@ function updateSubgraphInfo(subgraphIdx) {
     document.getElementById('sg-supported').textContent = supportedCount;
     document.getElementById('sg-non-accelerated').textContent = nonAcceleratedCount;
 }
+// ==================== SHARED EDGE PATH HELPERS ====================
+// Rounded "elbow" connector, corners rounded with a small fixed radius.
+// Shared by both the initial render (renderGraph) and any code that
+// re-syncs edge paths after a node moves (updateEdges) — previously each
+// had its own copy of the path-generation logic, so fixes to one silently
+// didn't apply to the other (e.g. a curve-style change here would still
+// show the old bezier style after any drag/click interaction).
+const GRAPH_EDGE_CORNER_RADIUS = 20;
+function roundedPolylinePath(points, radius) {
+    if (points.length < 2) return '';
+    if (points.length === 2) {
+        return `M ${points[0].x},${points[0].y} L ${points[1].x},${points[1].y}`;
+    }
+    let path = `M ${points[0].x},${points[0].y}`;
+    for (let i = 1; i < points.length - 1; i++) {
+        const prev = points[i - 1], curr = points[i], next = points[i + 1];
+        const d1x = curr.x - prev.x, d1y = curr.y - prev.y;
+        const len1 = Math.sqrt(d1x * d1x + d1y * d1y) || 1;
+        const d2x = next.x - curr.x, d2y = next.y - curr.y;
+        const len2 = Math.sqrt(d2x * d2x + d2y * d2y) || 1;
+        const r = Math.min(radius, len1 / 2, len2 / 2);
+        const p1x = curr.x - (d1x / len1) * r, p1y = curr.y - (d1y / len1) * r;
+        const p2x = curr.x + (d2x / len2) * r, p2y = curr.y + (d2y / len2) * r;
+        path += ` L ${p1x},${p1y} Q ${curr.x},${curr.y} ${p2x},${p2y}`;
+    }
+    const last = points[points.length - 1];
+    path += ` L ${last.x},${last.y}`;
+    return path;
+}
+// Deterministic small hash → stable per-edge jitter (same edge always
+// gets the same value across re-renders, so ports/jog heights don't jump
+// around on every redraw).
+function stableEdgeHash(str) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) { h = (h * 31 + str.charCodeAt(i)) | 0; }
+    return Math.abs(h);
+}
+function edgeElbowPath(x1, y1, x2, y2, midYFrac) {
+    // Same column (or near enough) — a straight vertical line, no corners.
+    if (Math.abs(x2 - x1) < 5) {
+        return `M ${x1},${y1} L ${x2},${y2}`;
+    }
+    // Simple orthogonal elbow: straight down from source, one horizontal
+    // jog at the vertical midpoint, straight down into the target.
+    // midYFrac lets edges that share the same y1/y2 (e.g. all crossing
+    // from one rank to the next) jog at slightly different heights
+    // instead of stacking their whole horizontal segment on top of each
+    // other — defaults to the exact midpoint when not given.
+    const frac = midYFrac === undefined ? 0.5 : midYFrac;
+    const midY = y1 + (y2 - y1) * frac;
+    const points = [
+        { x: x1, y: y1 },
+        { x: x1, y: midY },
+        { x: x2, y: midY },
+        { x: x2, y: y2 }
+    ];
+    return roundedPolylinePath(points, GRAPH_EDGE_CORNER_RADIUS);
+}
+function edgeAnchorHalfHeight(n) {
+    return (n.type === 'Input' || n.type === 'Output' || n.type === 'Tensor' || n.type === 'ARM' || n.type === 'Unmapped') ? 14 : 50;
+}
+
 // ==================== GRAPH CLASS ====================
 class Graph {
     constructor(svgId, contentId, canvasId, isTIDL = false) {
@@ -8021,9 +8106,22 @@ class Graph {
 
         console.log('V3: Using Dagre layout algorithm');
 
-        // Create Dagre graph with improved compact layout
+        // Create Dagre graph with improved compact layout.
+        // The Overview graph can have many more nodes per rank than the
+        // Layer/ONNX views (e.g. a model with 10 TIDL + 38 TVM subgraphs),
+        // and its edges skip across many ranks (skip-connections between
+        // encoder/decoder subgraphs), so it gets extra breathing room to
+        // avoid the tangled look of default spacing.
+        const isOverviewGraph = nodes.some(n => n.is_overview);
         const g = new dagre.graphlib.Graph();
-        g.setGraph({
+        g.setGraph(isOverviewGraph ? {
+            rankdir: 'TB',
+            nodesep: 100,       // Horizontal room between sibling subgraphs
+            ranksep: 160,
+            edgesep: 25,
+            marginx: 40,
+            marginy: 40
+        } : {
             rankdir: 'TB',      // Top to Bottom layout
             nodesep: 110,       // Horizontal spacing between sibling nodes
             ranksep: 140,       // Vertical spacing between ranks
@@ -8045,7 +8143,7 @@ class Graph {
 
         // Add nodes to Dagre with dimensions (compact)
         Array.from(nodeMap.values()).forEach(node => {
-            const isIONode = node.type === 'Input' || node.type === 'Output' || node.type === 'Tensor' || node.type === 'ARM';
+            const isIONode = node.type === 'Input' || node.type === 'Output' || node.type === 'Tensor' || node.type === 'ARM' || node.type === 'Unmapped';
             let width;
             if (isIONode) {
                 width = 100;
@@ -8074,6 +8172,20 @@ class Graph {
         // Run Dagre layout algorithm
         dagre.layout(g);
 
+        // Dagre computes routed waypoints per edge (avoiding other nodes'
+        // ranks) — capture them so rendering can follow the actual routed
+        // path instead of a straight line between node centers, which is
+        // what made graphs with many skip-connections (e.g. Overview) look
+        // like a tangled hairball.
+        edges.forEach(edge => {
+            const srcId = edge.source.id || edge.source;
+            const tgtId = edge.target.id || edge.target;
+            const dagreEdge = g.edge(srcId, tgtId);
+            if (dagreEdge && dagreEdge.points) {
+                edge.points = dagreEdge.points;
+            }
+        });
+
         // Apply calculated positions to nodes
         Array.from(nodeMap.values()).forEach(node => {
             const dagreNode = g.node(node.id);
@@ -8098,32 +8210,77 @@ class Graph {
         // Half-height used for edge endpoints — must match VISUAL rect half-height
         // IO/Tensor/ARM pill: visual height=28 → half=14
         // Regular node: visual height=100 → half=50
-        const nodeHalfH = n => (n.type === 'Input' || n.type === 'Output' || n.type === 'Tensor' || n.type === 'ARM') ? 14 : 50;
+        const nodeHalfH = edgeAnchorHalfHeight;
 
-        // Helper function to generate curved path
+        // Port spreading: when many edges share the same source or target
+        // node, they'd otherwise all leave/arrive at that node's exact
+        // center and overlap each other for their whole shared trunk
+        // (e.g. one Input node fanning out to a dozen subgraphs). Spread
+        // each node's outgoing/incoming edges evenly across a small span
+        // of its bottom/top edge instead, ordered by the OTHER endpoint's
+        // x so the fan-out doesn't cross over itself. Offsets are stored
+        // on the edge datum so updateEdges (drag/click) reuses the same
+        // values instead of recomputing or falling out of sync.
+        const PORT_SPREAD_WIDTH = 60;
+        const spreadOffsets = (count) => {
+            if (count <= 1) return [0];
+            const step = Math.min(PORT_SPREAD_WIDTH / (count - 1), 20);
+            const span = step * (count - 1);
+            return Array.from({ length: count }, (_, i) => -span / 2 + i * step);
+        };
+        const bySource = new Map(), byTarget = new Map();
+        edges.forEach(e => {
+            const srcId = e.source.id || e.source, tgtId = e.target.id || e.target;
+            if (!bySource.has(srcId)) bySource.set(srcId, []);
+            bySource.get(srcId).push(e);
+            if (!byTarget.has(tgtId)) byTarget.set(tgtId, []);
+            byTarget.get(tgtId).push(e);
+        });
+        bySource.forEach(list => {
+            list.sort((a, b) => {
+                const ax = nodeMap.get(a.target.id || a.target)?.x || 0;
+                const bx = nodeMap.get(b.target.id || b.target)?.x || 0;
+                return ax - bx;
+            });
+            const offsets = spreadOffsets(list.length);
+            list.forEach((e, i) => { e._srcPortOffset = offsets[i]; });
+        });
+        byTarget.forEach(list => {
+            list.sort((a, b) => {
+                const ax = nodeMap.get(a.source.id || a.source)?.x || 0;
+                const bx = nodeMap.get(b.source.id || b.source)?.x || 0;
+                return ax - bx;
+            });
+            const offsets = spreadOffsets(list.length);
+            list.forEach((e, i) => { e._tgtPortOffset = offsets[i]; });
+        });
+
+        // Jog-height staggering: edges that cross the same pair of ranks
+        // (same y1/y2) would otherwise all bend at the exact midpoint and
+        // overlap along that whole horizontal segment. Give each edge a
+        // small, stable (hash-based) nudge to its jog fraction so parallel
+        // edges spread across a band of heights instead of one shared line.
+        edges.forEach(e => {
+            const srcId = e.source.id || e.source, tgtId = e.target.id || e.target;
+            const h = stableEdgeHash(`${srcId}->${tgtId}`) % 21; // 0..20
+            e._midYFrac = 0.4 + (h / 20) * 0.2; // spread across 0.4..0.6
+        });
+
+        // Helper function to generate curved path (shared with updateEdges
+        // via edgeElbowPath, so a style change here can't silently drift
+        // out of sync with what drag/click interactions render).
         const generateCurvedPath = (d) => {
             const src = nodeMap.get(d.source.id || d.source);
             const tgt = nodeMap.get(d.target.id || d.target);
 
             if (!src || !tgt) return '';
 
-            const x1 = src.x;
+            const x1 = src.x + (d._srcPortOffset || 0);
             const y1 = src.y + nodeHalfH(src);  // Bottom edge of source node
-            const x2 = tgt.x;
+            const x2 = tgt.x + (d._tgtPortOffset || 0);
             const y2 = tgt.y - nodeHalfH(tgt);  // Top edge of target node
 
-            const dy = y2 - y1;
-            const dx = x2 - x1;
-
-            // Use straight line for tiny distances
-            if (Math.abs(dy) < 5 && Math.abs(dx) < 5) {
-                return `M ${x1},${y1} L ${x2},${y2}`;
-            }
-
-            // Cubic Bezier: control points bend vertically at source and target,
-            // handling both purely vertical and diagonal/skip-connection edges cleanly.
-            const bend = Math.max(Math.abs(dy) * 0.45, Math.abs(dx) * 0.3, 40);
-            return `M ${x1},${y1} C ${x1},${y1 + bend} ${x2},${y2 - bend} ${x2},${y2}`;
+            return edgeElbowPath(x1, y1, x2, y2, d._midYFrac);
         };
 
         const links = this.group.selectAll('.graph-edge')
@@ -8205,7 +8362,7 @@ class Graph {
                 nodeG.each(function(nd) {
                     const el = d3.select(this);
                     el.select('.selected-node-name').remove();
-                    if (nd.type === 'Input' || nd.type === 'Output' || nd.type === 'Tensor' || nd.type === 'ARM') {
+                    if (nd.type === 'Input' || nd.type === 'Output' || nd.type === 'Tensor' || nd.type === 'ARM' || nd.type === 'Unmapped') {
                         el.select('.node-rect')
                             .attr('width', 110).attr('height', 28)
                             .attr('x', -55).attr('y', -14).attr('rx', 14).attr('ry', 14);
@@ -8233,7 +8390,7 @@ class Graph {
                 const nameLen = Math.min(nodeName.length, 18);
                 const expandedW = Math.max(120, nameLen * 7 + 40);
 
-                if (d.type === 'Input' || d.type === 'Output' || d.type === 'Tensor' || d.type === 'ARM') {
+                if (d.type === 'Input' || d.type === 'Output' || d.type === 'Tensor' || d.type === 'ARM' || d.type === 'Unmapped') {
                     // Pill enlarges slightly on select — update edges to stay connected
                     thisNode.select('.node-rect')
                         .attr('width', 120).attr('height', 32)
@@ -8306,12 +8463,12 @@ class Graph {
                 .on('end', (e, d) => {}));
         
         // Pill shape for: Input, Output, Tensor (cross-boundary), and ARM overview nodes
-        const isIO = d => d.type === 'Input' || d.type === 'Output' || d.type === 'Tensor' || d.type === 'ARM';
+        const isIO = d => d.type === 'Input' || d.type === 'Output' || d.type === 'Tensor' || d.type === 'ARM' || d.type === 'Unmapped';
 
         // Pill/oval for Input/Output nodes — same style as other nodes
         nodeG.filter(d => isIO(d))
             .append('rect')
-            .attr('class', d => d.type === 'ARM' ? 'node-rect arm-pill' : 'node-rect')
+            .attr('class', d => d.type === 'ARM' ? 'node-rect arm-pill' : d.type === 'Unmapped' ? 'node-rect unmapped-pill' : 'node-rect')
             .attr('width', 110)
             .attr('height', 28)
             .attr('x', -55)
@@ -8380,14 +8537,16 @@ class Graph {
             .style('font-size', '14px')
             .style('pointer-events', 'none')
             .text(d => {
-                // ARM nodes: show op type (e.g. "Resize")
-                const label = d.type === 'ARM'
+                // ARM/Unmapped nodes: show op type (e.g. "Resize")
+                const label = (d.type === 'ARM' || d.type === 'Unmapped')
                     ? (d.overview_data?.op_type || d.name || d.type)
                     : (d.full_name || d.name || '');
                 return label.length > 13 ? label.slice(-12) + '…' : label;
             });
 
-        // Small sub-label below pill: "ARM" tag for ARM overview nodes
+        // Small sub-label below pill: "ARM" tag for ARM overview nodes, or the
+        // node's actual runtime for Unmapped ones (accelerated but not found
+        // in any subgraph's layer mapping — see html_generator.py).
         nodeG.filter(d => d.type === 'ARM')
             .append('text')
             .attr('class', 'node-type-label')
@@ -8400,6 +8559,19 @@ class Graph {
             .style('font-weight', '600')
             .style('pointer-events', 'none')
             .text('ARM');
+
+        nodeG.filter(d => d.type === 'Unmapped')
+            .append('text')
+            .attr('class', 'node-type-label')
+            .attr('x', 0)
+            .attr('y', 30)
+            .attr('text-anchor', 'middle')
+            .attr('dominant-baseline', 'middle')
+            .style('font-size', '10px')
+            .style('fill', '#E68A00')
+            .style('font-weight', '600')
+            .style('pointer-events', 'none')
+            .text(d => (d.overview_data?.reason || '').includes('tvm_rt') ? 'TVM (unmapped)' : 'TIDL (unmapped)');
 
         // Store references
         this.nodeG = nodeG;
@@ -8437,7 +8609,7 @@ class Graph {
             // Force correct pill dimensions immediately — prevents height=100 bleed-over
             // from a previous regular-node render animating to height=28 (visible as "square" flash)
             if (this.nodeG) {
-                this.nodeG.filter(d => d.type === 'Input' || d.type === 'Output' || d.type === 'Tensor' || d.type === 'ARM')
+                this.nodeG.filter(d => d.type === 'Input' || d.type === 'Output' || d.type === 'Tensor' || d.type === 'ARM' || d.type === 'Unmapped')
                     .select('.node-rect')
                     .attr('width', 110).attr('height', 28)
                     .attr('x', -55).attr('y', -14)
@@ -8540,27 +8712,25 @@ class Graph {
     }
 
     updateEdges(node, links, nodeMap) {
-        // V3: Update curved paths instead of straight lines
+        // Re-sync edge paths after a node moves (drag/click resize). Uses
+        // the same edgeElbowPath helper as the initial render (renderGraph)
+        // so this can't drift out of sync with the main render again.
         links.attr('d', d => {
             const src = nodeMap.get(d.source.id || d.source);
             const tgt = nodeMap.get(d.target.id || d.target);
 
             if (!src || !tgt) return '';
 
-            const x1 = src.x;
-            const y1 = src.y + ((src.type === 'Input' || src.type === 'Output' || src.type === 'Tensor' || src.type === 'ARM') ? 14 : 50);
-            const x2 = tgt.x;
-            const y2 = tgt.y - ((tgt.type === 'Input' || tgt.type === 'Output' || tgt.type === 'Tensor' || tgt.type === 'ARM') ? 14 : 50);
+            // _srcPortOffset/_tgtPortOffset were computed once in
+            // renderGraph (port spreading, so edges sharing a node don't
+            // overlap) and stored on the datum — reuse them here instead
+            // of recomputing, so a moved node keeps the same port layout.
+            const x1 = src.x + (d._srcPortOffset || 0);
+            const y1 = src.y + edgeAnchorHalfHeight(src);
+            const x2 = tgt.x + (d._tgtPortOffset || 0);
+            const y2 = tgt.y - edgeAnchorHalfHeight(tgt);
 
-            const dy = y2 - y1;
-            const dxU = x2 - x1;
-
-            if (Math.abs(dy) < 5 && Math.abs(dxU) < 5) {
-                return `M ${x1},${y1} L ${x2},${y2}`;
-            }
-
-            const bend = Math.max(Math.abs(dy) * 0.45, Math.abs(dxU) * 0.3, 40);
-            return `M ${x1},${y1} C ${x1},${y1 + bend} ${x2},${y2 - bend} ${x2},${y2}`;
+            return edgeElbowPath(x1, y1, x2, y2, d._midYFrac);
         });
 
         // Update edge label positions
