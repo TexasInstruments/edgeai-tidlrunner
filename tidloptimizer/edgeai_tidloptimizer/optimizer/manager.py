@@ -35,7 +35,7 @@ import warnings
 import yaml
 import re
 
-from edgeai_tidlrunner.runner import tidlrunner_manager
+from edgeai_tidlrunner.runner import manager as tidlrunner_manager
 
 from .common import pipelines
 
