@@ -230,7 +230,7 @@ The default TIDL version will be the TIDL_TOOLS_VERSION value in setup_runner_pc
 
 ###### What SDK version or branch do I need to use?
 
-SDK version and the branch should align, e.g. 11.1.7.5 SDK release for AM62A should be accompanied by rel_11_01, r11.1, or suitably similar tag. The first two version numbers (e.g. 11.1) are the most important. Compiled model artifacts can only be used in the SDK with matching version. 
+SDK version and the branch should align, e.g. 11.1.7.5 SDK release for AM62A should be accompanied by rel_11_01, r11.1, or suitably similar tag. The first two version numbers (e.g. 11.1) are the most important. Compiled model artifacts can only be used in the SDK with matching version. Using a newer version of this repo against older SDK version may result in incompatible dependencies. 
 
 For new users, pick up the latest SDK version on your device and choose the suitable branch/release based on the associated version. 
 
@@ -296,7 +296,32 @@ This means that the vision framework TIOVX caught a fundamental error and did no
 
 In this case, running the model may still return data, but it will likely be random values or all zeroes. Either way, the model did not initialize correctly. There are a few causes for this: 
 *  Using model artifacts for the wrong SDK. Verify your TIDL_TOOLS version matches your SDK version
+    * Take care with backwards compatible TIDL versions, where a newer TIDL version is installed into an older SDK version. Compile with the newer set of tools. 
 *  Check compile logs to see for any error or warning messages. Sometimes, compilation completes but threw errors, resulting in invalid artifacts
 *  Very large models may fail to allocate memory -- the OVX errors should mention 
+*  Ensure the model was compiled for the correct device. If a --target_device was not specified, it may default to an unexpected target device. The path to your artifacts in the `work_dir` will include the target_device name, but even this can have a device-artifact mismatch if you explicit set TIDL_TOOLS_PATH 
 
-If errors persist, add `--debug_level 2` to your arguments / runtime options, run /opt/vision_apps/vision_app_init.sh in the background on the target processor, and provide these logs to an e2e or issue ticket. 
+If errors persist, add `--debug_level 2` to your arguments / runtime options, run `source /opt/vision_apps/vision_app_init.sh` on the target processor before starting tidlrunner. Provide these logs to an e2e or issue ticket. 
+
+###### I tried to use the model in my own application but it threw an error for a failed ONNX check
+
+In your own python or CPP application, you may see an error like so: 
+```
+[libprotobuf FATAL /root/onnxruntime/build_aarch64/Release/_deps/protobuf-src/src/google/protobuf/repeated_ptr_field.h:271] CHECK failed: (index) < (current_size_):
+2026-08-06 16:17:48.015897082 [E:onnxruntime:, inference_session.cc:2579 operator()] Exception during initialization: CHECK failed: (index) < (current_size_):
+Traceback (most recent call last):
+  File "my_app.py", line 195, in <module>
+   ...
+    interpreter = onnxruntime.InferenceSession(modelfile, providers=ep_list, provider_options=ep_options, sess_options=sess_options)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/site-packages/onnxruntime/capi/onnxruntime_inference_collection.py", line 477, in __init__
+    self._create_inference_session(providers, provider_options, disabled_optimizers)
+  File "/usr/lib/python3.12/site-packages/onnxruntime/capi/onnxruntime_inference_collection.py", line 576, in _create_inference_session
+    sess.initialize_session(providers, provider_options, disabled_optimizers)
+onnxruntime.capi.onnxruntime_pybind11_state.RuntimeException: [ONNXRuntimeError] : 6 : RUNTIME_EXCEPTION : Exception during initialization: CHECK failed: (index) < (current_size_):
+```
+
+This means that there was an inconsistency between the .ONNX model that onnxruntime parsed here vs. what TIDL compiled against. Ensure that you are using the exact same .ONNX model for tidlrunner and your application.It is best to use the model placed into your model's work_dir for your application, rather than the source model. If any model-optimizations were performed, this can result in such a difference. 
+
+This error can also show for the exact same model file. This is often due to a graph_optimization_level setting for ONNXRuntime's session options. ONNX may perform optimizations as the model is initially parsed. The setting used by tidlrunner should be used identically in your application. Typically, all optimizations are disabled (0)
+* See in your model's work_dir for the config.yaml that represents the full, final configuration for the model. In particular, see `onnxruntime:graph_optimization_level` and [ONNX documentation](https://onnxruntime.ai/docs/performance/model-optimizations/graph-optimizations.html)
