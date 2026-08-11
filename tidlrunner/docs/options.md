@@ -33,12 +33,12 @@ Inspect model outputs and activation data
 | `--work_path` | `common.work_path` | `./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits` | work path |
 | `--run_label` | `common.run_label` | `` | run_label to create run_dir |
 | `--run_dir` | `session.run_dir` | `{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}` | run_dir |
-| `--model_surgery` | `session.model_surgery` | `True` | enable model surgery optimizations |
-| `--simplify_model` | `session.simplify_mode` | `pre` | enable model simplification optimizations |
-| `--shape_inference` | `session.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
 | `--input_optimization` | `session.input_optimization` | `False` | merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32 |
 | `--input_mean` | `session.input_mean` | `(123.675, 116.28, 103.53)` | mean values for input normalization (RGB channels) |
 | `--input_scale` | `session.input_scale` | `(0.017125, 0.017507, 0.017429)` | scale values for input normalization (RGB channels) |
+| `--model_surgery` | `surgery.model_surgery` | `True` | enable model surgery optimizations |
+| `--simplify_mode` | `surgery.simplify_mode` | `pre` | enable model simplification optimizations |
+| `--shape_inference` | `surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
 | `--task_type` | `common.task_type` | `` | type of AI task (classification, detection, segmentation etc.) |
 | `--task_name` | `common.task_name` | `` | specific name of the task (if any) |
 | `--num_frames` | `common.num_frames` | `1` | number of frames to process for accuracy evaluation |
@@ -125,12 +125,12 @@ Compile models and generate target-specific artifacts
 | `--work_path` | `common.work_path` | `./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits` | work path |
 | `--run_label` | `common.run_label` | `` | run_label to create run_dir |
 | `--run_dir` | `session.run_dir` | `{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}` | run_dir |
-| `--model_surgery` | `session.model_surgery` | `True` | enable model surgery optimizations |
-| `--simplify_model` | `session.simplify_mode` | `pre` | enable model simplification optimizations |
-| `--shape_inference` | `session.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
 | `--input_optimization` | `session.input_optimization` | `False` | merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32 |
 | `--input_mean` | `session.input_mean` | `(123.675, 116.28, 103.53)` | mean values for input normalization (RGB channels) |
 | `--input_scale` | `session.input_scale` | `(0.017125, 0.017507, 0.017429)` | scale values for input normalization (RGB channels) |
+| `--model_surgery` | `surgery.model_surgery` | `True` | enable model surgery optimizations |
+| `--simplify_mode` | `surgery.simplify_mode` | `pre` | enable model simplification optimizations |
+| `--shape_inference` | `surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
 | `--task_type` | `common.task_type` | `` | type of AI task (classification, detection, segmentation etc.) |
 | `--task_name` | `common.task_name` | `` | specific name of the task (if any) |
 | `--num_frames` | `common.num_frames` | `10` | number of frames to process |
@@ -211,12 +211,12 @@ Evaluate model accuracy against ground truth labels
 | `--work_path` | `common.work_path` | `./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits` | work path |
 | `--run_label` | `common.run_label` | `` | run_label to create run_dir |
 | `--run_dir` | `session.run_dir` | `{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}` | run_dir |
-| `--model_surgery` | `session.model_surgery` | `True` | enable model surgery optimizations |
-| `--simplify_model` | `session.simplify_mode` | `pre` | enable model simplification optimizations |
-| `--shape_inference` | `session.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
 | `--input_optimization` | `session.input_optimization` | `False` | merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32 |
 | `--input_mean` | `session.input_mean` | `(123.675, 116.28, 103.53)` | mean values for input normalization (RGB channels) |
 | `--input_scale` | `session.input_scale` | `(0.017125, 0.017507, 0.017429)` | scale values for input normalization (RGB channels) |
+| `--model_surgery` | `surgery.model_surgery` | `True` | enable model surgery optimizations |
+| `--simplify_mode` | `surgery.simplify_mode` | `pre` | enable model simplification optimizations |
+| `--shape_inference` | `surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
 | `--task_type` | `common.task_type` | `` | type of AI task (classification, detection, segmentation etc.) |
 | `--task_name` | `common.task_name` | `` | specific name of the task (if any) |
 | `--num_frames` | `common.num_frames` | `1000` | number of frames to process for accuracy evaluation |
@@ -337,12 +337,12 @@ Run inference using compiled models
 | `--work_path` | `common.work_path` | `./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits` | work path |
 | `--run_label` | `common.run_label` | `` | run_label to create run_dir |
 | `--run_dir` | `session.run_dir` | `{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}` | run_dir |
-| `--model_surgery` | `session.model_surgery` | `True` | enable model surgery optimizations |
-| `--simplify_model` | `session.simplify_mode` | `pre` | enable model simplification optimizations |
-| `--shape_inference` | `session.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
 | `--input_optimization` | `session.input_optimization` | `False` | merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32 |
 | `--input_mean` | `session.input_mean` | `(123.675, 116.28, 103.53)` | mean values for input normalization (RGB channels) |
 | `--input_scale` | `session.input_scale` | `(0.017125, 0.017507, 0.017429)` | scale values for input normalization (RGB channels) |
+| `--model_surgery` | `surgery.model_surgery` | `True` | enable model surgery optimizations |
+| `--simplify_mode` | `surgery.simplify_mode` | `pre` | enable model simplification optimizations |
+| `--shape_inference` | `surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
 | `--task_type` | `common.task_type` | `` | type of AI task (classification, detection, segmentation etc.) |
 | `--task_name` | `common.task_name` | `` | specific name of the task (if any) |
 | `--num_frames` | `common.num_frames` | `10` | number of frames to process |
@@ -427,12 +427,12 @@ Analyze model runtime and layer-level statistics
 | `--work_path` | `common.work_path` | `./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits` | work path |
 | `--run_label` | `common.run_label` | `` | run_label to create run_dir |
 | `--run_dir` | `session.run_dir` | `{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}` | run_dir |
-| `--model_surgery` | `session.model_surgery` | `True` | enable model surgery optimizations |
-| `--simplify_model` | `session.simplify_mode` | `pre` | enable model simplification optimizations |
-| `--shape_inference` | `session.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
 | `--input_optimization` | `session.input_optimization` | `False` | merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32 |
 | `--input_mean` | `session.input_mean` | `(123.675, 116.28, 103.53)` | mean values for input normalization (RGB channels) |
 | `--input_scale` | `session.input_scale` | `(0.017125, 0.017507, 0.017429)` | scale values for input normalization (RGB channels) |
+| `--model_surgery` | `surgery.model_surgery` | `True` | enable model surgery optimizations |
+| `--simplify_mode` | `surgery.simplify_mode` | `pre` | enable model simplification optimizations |
+| `--shape_inference` | `surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
 | `--task_type` | `common.task_type` | `` | type of AI task (classification, detection, segmentation etc.) |
 | `--task_name` | `common.task_name` | `` | specific name of the task (if any) |
 | `--num_frames` | `common.num_frames` | `1` | number of frames to process for accuracy evaluation |
@@ -562,12 +562,12 @@ Run model surgery optimizations on the input model
 | `--work_path` | `common.work_path` | `./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits` | work path |
 | `--run_label` | `common.run_label` | `` | run_label to create run_dir |
 | `--run_dir` | `session.run_dir` | `{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}` | run_dir |
-| `--model_surgery` | `session.model_surgery` | `True` | enable model surgery optimizations |
-| `--simplify_model` | `session.simplify_mode` | `pre` | enable model simplification optimizations |
-| `--shape_inference` | `session.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
 | `--input_optimization` | `session.input_optimization` | `False` | merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32 |
 | `--input_mean` | `session.input_mean` | `(123.675, 116.28, 103.53)` | mean values for input normalization (RGB channels) |
 | `--input_scale` | `session.input_scale` | `(0.017125, 0.017507, 0.017429)` | scale values for input normalization (RGB channels) |
+| `--model_surgery` | `surgery.model_surgery` | `True` | enable model surgery optimizations |
+| `--simplify_mode` | `surgery.simplify_mode` | `pre` | enable model simplification optimizations |
+| `--shape_inference` | `surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
 
 ## Dataloaders
 

@@ -14,6 +14,8 @@ preprocess:
   resize_with_pad: false
   pad_color: 0
   name: image_preprocess
+surgery:
+  model_surgery: false
 session:
   input_optimization: false
   input_data_layout: NCHW
@@ -35,7 +37,6 @@ session:
   input_details: null
   output_details: null
   num_inputs: 1
-  model_surgery: false
 postprocess:
   reshape_list:
   - - -1

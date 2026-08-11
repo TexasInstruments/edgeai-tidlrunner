@@ -57,7 +57,8 @@ class CompileModel(CompileModelBase):
 
     def _prepare_model(self):
         print(f'INFO: running model surgery {self.model_path}')
-        surgery.ModelSurgery._run_func(self.settings, self.model_path, self.model_path)
+        surgery_kwargs = self.settings.get('surgery', {})
+        surgery.ModelSurgery._run_func(self.settings, self.model_path, self.model_path, **surgery_kwargs)
     
     def _prepare_runtime_settings(self):
         session_kwargs = self.settings[self.session_prefix]

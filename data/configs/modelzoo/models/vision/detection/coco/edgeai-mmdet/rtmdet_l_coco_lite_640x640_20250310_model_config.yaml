@@ -13,6 +13,8 @@ preprocess:
   - 114
   - 114
   name: image_preprocess
+surgery:
+  model_surgery: true
 session:
   input_optimization: false
   input_data_layout: NCHW
@@ -34,7 +36,6 @@ session:
   input_details: null
   output_details: null
   num_inputs: 1
-  model_surgery: true
 postprocess:
   reshape_list:
   - - -1
