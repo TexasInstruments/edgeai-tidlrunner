@@ -82,12 +82,18 @@ def build_hierarchical_tree(layer_details: Dict[str, Any], edges: List[Dict]) ->
         if not node_path:
             continue
 
+        # graphData nodes on the JS side use layer_name (falling back to the dict
+        # key) as full_name — mirror that here so tree leaves match graph nodes.
+        # The two differ for synthetic __input_*__/__output_*__ sentinel entries,
+        # whose dict key is wrapped but whose layer_name is the clean tensor name.
+        full_node_name = node_data.get('layer_name') or node_name
+
         node_info = {
-            "name": node_name,
+            "name": full_node_name,
             "op": node_data.get('type', 'Unknown'),
             "is_leaf": True,
             "node_details": {
-                "name": node_name,
+                "name": full_node_name,
                 "op": node_data.get('type', 'Unknown'),
                 "inputs": node_data.get('inputs', []),
                 "outputs": node_data.get('outputs', []),
@@ -703,8 +709,13 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
                 assigned_runtime = ra.get('assigned_runtime', 'arm')
                 # tidl_rt and tvm_rt are both DSP-accelerated; arm is not
                 is_supported = assigned_runtime in ('tidl_rt', 'tvm_rt')
+                # Keep the reason for arm AND tvm_rt — a tvm_rt node IS
+                # accelerated (is_supported=True), but the reason is still
+                # exactly the useful "why not TIDL" info for it specifically.
+                # Gating on is_supported here discarded it for every tvm_rt
+                # node, since that flag is True for tvm_rt too.
                 reason_raw = ra.get('reason', '')
-                reason = ('; '.join(reason_raw) if isinstance(reason_raw, list) else str(reason_raw or '')) if not is_supported else ''
+                reason = ('; '.join(reason_raw) if isinstance(reason_raw, list) else str(reason_raw or '')) if assigned_runtime != 'tidl_rt' else ''
             else:
                 offload = layer_info.get('offload', {})
                 runtime_val = offload.get('RunTime')
@@ -737,14 +748,21 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
                     if idx_key in node_support:
                         node_support[idx_key]['subgraph'] = str(subgraph_id)
                         node_support[idx_key]['supported'] = True
-                        # A node present in onnx_mapping is compiled into a TIDL layer
-                        # (e.g. TIDL_OdOutputReformatLayer fuses all OD post-processing).
-                        # Override any graphvizInfo 'arm' assignment — it runs on C7x DSP.
-                        # Also clear the misleading diagInfo message so the UI doesn't
-                        # show "will be delegated in post-processing" for an accelerated node.
+                        # A node present in onnx_mapping is compiled into a TIDL
+                        # or TVM layer (e.g. TIDL_OdOutputReformatLayer fuses all
+                        # OD post-processing). Override any graphvizInfo 'arm'
+                        # assignment — it runs on the NPU either way.
                         sg_runtime = subgraph_info.get('runtime', 'tidl_rt')
                         node_support[idx_key]['assigned_runtime'] = sg_runtime
-                        node_support[idx_key]['diagInfo'] = ''
+                        # Only clear diagInfo for genuinely-TIDL nodes — the
+                        # message there ("will be delegated in post-processing")
+                        # really is misleading once we know it's fused into a
+                        # TIDL layer. For a tvm_rt node, diagInfo is the
+                        # accurate "why not TIDL" reason and clearing it would
+                        # discard the one useful piece of info explaining why
+                        # this node runs on TVM instead of TIDL.
+                        if sg_runtime == 'tidl_rt':
+                            node_support[idx_key]['diagInfo'] = ''
 
         # The virtual __input_*__ / __output_*__ sentinel nodes are appended to
         # transformed_layers AFTER node_support is built from onnx_layers, so they
@@ -865,6 +883,8 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
                         'gmacs': gmacs,
                         'onnx_node_indices': onnx_node_indices,
                         'onnx_node_names': onnx_node_names,
+                        'inputs': tidl_layer.get('inputs', []),
+                        'outputs': tidl_layer.get('outputs', []),
                     },
                     'onnx_node_index': onnx_node_index,
                     'onnx_name': onnx_node_names[0] if onnx_node_names else ''
@@ -873,11 +893,13 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
 
             # Build edges using node_id from inputs (direct node references)
             edges_created = set()
+            consumed_node_ids = set()
             for target_layer in layers:
                 target_idx = target_layer['layer_index']
                 for input_item in target_layer.get('inputs', []):
                     source_node_id = input_item.get('node_id')
                     if source_node_id is not None:
+                        consumed_node_ids.add(source_node_id)
                         edge_key = (source_node_id, target_idx)
                         if edge_key not in edges_created:
                             graph_edges.append({
@@ -886,58 +908,46 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
                             })
                             edges_created.add(edge_key)
 
-            # Boundary Input/Output pill nodes — so a subgraph reads as a
-            # complete graph (tensor in -> ... -> tensor out) even when it
-            # has just one layer (e.g. a single-op TVM subgraph) instead of
-            # appearing as a disconnected floating box.
-            # Matched to layers by tensor name (works for any subgraph whose
-            # top-level inputs/outputs list is populated).
-            layer_input_names = {}   # tensor_name -> [layer_index, ...]
-            layer_output_names = {}  # tensor_name -> [layer_index, ...]
-            for tidl_layer in subgraph_info.get('layers', []):
-                idx = tidl_layer.get('layer_id', 0)
-                for inp in tidl_layer.get('inputs', []) or []:
-                    nm = inp.get('name')
-                    if nm:
-                        layer_input_names.setdefault(nm, []).append(idx)
-                for out in tidl_layer.get('outputs', []) or []:
-                    nm = out.get('name')
-                    if nm:
-                        layer_output_names.setdefault(nm, []).append(idx)
-
-            for i, sg_in in enumerate(subgraph_info.get('inputs', []) or []):
-                tensor_name = sg_in.get('name', f'input_{i}')
-                shape = sg_in.get('shape', [])
-                targets = layer_input_names.get(tensor_name, [])
-                if not targets:
-                    continue  # no layer in this subgraph consumes it — skip pill
-                pill_id = f'tidl_sg_{subgraph_id}_input_{i}'
-                graph_nodes.append({
-                    'id': pill_id, 'index': -1,
-                    'name': tensor_name, 'full_name': tensor_name, 'type': 'Input',
-                    'tidl_supported': True,
-                    'inputshape': 'N/A', 'outputshape': str(shape) if shape else 'N/A',
-                    'layer_data': {'raw_text': f'Input: {tensor_name}\nShape: {shape}'},
-                })
-                for target_idx in targets:
-                    graph_edges.append({'source': pill_id, 'target': f'tidl_layer_{target_idx}'})
-
-            for i, sg_out in enumerate(subgraph_info.get('outputs', []) or []):
-                tensor_name = sg_out.get('name', f'output_{i}')
-                shape = sg_out.get('shape', [])
-                sources = layer_output_names.get(tensor_name, [])
-                if not sources:
-                    continue  # no layer in this subgraph produces it — skip pill
-                pill_id = f'tidl_sg_{subgraph_id}_output_{i}'
-                graph_nodes.append({
-                    'id': pill_id, 'index': -1,
-                    'name': tensor_name, 'full_name': tensor_name, 'type': 'Output',
-                    'tidl_supported': True,
-                    'inputshape': str(shape) if shape else 'N/A', 'outputshape': 'N/A',
-                    'layer_data': {'raw_text': f'Output: {tensor_name}\nShape: {shape}'},
-                })
-                for source_idx in sources:
-                    graph_edges.append({'source': f'tidl_layer_{source_idx}', 'target': pill_id})
+            # Boundary pill nodes: a layer's own input with no node_id isn't
+            # produced by any sibling layer in this subgraph (external
+            # input); a layer whose index never shows up as another layer's
+            # node_id isn't consumed by any sibling either (external
+            # output). Without these, a subgraph with no INTERNAL edges at
+            # all — e.g. a TVM subgraph's single tvm_op layer — renders as
+            # one bare box with no visible boundary whatsoever.
+            pill_seq = 0
+            for layer in layers:
+                layer_idx = layer['layer_index']
+                layer_id = f'tidl_layer_{layer_idx}'
+                for input_item in layer.get('inputs', []):
+                    if input_item.get('node_id') is not None:
+                        continue
+                    pill_seq += 1
+                    pill_id = f'{layer_id}_boundary_in_{pill_seq}'
+                    pill_name = input_item.get('tensor_name') or input_item.get('name') or f'input_{pill_seq}'
+                    graph_nodes.append({
+                        'id': pill_id,
+                        'name': pill_name,
+                        'full_name': pill_name,
+                        'type': 'Tensor',
+                        'tidl_supported': True,
+                        'layer_data': {'shape': input_item.get('shape', [])},
+                    })
+                    graph_edges.append({'source': pill_id, 'target': layer_id})
+                if layer_idx not in consumed_node_ids:
+                    for output_item in layer.get('outputs', []):
+                        pill_seq += 1
+                        pill_id = f'{layer_id}_boundary_out_{pill_seq}'
+                        pill_name = output_item.get('tensor_name') or output_item.get('name') or f'output_{pill_seq}'
+                        graph_nodes.append({
+                            'id': pill_id,
+                            'name': pill_name,
+                            'full_name': pill_name,
+                            'type': 'Tensor',
+                            'tidl_supported': True,
+                            'layer_data': {'shape': output_item.get('shape', [])},
+                        })
+                        graph_edges.append({'source': layer_id, 'target': pill_id})
 
             # Collect ONNX nodes belonging to this subgraph (for ONNX view in Level 2)
             onnx_nodes_for_subgraph = []
@@ -1132,10 +1142,18 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
         # Config data from metadata and subgraphs
         metadata = json_data.get('metadata', {})
         tidl_subgraphs_raw = json_data['runtime'].get('subgraphs', {})
-        # Get target_device and tensor_bits from first subgraph (same across all)
+        # Get target_device and tensor_bits from first subgraph (same across all).
+        # TVM-side subgraph stubs don't carry target_device at all, and some TIDL
+        # subgraphs report it literally as the string "Unknown" — in both cases
+        # fall back to AM62D, the actual target for this pipeline.
         first_sg = next(iter(tidl_subgraphs_raw.values()), {})
+        target_device = next(
+            (sg.get('target_device') for sg in tidl_subgraphs_raw.values()
+             if sg.get('target_device') and sg.get('target_device') != 'Unknown'),
+            'AM62D'
+        )
         config_data = {
-            'target_device': first_sg.get('target_device', 'Unknown'),
+            'target_device': target_device,
             'task_type': metadata.get('task_type', 'Unknown'),
             'tensor_bits': first_sg.get('tensor_bits', 'Unknown'),
             'accuracy': 'N/A',  # Not in unified schema yet
@@ -1185,43 +1203,98 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
             if oname not in onnx_to_overview_id:  # Only map if not already mapped
                 onnx_to_overview_id[oname] = node_id
 
-    # Add ARM/unsupported ONNX nodes not covered by any subgraph.
+    # Add fallback overview nodes for ONNX nodes not covered by any subgraph.
     # A node that appears in subgraph_onnx_names is compiled into a TIDL/TVM layer
     # (even if graphvizInfo.txt / JSON runtime_assignment says 'arm') so it must NOT
     # appear as an ARM overview node.  The subgraph_onnx_names check is the authoritative
     # source; ra.assigned_runtime from the JSON is a secondary hint only.
+    #
+    # Two distinct cases land here:
+    #   1. Genuinely unaccelerated (arm) — rendered as a red ARM pill, as before.
+    #   2. assigned_runtime IS tidl_rt/tvm_rt but the node never showed up in any
+    #      layer's onnx_mapping.onnx_node_names — a mapping-coverage gap (seen e.g.
+    #      on LSTM/LayerNorm sub-ops that get fused into a composite TIDL layer
+    #      without every sub-op being recorded). Previously these were silently
+    #      dropped from the overview entirely, which also silently dropped any
+    #      edge passing through them — making a perfectly-connected downstream
+    #      TVM/TIDL subgraph look like it had no input. Give them a distinct
+    #      "unmapped" node so the edge chain stays connected and the gap is
+    #      visible instead of invisible.
     if is_unified_schema:
         for layer_name, layer_info in onnx_layers.items():
+            if layer_name in subgraph_onnx_names:
+                continue
             ra = layer_info.get('runtime_assignment', {})
-            if layer_name not in subgraph_onnx_names and ra.get('assigned_runtime') not in ('tidl_rt', 'tvm_rt'):
-                node_id = f'arm_{layer_name}'
-                overview_nodes.append({
-                    'id': node_id,
-                    'type': 'arm',
-                    'label': layer_name,
-                    'op_type': layer_info.get('type', 'Unknown'),
-                    'reason': ra.get('reason', ''),
-                })
-                onnx_to_overview_id[layer_name] = node_id
+            assigned_runtime = ra.get('assigned_runtime')
+            is_accelerated = assigned_runtime in ('tidl_rt', 'tvm_rt')
+            node_id = f'{"unmapped" if is_accelerated else "arm"}_{layer_name}'
+            overview_nodes.append({
+                'id': node_id,
+                'type': 'unmapped' if is_accelerated else 'arm',
+                'label': layer_name,
+                'op_type': layer_info.get('type', 'Unknown'),
+                'reason': ra.get('reason', '') if not is_accelerated else
+                          f'Runs on {assigned_runtime} but not captured in any subgraph layer mapping',
+            })
+            onnx_to_overview_id[layer_name] = node_id
 
-    # Build overview edges by following ONNX data flow
-    # For each ONNX edge, map source/target ONNX nodes to overview nodes and create edge
+    seen_overview_edges = set()
+
+    def _add_overview_edge(src_id, tgt_id):
+        if src_id and tgt_id and src_id != tgt_id and (src_id, tgt_id) not in seen_overview_edges:
+            seen_overview_edges.add((src_id, tgt_id))
+            overview_edges.append({'source': src_id, 'target': tgt_id})
+
+    # Primary: build overview edges directly from each subgraph's own
+    # inputs/outputs. data_extractor.py (and merge_inspector_json.py, once
+    # TVM is merged) already resolves each boundary entry to either the
+    # neighboring subgraph's id (e.g. "tidl_5") or, when it crosses to a
+    # node that isn't part of any subgraph, that ONNX node's own NAME —
+    # which is exactly what the ARM/unmapped overview nodes above are
+    # keyed by (onnx_to_overview_id). Checking both here is far more
+    # direct/robust than re-deriving ownership by tracing the full ONNX
+    # node graph below; only genuine model input/output tensor names (no
+    # producer/consumer node to name) fall through to that fallback.
+    subgraph_node_id = {sg_id: f'subgraph_{sg_id}' for sg_id in tidl_data}
+    subgraph_overview_ids = set(subgraph_node_id.values())
+    for sg_id, sg_info in tidl_data.items():
+        this_id = subgraph_node_id[sg_id]
+        for v in sg_info.get('subgraph_inputs', []) or []:
+            src_id = subgraph_node_id.get(v) or onnx_to_overview_id.get(v)
+            if src_id:
+                _add_overview_edge(src_id, this_id)
+        for v in sg_info.get('subgraph_outputs', []) or []:
+            tgt_id = subgraph_node_id.get(v) or onnx_to_overview_id.get(v)
+            if tgt_id:
+                _add_overview_edge(this_id, tgt_id)
+
+    # Fallback: also trace ONNX data flow through node ownership, for
+    # anything the tensor-name matching above doesn't cover yet — e.g. ARM
+    # node connections, or a boundary tensor whose connected_subgraph is
+    # still None because it crosses into TVM before a merge has resolved
+    # it. Only adds edges not already found above (seen_overview_edges).
+    #
+    # Skip subgraph-to-subgraph edges here (both endpoints already valid
+    # subgraph_node_id entries) — a direct ONNX-level edge between two
+    # internal nodes of different subgraphs reflects the PRE-compilation
+    # graph topology, which doesn't necessarily match the actual compiled
+    # hop structure (e.g. ONNX shows conv2d's output feeding tidl_9's Mul
+    # directly, but the real compiled graph routes it through an
+    # intermediate max_pool2d_add kernel first — adding both gives tidl_9
+    # 4 incoming edges instead of the real 2). Subgraph-to-subgraph
+    # connectivity should already be fully covered by the primary pass
+    # above when the source data has complete subgraph-level inputs/
+    # outputs; this fallback exists for ARM/unmapped nodes specifically,
+    # which aren't in subgraph_node_id at all.
     if is_unified_schema:
-        seen_overview_edges = set()
         for edge in model_data.get('edges', []):
             src_onnx = edge.get('source_node_name')
             tgt_onnx = edge.get('target_node_name')
-            src_overview_id = onnx_to_overview_id.get(src_onnx)
-            tgt_overview_id = onnx_to_overview_id.get(tgt_onnx)
-            # Only create overview edge if both nodes are in overview and they're different
-            if src_overview_id and tgt_overview_id and src_overview_id != tgt_overview_id:
-                edge_key = (src_overview_id, tgt_overview_id)
-                if edge_key not in seen_overview_edges:
-                    seen_overview_edges.add(edge_key)
-                    overview_edges.append({
-                        'source': src_overview_id,
-                        'target': tgt_overview_id
-                    })
+            src_id = onnx_to_overview_id.get(src_onnx)
+            tgt_id = onnx_to_overview_id.get(tgt_onnx)
+            if src_id in subgraph_overview_ids and tgt_id in subgraph_overview_ids:
+                continue
+            _add_overview_edge(src_id, tgt_id)
     overview_data = {'nodes': overview_nodes, 'edges': overview_edges}
 
     # Convert data to JSON strings for template injection

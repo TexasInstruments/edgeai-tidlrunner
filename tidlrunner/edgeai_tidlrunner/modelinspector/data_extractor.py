@@ -23,7 +23,9 @@ import json
 import sys
 import os
 import re
+import glob
 import gzip
+import copy
 import logging
 import numpy as np
 from pathlib import Path
@@ -39,6 +41,39 @@ if not hasattr(collections, 'Callable'):
     collections.Callable = collections.abc.Callable
 
 from bs4 import BeautifulSoup
+
+# Per-subgraph TIDL artifacts normally use "subgraph_N_tidl_net<suffix>"
+# (a full standalone TIDL compile). When TIDL artifacts are generated as
+# delegated sub-pieces of a TVM compile instead, TVM's own import step
+# names them "subgraphN_net<suffix>" (no underscore, no "_tidl"). This one
+# regex matches both conventions, so every subgraph-id-extraction call
+# site works unmodified regardless of which convention is on disk.
+SUBGRAPH_NUM_RE = r'subgraph_?(\d+)_(?:tidl_)?net'
+
+
+def glob_subgraph_files(base_dir, suffix, recursive=False):
+    """Glob per-subgraph artifact files, trying the standard
+    "subgraph_N_tidl_net<suffix>" convention first and falling back to the
+    TVM-delegated "subgraphN_net<suffix>" convention if nothing matches."""
+    files = glob.glob(os.path.join(base_dir, f'subgraph_*_tidl_net{suffix}'), recursive=recursive)
+    if not files:
+        files = glob.glob(os.path.join(base_dir, f'subgraph*_net{suffix}'), recursive=recursive)
+    return files
+
+
+def resolve_subgraph_path(base_dir, subgraph_id, suffix):
+    """Resolve a single per-subgraph artifact path, trying both naming
+    conventions and returning whichever actually exists on disk (defaults
+    to the standard convention's path if neither exists, so existing
+    "not found" handling downstream still works)."""
+    standard = os.path.join(base_dir, f'subgraph_{subgraph_id}_tidl_net{suffix}')
+    if os.path.exists(standard):
+        return standard
+    alternate = os.path.join(base_dir, f'subgraph{subgraph_id}_net{suffix}')
+    if os.path.exists(alternate):
+        return alternate
+    return standard
+
 
 try:
     import onnx_graphsurgeon as gs
@@ -78,20 +113,18 @@ class ActivationDataParser:
 
     def _load_from_layer_info(self):
         """Build activation mapping from layer_info.txt files"""
-        import glob
-
         logger.debug(f"Building activation mapping from layer_info.txt files...")
 
         # Try both paths: artifacts/tempDir (modern) and tidl/artifacts/tempDir (legacy)
-        layer_info_pattern = os.path.join(self.model_dir, 'artifacts/tempDir/subgraph_*_tidl_net.bin.layer_info.txt')
-        layer_info_files = glob.glob(layer_info_pattern, recursive=False)
+        layer_info_files = glob_subgraph_files(
+            os.path.join(self.model_dir, 'artifacts/tempDir'), '.bin.layer_info.txt')
 
         if not layer_info_files:
-            layer_info_pattern = os.path.join(self.model_dir, 'tidl/artifacts/tempDir/subgraph_*_tidl_net.bin.layer_info.txt')
-            layer_info_files = glob.glob(layer_info_pattern, recursive=False)
+            layer_info_files = glob_subgraph_files(
+                os.path.join(self.model_dir, 'tidl/artifacts/tempDir'), '.bin.layer_info.txt')
 
         if not layer_info_files:
-            logger.debug(f"  WARNING: No layer_info.txt files found in {layer_info_pattern}")
+            logger.debug(f"  WARNING: No layer_info.txt files found under {self.model_dir}")
             return
 
         logger.debug(f"  Found {len(layer_info_files)} layer_info.txt files")
@@ -107,7 +140,7 @@ class ActivationDataParser:
         total_mapped = 0
 
         for layer_info_path in sorted(layer_info_files):
-            match = re.search(r'subgraph_(\d+)_tidl_net\.bin\.layer_info\.txt', layer_info_path)
+            match = re.search(SUBGRAPH_NUM_RE, layer_info_path)
             if not match:
                 continue
 
@@ -824,7 +857,7 @@ class TIDLSubgraphParser:
         This uses netLog.txt (which is more reliable) instead of layer_info.txt,
         extracting the "Out Data Name" column which contains the ONNX output tensor reference.
         """
-        netlog_path = os.path.join(self.base_dir, f'subgraph_{subgraph_id}_tidl_net.bin_netLog.txt')
+        netlog_path = resolve_subgraph_path(self.base_dir, subgraph_id, '.bin_netLog.txt')
         mapping = {}  # tidl_layer_index → onnx_output_tensor_name
 
         if not os.path.exists(netlog_path):
@@ -835,10 +868,19 @@ class TIDLSubgraphParser:
                 for line_num, line in enumerate(f):
                     # Skip header lines (until we see "Num|TIDL Layer")
                     if '|TIDL Layer' not in line and 'Num of Layer' not in line:
-                        # Check if this is a data row (not a separator)
-                        if line.startswith('    ') and '|' in line:
+                        # Check if this is a data row (not a separator). The
+                        # layer index column is right-justified to a fixed
+                        # width, so its leading-space count varies with the
+                        # number of digits (e.g. "    8|" for single-digit
+                        # vs "   48|" for double-digit) — checking for an
+                        # exact 4-space prefix silently skipped every layer
+                        # index >= 10, which broke fusion detection for any
+                        # subgraph with more than ~10 layers. Strip first and
+                        # check the first column is actually numeric instead.
+                        stripped = line.strip()
+                        if stripped and '|' in stripped:
                             # Parse the columns: Num|TIDL Layer Name|Out Data Name|...
-                            cols = line.split('|')
+                            cols = stripped.split('|')
                             if len(cols) >= 3:
                                 try:
                                     tidl_idx_str = cols[0].strip()
@@ -878,6 +920,12 @@ class TIDLSubgraphParser:
             onnx_node_name = onnx_node_name[:-9]
         if onnx_node_name.endswith('_netFormat'):
             onnx_node_name = onnx_node_name[:-10]
+        # TIDL appends its own "__N" disambiguation suffix when a composite
+        # op (e.g. LSTM) gets internally decomposed into multiple netLog
+        # entries sharing the same base name — e.g. a TIDL_SliceLayer for
+        # LSTM's gate-splitting shows up as "/glstm/.../LSTM__10", not the
+        # real ONNX node name "/glstm/.../LSTM". Strip it before matching.
+        onnx_node_name = re.sub(r'__\d+$', '', onnx_node_name)
 
         # First try: match by node name
         for node_idx, node_data in self.node_support.items():
@@ -893,7 +941,7 @@ class TIDLSubgraphParser:
 
     def find_subgraph_files(self) -> List[Tuple[int, str, str]]:
         """Find all subgraph HTML files and their corresponding netLog files"""
-        pattern = re.compile(r'subgraph_(\d+)_tidl_net\.bin\.html')
+        pattern = re.compile(SUBGRAPH_NUM_RE + r'\.bin\.html$')
         files = []
 
         for filename in os.listdir(self.base_dir):
@@ -902,8 +950,7 @@ class TIDLSubgraphParser:
                 subgraph_idx = int(match.group(1))
                 html_filepath = os.path.join(self.base_dir, filename)
 
-                netlog_filename = f'subgraph_{subgraph_idx}_tidl_net.bin_netLog.txt'
-                netlog_filepath = os.path.join(self.base_dir, netlog_filename)
+                netlog_filepath = resolve_subgraph_path(self.base_dir, subgraph_idx, '.bin_netLog.txt')
 
                 if not os.path.exists(netlog_filepath):
                     netlog_filepath = None
@@ -1097,6 +1144,15 @@ class TIDLSubgraphParser:
             if output_onnx_idx in self.owned_onnx_nodes:
                 continue
 
+            # BOUNDARY: Skip if diag_info's own authoritative assignment
+            # says this node belongs to a DIFFERENT subgraph. This should
+            # be rare here (layer_info_mapping already comes from THIS
+            # subgraph's own netLog), but keeps the starting point honest
+            # if it ever disagrees.
+            own_subgraph = self.node_support.get(output_onnx_idx, {}).get('tidl_subgraph')
+            if own_subgraph and own_subgraph != f'tidl_{subgraph_id}':
+                continue
+
             # Determine the starting runtime (TIDL or TVM/ARM)
             # supported=True → TIDL, supported=False → TVM/ARM
             start_runtime = self.node_support.get(output_onnx_idx, {}).get('supported', True)
@@ -1141,6 +1197,18 @@ class TIDLSubgraphParser:
                     # the cross-subgraph analogue of the tidl_tensor_map
                     # check above, which only covers the current subgraph.
                     if producer_node_idx in self.owned_onnx_nodes:
+                        continue
+
+                    # Stop: diag_info's own authoritative assignment says
+                    # this producer belongs to a DIFFERENT subgraph. This
+                    # is order-independent — unlike the owned_onnx_nodes
+                    # check above, it doesn't matter whether that other
+                    # subgraph has been processed yet. Without this, e.g.
+                    # tidl_1 (processed before tidl_9) would incorrectly
+                    # absorb tidl_9's nodes simply because tidl_9 hasn't
+                    # claimed them yet at this point in processing order.
+                    producer_subgraph = self.node_support.get(producer_node_idx, {}).get('tidl_subgraph')
+                    if producer_subgraph and producer_subgraph != f'tidl_{subgraph_id}':
                         continue
 
                     # Stop: runtime changes (TIDL→TVM, TVM→TIDL, TVM→ARM, etc.)
@@ -1792,57 +1860,87 @@ class GraphVizParser:
         return node_support
 
 
-class AllowedNodeParser:
-    """Parser for allowednode.txt"""
+class DiagInfoParser:
+    """Fallback for GraphVizParser when graphvizInfo.txt doesn't exist —
+    used when TIDL layers are delegated sub-pieces of a TVM compile (TVM's
+    own import step doesn't emit graphvizInfo.txt at all). The equivalent
+    per-node support info instead lives in a "diag_info" list inside the
+    TVM-side model_inspector.json, keyed by tensor name (or, for
+    multi-output nodes like LSTM, the ONNX node's own name) rather than
+    node index — so it needs the ONNX model to resolve node_index/
+    node_name/node_type, unlike graphvizInfo.txt which already has those.
+    """
 
-    def __init__(self, filepath: str):
+    def __init__(self, filepath: str, onnx_model_path: str):
         self.filepath = filepath
+        self.onnx_model_path = onnx_model_path
 
-    def parse(self) -> List[Dict[str, Any]]:
-        """Parse allowednode.txt and extract subgraph information"""
-        logger.debug(f"Parsing allowednode.txt: {self.filepath}")
+    def parse(self) -> Dict[int, Dict[str, Any]]:
+        logger.debug(f"Parsing diag_info from: {self.filepath}")
 
         with open(self.filepath, 'r', encoding='utf-8') as f:
-            lines = [line.strip() for line in f if line.strip()]
+            mi = json.load(f)
+        diag_info = mi.get('diag_info')
+        if not diag_info:
+            logger.debug("  No 'diag_info' key found — not a valid fallback source")
+            return {}
 
-        if not lines:
-            logger.debug("  Warning: Empty allowednode.txt")
-            return []
+        # ONNXParser (the source of node_index everywhere else — see
+        # runtime_assignment lookups against node_support) indexes nodes
+        # via onnx_graphsurgeon's graph.nodes, not the raw protobuf's
+        # graph.node list — graphsurgeon's import_onnx() doesn't always
+        # preserve file order. Indexing here from plain onnx.load()
+        # instead silently mismatches for whichever nodes graphsurgeon
+        # reorders, writing support info under the wrong index (so some
+        # node's runtime_assignment falls through to the "no info found"
+        # default of tidl_rt regardless of what diag_info actually said).
+        model = onnx.load(self.onnx_model_path)
+        output_to_node = {}
+        name_to_node = {}
+        if HAS_GRAPHSURGEON:
+            for idx, node in enumerate(gs.import_onnx(model).nodes):
+                for out in node.outputs:
+                    output_to_node[out.name] = (idx, node.name, node.op)
+                name_to_node[node.name] = (idx, node.name, node.op)
+        else:
+            for idx, node in enumerate(model.graph.node):
+                for out in node.output:
+                    output_to_node[out] = (idx, node.name, node.op_type)
+                name_to_node[node.name] = (idx, node.name, node.op_type)
 
-        try:
-            num_subgraphs = int(lines[0])
-            logger.debug(f"  Number of subgraphs: {num_subgraphs}")
+        node_support = {}
+        unresolved = 0
+        for entry in diag_info:
+            tensor_or_node_name = entry.get('node_name')
+            info = output_to_node.get(tensor_or_node_name) or name_to_node.get(tensor_or_node_name)
+            if not info:
+                unresolved += 1
+                continue
+            idx, onnx_node_name, op_type = info
+            diagnostic = entry.get('diagnostic_info', '')
+            is_supported = diagnostic == 'Offloaded to TIDL'
+            node_support[idx] = {
+                'supported': is_supported,
+                'diagInfo': ('SUPPORTED: ' if is_supported else 'UNSUPPORTED: ') + diagnostic,
+                'node_name': onnx_node_name,
+                'node_type': op_type,
+                # Authoritative "this node belongs to subgraph tidl_N",
+                # straight from diag_info — used as an ADDITIONAL boundary
+                # condition in fusion backtracking (see _detect_layer_fusion),
+                # independent of processing order. Without it, whichever of
+                # two skip-connected subgraphs happens to be parsed first
+                # wins a race to claim shared-looking nodes, even when they
+                # actually belong to the other one (e.g. tidl_1 incorrectly
+                # absorbing tidl_9's nodes just because tidl_1 < tidl_9).
+                'tidl_subgraph': entry.get('tidl_subgraph'),
+            }
 
-            subgraphs = []
-            line_idx = 1
+        supported_count = sum(1 for n in node_support.values() if n['supported'])
+        logger.debug(f"Parsed {len(node_support)} nodes from diag_info ({unresolved} unresolved)")
+        logger.debug(f"  Supported: {supported_count}")
+        logger.debug(f"  Unsupported: {len(node_support) - supported_count}")
 
-            for sg_idx in range(num_subgraphs):
-                if line_idx >= len(lines):
-                    break
-
-                num_nodes = int(lines[line_idx])
-                line_idx += 1
-
-                nodes = []
-                for _ in range(num_nodes):
-                    if line_idx >= len(lines):
-                        break
-                    nodes.append(int(lines[line_idx]))
-                    line_idx += 1
-
-                subgraphs.append({
-                    'id': sg_idx,
-                    'nodes': nodes
-                })
-
-                logger.debug(f"  Subgraph {sg_idx}: {num_nodes} nodes")
-
-            logger.debug(f"Parsed {len(subgraphs)} subgraphs")
-            return subgraphs
-
-        except (ValueError, IndexError) as e:
-            logger.debug(f"  Error parsing allowednode.txt: {e}")
-            return []
+        return node_support
 
 
 def calculate_node_depths_and_positions(nodes, edges, width=1200, height=800):
@@ -2694,24 +2792,37 @@ def discover_files_from_workdir(model_dir_path: str) -> Dict[str, str]:
         discovered['graphviz'] = graphviz_files[0]
         logger.debug(f"[FOUND] graphvizInfo: {os.path.relpath(discovered['graphviz'])}")
     else:
-        logger.debug("[NOT FOUND] graphvizInfo.txt not found")
-
-    allowednode_files = glob.glob(os.path.join(model_dir_path, 'artifacts/allowedNode.txt'), recursive=False)
-    if allowednode_files:
-        discovered['allowednode'] = allowednode_files[0]
-        logger.debug(f"[FOUND] allowedNode: {os.path.relpath(discovered['allowednode'])}")
-    else:
-        logger.debug("[NOT FOUND] allowedNode.txt not found")
+        # graphvizInfo.txt doesn't exist when TIDL layers are delegated
+        # sub-pieces of a TVM compile — TVM's import step never emits it.
+        # Fall back to a "diag_info" list inside a nearby model_inspector
+        # JSON (e.g. artifacts/model_inspector_tvm/model_inspector.json),
+        # which records the same per-node TIDL-offload info in a
+        # different shape (see DiagInfoParser).
+        diag_info_json = None
+        for candidate in glob.glob(os.path.join(model_dir_path, 'artifacts/*/*.json')):
+            try:
+                with open(candidate, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                if isinstance(data, dict) and 'diag_info' in data:
+                    diag_info_json = candidate
+                    break
+            except (json.JSONDecodeError, OSError, UnicodeDecodeError):
+                continue
+        if diag_info_json:
+            discovered['diag_info_json'] = diag_info_json
+            logger.debug(f"[FOUND] diag_info fallback (graphvizInfo.txt substitute): {os.path.relpath(diag_info_json)}")
+        else:
+            logger.debug("[NOT FOUND] graphvizInfo.txt not found, and no diag_info fallback found")
 
     subgraph_dir = None
-    subgraph_html_files = glob.glob(os.path.join(model_dir_path, 'artifacts/tempDir/subgraph_*_tidl_net.bin.html'), recursive=False)
+    subgraph_html_files = glob_subgraph_files(os.path.join(model_dir_path, 'artifacts/tempDir'), '.bin.html')
     if subgraph_html_files:
         subgraph_dir = os.path.dirname(subgraph_html_files[0])
         discovered['subgraph_dir'] = subgraph_dir
         logger.debug(f"[FOUND] {len(subgraph_html_files)} subgraph HTML files in: {os.path.relpath(subgraph_dir)}")
     else:
         # Check if SVG files exist (TIDL Tools < 11.02 generates SVG instead of HTML)
-        subgraph_svg_files = glob.glob(os.path.join(model_dir_path, 'artifacts/tempDir/subgraph_*_tidl_net.bin.svg'), recursive=False)
+        subgraph_svg_files = glob_subgraph_files(os.path.join(model_dir_path, 'artifacts/tempDir'), '.bin.svg')
         if subgraph_svg_files:
             svg_dir = os.path.relpath(os.path.dirname(subgraph_svg_files[0]))
             error_msg = f"""
@@ -2761,6 +2872,85 @@ Note: Model Inspector cannot parse SVG format - HTML format is required.
 
     logger.debug("=" * 70)
     return discovered
+
+
+def _merge_compiler_subgraphs(combined_data: Dict[str, Any], compiler_json: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Fold a compiler-emitted model_inspector.json (e.g. TVM's
+    artifacts/model_inspector/model_inspector.json, discovered as the
+    diag_info fallback source) into our own freshly-extracted combined_data.
+
+    Why this exists: when a model is compiled with TVM+TIDL, TVM calls TIDL
+    internally and writes out ONE json containing both fully-detailed
+    tvmgen_* subgraphs and tidl_N subgraphs — but the tidl_N entries are
+    often just boundary stubs (inputs/outputs, no 'layers' array). We
+    always parse the ONNX model and TIDL's own raw artifacts (netLog.txt/
+    layer_info.txt/subgraph HTML) ourselves regardless — that's
+    combined_data — so this only needs to inject what's actually missing:
+      - tvmgen_* subgraphs and their layer detail: taken from compiler_json
+        verbatim (we have no other source for these).
+      - tidl_N subgraphs: compiler_json's OWN boundary inputs/outputs win
+        (Relay-side boundary tracing is more reliable than our own tensor-
+        based tracing in ambiguous cases — see merge_inspector_json.py's
+        merge_trust_tvm_connections, which this ports inline). Layer detail
+        (the 'layers' array) is injected from our own extraction only if
+        compiler_json's own entry doesn't already have it — if TIDL starts
+        emitting complete data itself, that check just becomes a no-op.
+      - model.onnx / metadata: always ours, never touched here.
+    """
+    our_subgraphs = combined_data.get('runtime', {}).get('subgraphs', {})
+    compiler_subgraphs = compiler_json.get('runtime', {}).get('subgraphs', {})
+
+    merged_subgraphs = copy.deepcopy(compiler_subgraphs)
+    injected, missing = 0, []
+    for sg_id, stub in merged_subgraphs.items():
+        if not sg_id.startswith('tidl_'):
+            continue
+        if stub.get('layers'):
+            continue  # compiler already provided full detail — nothing to do
+        detail = our_subgraphs.get(sg_id)
+        if not detail:
+            missing.append(sg_id)
+            continue
+        for key in ('subgraph_id', 'tidl_tool_version', 'tensor_bits',
+                    'total_gmacs', 'num_layers', 'layers', 'target_device'):
+            if key in detail:
+                stub[key] = detail[key]
+        injected += 1
+    logger.debug(f"  [Compiler merge] Injected layer detail into {injected} tidl_N subgraph(s)")
+    if missing:
+        logger.debug(f"  [Compiler merge] WARNING: no extracted detail found for: {missing}")
+
+    # A subgraph we extracted that the compiler json doesn't mention at all
+    # (e.g. compiler json is stale, or a pure-TIDL-side subgraph it never
+    # saw) — keep our own entry rather than silently dropping it.
+    for sg_id, detail in our_subgraphs.items():
+        if sg_id.startswith('tidl_') and sg_id not in merged_subgraphs:
+            merged_subgraphs[sg_id] = detail
+
+    combined_data.setdefault('runtime', {})['subgraphs'] = merged_subgraphs
+
+    # Promote ONNX nodes currently 'arm' to 'tvm_rt' if a tvmgen_* subgraph's
+    # own onnx_mapping claims them — preserving the original "why not TIDL"
+    # reason (the node IS accelerated, just not by TIDL).
+    node_owner = {}
+    for sg_id, info in merged_subgraphs.items():
+        if not sg_id.startswith('tvmgen'):
+            continue
+        for layer in info.get('layers', []) or []:
+            for n in (layer.get('onnx_mapping') or {}).get('onnx_node_names') or []:
+                node_owner[n] = sg_id
+
+    onnx_layers = combined_data.get('model', {}).get('onnx', {}).get('layers', {})
+    promoted = 0
+    for name, info in onnx_layers.items():
+        ra = info.get('runtime_assignment', {})
+        if ra.get('assigned_runtime') == 'arm' and name in node_owner:
+            info['runtime_assignment'] = {'assigned_runtime': 'tvm_rt', 'reason': ra.get('reason')}
+            promoted += 1
+    logger.debug(f"  [Compiler merge] Promoted {promoted} ONNX node(s): arm -> tvm_rt (reason preserved)")
+
+    return combined_data
 
 
 def load_config_data(model_dir_path: str) -> Dict[str, Any]:
@@ -3068,7 +3258,13 @@ def load_proctime_data(model_dir_path: str) -> Dict[int, List[Dict[str, Any]]]:
     proctime_data = {}
 
     import glob
+    # Standard TIDL-only naming; TVM-delegated TIDL sub-compiles use a
+    # different directory AND file format entirely (bufinfolog_0.csv,
+    # perfSimInfo.bin, not this CSV layout at all) — proctime/cycles/
+    # memory data simply won't be available for those subgraphs.
     csv_files = glob.glob(os.path.join(model_dir_path, '**/tempDir/subgraph_*/tempDir_subgraph_*_tidl_net_*.csv'), recursive=True)
+    if not csv_files:
+        csv_files = glob.glob(os.path.join(model_dir_path, '**/tempDir/subgraph*_net/tempDir_subgraph*_net_*.csv'), recursive=True)
 
     preferred_files = []
     for path in csv_files:
@@ -3083,7 +3279,7 @@ def load_proctime_data(model_dir_path: str) -> Dict[int, List[Dict[str, Any]]]:
     for csv_path in preferred_files:
         try:
             import re
-            match = re.search(r'subgraph_(\d+)_tidl_net', csv_path)
+            match = re.search(SUBGRAPH_NUM_RE, csv_path)
             if not match:
                 continue
 
@@ -3130,7 +3326,13 @@ def load_cycles_data(model_dir_path: str) -> Dict[int, List[Dict[str, Any]]]:
     cycles_data = {}
 
     import glob
+    # Standard TIDL-only naming; TVM-delegated TIDL sub-compiles use a
+    # different directory AND file format entirely (bufinfolog_0.csv,
+    # perfSimInfo.bin, not this CSV layout at all) — proctime/cycles/
+    # memory data simply won't be available for those subgraphs.
     csv_files = glob.glob(os.path.join(model_dir_path, '**/tempDir/subgraph_*/tempDir_subgraph_*_tidl_net_*.csv'), recursive=True)
+    if not csv_files:
+        csv_files = glob.glob(os.path.join(model_dir_path, '**/tempDir/subgraph*_net/tempDir_subgraph*_net_*.csv'), recursive=True)
 
     preferred_files = []
     for path in csv_files:
@@ -3145,7 +3347,7 @@ def load_cycles_data(model_dir_path: str) -> Dict[int, List[Dict[str, Any]]]:
     for csv_path in preferred_files:
         try:
             import re
-            match = re.search(r'subgraph_(\d+)_tidl_net', csv_path)
+            match = re.search(SUBGRAPH_NUM_RE, csv_path)
             if not match:
                 continue
 
@@ -3207,7 +3409,13 @@ def load_memory_data(model_dir_path: str) -> Dict[int, List[Dict[str, Any]]]:
     memory_data = {}
 
     import glob
+    # Standard TIDL-only naming; TVM-delegated TIDL sub-compiles use a
+    # different directory AND file format entirely (bufinfolog_0.csv,
+    # perfSimInfo.bin, not this CSV layout at all) — proctime/cycles/
+    # memory data simply won't be available for those subgraphs.
     csv_files = glob.glob(os.path.join(model_dir_path, '**/tempDir/subgraph_*/tempDir_subgraph_*_tidl_net_*.csv'), recursive=True)
+    if not csv_files:
+        csv_files = glob.glob(os.path.join(model_dir_path, '**/tempDir/subgraph*_net/tempDir_subgraph*_net_*.csv'), recursive=True)
 
     preferred_files = []
     for path in csv_files:
@@ -3222,7 +3430,7 @@ def load_memory_data(model_dir_path: str) -> Dict[int, List[Dict[str, Any]]]:
     for csv_path in preferred_files:
         try:
             import re
-            match = re.search(r'subgraph_(\d+)_tidl_net', csv_path)
+            match = re.search(SUBGRAPH_NUM_RE, csv_path)
             if not match:
                 continue
 
@@ -3306,7 +3514,6 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
         logger.debug("\nThe script will automatically discover and parse:")
         logger.debug("  - ONNX model from <model_dir>/model/*.onnx")
         logger.debug("  - GraphViz info from <model_dir>/artifacts/tempDir/graphvizInfo.txt")
-        logger.debug("  - Allowed nodes from <model_dir>/artifacts/allowedNode.txt")
         logger.debug("  - Subgraph files from <model_dir>/artifacts/tempDir/")
         logger.debug("  - Metrics from <model_dir>/analyze.xlsx")
         logger.debug("  - Activation data from layer_info.txt and binary files (enabled by default)")
@@ -3349,14 +3556,36 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
 
     onnx_path = discovered['onnx']
     graphviz_path = discovered.get('graphviz')
-    allowednode_path = discovered.get('allowednode')
+    diag_info_json_path = discovered.get('diag_info_json')
     subgraph_dir = discovered.get('subgraph_dir')
 
+    # Load the compiler-emitted model_inspector.json (if discovered) once,
+    # up front — used both as an authoritative "which nodes does a tvmgen_*
+    # subgraph already claim" exclusion set during our own extraction below,
+    # and later to merge its tvmgen_*/tidl_N subgraphs into what we extract.
+    compiler_json = None
+    compiler_claimed_tvm_nodes = set()
+    if diag_info_json_path and os.path.exists(diag_info_json_path):
+        try:
+            with open(diag_info_json_path, 'r', encoding='utf-8') as f:
+                compiler_json = json.load(f)
+            if not compiler_json.get('runtime', {}).get('subgraphs'):
+                compiler_json = None
+        except (json.JSONDecodeError, OSError) as e:
+            logger.debug(f"  WARNING: Could not load compiler-emitted json: {e}")
+            compiler_json = None
+    if compiler_json:
+        for sg_id, info in compiler_json['runtime']['subgraphs'].items():
+            if not sg_id.startswith('tvmgen'):
+                continue
+            for layer in info.get('layers', []) or []:
+                compiler_claimed_tvm_nodes.update(
+                    (layer.get('onnx_mapping') or {}).get('onnx_node_names') or []
+                )
+
     # Log missing optional TIDL artifacts as info (not error)
-    if not graphviz_path:
+    if not graphviz_path and not diag_info_json_path:
         logger.debug("[INFO] GraphViz info not found (optional) - TIDL support info will be unavailable")
-    if not allowednode_path:
-        logger.debug("[INFO] allowedNode.txt not found (optional) - using all nodes as allowed")
     if not subgraph_dir:
         logger.debug("[INFO] Subgraph directory not found (optional) - assuming single subgraph")
 
@@ -3364,14 +3593,13 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
     logger.debug("Data Extractor - Parsing Artifacts")
     logger.debug("=" * 70)
     logger.debug(f"ONNX Model:      {onnx_path}")
-    logger.debug(f"GraphViz Info:   {graphviz_path}")
-    logger.debug(f"Allowed Nodes:   {allowednode_path}")
+    logger.debug(f"GraphViz Info:   {graphviz_path or diag_info_json_path}")
     logger.debug(f"Subgraph Dir:    {subgraph_dir}")
     logger.debug(f"Output JSON:     {output_json_path}")
     logger.debug("=" * 70)
 
     try:
-        logger.debug("\n[1/8] Parsing ONNX model...")
+        logger.debug("\n[1/7] Parsing ONNX model...")
         onnx_parser = ONNXParser(onnx_path)
         model_data = onnx_parser.parse()
 
@@ -3382,27 +3610,22 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
         model_data['tree_structure'] = tree_structure
 
         subgraph_data = {
-            'subgraphs': [],
             'node_support': {}
         }
 
-        logger.debug("\n[2/8] Parsing GraphViz info...")
+        logger.debug("\n[2/7] Parsing GraphViz info...")
         if graphviz_path and os.path.exists(graphviz_path):
             graphviz_parser = GraphVizParser(graphviz_path)
             subgraph_data['node_support'] = graphviz_parser.parse()
+        elif diag_info_json_path and os.path.exists(diag_info_json_path):
+            logger.debug(f"  graphvizInfo.txt not found — using diag_info fallback: {diag_info_json_path}")
+            diag_info_parser = DiagInfoParser(diag_info_json_path, onnx_path)
+            subgraph_data['node_support'] = diag_info_parser.parse()
         else:
             logger.debug(f"WARNING: GraphViz info not found (optional)")
             subgraph_data['node_support'] = {}
 
-        logger.debug("\n[3/8] Parsing allowed nodes...")
-        if allowednode_path and os.path.exists(allowednode_path):
-            allowednode_parser = AllowedNodeParser(allowednode_path)
-            subgraph_data['subgraphs'] = allowednode_parser.parse()
-        else:
-            logger.debug(f"WARNING: allowedNode.txt not found (optional)")
-            subgraph_data['subgraphs'] = {}
-
-        logger.debug("\n[4/8] Parsing TIDL subgraph HTML files...")
+        logger.debug("\n[3/7] Parsing TIDL subgraph HTML files...")
         # Build tensor name → ONNX node index map for TIDL-to-ONNX mapping
         tensor_to_node_map = {}
         for idx, (layer_name, layer_info) in enumerate(model_data.get('layer_details', {}).items()):
@@ -3422,7 +3645,7 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
             tidl_parser.onnx_layer_details = model_data.get('layer_details', {})
             tidl_data = tidl_parser.parse_all_subgraphs()
 
-        logger.debug("\n[5/8] Parsing activation data...")
+        logger.debug("\n[4/7] Parsing activation data...")
         activation_data = {}
         if extract_activations:
             try:
@@ -3439,7 +3662,7 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
         else:
             logger.debug("  Skipping activation data - JSON contains only model structure")
 
-        logger.debug("\n[6/8] Parsing metrics data...")
+        logger.debug("\n[5/7] Parsing metrics data...")
         metrics_data = {}
         metrics_xlsx_path = discovered.get('xlsx', None)
         if metrics_xlsx_path and os.path.exists(metrics_xlsx_path):
@@ -3448,13 +3671,13 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
         else:
             logger.info("INFO: No analyze.xlsx file from inspect is found (optional)")
 
-        logger.debug("\n[7/8] Loading configuration and performance data...")
+        logger.debug("\n[6/7] Loading configuration and performance data...")
         config_data = load_config_data(model_dir_path)
         proctime_data = load_proctime_data(model_dir_path)
         cycles_data = load_cycles_data(model_dir_path)
         memory_data = load_memory_data(model_dir_path)
 
-        logger.debug("\n[8/8] Combining and saving data...")
+        logger.debug("\n[7/7] Combining and saving data...")
 
         performance_data = {}
         all_subgraphs = set(proctime_data.keys()) | set(cycles_data.keys()) | set(memory_data.keys())
@@ -3756,6 +3979,194 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
 
             onnx_layers[layer_name] = unified_layer
 
+        # Detect activations TIDL fused into a layer's OWN actParams
+        # instead of emitting a separate layer for them. This shows up on
+        # boundary/reformat layers (TIDL_DataConvertLayer/TIDL_BatchNormLayer
+        # etc.) whose netLog "Out Data Name" is really "apply <activation>
+        # to my input" — physically one layer, but semantically also the
+        # compute step for a distinct ONNX activation node (e.g. Elu).
+        # Without this, such layers get an empty onnx_mapping, hiding that
+        # ONNX node from mapping coverage entirely, AND the subgraph's
+        # boundary "produced" tensor (used for Overview-graph matching)
+        # ends up being the pre-activation netLog buffer name instead of
+        # the real tensor name the next runtime actually consumes.
+        TIDL_ACT_TO_ONNX_OP = {
+            'TIDL_ELU': 'Elu',
+            'TIDL_RELU': 'Relu',
+            'TIDL_PRELU': 'PRelu',
+            'TIDL_SIGMOID': 'Sigmoid',
+            'TIDL_TANH': 'Tanh',
+        }
+        # (input_tensor_name, onnx_op_type) -> onnx_node_name
+        act_input_lookup = {}
+        for name, info in onnx_layers.items():
+            for d in info.get('input_details', []):
+                t = d.get('tensor_name')
+                if t:
+                    act_input_lookup[(t, info.get('type'))] = name
+
+        act_fused_count = 0
+        for subgraph_id, tidl_subgraph in enhanced_tidl_data.items():
+            for layer in tidl_subgraph.get('layers', []):
+                mapping = layer.get('onnx_mapping') or {}
+                if mapping.get('onnx_node_names'):
+                    continue
+                act_type = (layer.get('parameters', {}).get('actParams', {}).get('actType') or '').upper()
+                onnx_op = TIDL_ACT_TO_ONNX_OP.get(act_type)
+                if not onnx_op:
+                    continue
+                matched_name = None
+                for inp in layer.get('inputs', []):
+                    t = inp.get('tensor_name')
+                    if t and (t, onnx_op) in act_input_lookup:
+                        matched_name = act_input_lookup[(t, onnx_op)]
+                        break
+                if matched_name:
+                    layer['onnx_mapping'] = {
+                        'onnx_node_names': [matched_name],
+                        'onnx_node_indices': [],
+                        'mapping_type': 'activation_fusion',
+                    }
+                    act_fused_count += 1
+        logger.debug(f"  Activation-fusion mapping: matched {act_fused_count} embedded-activation layers")
+
+        # Some TIDL layers are themselves a genuine, separately-named
+        # compute layer (e.g. TIDL_ConcatLayer) that still ends up with an
+        # empty onnx_mapping — typically because it's ALSO the subgraph's
+        # boundary-output layer (name ending "_netFormat"), a case the
+        # normal backtracking/fusion passes above treat as pure boundary
+        # plumbing and skip. Unlike the embedded-activation case above,
+        # there's no separate "actParams" signal — instead, match by this
+        # TIDL layer type's natural ONNX op equivalent AND an EXACT match
+        # on the input tensor set, which is specific enough to avoid
+        # false positives from unrelated same-type layers elsewhere.
+        TIDL_LAYER_TYPE_TO_ONNX_OP = {
+            'TIDL_ConcatLayer': 'Concat',
+            'TIDL_SliceLayer': 'Slice',
+        }
+        # (frozenset of non-constant input tensor names, onnx_op_type) -> onnx_node_name
+        type_input_set_lookup = {}
+        for name, info in onnx_layers.items():
+            inputs = frozenset(
+                d.get('tensor_name') for d in info.get('input_details', [])
+                if d.get('tensor_name') and not d.get('is_constant', False)
+            )
+            if inputs:
+                type_input_set_lookup[(inputs, info.get('type'))] = name
+
+        type_match_count = 0
+        for subgraph_id, tidl_subgraph in enhanced_tidl_data.items():
+            for layer in tidl_subgraph.get('layers', []):
+                mapping = layer.get('onnx_mapping') or {}
+                if mapping.get('onnx_node_names'):
+                    continue
+                onnx_op = TIDL_LAYER_TYPE_TO_ONNX_OP.get(layer.get('layer_type'))
+                if not onnx_op:
+                    continue
+                own_inputs = frozenset(
+                    i.get('tensor_name') for i in layer.get('inputs', [])
+                    if i.get('tensor_name') and not i.get('tensor_name', '').endswith('_netFormat')
+                )
+                matched_name = type_input_set_lookup.get((own_inputs, onnx_op)) if own_inputs else None
+                if matched_name:
+                    layer['onnx_mapping'] = {
+                        'onnx_node_names': [matched_name],
+                        'onnx_node_indices': [],
+                        'mapping_type': 'boundary_layer_match',
+                    }
+                    type_match_count += 1
+        logger.debug(f"  Boundary-layer type match: matched {type_match_count} layers")
+
+        # Some TIDL layers hardware-implement an entire ONNX-graph subgraph
+        # rather than corresponding to any single ONNX node — e.g. a
+        # TIDL_DetectionOutputLayer takes the raw per-scale box/class conv
+        # outputs directly and does box-decode + NMS internally, completely
+        # replacing the ONNX post-processing chain (Reshape/Transpose/
+        # Softmax/Sigmoid/Concat/.../NonMaxSuppression) that graphvizInfo.txt
+        # labels ARM ("will be delegated in post-processing"). Such layers
+        # end up with an empty onnx_mapping because there's no single ONNX
+        # output tensor to backtrack from. Fix: seed from the ONNX nodes
+        # already mapped to this TIDL layer's OWN input layers (real conv
+        # outputs, already 1-to-1 mapped above), then forward-trace through
+        # the actual ONNX graph to find every downstream node this layer
+        # replaces, stopping at anything already claimed by another TIDL
+        # layer (e.g. the final reformat layer's own boundary node).
+        onnx_tensor_producer = {}
+        for name, info in onnx_layers.items():
+            for d in info.get('output_details', []):
+                t = d.get('tensor_name')
+                if t:
+                    onnx_tensor_producer[t] = name
+        onnx_consumers = {name: [] for name in onnx_layers}
+        for name, info in onnx_layers.items():
+            for d in info.get('input_details', []):
+                t = d.get('tensor_name')
+                producer = onnx_tensor_producer.get(t)
+                if producer:
+                    onnx_consumers[producer].append(name)
+
+        # Authoritative "this node belongs to subgraph X" tag from diag_info
+        # (see DiagInfoParser), name-keyed — same boundary check the backward
+        # fusion pass uses. diag_info's own tidl_subgraph tag only ever names
+        # tidl_N subgraphs, never a tvmgen_* one, so it alone doesn't stop
+        # this forward walk from crossing into a neighboring TVM subgraph's
+        # nodes — compiler_claimed_tvm_nodes (loaded up front from the
+        # compiler-emitted json, if any) covers that other half of the
+        # boundary.
+        node_support_by_idx = subgraph_data.get('node_support', {})
+        name_to_tidl_subgraph = {
+            name: node_support_by_idx.get(idx, {}).get('tidl_subgraph')
+            for idx, name in enumerate(onnx_layer_names)
+        }
+
+        owned_onnx_nodes = set()
+        for tidl_subgraph in enhanced_tidl_data.values():
+            for layer in tidl_subgraph.get('layers', []):
+                owned_onnx_nodes.update(layer.get('onnx_mapping', {}).get('onnx_node_names', []))
+
+        forward_fill_count = 0
+        forward_fill_layers = 0
+        for subgraph_id, tidl_subgraph in enhanced_tidl_data.items():
+            sg_layers = tidl_subgraph.get('layers', [])
+            layer_by_id = {l['layer_id']: l for l in sg_layers}
+            for layer in sg_layers:
+                mapping = layer.get('onnx_mapping') or {}
+                if mapping.get('onnx_node_names'):
+                    continue
+                seeds = set()
+                for inp in layer.get('inputs', []):
+                    src_layer = layer_by_id.get(inp.get('node_id'))
+                    if src_layer:
+                        seeds.update(src_layer.get('onnx_mapping', {}).get('onnx_node_names', []))
+                if not seeds:
+                    continue
+                visited = set()
+                queue = list(seeds)
+                while queue:
+                    cur = queue.pop()
+                    for nxt in onnx_consumers.get(cur, []):
+                        if nxt in visited or nxt in owned_onnx_nodes:
+                            continue
+                        if nxt in compiler_claimed_tvm_nodes:
+                            continue  # belongs to a tvmgen_* subgraph — don't cross the seam
+                        tag = name_to_tidl_subgraph.get(nxt)
+                        if tag and tag != f'tidl_{subgraph_id}':
+                            continue  # belongs to a different tidl_N subgraph — don't cross the seam
+                        visited.add(nxt)
+                        queue.append(nxt)
+                if not visited:
+                    continue
+                ordered_names = [n for n in onnx_layers if n in visited]
+                layer['onnx_mapping'] = {
+                    'onnx_node_indices': [],
+                    'onnx_node_names': ordered_names,
+                    'mapping_type': 'delegated_fusion',
+                }
+                owned_onnx_nodes.update(visited)
+                forward_fill_count += len(visited)
+                forward_fill_layers += 1
+        logger.debug(f"  Forward-reachability delegation mapping: matched {forward_fill_count} ONNX nodes into {forward_fill_layers} layer(s)")
+
         # Override runtime_assignment for ONNX nodes that are fused into TIDL layers.
         # graphvizInfo.txt may label them as ARM (e.g. "will be delegated in post-processing")
         # but if they appear in onnx_mapping.onnx_node_names of a TIDL layer they actually
@@ -3797,12 +4208,141 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
             logger.debug("  No TVM artifacts found, skipping TVM section")
             tvm_data = {}
 
+        # Compute each TIDL subgraph's boundary inputs/outputs — the tensors
+        # that cross the subgraph's boundary (enter from outside / exit to
+        # outside). Derived from the ONNX nodes actually mapped into each
+        # subgraph (onnx_mapping), using THEIR OWN real input_details/
+        # output_details — not netLog's raw internal buffer names. A TIDL
+        # subgraph's own netLog boundary layers (TIDL_DataLayer for
+        # inputs) have no concept of the original ONNX tensor at all —
+        # their "Out Data Name" is just a generic placeholder like
+        # "tidl_1_i0" — so building the boundary from netLog names instead
+        # of ONNX node names left every subgraph's INPUTS stuck as that
+        # placeholder until a TVM/Relay-side merge resolved them. Every
+        # ONNX node's own input/output tensor names are real by
+        # definition, so this eliminates the placeholder for outputs too
+        # (previously patched separately via activation_fused_output) and
+        # fixes it for inputs as well, without needing a TVM merge at all.
+        subgraph_produced = {}
+        subgraph_consumed = {}
+        for subgraph_id, tidl_subgraph in enhanced_tidl_data.items():
+            produced, consumed = set(), set()
+            for layer in tidl_subgraph['layers']:
+                for onnx_name in (layer.get('onnx_mapping') or {}).get('onnx_node_names') or []:
+                    onnx_info = onnx_layers.get(onnx_name, {})
+                    for d in onnx_info.get('input_details', []):
+                        t = d.get('tensor_name')
+                        if t and not d.get('is_constant', False):
+                            consumed.add(t)
+                    for d in onnx_info.get('output_details', []):
+                        t = d.get('tensor_name')
+                        if t:
+                            produced.add(t)
+            subgraph_produced[subgraph_id] = produced
+            subgraph_consumed[subgraph_id] = consumed
+
+        # Which subgraphs consume a given tensor — used to decide if a
+        # produced tensor actually crosses this subgraph's boundary (i.e.
+        # some OTHER subgraph also consumes it), vs. being purely internal.
+        consumers_of_tensor = {}
+        for sid, consumed in subgraph_consumed.items():
+            for t in consumed:
+                consumers_of_tensor.setdefault(t, set()).add(sid)
+
+        model_output_tensor_names = {o.get('name') for o in onnx_outputs if o.get('name')}
+        model_input_tensor_names = {i.get('name') for i in onnx_inputs if i.get('name')}
+
+        # Producer/consumer subgraph per tensor (TIDL<->TIDL only — TVM
+        # isn't known yet at this stage; merge_inspector_json.py resolves
+        # those once TVM subgraphs are merged in).
+        tensor_producer_ref = {}
+        for sid, produced in subgraph_produced.items():
+            for t in produced:
+                tensor_producer_ref[t] = f'tidl_{sid}'
+        tensor_consumer_refs = {}
+        for sid, consumed in subgraph_consumed.items():
+            for t in consumed:
+                tensor_consumer_refs.setdefault(t, []).append(f'tidl_{sid}')
+
+        # Global (whole-model, any runtime) tensor -> producing/consuming
+        # ONNX node NAME — used to name an ARM-bound boundary by the node
+        # on the other side of it, rather than by the tensor connecting to
+        # it. A tensor name doesn't tell you what's consuming/producing
+        # it; the node name does, and it's what the Overview graph's ARM
+        # nodes are actually keyed by (see html_generator.py's
+        # f'arm_{layer_name}'), so this lets the primary subgraph-id
+        # matching path resolve ARM edges directly too.
+        tensor_to_producer_node = {}
+        tensor_to_consumer_nodes = {}
+        for name, info in onnx_layers.items():
+            for d in info.get('output_details', []):
+                t = d.get('tensor_name')
+                if t:
+                    tensor_to_producer_node[t] = name
+            for d in info.get('input_details', []):
+                t = d.get('tensor_name')
+                if t and not d.get('is_constant', False):
+                    tensor_to_consumer_nodes.setdefault(t, []).append(name)
+
+        # Each boundary entry is a single value: the neighboring subgraph's
+        # id (e.g. "tidl_0") when it resolves to one; the ARM-bound ONNX
+        # node's own NAME when it crosses to a node that isn't part of any
+        # subgraph; or, only for genuine model input/output tensors (which
+        # have no producer/consumer node to name), the tensor name itself
+        # — that's what the Input/Output pill matching keys off of.
+        def _boundary_input_value(tensor_name, self_ref):
+            producer = tensor_producer_ref.get(tensor_name)
+            if producer and producer != self_ref:
+                return producer
+            if tensor_name in model_input_tensor_names:
+                return tensor_name
+            return tensor_to_producer_node.get(tensor_name, tensor_name)
+
+        def _boundary_output_value(tensor_name, self_ref):
+            consumers = [c for c in tensor_consumer_refs.get(tensor_name, []) if c != self_ref]
+            if consumers:
+                return consumers[0]
+            if tensor_name in model_output_tensor_names:
+                return tensor_name
+            arm_consumers = tensor_to_consumer_nodes.get(tensor_name) or []
+            return arm_consumers[0] if arm_consumers else tensor_name
+
+        def _dedupe_preserve_order(values):
+            # Two distinct boundary tensors resolving to the same neighbor
+            # subgraph would otherwise show that subgraph id twice.
+            seen = set()
+            result = []
+            for v in values:
+                if v not in seen:
+                    seen.add(v)
+                    result.append(v)
+            return result
+
         # Build subgraphs dict in the format: tidl_0, tidl_1, tvm_0, etc.
         unified_subgraphs = {}
 
         # Add TIDL subgraphs with correct field order
         for subgraph_id, tidl_subgraph in enhanced_tidl_data.items():
             subgraph_key = f'tidl_{subgraph_id}'
+
+            produced = subgraph_produced[subgraph_id]
+            consumed = subgraph_consumed[subgraph_id]
+            boundary_inputs = sorted(consumed - produced)
+            # A produced tensor is a boundary output if it's the model's
+            # final output, OR simply isn't consumed by anything ELSE
+            # within this same subgraph — cross-checking against other
+            # TIDL subgraphs' consumed sets specifically (as before) missed
+            # tensors that cross into TVM instead (e.g. a TIDL subgraph's
+            # last op feeding a TVM-handled ConvTranspose): no OTHER TIDL
+            # subgraph consumes it, so it silently got excluded and never
+            # even carried the raw tensor name through to merge time. Any
+            # genuinely internal-only tensor is, by definition, already
+            # consumed by another layer in this same subgraph, so this is
+            # strictly more correct, not just more inclusive.
+            boundary_outputs = sorted(
+                t for t in produced
+                if t in model_output_tensor_names or t not in consumed
+            )
 
             # Build TIDL subgraph with correct field order matching unified schema
             ordered_tidl_subgraph = {
@@ -3812,8 +4352,8 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
                 'tensor_bits': config_data.get('tensor_bits', 8),
                 'total_gmacs': tidl_subgraph['total_gmacs'],
                 'num_layers': tidl_subgraph['num_layers'],
-                'inputs': [],
-                'outputs': [],
+                'inputs': _dedupe_preserve_order(_boundary_input_value(t, subgraph_key) for t in boundary_inputs),
+                'outputs': _dedupe_preserve_order(_boundary_output_value(t, subgraph_key) for t in boundary_outputs),
                 'layers': tidl_subgraph['layers'],
                 'target_device': target_device,
             }
@@ -3845,6 +4385,16 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
                 'subgraphs': unified_subgraphs
             }
         }
+
+        # If a compiler-emitted model_inspector.json was discovered (e.g.
+        # TVM's artifacts/model_inspector/model_inspector.json — TVM calls
+        # TIDL internally and writes out both tvmgen_* and tidl_N subgraphs
+        # in one file), fold its tvmgen_* subgraphs and any missing tidl_N
+        # layer detail into what we just extracted ourselves. See
+        # _merge_compiler_subgraphs() for what's taken from where.
+        if compiler_json:
+            logger.debug(f"  Merging compiler-emitted subgraphs from: {diag_info_json_path}")
+            combined_data = _merge_compiler_subgraphs(combined_data, compiler_json)
 
         logger.debug(f"Writing unified JSON to: {output_json_path}")
 

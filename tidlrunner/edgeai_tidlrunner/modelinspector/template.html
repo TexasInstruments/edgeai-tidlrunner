@@ -2383,6 +2383,24 @@ main {
     stroke-width: 3;
 }
 
+/* Accelerated (tidl_rt/tvm_rt) node not captured in any subgraph's layer
+   mapping — distinct from ARM (unaccelerated) so it isn't mistaken for a
+   CPU fallback; amber signals "gap in mapping data", not "not accelerated". */
+.node-rect.unmapped-pill {
+    fill: #FFF3E0;
+    stroke: #E68A00;
+    stroke-width: 2;
+}
+
+[data-theme="dark"] .node-rect.unmapped-pill {
+    fill: #4d3a1b;
+    stroke: #E68A00;
+}
+
+.graph-node:hover .node-rect.unmapped-pill {
+    stroke-width: 3;
+}
+
 .graph-node.selected .node-rect.arm-pill {
     fill: #E63339 !important;
     stroke: #990000;
@@ -4224,11 +4242,11 @@ main {
                     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
                         <div style="padding:8px 4px;border-radius:8px;background:rgba(67,160,71,0.08);border:1px solid rgba(67,160,71,0.25);">
                             <div style="font-size:1.3rem;font-weight:700;color:#43a047;line-height:1;font-family:var(--font-sans);"><span id="accelerated-count">0</span></div>
-                            <div style="font-size:0.68rem;color:var(--text-secondary);margin-top:4px;font-weight:500;font-family:var(--font-sans);">C7x with TIDL</div>
+                            <div style="font-size:0.68rem;color:var(--text-secondary);margin-top:4px;font-weight:500;font-family:var(--font-sans);">NPU with TIDL</div>
                         </div>
                         <div style="padding:8px 4px;border-radius:8px;background:rgba(0,114,206,0.08);border:1px solid rgba(0,114,206,0.25);">
                             <div style="font-size:1.3rem;font-weight:700;color:#0072ce;line-height:1;font-family:var(--font-sans);"><span id="tvm-count">0</span></div>
-                            <div style="font-size:0.68rem;color:var(--text-secondary);margin-top:4px;font-weight:500;font-family:var(--font-sans);">C7x without TIDL</div>
+                            <div style="font-size:0.68rem;color:var(--text-secondary);margin-top:4px;font-weight:500;font-family:var(--font-sans);">NPU without TIDL</div>
                         </div>
                         <div style="padding:8px 4px;border-radius:8px;background:rgba(198,40,40,0.08);border:1px solid rgba(198,40,40,0.25);">
                             <div style="font-size:1.3rem;font-weight:700;color:#c62828;line-height:1;font-family:var(--font-sans);"><span id="cpu-count">0</span></div>
@@ -4292,10 +4310,10 @@ main {
                                 <tr>
                                     <th class="sortable" data-column="type" style="text-align: center;" title="ONNX operator type (Conv, Relu, Add, etc.)">Operator Type <i class="fas fa-sort"></i></th>
                                     <th class="sortable" data-column="total" style="text-align: center;" title="Total number of this operator in the model">Total <i class="fas fa-sort"></i></th>
-                                    <th class="sortable" data-column="tidl" style="text-align: center;" title="Layers running on C7x DSP via TIDL">C7x with TIDL <i class="fas fa-sort"></i></th>
-                                    <th class="sortable" data-column="tvm" style="text-align: center;" title="Layers running on C7x DSP via TVM (without TIDL)">C7x without TIDL <i class="fas fa-sort"></i></th>
+                                    <th class="sortable" data-column="tidl" style="text-align: center;" title="Layers running on NPU via TIDL">NPU with TIDL <i class="fas fa-sort"></i></th>
+                                    <th class="sortable" data-column="tvm" style="text-align: center;" title="Layers running on NPU via TVM (without TIDL)">NPU without TIDL <i class="fas fa-sort"></i></th>
                                     <th class="sortable" data-column="arm" style="text-align: center;" title="Layers running on ARM CPU (not accelerated)">ARM <i class="fas fa-sort"></i></th>
-                                    <th class="sortable" data-column="pctAccelerated" style="text-align: center;" title="Percentage running on DSP (TIDL + TVM)">% On DSP <i class="fas fa-sort"></i></th>
+                                    <th class="sortable" data-column="pctAccelerated" style="text-align: center;" title="Percentage running on NPU (TIDL + TVM)">% On NPU <i class="fas fa-sort"></i></th>
                                 </tr>
                             </thead>
                             <tbody id="operator-summary-table-body"></tbody>
@@ -4725,9 +4743,9 @@ function _renderEVMTiming(PA) {
     const t = (PA && PA.evm_timing) || {};
     const rows = [
         { key: 'infer_time_subgraph_ms',
-          desc: 'Pure C7x DSP execution time for the TIDL subgraph(s)' },
+          desc: 'Pure NPU execution time for the TIDL subgraph(s)' },
         { key: 'infer_time_core_ms',
-          desc: 'Total model inference: DSP subgraph + any ARM CPU layers' },
+          desc: 'Total model inference: NPU subgraph + any ARM CPU layers' },
         { key: 'infer_time_invoke_ms',
           desc: 'End-to-end time including Python/framework overhead' },
     ].filter(r => t[r.key] != null);
@@ -4833,10 +4851,11 @@ function buildSubgraphPerfTable() {
 
         const numLayers = Math.max(cyclesArr.length,
             (typeof TIDL_LAYER_DATA !== 'undefined' && TIDL_LAYER_DATA?.[sgId]?.num_layers) || 0);
-        // Build a readable label: "TIDL — Subgraph 0", "TVM — Subgraph 1", etc.
+        // Build a readable label using the real subgraph id, e.g. "TIDL — tidl_9",
+        // "TVM — tvmgen_default_fused_nn_conv2d" (not a made-up sequential index).
         const sgInfo = (typeof TIDL_LAYER_DATA !== 'undefined' && TIDL_LAYER_DATA?.[sgId]) || {};
         const rt = (sgInfo.runtime || 'tidl_rt') === 'tvm_rt' ? 'TVM' : 'TIDL';
-        const label = `${rt} — Subgraph ${sgIndex(sgId)}`;
+        const label = `${rt} — ${sgId}`;
         const evmTimeMs = sgInfo.evm_execution_time_ms_per_frame != null
             ? sgInfo.evm_execution_time_ms_per_frame : null;
         sgPerfData.push({ sgId, label, sortKey: sgIndex(sgId), numLayers, totalLayerCycles, gmacs, evmTimeMs, isAccelerated: true });
@@ -5028,10 +5047,10 @@ function initPerfSubgraphSelector() {
         return;
     }
 
-    unified.innerHTML = sortedKeys.map((k, i) => {
+    unified.innerHTML = sortedKeys.map((k) => {
         const sg = TIDL_LAYER_DATA?.[k] || {};
         const rt = (sg.runtime || 'tidl_rt') === 'tvm_rt' ? 'TVM' : 'TIDL';
-        return `<option value="${k}">${rt} — Subgraph ${i}</option>`;
+        return `<option value="${k}">${rt} — ${k}</option>`;
     }).join('');
 
     // Sync all hidden mirrors and re-render all charts
@@ -6011,15 +6030,15 @@ function populateAccelerationStatus(nodes) {
     const segTidl = document.getElementById('seg-tidl');
     const segTvm  = document.getElementById('seg-tvm');
     const segArm  = document.getElementById('seg-arm');
-    if (segTidl) { segTidl.style.width = tidlPct + '%'; segTidl.title = `C7x with TIDL: ${tidlCount} layers (${tidlPct}%)`; }
-    if (segTvm)  { segTvm.style.width  = tvmPct  + '%'; segTvm.title  = `C7x without TIDL: ${tvmCount} layers (${tvmPct}%)`; }
+    if (segTidl) { segTidl.style.width = tidlPct + '%'; segTidl.title = `NPU with TIDL: ${tidlCount} layers (${tidlPct}%)`; }
+    if (segTvm)  { segTvm.style.width  = tvmPct  + '%'; segTvm.title  = `NPU without TIDL: ${tvmCount} layers (${tvmPct}%)`; }
     if (segArm)  { segArm.style.width  = armPct  + '%'; segArm.title  = `ARM: ${armCount} layers (${armPct}%)`; }
 
     // Update total layers display
     const layersEl = document.getElementById('layers');
     if (layersEl) layersEl.textContent = totalNodes;
 
-    console.log(`Acceleration: ${tidlCount} DSP(TIDL) + ${tvmCount} DSP(TVM) + ${armCount} ARM = ${totalNodes} total`);
+    console.log(`Acceleration: ${tidlCount} NPU(TIDL) + ${tvmCount} NPU(TVM) + ${armCount} ARM = ${totalNodes} total`);
 }
 // ==================== LAYER BREAKDOWN TABLE ====================
 let layerTableData = [];
@@ -7213,9 +7232,7 @@ function _populateSubgraphSelector(activeId) {
     if (!sel) return;
     const ids = Object.keys(TIDL_LAYER_DATA || {});
     sel.innerHTML = ids.map((id, i) => {
-        const sg = TIDL_LAYER_DATA[id] || {};
-        const rt = (sg.runtime || 'tidl_rt') === 'tvm_rt' ? 'TVM' : 'TIDL';
-        return `<option value="${id}" ${id === String(activeId) ? 'selected' : ''}>${rt} — Subgraph ${i}</option>`;
+        return `<option value="${id}" ${id === String(activeId) ? 'selected' : ''}>${id}</option>`;
     }).join('');
     sel.onchange = () => {
         _sgCurrentId = sel.value;
@@ -7303,7 +7320,7 @@ function _highlightNodeById(nodeId) {
     // Expand the selected node visually
     const nodeName = targetNode.full_name || targetNode.name || targetNode.type;
     const expandedW = Math.max(120, Math.min(nodeName.length, 18) * 7 + 40);
-    if (targetNode.type === 'Input' || targetNode.type === 'Output' || targetNode.type === 'Tensor' || targetNode.type === 'ARM') {
+    if (targetNode.type === 'Input' || targetNode.type === 'Output' || targetNode.type === 'Tensor' || targetNode.type === 'ARM' || targetNode.type === 'Unmapped') {
         targetEl.select('.node-rect').attr('width', 120).attr('height', 32).attr('x', -60).attr('y', -16).attr('rx', 16).attr('ry', 16);
     } else {
         targetEl.select('.node-rect').attr('width', expandedW).attr('height', 110).attr('x', -expandedW / 2).attr('y', -55).attr('rx', 12);
@@ -7326,6 +7343,18 @@ function _highlightNodeById(nodeId) {
 
     // Show details in the panel
     window.tidlGraph.showDetails(targetNode);
+}
+
+function findSubgraphIdForONNXNode(onnxName) {
+    if (!onnxName || typeof TIDL_LAYER_DATA === 'undefined' || !TIDL_LAYER_DATA) return null;
+    for (const sgId of Object.keys(TIDL_LAYER_DATA)) {
+        const layers = TIDL_LAYER_DATA[sgId].layers || [];
+        for (const layer of layers) {
+            const names = layer.onnx_mapping?.onnx_node_names || layer.layer_data?.onnx_node_names || [];
+            if (names.includes(onnxName)) return sgId;
+        }
+    }
+    return null;
 }
 
 function findTIDLLayersForONNX(onnxName, subgraphId) {
@@ -7650,19 +7679,21 @@ function renderOverview() {
     if (!window.tidlGraph || !OVERVIEW_DATA) return;
     const nodes = (OVERVIEW_DATA.nodes || []).map(n => {
         const isSubgraph = n.type === 'subgraph';
+        const isUnmapped = n.type === 'unmapped';
+        const nodeType = isSubgraph ? 'Subgraph' : isUnmapped ? 'Unmapped' : 'ARM';
         return {
             id: n.id,
             index: n.id,
             name: n.label,
             full_name: n.label,
-            type: isSubgraph ? 'Subgraph' : 'ARM',
+            type: nodeType,
             tidl_supported: isSubgraph,
             inputshape: 'N/A',
             outputshape: 'N/A',
             is_overview: true,
             overview_data: n,
-            subgraph_color: isSubgraph ? (n.runtime === 'tvm_rt' ? '#2e7d32' : '#0072ce') : '#c62828',
-            subgraph_border_color: isSubgraph ? (n.runtime === 'tvm_rt' ? '#1b5e20' : '#004a99') : '#b71c1c',
+            subgraph_color: isSubgraph ? (n.runtime === 'tvm_rt' ? '#2e7d32' : '#0072ce') : isUnmapped ? '#E68A00' : '#c62828',
+            subgraph_border_color: isSubgraph ? (n.runtime === 'tvm_rt' ? '#1b5e20' : '#004a99') : isUnmapped ? '#a35f00' : '#b71c1c',
             layer_data: { raw_text: '', layer_name: n.label, layer_type: n.type, gmacs: n.total_gmacs || 0, overview_data: n }
         };
     });
@@ -7710,15 +7741,18 @@ function renderOverview() {
     const modelInputNames  = new Set(modelInputs.map(t => t.name));
     const modelOutputNames = new Set(modelOutputs.map(t => t.name));
 
+    // od.inputs/outputs entries are simple values now — either a
+    // neighboring subgraph's id or the raw tensor name — so match
+    // directly against the tensor name string, no .name lookup needed.
     const inputTargets = nodes.filter(n => {
         const od = n.overview_data || {};
-        if (od.type === 'subgraph') return (od.inputs || []).some(t => modelInputNames.has(t.name));
+        if (od.type === 'subgraph') return (od.inputs || []).some(t => modelInputNames.has(t));
         const detail = allLayerDetails[od.label] || {};
         return (detail.input || []).some(name => modelInputNames.has(name));
     });
     const outputSources = nodes.filter(n => {
         const od = n.overview_data || {};
-        if (od.type === 'subgraph') return (od.outputs || []).some(t => modelOutputNames.has(t.name));
+        if (od.type === 'subgraph') return (od.outputs || []).some(t => modelOutputNames.has(t));
         const detail = allLayerDetails[od.label] || {};
         return (detail.output || []).some(name => modelOutputNames.has(name));
     });
@@ -7822,6 +7856,128 @@ function updateSubgraphInfo(subgraphIdx) {
     document.getElementById('sg-supported').textContent = supportedCount;
     document.getElementById('sg-non-accelerated').textContent = nonAcceleratedCount;
 }
+// ==================== SHARED EDGE PATH HELPERS ====================
+// Rounded "elbow" connector, corners rounded with a small fixed radius.
+// Shared by both the initial render (renderGraph) and any code that
+// re-syncs edge paths after a node moves (updateEdges) — previously each
+// had its own copy of the path-generation logic, so fixes to one silently
+// didn't apply to the other (e.g. a curve-style change here would still
+// show the old bezier style after any drag/click interaction).
+const GRAPH_EDGE_CORNER_RADIUS = 20;
+function roundedPolylinePath(points, radius) {
+    if (points.length < 2) return '';
+    if (points.length === 2) {
+        return `M ${points[0].x},${points[0].y} L ${points[1].x},${points[1].y}`;
+    }
+    let path = `M ${points[0].x},${points[0].y}`;
+    for (let i = 1; i < points.length - 1; i++) {
+        const prev = points[i - 1], curr = points[i], next = points[i + 1];
+        const d1x = curr.x - prev.x, d1y = curr.y - prev.y;
+        const len1 = Math.sqrt(d1x * d1x + d1y * d1y) || 1;
+        const d2x = next.x - curr.x, d2y = next.y - curr.y;
+        const len2 = Math.sqrt(d2x * d2x + d2y * d2y) || 1;
+        const r = Math.min(radius, len1 / 2, len2 / 2);
+        const p1x = curr.x - (d1x / len1) * r, p1y = curr.y - (d1y / len1) * r;
+        const p2x = curr.x + (d2x / len2) * r, p2y = curr.y + (d2y / len2) * r;
+        path += ` L ${p1x},${p1y} Q ${curr.x},${curr.y} ${p2x},${p2y}`;
+    }
+    const last = points[points.length - 1];
+    path += ` L ${last.x},${last.y}`;
+    return path;
+}
+// Deterministic small hash → stable per-edge jitter (same edge always
+// gets the same value across re-renders, so ports/jog heights don't jump
+// around on every redraw).
+function stableEdgeHash(str) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) { h = (h * 31 + str.charCodeAt(i)) | 0; }
+    return Math.abs(h);
+}
+function edgeElbowPoints(x1, y1, x2, y2, midYFrac, detourOffset) {
+    // Skip-connection detour: an edge spanning more than one rank (e.g.
+    // tidl_3 -> tidl_5, skipping over tidl_4) would otherwise travel
+    // straight down the same column as the main trunk between them,
+    // stacking on top of whatever's already running through that column
+    // and any other skip-connections doing the same thing — the "one
+    // thick dark line, can't tell inputs from outputs" problem. Route it
+    // sideways early, run the long vertical stretch offset from the
+    // trunk, then jog back late — so it's visually distinct for nearly
+    // its whole length instead of overlapping through the middle ranks.
+    if (detourOffset) {
+        const gap = Math.max(Math.min(Math.abs(y2 - y1) * 0.2, 40), 15);
+        const detourX = x1 + detourOffset;
+        return [
+            { x: x1, y: y1 },
+            { x: x1, y: y1 + gap },
+            { x: detourX, y: y1 + gap },
+            { x: detourX, y: y2 - gap },
+            { x: x2, y: y2 - gap },
+            { x: x2, y: y2 }
+        ];
+    }
+    // Same column (or near enough) — a straight vertical line, no corners.
+    if (Math.abs(x2 - x1) < 5) {
+        return [{ x: x1, y: y1 }, { x: x2, y: y2 }];
+    }
+    // Simple orthogonal elbow: straight down from source, one horizontal
+    // jog at the vertical midpoint, straight down into the target.
+    // midYFrac lets edges that share the same y1/y2 (e.g. all crossing
+    // from one rank to the next) jog at slightly different heights
+    // instead of stacking their whole horizontal segment on top of each
+    // other — defaults to the exact midpoint when not given.
+    const frac = midYFrac === undefined ? 0.5 : midYFrac;
+    const midY = y1 + (y2 - y1) * frac;
+    return [
+        { x: x1, y: y1 },
+        { x: x1, y: midY },
+        { x: x2, y: midY },
+        { x: x2, y: y2 }
+    ];
+}
+function edgeElbowPath(x1, y1, x2, y2, midYFrac, detourOffset) {
+    return roundedPolylinePath(edgeElbowPoints(x1, y1, x2, y2, midYFrac, detourOffset), GRAPH_EDGE_CORNER_RADIUS);
+}
+// Shared by the path renderer AND the edge-label positioner, so a label
+// always sits on the actual rendered line instead of drifting off it —
+// previously the label used a straight node-center-to-node-center
+// midpoint, which for a long routed/detoured edge could land far from
+// the visible curve (even inside an unrelated node).
+function computeEdgePoints(d, x1, y1, x2, y2) {
+    if (d.points && d.points.length > 2) {
+        const mid = d.points.slice(1, -1);
+        return [{ x: x1, y: y1 }, ...mid, { x: x2, y: y2 }];
+    }
+    return edgeElbowPoints(x1, y1, x2, y2, d._midYFrac, d._detourOffset);
+}
+// Midpoint measured along the actual polyline (arc-length), not a
+// straight-line interpolation between endpoints — for a multi-segment
+// routed edge those can be very different points.
+function pointAtPathMidpoint(points) {
+    if (points.length === 0) return { x: 0, y: 0 };
+    if (points.length === 1) return points[0];
+    const segLens = [];
+    let total = 0;
+    for (let i = 1; i < points.length; i++) {
+        const dx = points[i].x - points[i - 1].x, dy = points[i].y - points[i - 1].y;
+        const len = Math.sqrt(dx * dx + dy * dy);
+        segLens.push(len);
+        total += len;
+    }
+    let remaining = total / 2;
+    for (let i = 0; i < segLens.length; i++) {
+        if (remaining <= segLens[i] || i === segLens.length - 1) {
+            const frac = segLens[i] > 0 ? remaining / segLens[i] : 0;
+            const p1 = points[i], p2 = points[i + 1];
+            return { x: p1.x + (p2.x - p1.x) * frac, y: p1.y + (p2.y - p1.y) * frac };
+        }
+        remaining -= segLens[i];
+    }
+    return points[Math.floor(points.length / 2)];
+}
+function edgeAnchorHalfHeight(n) {
+    return (n.type === 'Input' || n.type === 'Output' || n.type === 'Tensor' || n.type === 'ARM' || n.type === 'Unmapped') ? 14 : 50;
+}
+
 // ==================== GRAPH CLASS ====================
 class Graph {
     constructor(svgId, contentId, canvasId, isTIDL = false) {
@@ -7932,21 +8088,45 @@ class Graph {
         // Check if graph data exists
         if (!tidlSubgraph.graph_nodes || !tidlSubgraph.graph_edges) {
             console.warn(`No graph data for TIDL subgraph ${subgraphIdx}, using layer list only`);
-            // Fallback: Create simple node list from layers
-            const nodes = (tidlSubgraph.layers || []).map((layer, idx) => ({
-                id: `tidl_layer_${layer.layer_index}`,
-                index: layer.layer_index,
-                onnx_node_index: layer.onnx_node_index,  // For activation plotting
-                name: layer.layer_name?.substring(0, 20) || `L${layer.layer_index}`,
-                full_name: layer.layer_name || `Layer_${layer.layer_index}`,
-                type: layer.layer_type || 'Unknown',
-                tidl_supported: true,
-                subgraph_index: subgraphIdx,
-                subgraph_color: getSubgraphColor(subgraphIdx),
-                subgraph_border_color: getSubgraphBorderColor(subgraphIdx),
-                layer_data: layer
-            }));
-            this.renderGraph(nodes, [], false);
+            // Fallback: Create simple node list from layers, PLUS a pill node
+            // for each layer's own input/output tensors — this is the path a
+            // TVM subgraph's single tvm_op layer takes (no internal layer-to
+            // -layer edges to build a real graph_nodes/graph_edges from), so
+            // without these pills a TVM subgraph would render as one bare
+            // box with no visible boundary at all.
+            const nodes = [];
+            const edges = [];
+            (tidlSubgraph.layers || []).forEach((layer, idx) => {
+                const layerId = `tidl_layer_${layer.layer_index}`;
+                nodes.push({
+                    id: layerId,
+                    index: layer.layer_index,
+                    onnx_node_index: layer.onnx_node_index,  // For activation plotting
+                    name: layer.layer_name?.substring(0, 20) || `L${layer.layer_index}`,
+                    full_name: layer.layer_name || `Layer_${layer.layer_index}`,
+                    type: layer.layer_type || 'Unknown',
+                    tidl_supported: true,
+                    subgraph_index: subgraphIdx,
+                    subgraph_color: getSubgraphColor(subgraphIdx),
+                    subgraph_border_color: getSubgraphBorderColor(subgraphIdx),
+                    layer_data: layer
+                });
+                (layer.inputs || []).forEach((t, i) => {
+                    const pillId = `${layerId}_in_${i}`;
+                    nodes.push({ id: pillId, name: t.tensor_name || t.name || `input_${i}`,
+                                  full_name: t.tensor_name || t.name || `input_${i}`, type: 'Tensor',
+                                  tidl_supported: true, layer_data: { shape: t.shape, dtype: t.dtype } });
+                    edges.push({ source: pillId, target: layerId });
+                });
+                (layer.outputs || []).forEach((t, i) => {
+                    const pillId = `${layerId}_out_${i}`;
+                    nodes.push({ id: pillId, name: t.tensor_name || t.name || `output_${i}`,
+                                  full_name: t.tensor_name || t.name || `output_${i}`, type: 'Tensor',
+                                  tidl_supported: true, layer_data: { shape: t.shape, dtype: t.dtype } });
+                    edges.push({ source: layerId, target: pillId });
+                });
+            });
+            this.renderGraph(nodes, edges, false);
             updateSubgraphInfo(subgraphIdx);
             return;
         }
@@ -8021,9 +8201,22 @@ class Graph {
 
         console.log('V3: Using Dagre layout algorithm');
 
-        // Create Dagre graph with improved compact layout
+        // Create Dagre graph with improved compact layout.
+        // The Overview graph can have many more nodes per rank than the
+        // Layer/ONNX views (e.g. a model with 10 TIDL + 38 TVM subgraphs),
+        // and its edges skip across many ranks (skip-connections between
+        // encoder/decoder subgraphs), so it gets extra breathing room to
+        // avoid the tangled look of default spacing.
+        const isOverviewGraph = nodes.some(n => n.is_overview);
         const g = new dagre.graphlib.Graph();
-        g.setGraph({
+        g.setGraph(isOverviewGraph ? {
+            rankdir: 'TB',
+            nodesep: 50,        // Horizontal room between sibling subgraphs
+            ranksep: 90,
+            edgesep: 15,
+            marginx: 40,
+            marginy: 40
+        } : {
             rankdir: 'TB',      // Top to Bottom layout
             nodesep: 110,       // Horizontal spacing between sibling nodes
             ranksep: 140,       // Vertical spacing between ranks
@@ -8045,7 +8238,7 @@ class Graph {
 
         // Add nodes to Dagre with dimensions (compact)
         Array.from(nodeMap.values()).forEach(node => {
-            const isIONode = node.type === 'Input' || node.type === 'Output' || node.type === 'Tensor' || node.type === 'ARM';
+            const isIONode = node.type === 'Input' || node.type === 'Output' || node.type === 'Tensor' || node.type === 'ARM' || node.type === 'Unmapped';
             let width;
             if (isIONode) {
                 width = 100;
@@ -8074,6 +8267,20 @@ class Graph {
         // Run Dagre layout algorithm
         dagre.layout(g);
 
+        // Dagre computes routed waypoints per edge (avoiding other nodes'
+        // ranks) — capture them so rendering can follow the actual routed
+        // path instead of a straight line between node centers, which is
+        // what made graphs with many skip-connections (e.g. Overview) look
+        // like a tangled hairball.
+        edges.forEach(edge => {
+            const srcId = edge.source.id || edge.source;
+            const tgtId = edge.target.id || edge.target;
+            const dagreEdge = g.edge(srcId, tgtId);
+            if (dagreEdge && dagreEdge.points) {
+                edge.points = dagreEdge.points;
+            }
+        });
+
         // Apply calculated positions to nodes
         Array.from(nodeMap.values()).forEach(node => {
             const dagreNode = g.node(node.id);
@@ -8087,6 +8294,17 @@ class Graph {
             }
         });
 
+        // Dagre's node object doesn't expose a usable `.rank` (only
+        // label/width/height/x/y), so infer rank from Y position instead:
+        // in a TB layout every node in the same rank shares the same Y,
+        // so the sorted list of unique Y values IS the rank ordering.
+        // Needed to detect "skip connection" edges below (span > 1 rank).
+        const uniqueYs = Array.from(new Set(Array.from(nodeMap.values()).map(n => Math.round(n.y)))).sort((a, b) => a - b);
+        const rankOfY = new Map(uniqueYs.map((y, i) => [y, i]));
+        Array.from(nodeMap.values()).forEach(node => {
+            node.rank = rankOfY.get(Math.round(node.y));
+        });
+
         console.log(`  Dagre layout: ${Array.from(nodeMap.values()).length} nodes positioned`);
         
         // ========================================
@@ -8098,32 +8316,104 @@ class Graph {
         // Half-height used for edge endpoints — must match VISUAL rect half-height
         // IO/Tensor/ARM pill: visual height=28 → half=14
         // Regular node: visual height=100 → half=50
-        const nodeHalfH = n => (n.type === 'Input' || n.type === 'Output' || n.type === 'Tensor' || n.type === 'ARM') ? 14 : 50;
+        const nodeHalfH = edgeAnchorHalfHeight;
 
-        // Helper function to generate curved path
+        // Port spreading: when many edges share the same source or target
+        // node, they'd otherwise all leave/arrive at that node's exact
+        // center and overlap each other for their whole shared trunk
+        // (e.g. one Input node fanning out to a dozen subgraphs). Spread
+        // each node's outgoing/incoming edges evenly across a small span
+        // of its bottom/top edge instead, ordered by the OTHER endpoint's
+        // x so the fan-out doesn't cross over itself. Offsets are stored
+        // on the edge datum so updateEdges (drag/click) reuses the same
+        // values instead of recomputing or falling out of sync.
+        const PORT_SPREAD_WIDTH = 60;
+        const spreadOffsets = (count) => {
+            if (count <= 1) return [0];
+            const step = Math.min(PORT_SPREAD_WIDTH / (count - 1), 20);
+            const span = step * (count - 1);
+            return Array.from({ length: count }, (_, i) => -span / 2 + i * step);
+        };
+        const bySource = new Map(), byTarget = new Map();
+        edges.forEach(e => {
+            const srcId = e.source.id || e.source, tgtId = e.target.id || e.target;
+            if (!bySource.has(srcId)) bySource.set(srcId, []);
+            bySource.get(srcId).push(e);
+            if (!byTarget.has(tgtId)) byTarget.set(tgtId, []);
+            byTarget.get(tgtId).push(e);
+        });
+        bySource.forEach(list => {
+            list.sort((a, b) => {
+                const ax = nodeMap.get(a.target.id || a.target)?.x || 0;
+                const bx = nodeMap.get(b.target.id || b.target)?.x || 0;
+                return ax - bx;
+            });
+            const offsets = spreadOffsets(list.length);
+            list.forEach((e, i) => { e._srcPortOffset = offsets[i]; });
+        });
+        byTarget.forEach(list => {
+            list.sort((a, b) => {
+                const ax = nodeMap.get(a.source.id || a.source)?.x || 0;
+                const bx = nodeMap.get(b.source.id || b.source)?.x || 0;
+                return ax - bx;
+            });
+            const offsets = spreadOffsets(list.length);
+            list.forEach((e, i) => { e._tgtPortOffset = offsets[i]; });
+        });
+
+        // Jog-height staggering: edges that cross the same pair of ranks
+        // (same y1/y2) would otherwise all bend at the exact midpoint and
+        // overlap along that whole horizontal segment. Give each edge a
+        // small, stable (hash-based) nudge to its jog fraction so parallel
+        // edges spread across a band of heights instead of one shared line.
+        edges.forEach(e => {
+            const srcId = e.source.id || e.source, tgtId = e.target.id || e.target;
+            const h = stableEdgeHash(`${srcId}->${tgtId}`) % 21; // 0..20
+            e._midYFrac = 0.4 + (h / 20) * 0.2; // spread across 0.4..0.6
+        });
+
+        // Skip-connection detour: edges spanning more than one rank (e.g.
+        // tidl_3 -> tidl_5, over tidl_4) get routed sideways instead of
+        // straight through the intervening ranks' column — see
+        // edgeElbowPath. Side alternates and magnitude grows with rank
+        // span (hash-based, stable across re-renders) so multiple skip
+        // connections spread out rather than stacking on each other too.
+        edges.forEach(e => {
+            const src = nodeMap.get(e.source.id || e.source);
+            const tgt = nodeMap.get(e.target.id || e.target);
+            const rankSpan = (src && tgt && src.rank != null && tgt.rank != null) ? Math.abs(tgt.rank - src.rank) : 0;
+            if (rankSpan > 1) {
+                const srcId = e.source.id || e.source, tgtId = e.target.id || e.target;
+                const h = stableEdgeHash(`detour:${srcId}->${tgtId}`);
+                const side = (h % 2 === 0) ? 1 : -1;
+                e._detourOffset = side * (70 + rankSpan * 20);
+            }
+        });
+
+        // Helper function to generate curved path (shared with updateEdges
+        // via edgeElbowPath, so a style change here can't silently drift
+        // out of sync with what drag/click interactions render).
         const generateCurvedPath = (d) => {
             const src = nodeMap.get(d.source.id || d.source);
             const tgt = nodeMap.get(d.target.id || d.target);
 
             if (!src || !tgt) return '';
 
-            const x1 = src.x;
+            const x1 = src.x + (d._srcPortOffset || 0);
             const y1 = src.y + nodeHalfH(src);  // Bottom edge of source node
-            const x2 = tgt.x;
+            const x2 = tgt.x + (d._tgtPortOffset || 0);
             const y2 = tgt.y - nodeHalfH(tgt);  // Top edge of target node
 
-            const dy = y2 - y1;
-            const dx = x2 - x1;
-
-            // Use straight line for tiny distances
-            if (Math.abs(dy) < 5 && Math.abs(dx) < 5) {
-                return `M ${x1},${y1} L ${x2},${y2}`;
-            }
-
-            // Cubic Bezier: control points bend vertically at source and target,
-            // handling both purely vertical and diagonal/skip-connection edges cleanly.
-            const bend = Math.max(Math.abs(dy) * 0.45, Math.abs(dx) * 0.3, 40);
-            return `M ${x1},${y1} C ${x1},${y1 + bend} ${x2},${y2 - bend} ${x2},${y2}`;
+            // computeEdgePoints prefers dagre's own routed waypoints for
+            // edges spanning more than one rank — dagre inserts a virtual
+            // node at every intermediate rank a long edge crosses
+            // specifically so its bend points route AROUND whatever real
+            // nodes occupy those ranks, which our own hand-rolled
+            // single-jog "detour" offset can't guarantee. Only the very
+            // first/last point is swapped for our own precise anchor
+            // (source bottom / target top, with the port-spread offset
+            // applied) — dagre's own start/end sit at node center.
+            return roundedPolylinePath(computeEdgePoints(d, x1, y1, x2, y2), GRAPH_EDGE_CORNER_RADIUS);
         };
 
         const links = this.group.selectAll('.graph-edge')
@@ -8148,9 +8438,17 @@ class Graph {
                 const sourceNode = nodeMap.get(d.source.id || d.source);
                 const targetNode = nodeMap.get(d.target.id || d.target);
                 if (sourceNode && targetNode) {
-                    const midX = (sourceNode.x + targetNode.x) / 2;
-                    const midY = (sourceNode.y + targetNode.y) / 2;
-                    return `translate(${midX},${midY})`;
+                    // Midpoint along the ACTUAL rendered path, not a
+                    // straight line between node centers — for a routed/
+                    // detoured edge those can be far apart, landing the
+                    // label off the visible line entirely (see
+                    // computeEdgePoints/pointAtPathMidpoint).
+                    const x1 = sourceNode.x + (d._srcPortOffset || 0);
+                    const y1 = sourceNode.y + nodeHalfH(sourceNode);
+                    const x2 = targetNode.x + (d._tgtPortOffset || 0);
+                    const y2 = targetNode.y - nodeHalfH(targetNode);
+                    const mid = pointAtPathMidpoint(computeEdgePoints(d, x1, y1, x2, y2));
+                    return `translate(${mid.x},${mid.y})`;
                 }
                 return 'translate(0,0)';
             });
@@ -8205,7 +8503,7 @@ class Graph {
                 nodeG.each(function(nd) {
                     const el = d3.select(this);
                     el.select('.selected-node-name').remove();
-                    if (nd.type === 'Input' || nd.type === 'Output' || nd.type === 'Tensor' || nd.type === 'ARM') {
+                    if (nd.type === 'Input' || nd.type === 'Output' || nd.type === 'Tensor' || nd.type === 'ARM' || nd.type === 'Unmapped') {
                         el.select('.node-rect')
                             .attr('width', 110).attr('height', 28)
                             .attr('x', -55).attr('y', -14).attr('rx', 14).attr('ry', 14);
@@ -8233,7 +8531,7 @@ class Graph {
                 const nameLen = Math.min(nodeName.length, 18);
                 const expandedW = Math.max(120, nameLen * 7 + 40);
 
-                if (d.type === 'Input' || d.type === 'Output' || d.type === 'Tensor' || d.type === 'ARM') {
+                if (d.type === 'Input' || d.type === 'Output' || d.type === 'Tensor' || d.type === 'ARM' || d.type === 'Unmapped') {
                     // Pill enlarges slightly on select — update edges to stay connected
                     thisNode.select('.node-rect')
                         .attr('width', 120).attr('height', 32)
@@ -8306,12 +8604,12 @@ class Graph {
                 .on('end', (e, d) => {}));
         
         // Pill shape for: Input, Output, Tensor (cross-boundary), and ARM overview nodes
-        const isIO = d => d.type === 'Input' || d.type === 'Output' || d.type === 'Tensor' || d.type === 'ARM';
+        const isIO = d => d.type === 'Input' || d.type === 'Output' || d.type === 'Tensor' || d.type === 'ARM' || d.type === 'Unmapped';
 
         // Pill/oval for Input/Output nodes — same style as other nodes
         nodeG.filter(d => isIO(d))
             .append('rect')
-            .attr('class', d => d.type === 'ARM' ? 'node-rect arm-pill' : 'node-rect')
+            .attr('class', d => d.type === 'ARM' ? 'node-rect arm-pill' : d.type === 'Unmapped' ? 'node-rect unmapped-pill' : 'node-rect')
             .attr('width', 110)
             .attr('height', 28)
             .attr('x', -55)
@@ -8380,14 +8678,16 @@ class Graph {
             .style('font-size', '14px')
             .style('pointer-events', 'none')
             .text(d => {
-                // ARM nodes: show op type (e.g. "Resize")
-                const label = d.type === 'ARM'
+                // ARM/Unmapped nodes: show op type (e.g. "Resize")
+                const label = (d.type === 'ARM' || d.type === 'Unmapped')
                     ? (d.overview_data?.op_type || d.name || d.type)
                     : (d.full_name || d.name || '');
                 return label.length > 13 ? label.slice(-12) + '…' : label;
             });
 
-        // Small sub-label below pill: "ARM" tag for ARM overview nodes
+        // Small sub-label below pill: "ARM" tag for ARM overview nodes, or the
+        // node's actual runtime for Unmapped ones (accelerated but not found
+        // in any subgraph's layer mapping — see html_generator.py).
         nodeG.filter(d => d.type === 'ARM')
             .append('text')
             .attr('class', 'node-type-label')
@@ -8400,6 +8700,19 @@ class Graph {
             .style('font-weight', '600')
             .style('pointer-events', 'none')
             .text('ARM');
+
+        nodeG.filter(d => d.type === 'Unmapped')
+            .append('text')
+            .attr('class', 'node-type-label')
+            .attr('x', 0)
+            .attr('y', 30)
+            .attr('text-anchor', 'middle')
+            .attr('dominant-baseline', 'middle')
+            .style('font-size', '10px')
+            .style('fill', '#E68A00')
+            .style('font-weight', '600')
+            .style('pointer-events', 'none')
+            .text(d => (d.overview_data?.reason || '').includes('tvm_rt') ? 'TVM (unmapped)' : 'TIDL (unmapped)');
 
         // Store references
         this.nodeG = nodeG;
@@ -8437,7 +8750,7 @@ class Graph {
             // Force correct pill dimensions immediately — prevents height=100 bleed-over
             // from a previous regular-node render animating to height=28 (visible as "square" flash)
             if (this.nodeG) {
-                this.nodeG.filter(d => d.type === 'Input' || d.type === 'Output' || d.type === 'Tensor' || d.type === 'ARM')
+                this.nodeG.filter(d => d.type === 'Input' || d.type === 'Output' || d.type === 'Tensor' || d.type === 'ARM' || d.type === 'Unmapped')
                     .select('.node-rect')
                     .attr('width', 110).attr('height', 28)
                     .attr('x', -55).attr('y', -14)
@@ -8540,27 +8853,28 @@ class Graph {
     }
 
     updateEdges(node, links, nodeMap) {
-        // V3: Update curved paths instead of straight lines
+        // Re-sync edge paths after a node moves (drag/click resize). Uses
+        // the same edgeElbowPath helper as the initial render (renderGraph)
+        // so this can't drift out of sync with the main render again.
         links.attr('d', d => {
             const src = nodeMap.get(d.source.id || d.source);
             const tgt = nodeMap.get(d.target.id || d.target);
 
             if (!src || !tgt) return '';
 
-            const x1 = src.x;
-            const y1 = src.y + ((src.type === 'Input' || src.type === 'Output' || src.type === 'Tensor' || src.type === 'ARM') ? 14 : 50);
-            const x2 = tgt.x;
-            const y2 = tgt.y - ((tgt.type === 'Input' || tgt.type === 'Output' || tgt.type === 'Tensor' || tgt.type === 'ARM') ? 14 : 50);
+            // _srcPortOffset/_tgtPortOffset were computed once in
+            // renderGraph (port spreading, so edges sharing a node don't
+            // overlap) and stored on the datum — reuse them here instead
+            // of recomputing, so a moved node keeps the same port layout.
+            const x1 = src.x + (d._srcPortOffset || 0);
+            const y1 = src.y + edgeAnchorHalfHeight(src);
+            const x2 = tgt.x + (d._tgtPortOffset || 0);
+            const y2 = tgt.y - edgeAnchorHalfHeight(tgt);
 
-            const dy = y2 - y1;
-            const dxU = x2 - x1;
-
-            if (Math.abs(dy) < 5 && Math.abs(dxU) < 5) {
-                return `M ${x1},${y1} L ${x2},${y2}`;
-            }
-
-            const bend = Math.max(Math.abs(dy) * 0.45, Math.abs(dxU) * 0.3, 40);
-            return `M ${x1},${y1} C ${x1},${y1 + bend} ${x2},${y2 - bend} ${x2},${y2}`;
+            // See generateCurvedPath's comment — prefer dagre's own
+            // multi-rank routing waypoints (which avoid intervening real
+            // nodes) over the single-jog detour approximation.
+            return roundedPolylinePath(computeEdgePoints(d, x1, y1, x2, y2), GRAPH_EDGE_CORNER_RADIUS);
         });
 
         // Update edge label positions
@@ -8569,9 +8883,14 @@ class Graph {
                 const sourceNode = nodeMap.get(d.source.id || d.source);
                 const targetNode = nodeMap.get(d.target.id || d.target);
                 if (sourceNode && targetNode) {
-                    const midX = (sourceNode.x + targetNode.x) / 2;
-                    const midY = (sourceNode.y + targetNode.y) / 2;
-                    return `translate(${midX},${midY})`;
+                    // See renderGraph's edge-label comment — midpoint
+                    // along the actual rendered path, not node centers.
+                    const x1 = sourceNode.x + (d._srcPortOffset || 0);
+                    const y1 = sourceNode.y + edgeAnchorHalfHeight(sourceNode);
+                    const x2 = targetNode.x + (d._tgtPortOffset || 0);
+                    const y2 = targetNode.y - edgeAnchorHalfHeight(targetNode);
+                    const mid = pointAtPathMidpoint(computeEdgePoints(d, x1, y1, x2, y2));
+                    return `translate(${mid.x},${mid.y})`;
                 }
                 return 'translate(0,0)';
             });
@@ -8598,8 +8917,11 @@ class Graph {
                     ${tensorRows || '<div class="detail-row"><span class="detail-label">—</span></div>'}
                 </div>`;
             } else if (d.type === 'subgraph') {
-                const inputNames = (d.inputs || []).map(i => i.name || '').filter(Boolean).join(', ') || '—';
-                const outputNames = (d.outputs || []).map(o => o.name || '').filter(Boolean).join(', ') || '—';
+                // d.inputs/outputs entries are simple values now — either a
+                // neighboring subgraph's id or a raw tensor name — not
+                // {name:...} dicts.
+                const inputNames = (d.inputs || []).filter(Boolean).join(', ') || '—';
+                const outputNames = (d.outputs || []).filter(Boolean).join(', ') || '—';
                 html = `<div class="detail-section"><h4 style="margin-bottom:12px;">${d.label || d.id}</h4>
                     <div class="detail-row"><span class="detail-label">Runtime</span><span class="detail-value">${d.runtime || '—'}</span></div>
                     <div class="detail-row"><span class="detail-label">GMACs</span><span class="detail-value">${(d.total_gmacs||0).toFixed(4)}</span></div>
@@ -8689,24 +9011,37 @@ class Graph {
             // Overview tab: Show summary information
             const ld = node.layerdetails || {};
 
-            // Add subgraph info for runtime model
+            // Add subgraph info for runtime model — look up the REAL owning
+            // subgraph id (e.g. "tvmgen_default_fused_nn_conv2d") via its
+            // onnx_mapping, instead of the meaningless legacy numeric index
+            // from getNodeSubgraph (a plain loop counter unrelated to our
+            // actual tidl_N/tvmgen_* subgraph ids — every node ended up
+            // showing some arbitrary "Subgraph 0/1/2...").
             let subgraphInfo = '';
-            if (!this.isTIDL && node.subgraph_index >= 0) {
-                subgraphInfo = `
-                    <div class="detail-row">
-                        <span class="detail-label">Subgraph:</span>
-                        <span class="detail-value">
-                            <span style="display: inline-block; width: 12px; height: 12px; background: ${node.subgraph_color}; border-radius: 3px; margin-right: 5px;"></span>
-                            Subgraph ${node.subgraph_index}
-                        </span>
-                    </div>
-                `;
+            if (!this.isTIDL) {
+                const realSgId = findSubgraphIdForONNXNode(node.full_name || node.onnx_name);
+                if (realSgId) {
+                    subgraphInfo = `
+                        <div class="detail-row">
+                            <span class="detail-label">Subgraph:</span>
+                            <span class="detail-value">
+                                <span style="display: inline-block; width: 12px; height: 12px; background: ${node.subgraph_color}; border-radius: 3px; margin-right: 5px;"></span>
+                                ${realSgId}
+                            </span>
+                        </div>
+                    `;
+                }
             }
 
-            // Add reason message for non-accelerated layers
+            // Add reason message for non-accelerated (arm) OR TVM-instead-
+            // of-TIDL layers — runtime_assignment.reason is the real field
+            // in our schema; node.tidl_diagInfo/layer_data.diag_info/
+            // ld.diag_info are legacy fields that don't exist in it at all,
+            // so this always used to render nothing for a real reason.
             let reasonHTML = '';
-            const diagInfo = node.tidl_diagInfo || node.layer_data?.diag_info || ld.diag_info;
-            if (!node.tidl_supported && diagInfo) {
+            const diagInfo = node.tidl_diagInfo || node.layer_data?.diag_info || ld.diag_info
+                || node.layer_data?.runtime_assignment?.reason;
+            if (node.assigned_runtime !== 'tidl_rt' && diagInfo) {
                 let reason = diagInfo;
                 const match = diagInfo.match(/\[PARSER\]\s+(UNSUPPORTED:.+?)(?:\s+--\s+\[|$)/);
                 if (match) {
@@ -8818,9 +9153,9 @@ class Graph {
                         <span class="detail-label">Acceleration</span>
                         <span class="detail-value">
                             <span class="support-badge ${(node.assigned_runtime || (node.tidl_supported ? 'tidl_rt' : 'arm')) === 'arm' ? 'non-accelerated' : 'supported'}">
-                                ${node.assigned_runtime === 'tidl_rt' ? 'DSP Accelerated (TIDL)'
-                                : node.assigned_runtime === 'tvm_rt'  ? 'DSP Accelerated (TVM)'
-                                : node.tidl_supported                 ? 'DSP Accelerated (TIDL)'
+                                ${node.assigned_runtime === 'tidl_rt' ? 'NPU Accelerated (TIDL)'
+                                : node.assigned_runtime === 'tvm_rt'  ? 'NPU Accelerated (TVM)'
+                                : node.tidl_supported                 ? 'NPU Accelerated (TIDL)'
                                 :                                        'ARM (Not Accelerated)'}
                             </span>
                         </span>
@@ -8851,18 +9186,23 @@ class Graph {
                 return sourceId === node.id;
             });
 
-            // Add subgraph info for runtime model
+            // Add subgraph info for runtime model — look up the REAL owning
+            // subgraph id (e.g. "tvmgen_default_fused_nn_conv2d"), same as the
+            // Overview tab, instead of the meaningless legacy numeric index.
             let subgraphInfo = '';
-            if (!this.isTIDL && node.subgraph_index >= 0) {
-                subgraphInfo = `
-                    <div class="detail-row">
-                        <span class="detail-label">Subgraph:</span>
-                        <span class="detail-value">
-                            <span style="display: inline-block; width: 12px; height: 12px; background: ${node.subgraph_color}; border-radius: 3px; margin-right: 5px;"></span>
-                            Subgraph ${node.subgraph_index}
-                        </span>
-                    </div>
-                `;
+            if (!this.isTIDL) {
+                const realSgId = findSubgraphIdForONNXNode(node.full_name || node.onnx_name);
+                if (realSgId) {
+                    subgraphInfo = `
+                        <div class="detail-row">
+                            <span class="detail-label">Subgraph:</span>
+                            <span class="detail-value">
+                                <span style="display: inline-block; width: 12px; height: 12px; background: ${node.subgraph_color}; border-radius: 3px; margin-right: 5px;"></span>
+                                ${realSgId}
+                            </span>
+                        </div>
+                    `;
+                }
             }
 
             // Add TIDL-specific text details if this is TIDL graph
@@ -8910,45 +9250,78 @@ class Graph {
                 const dimsMatches = rawText.match(/dims=\[[\d,]+\]/g) || [];
                 const outputShapeStr = dimsMatches.length > 0 ? dimsMatches.map(m => m.replace('dims=', '')).join(', ') : '';
 
+                // Tensor-name-aware input/output rows (name + shape, not just
+                // shape) — layerData.inputs/outputs is our schema's field
+                // name; used both for the ONNX-view detailed section below
+                // and, for layers with no netLog raw_text to parse a shape
+                // out of (e.g. a TVM subgraph's single tvm_op layer), as the
+                // ONLY source of boundary info at all.
+                const tensorRow = (t) => {
+                    const shp = (t.shape || []).filter(v => v > 0).join(' × ') || '?';
+                    const name = t.tensor_name || t.name || '-';
+                    const dtype = t.dtype ? `<span style="color:var(--text-secondary);margin-left:4px;">${t.dtype}</span>` : '';
+                    const badge = t.is_constant
+                        ? `<span style="font-size:0.7rem;background:var(--surface-secondary,#eee);border-radius:3px;padding:1px 5px;margin-left:4px;color:var(--text-secondary);">weight</span>`
+                        : '';
+                    return `<div class="detail-row">
+                        <span class="detail-label mono-font" style="font-size:0.78rem;word-break:break-all;">${name}${badge}</span>
+                        <span class="detail-value mono-font" style="font-size:0.78rem;">[${shp}]${dtype}</span>
+                    </div>`;
+                };
+                const schemaInputs = layerData.input_metadata || layerData.inputs || [];
+                const schemaOutputs = layerData.output_metadata || layerData.outputs || [];
+
                 // Section 1: Layer Info rows
                 // Display ONNX mapping — clickable navigation links to ONNX view
                 if (node.is_onnx_view) {
                     const onnxName = node.onnx_name || node.full_name || '';
-                    const inMeta  = layerData.input_metadata  || [];
-                    const outMeta = layerData.output_metadata || [];
+                    const inMeta  = schemaInputs;
+                    const outMeta = schemaOutputs;
                     const attrs   = layerData.attributes      || {};
                     const attrKeys = Object.keys(attrs).filter(k => attrs[k] !== null && attrs[k] !== undefined);
 
-                    // TIDL mapping — skip for boundary nodes (Input/Output/Tensor have no TIDL layer)
+                    // Runtime + "why not TIDL" reason — most useful for a
+                    // tvm_rt node specifically: it IS accelerated, just not
+                    // by TIDL, and the reason (e.g. "Stride must be the
+                    // same along both horizontal and vertical dimensions")
+                    // is the one piece of info that explains why.
+                    let runtimeHtml = '';
+                    const isBoundaryNode2 = node.type === 'Input' || node.type === 'Output' || node.type === 'Tensor';
+                    if (!isBoundaryNode2 && layerData.runtime_assignment) {
+                        const ra = layerData.runtime_assignment;
+                        const rtLabel = { tidl_rt: 'TIDL', tvm_rt: 'TVM', arm: 'ARM' }[ra.assigned_runtime] || ra.assigned_runtime || '-';
+                        runtimeHtml = `<div class="detail-row"><span class="detail-label">Runtime</span><span class="detail-value">${rtLabel}</span></div>`;
+                        if (ra.reason) {
+                            runtimeHtml += `<div class="detail-row" style="background: rgba(229, 62, 62, 0.1); padding: 12px; border-radius: 6px; margin-top: 8px; border-left: 4px solid #e53e3e;">
+                                <span class="detail-label" style="color: #c53030; font-weight: 400; display: flex; align-items: center; gap: 6px;">
+                                    <i class="fas fa-exclamation-triangle"></i> Not TIDL because:
+                                </span>
+                                <span class="detail-value" style="margin-top: 6px; display: block; font-size: 0.85em; line-height: 1.6; color: #555;">${ra.reason}</span>
+                            </div>`;
+                        }
+                    }
+
+                    // Layer mapping — skip for boundary nodes (Input/Output/Tensor have no compute layer).
+                    // The active subgraph can be either a TIDL subgraph (id "tidl_N") or a TVM
+                    // subgraph (id "tvmgen_*") — label the row to match, instead of always saying
+                    // "TIDL Layer" even when the node is actually mapped into a TVM subgraph.
                     let tidlMappingHtml = '';
                     const isBoundaryNode = node.type === 'Input' || node.type === 'Output' || node.type === 'Tensor';
                     if (!isBoundaryNode && _sgCurrentId !== null) {
+                        const isTvmSubgraph = String(_sgCurrentId).startsWith('tvmgen');
+                        const layerLabel = isTvmSubgraph ? 'TVM Layer' : 'TIDL Layer';
                         const tidlMappings = findTIDLLayersForONNX(onnxName, _sgCurrentId);
                         if (tidlMappings.length > 0) {
                             const links = tidlMappings.map(t =>
                                 `<span class="tidl-nav-link" data-tidl-layer="${t.layer_id}"
                                   style="cursor:pointer;color:var(--ti-red,#c00);text-decoration:underline;margin-right:6px;"
-                                  title="Navigate to TIDL layer">${t.layer_name} (${t.layer_type.replace('TIDL_','')})</span>`
+                                  title="Navigate to ${layerLabel}">${t.layer_name} (${t.layer_type.replace('TIDL_','')})</span>`
                             ).join('');
-                            tidlMappingHtml = `<div class="detail-row"><span class="detail-label">TIDL Layer</span><span class="detail-value">${links}</span></div>`;
+                            tidlMappingHtml = `<div class="detail-row"><span class="detail-label">${layerLabel}</span><span class="detail-value">${links}</span></div>`;
                         } else {
-                            tidlMappingHtml = `<div class="detail-row"><span class="detail-label">TIDL Layer</span><span class="detail-value" style="color:var(--text-secondary);font-style:italic;">Fused into another layer</span></div>`;
+                            tidlMappingHtml = `<div class="detail-row"><span class="detail-label">${layerLabel}</span><span class="detail-value" style="color:var(--text-secondary);font-style:italic;">Fused into another layer</span></div>`;
                         }
                     }
-
-                    // Build tensor rows helper
-                    const tensorRow = (t) => {
-                        const shp = (t.shape || []).filter(v => v > 0).join(' × ') || '?';
-                        const name = t.tensor_name || t.name || '-';
-                        const dtype = t.dtype ? `<span style="color:var(--text-secondary);margin-left:4px;">${t.dtype}</span>` : '';
-                        const badge = t.is_constant
-                            ? `<span style="font-size:0.7rem;background:var(--surface-secondary,#eee);border-radius:3px;padding:1px 5px;margin-left:4px;color:var(--text-secondary);">weight</span>`
-                            : '';
-                        return `<div class="detail-row">
-                            <span class="detail-label mono-font" style="font-size:0.78rem;word-break:break-all;">${name}${badge}</span>
-                            <span class="detail-value mono-font" style="font-size:0.78rem;">[${shp}]${dtype}</span>
-                        </div>`;
-                    };
 
                     // Assemble sectioned HTML directly (bypass infoRows for this node type)
                     html = `
@@ -8956,6 +9329,7 @@ class Graph {
                         <div class="detail-section-header">Node Info</div>
                         <div class="detail-row"><span class="detail-label">Name</span><span class="detail-value mono-font" style="word-break:break-all;">${onnxName}</span></div>
                         <div class="detail-row"><span class="detail-label">Op Type</span><span class="detail-value">${node.type || '-'}</span></div>
+                        ${runtimeHtml}
                         ${tidlMappingHtml}
                     </div>
                     ${inMeta.length > 0 ? `
@@ -8989,10 +9363,22 @@ class Graph {
                 } else if (onnxNodeName) {
                     infoRows.push(`<div class="detail-row"><span class="detail-label">ONNX Name</span><span class="detail-value onnx-nav-link" data-onnx-name="${onnxNodeName}" style="word-break:break-all;cursor:pointer;color:var(--ti-blue,#0072ce);text-decoration:underline;">${onnxNodeName}</span></div>`);
                 }
-                if (inputShapeStr) {
+                // Prefer tensor-name-aware rows (name + shape, per input/
+                // output) over the plain shape-only strings above — those
+                // come from netLog raw_text parsing, which layers with no
+                // netLog at all (e.g. a TVM subgraph's single tvm_op layer)
+                // never have, silently dropping Output Shape entirely and
+                // showing Input Shape with no indication of WHICH tensor.
+                if (schemaInputs.length > 0) {
+                    infoRows.push(`<div class="detail-row" style="margin-top:8px;"><span class="detail-label" style="font-weight:600;">Inputs (${schemaInputs.length})</span></div>`);
+                    schemaInputs.forEach(t => infoRows.push(tensorRow(t)));
+                } else if (inputShapeStr) {
                     infoRows.push(`<div class="detail-row"><span class="detail-label">Input Shape</span><span class="detail-value mono-font">${inputShapeStr}</span></div>`);
                 }
-                if (outputShapeStr) {
+                if (schemaOutputs.length > 0) {
+                    infoRows.push(`<div class="detail-row" style="margin-top:8px;"><span class="detail-label" style="font-weight:600;">Outputs (${schemaOutputs.length})</span></div>`);
+                    schemaOutputs.forEach(t => infoRows.push(tensorRow(t)));
+                } else if (outputShapeStr) {
                     infoRows.push(`<div class="detail-row"><span class="detail-label">Output Shape</span><span class="detail-value mono-font">${outputShapeStr}</span></div>`);
                 }
                 if (layerData.gmacs) {
@@ -9065,11 +9451,16 @@ class Graph {
 
             }
 
-            // Add reason message for non-accelerated layers
+            // Add reason message for non-accelerated (arm) OR TVM-instead-of-TIDL
+            // layers — runtime_assignment.reason is the real field in our schema;
+            // node.tidl_diagInfo/layer_data.diag_info/ld.diag_info are legacy
+            // fields that don't exist in it, so this used to render nothing for
+            // TVM nodes (gated on !node.tidl_supported, which is true for tvm_rt).
             let reasonHTML = '';
-            const diagInfo = node.tidl_diagInfo || node.layer_data?.diag_info || ld.diag_info;
+            const diagInfo = node.tidl_diagInfo || node.layer_data?.diag_info || ld.diag_info
+                || node.layer_data?.runtime_assignment?.reason;
 
-            if (!node.tidl_supported && diagInfo) {
+            if (node.assigned_runtime !== 'tidl_rt' && diagInfo) {
                 // Extract the meaningful part of the diagInfo
                 let reason = diagInfo;
                 // Try to extract just the UNSUPPORTED message
@@ -9085,7 +9476,6 @@ class Graph {
                         <span class="detail-value" style="margin-top: 6px; display: block; font-size: 0.85em; line-height: 1.6; color: #555;">${reason}</span>
                     </div>
                 `;
-            } else {
             }
 
             // For ONNX runtime graph: show Inputs, Outputs, Attributes
@@ -9159,6 +9549,11 @@ class Graph {
                 }
 
                 html = `
+                    ${(subgraphInfo || reasonHTML) ? `
+                    <div class="detail-section">
+                        ${subgraphInfo}
+                        ${reasonHTML}
+                    </div>` : ''}
                     ${inputMeta.length > 0 ? `
                     <div class="detail-section">
                         <div class="detail-section-header">Inputs (${inputMeta.length})</div>
@@ -10588,8 +10983,8 @@ function setupPlotResizeObserver() {
 /**
  * Build runtime filter dropdowns dynamically.
  * Shows a dropdown only for runtimes that have at least one layer:
- *   tidl_rt → "TIDL (C7x)"  — green
- *   tvm_rt  → "TVM (C7x)"   — blue
+ *   tidl_rt → "TIDL (NPU)"  — green
+ *   tvm_rt  → "TVM (NPU)"   — blue
  *   arm     → "ARM"          — red
  * Clicking a layer name in the dropdown highlights and centres it in the graph.
  */
@@ -10609,8 +11004,8 @@ function initRuntimeDropdowns(graph) {
     });
 
     const runtimeConfig = [
-        { key: 'tidl_rt', label: 'TIDL (C7x)', borderColor: '#43a047', textColor: '#66bb6a' },
-        { key: 'tvm_rt',  label: 'TVM (C7x)',  borderColor: '#0072ce', textColor: '#42a5f5' },
+        { key: 'tidl_rt', label: 'TIDL (NPU)', borderColor: '#43a047', textColor: '#66bb6a' },
+        { key: 'tvm_rt',  label: 'TVM (NPU)',  borderColor: '#0072ce', textColor: '#42a5f5' },
         { key: 'arm',     label: 'ARM',         borderColor: '#e53e3e', textColor: '#ef5350' },
     ];
 
@@ -10734,7 +11129,7 @@ function initNonAcceleratedLayersDropdown(graph) {
         // All layers supported - Keep dropdown VISIBLE to show success status
         if (container) container.classList.remove('hidden');
         const option = document.createElement('option');
-        option.textContent = 'C7x';
+        option.textContent = 'NPU';
         option.style.color = '#2ecc71';
         option.style.fontWeight = '600';
         dropdown.appendChild(option);
@@ -10858,7 +11253,7 @@ function initAcceleratedLayersDropdown(graph) {
     // Add default option
     const defaultOption = document.createElement('option');
     defaultOption.value = '';
-    defaultOption.textContent = 'C7x';
+    defaultOption.textContent = 'NPU';
     defaultOption.disabled = true;
     defaultOption.selected = true;
     dropdown.appendChild(defaultOption);
@@ -11135,9 +11530,11 @@ class LayerSearch {
             .map(node => ({
                 node: node,
                 context: 'all',
-                subgraph: node.subgraph_index >= 0 ? node.subgraph_index : null
+                // Real subgraph id (e.g. "tvmgen_default_fused_nn_conv2d"), not the
+                // meaningless legacy numeric subgraph_index.
+                subgraph: findSubgraphIdForONNXNode(node.full_name) || null
             }));
-        
+
         return results;
     }
     
@@ -11159,8 +11556,8 @@ class LayerSearch {
             const node = result.node;
             let subgraphBadge = '';
             
-            if (result.subgraph !== null && result.subgraph >= 0) {
-                subgraphBadge = `<span class="search-item-subgraph">Subgraph ${result.subgraph + 1}</span>`;
+            if (result.subgraph != null) {
+                subgraphBadge = `<span class="search-item-subgraph">${result.subgraph}</span>`;
             }
             
             return `
@@ -11886,8 +12283,8 @@ function showTooltip(node, event, isTIDL = false) {
 
     const rt = node.assigned_runtime || (node.tidl_supported ? 'tidl_rt' : 'arm');
     const supportClass = rt === 'arm' ? 'non-accelerated' : 'supported';
-    const supportText = rt === 'tidl_rt' ? 'DSP Accelerated (TIDL)'
-                      : rt === 'tvm_rt'  ? 'DSP Accelerated (TVM)'
+    const supportText = rt === 'tidl_rt' ? 'NPU Accelerated (TIDL)'
+                      : rt === 'tvm_rt'  ? 'NPU Accelerated (TVM)'
                       :                    'ARM (Not Accelerated)';
     tooltipContent += `
         <div class="tooltip-support-status ${supportClass}">
@@ -12224,13 +12621,17 @@ function renderModule(moduleName, moduleData, depth) {
                 // Update Runtime Graph panel with node details
                 // Use the actual graph node to ensure all fields match (including TIDL support, indices, etc.)
                 if (window.runtimeGraph && window.runtimeGraph.allNodes) {
-                    // Find the actual node from the graph by matching full_name
-                    const actualNode = window.runtimeGraph.allNodes.find(n => n.full_name === moduleName);
+                    // Match on the full ONNX node name (moduleData.name), NOT moduleName —
+                    // moduleName is only the tree's last path segment (e.g. "Sigmoid"), while
+                    // full_name on graph nodes is the complete node name (e.g. "/conv1/sigmoid/Sigmoid").
+                    // Matching on moduleName silently fails for anything but top-level/unnested nodes.
+                    const fullNodeName = moduleData.name || moduleName;
+                    const actualNode = window.runtimeGraph.allNodes.find(n => n.full_name === fullNodeName);
                     if (actualNode) {
                         // Use the actual node which has all the correct fields
                         window.runtimeGraph.showDetails(actualNode);
                     } else {
-                        console.warn(`Tree view: Could not find graph node for ${moduleName}`);
+                        console.warn(`Tree view: Could not find graph node for ${fullNodeName}`);
                     }
                 }
             });
@@ -12242,13 +12643,14 @@ function renderModule(moduleName, moduleData, depth) {
                 // Update Runtime Graph panel with node details
                 // Use the actual graph node to ensure all fields match (including TIDL support, indices, etc.)
                 if (window.runtimeGraph && window.runtimeGraph.allNodes) {
-                    // Find the actual node from the graph by matching full_name
-                    const actualNode = window.runtimeGraph.allNodes.find(n => n.full_name === moduleName);
+                    // See comment above: match on the full ONNX node name, not the tree's last path segment.
+                    const fullNodeName = moduleData.name || moduleName;
+                    const actualNode = window.runtimeGraph.allNodes.find(n => n.full_name === fullNodeName);
                     if (actualNode) {
                         // Use the actual node which has all the correct fields
                         window.runtimeGraph.showDetails(actualNode);
                     } else {
-                        console.warn(`Tree view: Could not find graph node for ${moduleName}`);
+                        console.warn(`Tree view: Could not find graph node for ${fullNodeName}`);
                     }
                 }
             });
