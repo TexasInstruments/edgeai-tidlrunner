@@ -12,9 +12,8 @@ preprocess:
   resize_with_pad: false
   pad_color: 0
   name: image_preprocess
-surgery:
-  model_surgery:
-    hf_attention_block_optimization: true
+model_surgery:
+  hf_attention_block_optimization: true
 session:
   input_optimization: false
   input_data_layout: NCHW

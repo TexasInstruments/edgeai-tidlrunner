@@ -97,7 +97,7 @@ session:
   num_inputs: 1
   # artifacts_folder: artifacts
 model_surgery:
-  enable: false
+  enable: true
 postprocess:
   name: null
   data_layout: null

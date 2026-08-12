@@ -14,9 +14,8 @@ preprocess:
   resize_with_pad: false
   pad_color: 0
   name: image_preprocess
-surgery:
-  model_surgery:
-    convert_conv_7x7_stride4_to_stride1: true
+model_surgery:
+  convert_conv_7x7_stride4_to_stride1: true
 session:
   input_optimization: false
   input_data_layout: NCHW

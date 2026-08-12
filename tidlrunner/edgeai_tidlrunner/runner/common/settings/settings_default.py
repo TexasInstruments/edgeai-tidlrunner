@@ -76,7 +76,7 @@ SETTINGS_DEFAULT['commands.surgery'] = SETTINGS_DEFAULT['common.basic'] | {
     'input_scale':                      {'dest': 'session.input_scale', 'default': (0.017125, 0.017507, 0.017429), 'type': float, 'nargs': '*', 'metavar': 'value', 'help': 'scale values for input normalization (RGB channels)'},
     'enable_model_surgery':                   {'dest': 'model_surgery.enable', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable model surgery optimizations'},
     'simplify_mode':                   {'dest': 'model_surgery.simplify_mode', 'default': 'pre', 'type': utils.str_or_none_or_bool, 'metavar': 'value', 'help': 'enable model simplification optimizations'},
-    'shape_inference':                  {'dest': 'model_surgery.shape_inference_mode', 'default': 'all', 'type': utils.str_or_none_or_bool, 'metavar': 'value', 'help': 'enable shape inference during surgery optimization'},
+    'shape_inference_mode':            {'dest': 'model_surgery.shape_inference_mode', 'default': 'all', 'type': utils.str_or_none_or_bool, 'metavar': 'value', 'help': 'enable shape inference during surgery optimization'},
 }
 
 register_help(
