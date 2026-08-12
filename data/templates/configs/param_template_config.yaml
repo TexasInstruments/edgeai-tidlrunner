@@ -96,7 +96,8 @@ session:
     type: tensor(int64)
   num_inputs: 1
   # artifacts_folder: artifacts
-  model_surgery: null
+model_surgery:
+  enable: false
 postprocess:
   name: null
   data_layout: null
