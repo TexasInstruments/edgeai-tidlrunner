@@ -153,20 +153,239 @@ def list_help_names(section: str) -> List[str]:
 
 
 def export_help_markdown() -> str:
-    """Export registered help metadata for a given section as a markdown table."""
-    lines = [
-        '| Section | Name | Task | Required Args [Config Fields] (Help) | Optional Args [Config Fields] (Help) | Description |',
-        '|---|---|---|---|---|---|',
-    ]
+    """Export registered help metadata as improved, readable markdown.
+
+    For the 'command' section: generates a ``### name`` subsection per command
+    with a proper ``| Argument | Config Field | Default | Description |`` table
+    (one row per argument).
+
+    For other sections (e.g. 'dataloader'): keeps the compact flat table that
+    already works well in a markdown renderer.
+    """
+    lines: list[str] = []
 
     for section in sorted(SETTINGS_HELP.keys()):
-        for name in sorted(SETTINGS_HELP.get(section, {}).keys()):
-            entry = SETTINGS_HELP[section][name]
-            task = entry.get('task_type') or ''
-            required = ', '.join(entry.get('required_args') or [])
-            optional = ', '.join((entry.get('optional_args') or {}).keys())
-            description = (entry.get('description') or '').replace('|', '\\|')
-            lines.append(f'| {section} | {name} | {task} | {required} | {optional} | {description} |')
+        section_entries = SETTINGS_HELP.get(section, {})
+        if not section_entries:
+            continue
 
+        lines.append(f'## {section.capitalize()}s')
+        lines.append('')
+
+        if section == 'command':
+            for name in sorted(section_entries.keys()):
+                entry = section_entries[name]
+                description = (entry.get('description') or '').strip()
+                task_type   = entry.get('task_type') or ''
+                notes       = entry.get('notes') or ''
+                example     = entry.get('example') or ''
+
+                lines.append(f'### {name}')
+                lines.append('')
+                if description:
+                    lines.append(description)
+                    lines.append('')
+                if task_type:
+                    lines.append(f'**Task type:** {task_type}')
+                    lines.append('')
+                if notes:
+                    lines.append(f'> **Note:** {notes}')
+                    lines.append('')
+                if example:
+                    lines.append(f'**Example:** `{example}`')
+                    lines.append('')
+
+                # --- required args table ---
+                required_args = entry.get('required_args') or []
+                if required_args:
+                    lines.append('**Required arguments:**')
+                    lines.append('')
+                    lines.append('| Argument | Config Field | Description |')
+                    lines.append('|---|---|---|')
+                    for arg_key in required_args:
+                        arg_name, dest, help_text = _parse_arg_key(arg_key)
+                        help_text = help_text.replace('|', '\\|')
+                        lines.append(f'| `--{arg_name}` | `{dest}` | {help_text} |')
+                    lines.append('')
+
+                # --- optional args table ---
+                optional_args = entry.get('optional_args') or {}
+                if optional_args:
+                    lines.append('**Optional arguments:**')
+                    lines.append('')
+                    lines.append('| Argument | Config Field | Default | Description |')
+                    lines.append('|---|---|---|---|')
+                    for arg_key, default_val in optional_args.items():
+                        arg_name, dest, help_text = _parse_arg_key(arg_key)
+                        default_str = str(default_val) if default_val is not None else ''
+                        # escape pipe chars that would break the table
+                        help_text   = help_text.replace('|', '\\|')
+                        default_str = default_str.replace('|', '\\|')
+                        lines.append(f'| `--{arg_name}` | `{dest}` | `{default_str}` | {help_text} |')
+                    lines.append('')
+
+        else:
+            # Non-command sections: flat table (one row per entry, args as comma list)
+            lines.append('| Name | Task | Required Args | Optional Args | Description |')
+            lines.append('|---|---|---|---|---|')
+            for name in sorted(section_entries.keys()):
+                entry = section_entries[name]
+                task        = entry.get('task_type') or ''
+                required    = ', '.join(
+                    _parse_arg_key(k)[0] for k in (entry.get('required_args') or [])
+                )
+                optional    = ', '.join(
+                    _parse_arg_key(k)[0] for k in (entry.get('optional_args') or {}).keys()
+                )
+                description = (entry.get('description') or '').replace('|', '\\|')
+                lines.append(f'| {name} | {task} | {required} | {optional} | {description} |')
+            lines.append('')
+
+    return '\n'.join(lines)
+
+
+def _parse_arg_key(key: str):
+    """Parse a key of the form 'arg_name [dest] (help text)' into (arg_name, dest, help).
+    Falls back gracefully if the format doesn't match.
+    Note: help text may itself contain parentheses, so we match up to the last ')'.
+    """
+    import re
+    # Match: word [dest] (anything up to last closing paren)
+    m = re.match(r'^([\w.:-]+)\s+\[([^\]]*)\]\s+\((.+)\)$', key)
+    if m:
+        return m.group(1), m.group(2), m.group(3)
+    # Try without help part: 'arg_name [dest]'
+    m2 = re.match(r'^([\w.:-]+)\s+\[([^\]]*)\]$', key)
+    if m2:
+        return m2.group(1), m2.group(2), ''
+    return key, '', ''
+
+
+def export_help_terminal() -> str:
+    """Export registered help metadata in a human-readable terminal format.
+
+    For 'command' section: prints each command as a block with a columnar
+    argument table (argument | config field | default | description).
+    For other sections (e.g. 'dataloader'): prints name, description, and
+    required/optional args in a compact list.
+    """
+    SEP = '─' * 72
+    THIN = '·' * 72
+    lines = []
+
+    for section in sorted(SETTINGS_HELP.keys()):
+        section_entries = SETTINGS_HELP.get(section, {})
+        if not section_entries:
+            continue
+
+        lines.append('')
+        lines.append(SEP)
+        lines.append(f'  SECTION: {section.upper()}')
+        lines.append(SEP)
+
+        for name in sorted(section_entries.keys()):
+            entry = section_entries[name]
+            description = (entry.get('description') or '').strip()
+            task_type = entry.get('task_type') or ''
+            notes = entry.get('notes') or ''
+            example = entry.get('example') or ''
+            availability = entry.get('availability') or ''
+            tags = entry.get('tags') or []
+
+            lines.append('')
+            header = f'  {name}'
+            if task_type:
+                header += f'  [task: {task_type}]'
+            if availability:
+                header += f'  [availability: {availability}]'
+            lines.append(header)
+            if description:
+                lines.append(f'    {description}')
+            if tags:
+                lines.append(f'    tags: {", ".join(tags)}')
+            if notes:
+                lines.append(f'    notes: {notes}')
+            if example:
+                lines.append(f'    example: {example}')
+
+            # --- required args ---
+            required_args = entry.get('required_args') or []
+            if required_args:
+                lines.append('    Required arguments:')
+                for arg_key in required_args:
+                    arg_name, dest, help_text = _parse_arg_key(arg_key)
+                    dest_str = f'  [{dest}]' if dest else ''
+                    help_str = f'  {help_text}' if help_text else ''
+                    lines.append(f'      --{arg_name}{dest_str}{help_str}')
+
+            # --- optional args ---
+            optional_args = entry.get('optional_args') or {}
+            if optional_args:
+                if section == 'command':
+                    # For commands, render as a table: argument | config field | default | description
+                    col_arg = 'Argument'
+                    col_dest = 'Config field'
+                    col_def = 'Default'
+                    col_help = 'Description'
+
+                    rows = []
+                    for arg_key, default_val in optional_args.items():
+                        arg_name, dest, help_text = _parse_arg_key(arg_key)
+                        default_str = str(default_val) if default_val is not None else ''
+                        if len(default_str) > 30:
+                            default_str = default_str[:27] + '...'
+                        rows.append((arg_name, dest, default_str, help_text))
+
+                    if rows:
+                        w_arg  = max(len(col_arg),  max(len(r[0]) for r in rows))
+                        w_dest = max(len(col_dest), max(len(r[1]) for r in rows))
+                        w_def  = max(len(col_def),  max(len(r[2]) for r in rows))
+                        # help column: remaining width up to 72 chars total, min 20
+                        w_help = max(20, 72 - w_arg - w_dest - w_def - 10)
+
+                        def _fmt_row(a, d, dv, h, _wa=w_arg, _wd=w_dest, _wdv=w_def, _wh=w_help):
+                            # wrap help text
+                            words = h.split()
+                            wrapped, cur = [], ''
+                            for word in words:
+                                if cur and len(cur) + 1 + len(word) > _wh:
+                                    wrapped.append(cur)
+                                    cur = word
+                                else:
+                                    cur = (cur + ' ' + word).strip()
+                            if cur:
+                                wrapped.append(cur)
+                            if not wrapped:
+                                wrapped = ['']
+                            pad_a  = a.ljust(_wa)
+                            pad_d  = d.ljust(_wd)
+                            pad_dv = dv.ljust(_wdv)
+                            blank_a  = ''.ljust(_wa)
+                            blank_d  = ''.ljust(_wd)
+                            blank_dv = ''.ljust(_wdv)
+                            first = f'    {pad_a}  {pad_d}  {pad_dv}  {wrapped[0]}'
+                            rest  = [f'    {blank_a}  {blank_d}  {blank_dv}  {line}' for line in wrapped[1:]]
+                            return [first] + rest
+
+                        # header
+                        lines.append(f'    Optional arguments:')
+                        header_row = f'    {col_arg:<{w_arg}}  {col_dest:<{w_dest}}  {col_def:<{w_def}}  {col_help}'
+                        lines.append(header_row)
+                        lines.append('    ' + THIN[:len(header_row) - 4])
+                        for row in rows:
+                            lines.extend(_fmt_row(*row))
+                else:
+                    # For non-command sections (dataloaders etc.), compact list
+                    lines.append('    Optional arguments:')
+                    for arg_key, default_val in optional_args.items():
+                        arg_name, dest, help_text = _parse_arg_key(arg_key)
+                        default_str = f'  (default: {default_val})' if default_val is not None else ''
+                        dest_str = f'  [{dest}]' if dest else ''
+                        help_str = f'  {help_text}' if help_text else ''
+                        lines.append(f'      {arg_name}{dest_str}{default_str}{help_str}')
+
+            lines.append('    ' + THIN[:40])
+
+    lines.append('')
     return '\n'.join(lines)
 

@@ -20,6 +20,8 @@ preprocess:
   resize_with_pad: false
   pad_color: 0
   name: fastbev_model_preprocess
+model_surgery:
+  enable: false
 session:
   input_optimization: true
   input_data_layout: NCHW
@@ -42,7 +44,6 @@ session:
   input_details: null
   output_details: null
   num_inputs: 1
-  model_surgery: false
 postprocess:
   data_layout: NCHW
   save_output: false

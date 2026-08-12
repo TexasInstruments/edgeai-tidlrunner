@@ -39,7 +39,7 @@ import subprocess
 
 import edgeai_tidlrunner
 from edgeai_tidlrunner import rtwrapper, runner
-from edgeai_tidlrunner.runner.common.settings.settings_help import export_help_markdown
+from edgeai_tidlrunner.runner.common.settings.settings_help import export_help_terminal
 
 
 SPECIAL_PIPELINE_NAMES = ('report',)
@@ -110,11 +110,11 @@ class StartRunner(runner.common.bases.PipelineBase):
             for command_choice in command_choices:
                 print(f'{sys.argv[0]} {command_choice} --help')
             
-            help_markdown = export_help_markdown()
-            if help_markdown:
+            help_text = export_help_terminal()
+            if help_text:
                 print('============================================================')
-                print('registered command help (markdown):')
-                print(help_markdown)
+                print('registered command/dataloader help:')
+                print(help_text)
 
         else:
             parser = cls.get_arg_parser()
