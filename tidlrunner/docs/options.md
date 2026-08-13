@@ -33,12 +33,13 @@ Inspect model outputs and activation data
 | `--work_path` | `common.work_path` | `./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits` | work path |
 | `--run_label` | `common.run_label` | `` | run_label to create run_dir |
 | `--run_dir` | `session.run_dir` | `{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}` | run_dir |
+| `--downgrade_onnx_ir_version` | `common.downgrade_onnx_ir_version` | `9` | downgrade ir_version, if the onnx model has higher value (temporary workaround until tidl-onnx-model-optimizer is updated). |
 | `--input_optimization` | `session.input_optimization` | `False` | merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32 |
 | `--input_mean` | `session.input_mean` | `(123.675, 116.28, 103.53)` | mean values for input normalization (RGB channels) |
 | `--input_scale` | `session.input_scale` | `(0.017125, 0.017507, 0.017429)` | scale values for input normalization (RGB channels) |
-| `--model_surgery` | `surgery.model_surgery` | `True` | enable model surgery optimizations |
-| `--simplify_mode` | `surgery.simplify_mode` | `pre` | enable model simplification optimizations |
-| `--shape_inference` | `surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
+| `--enable_model_surgery` | `model_surgery.enable` | `True` | enable model surgery optimizations |
+| `--simplify_mode` | `model_surgery.simplify_mode` | `pre` | enable model simplification optimizations |
+| `--shape_inference_mode` | `model_surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
 | `--task_type` | `common.task_type` | `` | type of AI task (classification, detection, segmentation etc.) |
 | `--task_name` | `common.task_name` | `` | specific name of the task (if any) |
 | `--num_frames` | `common.num_frames` | `1` | number of frames to process for accuracy evaluation |
@@ -113,7 +114,7 @@ Compile models and generate target-specific artifacts
 | Argument | Config Field | Default | Description |
 |---|---|---|---|
 | `--capture_log` | `common.capture_log` | `adaptive` | capture log mode (True, False, adaptive) |
-| `--parallel_processes` | `common.parallel_processes` | `2` | number of parallel processes to use |
+| `--parallel_processes` | `common.parallel_processes` | `8` | number of parallel processes to use |
 | `--parallel_devices` | `common.parallel_devices` | `` | number of parallel gpu devices to use for compilation (used only if gpu based tidl-tools is installed) |
 | `--target_machine` | `session.target_machine` | `pc` | target machine for running the inference (pc, evm) |
 | `--target_device` | `session.target_device` | `AM62A` | target device for inference (AM68A, AM69A, etc.) |
@@ -125,12 +126,13 @@ Compile models and generate target-specific artifacts
 | `--work_path` | `common.work_path` | `./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits` | work path |
 | `--run_label` | `common.run_label` | `` | run_label to create run_dir |
 | `--run_dir` | `session.run_dir` | `{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}` | run_dir |
+| `--downgrade_onnx_ir_version` | `common.downgrade_onnx_ir_version` | `9` | downgrade ir_version, if the onnx model has higher value (temporary workaround until tidl-onnx-model-optimizer is updated). |
 | `--input_optimization` | `session.input_optimization` | `False` | merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32 |
 | `--input_mean` | `session.input_mean` | `(123.675, 116.28, 103.53)` | mean values for input normalization (RGB channels) |
 | `--input_scale` | `session.input_scale` | `(0.017125, 0.017507, 0.017429)` | scale values for input normalization (RGB channels) |
-| `--model_surgery` | `surgery.model_surgery` | `True` | enable model surgery optimizations |
-| `--simplify_mode` | `surgery.simplify_mode` | `pre` | enable model simplification optimizations |
-| `--shape_inference` | `surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
+| `--enable_model_surgery` | `model_surgery.enable` | `True` | enable model surgery optimizations |
+| `--simplify_mode` | `model_surgery.simplify_mode` | `pre` | enable model simplification optimizations |
+| `--shape_inference_mode` | `model_surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
 | `--task_type` | `common.task_type` | `` | type of AI task (classification, detection, segmentation etc.) |
 | `--task_name` | `common.task_name` | `` | specific name of the task (if any) |
 | `--num_frames` | `common.num_frames` | `10` | number of frames to process |
@@ -199,7 +201,7 @@ Evaluate model accuracy against ground truth labels
 | Argument | Config Field | Default | Description |
 |---|---|---|---|
 | `--capture_log` | `common.capture_log` | `adaptive` | capture log mode (True, False, adaptive) |
-| `--parallel_processes` | `common.parallel_processes` | `2` | number of parallel processes to use |
+| `--parallel_processes` | `common.parallel_processes` | `8` | number of parallel processes to use |
 | `--parallel_devices` | `common.parallel_devices` | `` | number of parallel gpu devices to use for compilation (used only if gpu based tidl-tools is installed) |
 | `--target_machine` | `session.target_machine` | `pc` | target machine for running the inference (pc, evm) |
 | `--target_device` | `session.target_device` | `AM62A` | target device for inference (AM68A, AM69A, etc.) |
@@ -211,12 +213,13 @@ Evaluate model accuracy against ground truth labels
 | `--work_path` | `common.work_path` | `./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits` | work path |
 | `--run_label` | `common.run_label` | `` | run_label to create run_dir |
 | `--run_dir` | `session.run_dir` | `{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}` | run_dir |
+| `--downgrade_onnx_ir_version` | `common.downgrade_onnx_ir_version` | `9` | downgrade ir_version, if the onnx model has higher value (temporary workaround until tidl-onnx-model-optimizer is updated). |
 | `--input_optimization` | `session.input_optimization` | `False` | merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32 |
 | `--input_mean` | `session.input_mean` | `(123.675, 116.28, 103.53)` | mean values for input normalization (RGB channels) |
 | `--input_scale` | `session.input_scale` | `(0.017125, 0.017507, 0.017429)` | scale values for input normalization (RGB channels) |
-| `--model_surgery` | `surgery.model_surgery` | `True` | enable model surgery optimizations |
-| `--simplify_mode` | `surgery.simplify_mode` | `pre` | enable model simplification optimizations |
-| `--shape_inference` | `surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
+| `--enable_model_surgery` | `model_surgery.enable` | `True` | enable model surgery optimizations |
+| `--simplify_mode` | `model_surgery.simplify_mode` | `pre` | enable model simplification optimizations |
+| `--shape_inference_mode` | `model_surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
 | `--task_type` | `common.task_type` | `` | type of AI task (classification, detection, segmentation etc.) |
 | `--task_name` | `common.task_name` | `` | specific name of the task (if any) |
 | `--num_frames` | `common.num_frames` | `1000` | number of frames to process for accuracy evaluation |
@@ -298,7 +301,7 @@ Extract model submodules, operators, or layer ranges
 | Argument | Config Field | Default | Description |
 |---|---|---|---|
 | `--capture_log` | `common.capture_log` | `adaptive` | capture log mode (True, False, adaptive) |
-| `--parallel_processes` | `common.parallel_processes` | `2` | number of parallel processes to use |
+| `--parallel_processes` | `common.parallel_processes` | `8` | number of parallel processes to use |
 | `--parallel_devices` | `common.parallel_devices` | `` | number of parallel gpu devices to use for compilation (used only if gpu based tidl-tools is installed) |
 | `--target_machine` | `session.target_machine` | `pc` | target machine for running the inference (pc, evm) |
 | `--target_device` | `session.target_device` | `AM62A` | target device for inference (AM62A, AM69A, etc.) |
@@ -325,7 +328,7 @@ Run inference using compiled models
 | Argument | Config Field | Default | Description |
 |---|---|---|---|
 | `--capture_log` | `common.capture_log` | `adaptive` | capture log mode (True, False, adaptive) |
-| `--parallel_processes` | `common.parallel_processes` | `2` | number of parallel processes to use |
+| `--parallel_processes` | `common.parallel_processes` | `8` | number of parallel processes to use |
 | `--parallel_devices` | `common.parallel_devices` | `` | number of parallel gpu devices to use for compilation (used only if gpu based tidl-tools is installed) |
 | `--target_machine` | `session.target_machine` | `pc` | target machine for running the inference (pc, evm) |
 | `--target_device` | `session.target_device` | `AM62A` | target device for inference (AM68A, AM69A, etc.) |
@@ -337,12 +340,13 @@ Run inference using compiled models
 | `--work_path` | `common.work_path` | `./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits` | work path |
 | `--run_label` | `common.run_label` | `` | run_label to create run_dir |
 | `--run_dir` | `session.run_dir` | `{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}` | run_dir |
+| `--downgrade_onnx_ir_version` | `common.downgrade_onnx_ir_version` | `9` | downgrade ir_version, if the onnx model has higher value (temporary workaround until tidl-onnx-model-optimizer is updated). |
 | `--input_optimization` | `session.input_optimization` | `False` | merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32 |
 | `--input_mean` | `session.input_mean` | `(123.675, 116.28, 103.53)` | mean values for input normalization (RGB channels) |
 | `--input_scale` | `session.input_scale` | `(0.017125, 0.017507, 0.017429)` | scale values for input normalization (RGB channels) |
-| `--model_surgery` | `surgery.model_surgery` | `True` | enable model surgery optimizations |
-| `--simplify_mode` | `surgery.simplify_mode` | `pre` | enable model simplification optimizations |
-| `--shape_inference` | `surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
+| `--enable_model_surgery` | `model_surgery.enable` | `True` | enable model surgery optimizations |
+| `--simplify_mode` | `model_surgery.simplify_mode` | `pre` | enable model simplification optimizations |
+| `--shape_inference_mode` | `model_surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
 | `--task_type` | `common.task_type` | `` | type of AI task (classification, detection, segmentation etc.) |
 | `--task_name` | `common.task_name` | `` | specific name of the task (if any) |
 | `--num_frames` | `common.num_frames` | `10` | number of frames to process |
@@ -415,7 +419,7 @@ Analyze model runtime and layer-level statistics
 | Argument | Config Field | Default | Description |
 |---|---|---|---|
 | `--capture_log` | `common.capture_log` | `adaptive` | capture log mode (True, False, adaptive) |
-| `--parallel_processes` | `common.parallel_processes` | `2` | number of parallel processes to use |
+| `--parallel_processes` | `common.parallel_processes` | `8` | number of parallel processes to use |
 | `--parallel_devices` | `common.parallel_devices` | `` | number of parallel gpu devices to use for compilation (used only if gpu based tidl-tools is installed) |
 | `--target_machine` | `session.target_machine` | `pc` | target machine for running the inference (pc, evm) |
 | `--target_device` | `session.target_device` | `AM62A` | target device for inference (AM68A, AM69A, etc.) |
@@ -427,12 +431,13 @@ Analyze model runtime and layer-level statistics
 | `--work_path` | `common.work_path` | `./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits` | work path |
 | `--run_label` | `common.run_label` | `` | run_label to create run_dir |
 | `--run_dir` | `session.run_dir` | `{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}` | run_dir |
+| `--downgrade_onnx_ir_version` | `common.downgrade_onnx_ir_version` | `9` | downgrade ir_version, if the onnx model has higher value (temporary workaround until tidl-onnx-model-optimizer is updated). |
 | `--input_optimization` | `session.input_optimization` | `False` | merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32 |
 | `--input_mean` | `session.input_mean` | `(123.675, 116.28, 103.53)` | mean values for input normalization (RGB channels) |
 | `--input_scale` | `session.input_scale` | `(0.017125, 0.017507, 0.017429)` | scale values for input normalization (RGB channels) |
-| `--model_surgery` | `surgery.model_surgery` | `True` | enable model surgery optimizations |
-| `--simplify_mode` | `surgery.simplify_mode` | `pre` | enable model simplification optimizations |
-| `--shape_inference` | `surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
+| `--enable_model_surgery` | `model_surgery.enable` | `True` | enable model surgery optimizations |
+| `--simplify_mode` | `model_surgery.simplify_mode` | `pre` | enable model simplification optimizations |
+| `--shape_inference_mode` | `model_surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
 | `--task_type` | `common.task_type` | `` | type of AI task (classification, detection, segmentation etc.) |
 | `--task_name` | `common.task_name` | `` | specific name of the task (if any) |
 | `--num_frames` | `common.num_frames` | `1` | number of frames to process for accuracy evaluation |
@@ -507,7 +512,7 @@ Package artifacts for deployment
 | Argument | Config Field | Default | Description |
 |---|---|---|---|
 | `--capture_log` | `common.capture_log` | `adaptive` | capture log mode (True, False, adaptive) |
-| `--parallel_processes` | `common.parallel_processes` | `2` | number of parallel processes to use |
+| `--parallel_processes` | `common.parallel_processes` | `8` | number of parallel processes to use |
 | `--parallel_devices` | `common.parallel_devices` | `` | number of parallel gpu devices to use for compilation (used only if gpu based tidl-tools is installed) |
 | `--target_machine` | `session.target_machine` | `pc` | target machine for running the inference (pc, evm) |
 | `--target_device` | `session.target_device` | `AM62A` | target device for inference (AM68A, AM69A, etc.) |
@@ -529,7 +534,7 @@ Generate compile and performance reports
 | Argument | Config Field | Default | Description |
 |---|---|---|---|
 | `--capture_log` | `common.capture_log` | `adaptive` | capture log mode (True, False, adaptive) |
-| `--parallel_processes` | `common.parallel_processes` | `2` | number of parallel processes to use |
+| `--parallel_processes` | `common.parallel_processes` | `8` | number of parallel processes to use |
 | `--parallel_devices` | `common.parallel_devices` | `` | number of parallel gpu devices to use for compilation (used only if gpu based tidl-tools is installed) |
 | `--target_machine` | `session.target_machine` | `pc` | target machine for running the inference (pc, evm) |
 | `--target_device` | `session.target_device` | `` | target device for report (AM62A, AM69A, etc. None for all devices) |
@@ -550,7 +555,7 @@ Run model surgery optimizations on the input model
 | Argument | Config Field | Default | Description |
 |---|---|---|---|
 | `--capture_log` | `common.capture_log` | `adaptive` | capture log mode (True, False, adaptive) |
-| `--parallel_processes` | `common.parallel_processes` | `2` | number of parallel processes to use |
+| `--parallel_processes` | `common.parallel_processes` | `8` | number of parallel processes to use |
 | `--parallel_devices` | `common.parallel_devices` | `` | number of parallel gpu devices to use for compilation (used only if gpu based tidl-tools is installed) |
 | `--target_machine` | `session.target_machine` | `pc` | target machine for running the inference (pc, evm) |
 | `--target_device` | `session.target_device` | `AM62A` | target device for inference (AM62A, AM69A, etc.) |
@@ -562,12 +567,13 @@ Run model surgery optimizations on the input model
 | `--work_path` | `common.work_path` | `./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits` | work path |
 | `--run_label` | `common.run_label` | `` | run_label to create run_dir |
 | `--run_dir` | `session.run_dir` | `{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}` | run_dir |
+| `--downgrade_onnx_ir_version` | `common.downgrade_onnx_ir_version` | `9` | downgrade ir_version, if the onnx model has higher value (temporary workaround until tidl-onnx-model-optimizer is updated). |
 | `--input_optimization` | `session.input_optimization` | `False` | merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32 |
 | `--input_mean` | `session.input_mean` | `(123.675, 116.28, 103.53)` | mean values for input normalization (RGB channels) |
 | `--input_scale` | `session.input_scale` | `(0.017125, 0.017507, 0.017429)` | scale values for input normalization (RGB channels) |
-| `--model_surgery` | `surgery.model_surgery` | `True` | enable model surgery optimizations |
-| `--simplify_mode` | `surgery.simplify_mode` | `pre` | enable model simplification optimizations |
-| `--shape_inference` | `surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
+| `--enable_model_surgery` | `model_surgery.enable` | `True` | enable model surgery optimizations |
+| `--simplify_mode` | `model_surgery.simplify_mode` | `pre` | enable model simplification optimizations |
+| `--shape_inference_mode` | `model_surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
 
 ## Dataloaders
 

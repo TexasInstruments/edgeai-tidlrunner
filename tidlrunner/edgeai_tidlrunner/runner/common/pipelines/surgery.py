@@ -92,6 +92,18 @@ class ModelSurgery(common_base.CommonPipelineBase):
         model_ext = os.path.splitext(model_path)[1].lower()
 
         if model_ext == '.onnx':
+            # this is temporary fix to support ONNX IR version 10 and above.
+            # which is not supported in onnxsim used inside tidl-onnx-model-optimizer. 
+            # for now, the IR version is updated to 9 for compatibility
+            downgrade_onnx_ir_version = common_kwargs.get('downgrade_onnx_ir_version', None)
+            if downgrade_onnx_ir_version is not None:
+                import onnx
+                onnx_model = onnx.load(model_path)
+                if onnx_model.ir_version > downgrade_onnx_ir_version:
+                    print(f'WARNING: IR version of model: {onnx_model.ir_version} - not supported in onnxsim used inside tidl-onnx-model-optimizer - downgrading to {downgrade_onnx_ir_version}')
+                    onnx_model.ir_version = downgrade_onnx_ir_version
+                    onnx.save(onnx_model, model_path)
+
             # input_optimization is set, the input_mean and input_scale are added inside the model
             if input_optimization:
                 if not isinstance(kwargs.get('add_input_normalization', None), dict):
@@ -117,14 +129,6 @@ class ModelSurgery(common_base.CommonPipelineBase):
             else:
                 import tidl_onnx_model_optimizer
                 tidl_onnx_model_optimizer.optimize(model_path, model_path, **kwargs)
-            #
-            # check onnx model IR version
-            import onnx
-            onnx_model = onnx.load(model_path)
-            if onnx_model.ir_version >= 10:
-                print(f'WARNING: IR version of model: {onnx_model.ir_version} - not supported in TIDL - updating ONNX IR version to 9')
-                onnx_model.ir_version = 9
-                onnx.save(onnx_model, model_path)
             #
         elif model_ext == '.tflite':
             if input_optimization:
