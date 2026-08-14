@@ -35,6 +35,10 @@ Chart.defaults.color = '#495057';
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <!-- V4: Pako for gzip decompression -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+<!-- V5: jQuery + DataTables for the Analysis tab layer table -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
 <style>
 /* ==================== BASE STYLES ==================== */
 * {
@@ -210,6 +214,24 @@ Chart.defaults.color = '#495057';
 [data-theme="dark"] .layer-table thead,
 [data-theme="dark"] .operator-summary-table thead {
     background-color: var(--gray-100);
+}
+
+/* Analysis tab (DataTables) */
+[data-theme="dark"] .dataTables_wrapper .dataTables_filter input,
+[data-theme="dark"] .dataTables_wrapper .dataTables_length select {
+    background: var(--card-background);
+    color: var(--text-primary);
+    border-color: var(--gray-100);
+}
+[data-theme="dark"] .dataTables_wrapper .dataTables_filter,
+[data-theme="dark"] .dataTables_wrapper .dataTables_length,
+[data-theme="dark"] .dataTables_wrapper .dataTables_info,
+[data-theme="dark"] .dataTables_wrapper .dataTables_paginate,
+[data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button {
+    color: var(--text-primary) !important;
+}
+[data-theme="dark"] .analysis-chart-box {
+    border-color: var(--gray-100);
 }
 
 /* Search input & dropdown */
@@ -1755,6 +1777,160 @@ main {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.85rem;
+}
+
+/* ==================== ANALYSIS TAB TABLE ==================== */
+/* DataTables handles paging, so the container itself must not scroll-clip */
+/* No pagination: every layer is listed, so scroll inside the card and keep the
+   column headers pinned via the shared sticky thead rule. */
+#analysis-table-container {
+    max-height: 78vh;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    background: transparent;
+}
+
+#analysis-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--ti-red);
+}
+
+/* Reclaim horizontal space for the plots */
+#analysis .card-body {
+    padding: 0.75rem;
+}
+
+.analysis-count {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Give the plots the room; keep the text columns compact */
+#analysis-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+#analysis-table th:nth-child(1), #analysis-table td:nth-child(1) { width: 3.5%; }
+#analysis-table th:nth-child(2), #analysis-table td:nth-child(2) { width: 5%; }
+#analysis-table th:nth-child(3), #analysis-table td:nth-child(3) { width: 8%; }
+#analysis-table th:nth-child(4), #analysis-table td:nth-child(4) { width: 9%; }
+#analysis-table th:nth-child(5), #analysis-table td:nth-child(5) { width: 14%; }
+#analysis-table th:nth-child(6), #analysis-table td:nth-child(6) { width: 6%; }
+#analysis-table th:nth-child(7), #analysis-table td:nth-child(7) { width: 27.25%; }
+#analysis-table th:nth-child(8), #analysis-table td:nth-child(8) { width: 27.25%; }
+
+/* Left-justify every column, overriding the shared table centering */
+#analysis-table th,
+#analysis-table td,
+#analysis-table td:first-child,
+#analysis-table td:nth-child(n+2) {
+    text-align: left;
+}
+
+#analysis-table td {
+    padding: 0.3rem 0.4rem;
+    vertical-align: middle;
+    word-break: break-word;
+}
+
+/* Taller rows so the interactive plots are comfortable to read */
+#analysis-table tbody tr {
+    height: 300px;
+}
+
+/* Chart cells: minimal side padding, so the plots run edge to edge */
+#analysis-table td:nth-child(7),
+#analysis-table td:nth-child(8) {
+    padding: 0.35rem 0.2rem;
+}
+
+#analysis-table th {
+    padding: 0.5rem 0.4rem;
+}
+
+/* Serial number column */
+#analysis-table td:nth-child(1) {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+}
+
+#analysis-table td:nth-child(5) {
+    font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+    font-size: 0.7rem;
+    line-height: 1.3;
+    color: var(--text-secondary);
+}
+
+/* Chart.js sizes its canvas to this box, so the height lives here */
+.analysis-chart-box {
+    position: relative;
+    height: 285px;
+    width: 100%;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 2px;
+}
+
+.analysis-mini-chart {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.analysis-nodata {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    opacity: 0.7;
+}
+
+.analysis-nodata i {
+    font-size: 1.2rem;
+}
+
+.analysis-legend {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 0.6rem;
+}
+
+.analysis-legend .swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    margin-right: 0.35rem;
+    vertical-align: -1px;
+}
+
+.dataTables_wrapper {
+    font-family: inherit;
+    font-size: 0.85rem;
+}
+
+.dataTables_wrapper .dataTables_filter {
+    margin-bottom: var(--spacing-sm, 8px);
+}
+
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper .dataTables_length select {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 4px 8px;
 }
 
 .operator-summary-table thead {
@@ -4183,6 +4359,10 @@ main {
         <i class="fas fa-tachometer-alt"></i>
         <span>Performance</span>
     </button>
+    <button class="tab" data-tab="analysis" title="All layers from all subgraphs in a single sortable and filterable table">
+        <i class="fas fa-table"></i>
+        <span>Analysis</span>
+    </button>
     <div class="tab-indicator"></div>
 </nav>
 <!-- Main Content -->
@@ -4595,6 +4775,42 @@ main {
                 <div class="no-selection-message">
                     <i class="fas fa-mouse-pointer"></i>
                     <p>Select a subgraph and node to view details</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Analysis Tab: all layers from all subgraphs in one sortable/filterable table -->
+<section id="analysis" class="tab-content">
+    <div class="model-details-container">
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fas fa-table"></i> Layer Analysis</h2>
+                <span id="analysis-layer-count" class="analysis-count"></span>
+            </div>
+            <div class="card-body">
+                <div class="analysis-legend">
+                    <span><i class="fas fa-mouse-pointer"></i> Hover a plot for exact values</span>
+                    <span><i class="fas fa-search-plus"></i> Ctrl + scroll to zoom</span>
+                    <span><i class="fas fa-arrows-alt"></i> Drag to pan</span>
+                </div>
+                <div class="operator-summary-table-container" id="analysis-table-container">
+                    <table id="analysis-table" class="operator-summary-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Subgraph</th>
+                                <th>Layer Name</th>
+                                <th>Layer Type</th>
+                                <th>Properties</th>
+                                <th>SNR (dB)</th>
+                                <th>Histogram</th>
+                                <th>Scatter Plot</th>
+                            </tr>
+                        </thead>
+                        <tbody id="analysis-table-body"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -5070,6 +5286,364 @@ function initPerfSubgraphSelector() {
     unified.value = sortedKeys[0];
     unified.addEventListener('change', e => syncAll(e.target.value));
     syncAll(sortedKeys[0]);
+}
+
+// ==================== ANALYSIS TAB: ALL-LAYERS TABLE ====================
+// Flat table of every layer across every TIDL subgraph, powered by DataTables.
+let analysisTableBuilt = false;
+
+function analysisEscapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text == null ? '' : String(text);
+    return div.innerHTML;
+}
+
+// Map of subgraph id -> { tidl_layer_id: snr_db } built once from METRICS_DATA.
+function buildAnalysisSnrLookup() {
+    const lookup = {};
+    if (!METRICS_DATA) return lookup;
+    Object.keys(METRICS_DATA).forEach(sgId => {
+        const rows = METRICS_DATA[sgId];
+        if (!Array.isArray(rows)) return;
+        const bySg = {};
+        rows.forEach(row => {
+            if (row && row.tidl_layer_id !== undefined && row.snr_db !== undefined && row.snr_db !== null) {
+                bySg[String(row.tidl_layer_id)] = row.snr_db;
+            }
+        });
+        lookup[String(sgId)] = bySg;
+    });
+    return lookup;
+}
+
+function renderAnalysisTable() {
+    if (analysisTableBuilt) return;
+
+    const table = document.getElementById('analysis-table');
+    const tbody = document.getElementById('analysis-table-body');
+    if (!table || !tbody) return;
+
+    // Guard against "Cannot reinitialise DataTable" if this ever runs twice.
+    if (window.jQuery && $.fn.DataTable && $.fn.DataTable.isDataTable('#analysis-table')) {
+        $('#analysis-table').DataTable().destroy();
+    }
+    tbody.innerHTML = '';
+
+    const snrLookup = buildAnalysisSnrLookup();
+    const rowsHtml = [];
+    let rowCount = 0;
+
+    const sgIds = TIDL_LAYER_DATA ? Object.keys(TIDL_LAYER_DATA) : [];
+    for (let s = 0; s < sgIds.length; s++) {
+        const sgId = sgIds[s];
+        const sgData = TIDL_LAYER_DATA[sgId] || {};
+        const layers = sgData.layers || [];
+        const sgSnr = snrLookup[String(sgId)] || {};
+        // Activation data is keyed by numeric subgraph id, e.g. "0_3"
+        const sgNum = String(sgId).replace(/\D+/g, '') || '0';
+
+        for (let i = 0; i < layers.length; i++) {
+            const layer = layers[i];
+            const idx = layer.layer_index;
+            const snr = sgSnr[String(idx)];
+            const snrText = (snr === undefined || snr === null) ? 'N/A' : Number(snr).toFixed(1) + ' dB';
+            const actKey = sgNum + '_' + idx;
+
+            rowsHtml.push(
+                '<tr>' +
+                '<td>' + (rowCount + 1) + '</td>' +
+                '<td>' + analysisEscapeHtml(sgId) + '</td>' +
+                '<td>' + analysisEscapeHtml(layer.layer_name) + '</td>' +
+                '<td>' + analysisEscapeHtml(String(layer.layer_type).replace('TIDL_', '')) + '</td>' +
+                '<td>' + analysisEscapeHtml(layer.properties || '') + '</td>' +
+                '<td>' + snrText + '</td>' +
+                '<td><div class="analysis-chart-box"><canvas class="analysis-mini-chart" data-plot="histogram" data-key="' + actKey + '"></canvas></div></td>' +
+                '<td><div class="analysis-chart-box"><canvas class="analysis-mini-chart" data-plot="scatter" data-key="' + actKey + '"></canvas></div></td>' +
+                '</tr>'
+            );
+            rowCount++;
+        }
+    }
+
+    tbody.innerHTML = rowsHtml.join('');
+
+    const countEl = document.getElementById('analysis-layer-count');
+    if (countEl) {
+        countEl.textContent = rowCount + ' layers across ' + sgIds.length + ' subgraph' + (sgIds.length === 1 ? '' : 's');
+    }
+
+    if (window.jQuery && $.fn.DataTable) {
+        const dt = $('#analysis-table').DataTable({
+            paging: false,          // show every layer in one scrollable list
+            searching: true,
+            info: true,
+            order: [],
+            autoWidth: false,
+            columnDefs: [
+                { targets: [5, 6, 7], orderable: false }
+            ]
+        });
+        // Sorting/filtering re-inserts row elements, so re-check what needs drawing.
+        dt.on('draw', observeAnalysisPlots);
+    }
+
+    observeAnalysisPlots();
+    analysisTableBuilt = true;
+}
+
+// ---- Analysis table plots ----
+// These mirror the interactive Chart.js plots used by the Analysis sub-tab in the
+// Subgraphs panel (log-scale dual histogram, y=x scatter with R², tooltips,
+// wheel zoom and drag pan). Charts are created only while a row is on screen and
+// destroyed once it scrolls away, so the full un-paginated table stays responsive.
+
+function analysisNoDataHtml() {
+    return '<div class="analysis-nodata"><i class="fas fa-ban"></i><span>No activation data</span></div>';
+}
+
+function analysisBuildHistogramChart(canvas, hist) {
+    let tidlBins = [], tidlCounts = [], notidlBins = [], notidlCounts = [];
+    if (hist.tidl_bins && hist.notidl_bins) {
+        tidlBins = hist.tidl_bins; tidlCounts = hist.tidl_counts;
+        notidlBins = hist.notidl_bins; notidlCounts = hist.notidl_counts;
+    } else if (hist.tidl && hist.notidl) {
+        tidlBins = hist.tidl.centers || []; tidlCounts = hist.tidl.counts || [];
+        notidlBins = hist.notidl.centers || []; notidlCounts = hist.notidl.counts || [];
+    }
+    if (!notidlBins.length || !tidlBins.length) return null;
+
+    return new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: notidlBins.map(v => formatWithPrefix(v)),
+            datasets: [
+                {
+                    label: 'No-TIDL (FP32)',
+                    data: notidlCounts,
+                    backgroundColor: 'rgba(239, 83, 80, 0.5)',
+                    borderColor: 'rgba(198, 40, 40, 0.8)',
+                    borderWidth: 1,
+                    hoverBackgroundColor: 'rgba(239, 83, 80, 0.8)',
+                    barPercentage: 0.92,
+                    categoryPercentage: 1.0
+                },
+                {
+                    label: 'TIDL (INT8)',
+                    data: tidlCounts,
+                    backgroundColor: 'rgba(66, 165, 245, 0.5)',
+                    borderColor: 'rgba(21, 101, 192, 0.8)',
+                    borderWidth: 1,
+                    hoverBackgroundColor: 'rgba(66, 165, 245, 0.8)',
+                    barPercentage: 0.92,
+                    categoryPercentage: 1.0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            interaction: { intersect: false, mode: 'index' },
+            plugins: {
+                legend: { position: 'top', labels: { font: { size: 10 }, boxWidth: 10, usePointStyle: true, pointStyle: 'rectRounded' } },
+                tooltip: {
+                    backgroundColor: 'rgba(33,33,33,0.92)',
+                    titleFont: { size: 11, weight: '600' },
+                    bodyFont: { size: 11 },
+                    padding: 8,
+                    cornerRadius: 6,
+                    callbacks: {
+                        title: items => `Value: ${(notidlBins[items[0].dataIndex] || 0).toFixed(4)}`,
+                        label: ctx => `${ctx.dataset.label}: ${formatWithPrefix(ctx.parsed.y)}`
+                    }
+                },
+                zoom: {
+                    pan: { enabled: true, mode: 'x' },
+                    zoom: { wheel: { enabled: true, speed: 0.05, modifierKey: 'ctrl' }, pinch: { enabled: true }, mode: 'x' },
+                    limits: { x: { min: 'original', max: 'original' }, y: { min: 'original', max: 'original' } }
+                }
+            },
+            scales: {
+                x: {
+                    stacked: true,
+                    title: { display: true, text: 'Activation Value', font: { size: 10, weight: '600' }, color: '#495057' },
+                    ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8, font: { size: 9 }, color: '#6c757d' },
+                    grid: { display: false }
+                },
+                y: {
+                    type: 'logarithmic',
+                    title: { display: true, text: 'Frequency (log)', font: { size: 10, weight: '600' }, color: '#495057' },
+                    ticks: {
+                        callback: function(v) {
+                            const log = Math.log10(v);
+                            return Math.abs(log - Math.round(log)) < 0.01 ? formatWithPrefix(v) : '';
+                        },
+                        maxTicksLimit: 6, font: { size: 9 }, color: '#6c757d'
+                    },
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                }
+            }
+        }
+    });
+}
+
+function analysisBuildScatterChart(canvas, scatter) {
+    let points = [];
+    if (scatter.x && scatter.x.length) {
+        points = scatter.x.map((v, i) => ({ x: v, y: scatter.y[i] }));
+    } else if (scatter.points && scatter.points.length) {
+        points = scatter.points;
+    }
+    if (!points.length) return null;
+
+    const xVals = points.map(p => p.x);
+    const yVals = points.map(p => p.y);
+    const rSquared = calculateRSquared(xVals, yVals);
+    const axMin = (scatter.axis && scatter.axis.min != null) ? scatter.axis.min : Math.min(...xVals, ...yVals);
+    const axMax = (scatter.axis && scatter.axis.max != null) ? scatter.axis.max : Math.max(...xVals, ...yVals);
+    const range = axMax - axMin;
+
+    const baseRadius = points.length > 5000 ? 1.5 : points.length > 2000 ? 2 : 2.5;
+    const baseOpacity = points.length > 10000 ? 0.3 : points.length > 5000 ? 0.4 : 0.55;
+    const pointsWithError = points.map(p => ({ x: p.x, y: p.y, error: Math.abs(p.y - p.x) }));
+
+    return new Chart(canvas, {
+        type: 'scatter',
+        data: {
+            datasets: [
+                {
+                    label: `Activations (R² = ${rSquared.toFixed(3)})`,
+                    data: pointsWithError,
+                    backgroundColor: `rgba(33, 150, 243, ${baseOpacity})`,
+                    borderColor: 'transparent',
+                    pointRadius: baseRadius,
+                    pointHoverRadius: 6,
+                    pointHoverBackgroundColor: 'rgba(255, 87, 34, 0.95)',
+                    pointHoverBorderColor: '#fff',
+                    pointHoverBorderWidth: 2
+                },
+                {
+                    label: 'y = x',
+                    data: [{ x: axMin - range, y: axMin - range }, { x: axMax + range, y: axMax + range }],
+                    type: 'line',
+                    borderColor: 'rgba(0, 0, 0, 0.35)',
+                    borderWidth: 2,
+                    borderDash: [6, 4],
+                    pointRadius: 0,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            interaction: { mode: 'nearest', intersect: true, axis: 'xy' },
+            plugins: {
+                legend: { position: 'top', labels: { font: { size: 10 }, boxWidth: 10, usePointStyle: true } },
+                tooltip: {
+                    backgroundColor: 'rgba(33,33,33,0.92)',
+                    titleFont: { size: 11, weight: '600' },
+                    bodyFont: { size: 11 },
+                    padding: 8,
+                    cornerRadius: 6,
+                    displayColors: false,
+                    filter: item => item.datasetIndex === 0,
+                    callbacks: {
+                        title: () => 'Activation Value',
+                        label: ctx => {
+                            const p = ctx.raw;
+                            if (p.error === undefined) return '';
+                            return [
+                                `TIDL (INT8): ${p.x.toFixed(5)}`,
+                                `No-TIDL (FP32): ${p.y.toFixed(5)}`,
+                                `Abs Error: ${p.error.toFixed(7)}`
+                            ];
+                        }
+                    }
+                },
+                zoom: {
+                    pan: { enabled: true, mode: 'xy' },
+                    zoom: { wheel: { enabled: true, speed: 0.05, modifierKey: 'ctrl' }, pinch: { enabled: true }, mode: 'xy' },
+                    limits: { x: { min: 'original', max: 'original' }, y: { min: 'original', max: 'original' } }
+                }
+            },
+            scales: {
+                x: {
+                    type: 'linear', min: axMin, max: axMax,
+                    title: { display: true, text: 'TIDL (INT8)', font: { size: 10, weight: '600' }, color: '#495057' },
+                    ticks: { callback: v => formatWithPrefix(v), maxTicksLimit: 7, font: { size: 9 }, color: '#6c757d' },
+                    grid: { color: 'rgba(0,0,0,0.04)' }
+                },
+                y: {
+                    type: 'linear', min: axMin, max: axMax,
+                    title: { display: true, text: 'No-TIDL (FP32)', font: { size: 10, weight: '600' }, color: '#495057' },
+                    ticks: { callback: v => formatWithPrefix(v), maxTicksLimit: 6, font: { size: 9 }, color: '#6c757d' },
+                    grid: { color: 'rgba(0,0,0,0.04)' }
+                }
+            }
+        }
+    });
+}
+
+function createAnalysisPlot(canvas) {
+    if (canvas._analysisChart || canvas.dataset.empty === '1') return;
+
+    const key = canvas.dataset.key;
+    const data = (typeof ACTIVATION_DATA_COMPRESSED !== 'undefined' && ACTIVATION_DATA_COMPRESSED[key])
+        ? decompressLayerActivation(key) : null;
+
+    let chart = null;
+    if (data) {
+        chart = canvas.dataset.plot === 'histogram'
+            ? (data.histogram ? analysisBuildHistogramChart(canvas, data.histogram) : null)
+            : (data.scatter ? analysisBuildScatterChart(canvas, data.scatter) : null);
+    }
+
+    if (chart) {
+        canvas._analysisChart = chart;
+    } else {
+        // Nothing to plot for this layer (e.g. DataLayer) — say so once and stop retrying
+        canvas.dataset.empty = '1';
+        const box = canvas.parentNode;
+        if (box && !box.querySelector('.analysis-nodata')) {
+            box.insertAdjacentHTML('beforeend', analysisNoDataHtml());
+            canvas.style.display = 'none';
+        }
+    }
+}
+
+function destroyAnalysisPlot(canvas) {
+    if (canvas._analysisChart) {
+        canvas._analysisChart.destroy();
+        canvas._analysisChart = null;
+    }
+}
+
+// Paging is off, so every layer is in the DOM at once. Only charts near the
+// viewport are alive; the rest are torn down to keep memory and redraw cost flat.
+let analysisPlotObserver = null;
+
+function observeAnalysisPlots() {
+    const canvases = document.querySelectorAll('#analysis-table canvas.analysis-mini-chart');
+
+    if (!('IntersectionObserver' in window)) {
+        canvases.forEach(createAnalysisPlot);
+        return;
+    }
+
+    if (!analysisPlotObserver) {
+        // The table body scrolls inside its own container, so observe against it
+        const scrollRoot = document.getElementById('analysis-table-container');
+        analysisPlotObserver = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) createAnalysisPlot(entry.target);
+                else destroyAnalysisPlot(entry.target);
+            });
+        }, { root: scrollRoot || null, rootMargin: '300px 0px' });  // build just before they scroll in
+    }
+
+    canvases.forEach(canvas => analysisPlotObserver.observe(canvas));
 }
 
 // Initialize Cycles Chart (Grouped: Total Layer Cycles and IO Cycles side by side)
@@ -12434,6 +13008,12 @@ function init() {
                         renderMetricsCharts();
                         initPerfSubgraphSelector(); // unified selector wires & re-renders all
                     }, 100);
+                }
+
+                // DataTables cannot measure column widths inside a hidden pane,
+                // so the Analysis table is built the first time the tab is shown.
+                if (targetTab === 'analysis') {
+                    setTimeout(renderAnalysisTable, 100);
                 }
             }, 50);
         });

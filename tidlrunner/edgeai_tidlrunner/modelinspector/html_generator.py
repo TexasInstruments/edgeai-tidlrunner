@@ -66,6 +66,74 @@ def generate_raw_text_from_parameters(layer_index: int, layer_type: str, layer_n
     return "\n".join(lines)
 
 
+def _pair_to_str(value: Any, separator: str = 'x') -> Optional[str]:
+    """Format a [h, w] style parameter as 'HxW'. Returns None if not a usable pair."""
+    if isinstance(value, (list, tuple)) and len(value) >= 2:
+        return f"{value[0]}{separator}{value[1]}"
+    if isinstance(value, (int, float)):
+        return f"{value}{separator}{value}"
+    return None
+
+
+def format_layer_properties(layer_type: str, parameters: Dict[str, Any]) -> str:
+    """Build a compact one-line summary of a TIDL layer's operational parameters.
+
+    Deliberately excludes the layer type and GMACS, which have their own columns in
+    the Analysis table. Returns an empty string when nothing meaningful is available.
+    """
+    if not isinstance(parameters, dict) or not parameters:
+        return ''
+
+    parts = []
+
+    kernel = _pair_to_str(parameters.get('kernelH/W'))
+    if kernel and kernel != '0x0':
+        parts.append(f"kernel: {kernel}")
+
+    num_in = parameters.get('numInChannels')
+    num_out = parameters.get('numOutChannels')
+    if num_in and num_out:
+        parts.append(f"channels: {num_in}->{num_out}")
+    elif parameters.get('numChannels'):
+        parts.append(f"channels: {parameters['numChannels']}")
+    elif parameters.get('numInCols') and parameters.get('numOutCols'):
+        parts.append(f"channels: {parameters['numInCols']}->{parameters['numOutCols']}")
+
+    num_groups = parameters.get('numGroups')
+    if isinstance(num_groups, int) and num_groups > 1:
+        if num_groups == num_in:
+            parts.append("depthwise")
+        else:
+            parts.append(f"groups: {num_groups}")
+
+    stride = _pair_to_str(parameters.get('strideH/W'))
+    if stride and stride != '1x1':
+        parts.append(f"stride: {stride}")
+
+    padding = _pair_to_str(parameters.get('padH/W'), separator=',')
+    if padding and padding != '0,0':
+        parts.append(f"padding: ({padding})")
+
+    dilation = _pair_to_str(parameters.get('dilationH/W'))
+    if dilation and dilation != '1x1':
+        parts.append(f"dilation: {dilation}")
+
+    act_params = parameters.get('actParams')
+    if isinstance(act_params, dict):
+        act_type = act_params.get('actType')
+        if act_type and act_type != 'TIDL_NoAct':
+            parts.append(f"act: {str(act_type).replace('TIDL_', '')}")
+
+    # Non-convolution layer types carry their own descriptive parameters
+    for key, label in (('dataConvertType', 'convert'), ('inLayout', 'in'), ('outLayout', 'out'),
+                       ('poolingtype', 'pool'), ('poolingType', 'pool'), ('eltWiseType', 'eltwise')):
+        value = parameters.get(key)
+        if value not in (None, ''):
+            parts.append(f"{label}: {str(value).replace('TIDL_', '')}")
+
+    return ' | '.join(parts)
+
+
 def build_hierarchical_tree(layer_details: Dict[str, Any], edges: List[Dict]) -> Dict[str, Any]:
     """Build hierarchical tree structure from layer details based on node naming"""
     logger.debug("Building hierarchical tree structure...")
@@ -842,6 +910,7 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
                     'layer_type': layer_type,
                     'layer_name': layer_name,
                     'parameters': tidl_layer.get('parameters', {}),
+                    'properties': format_layer_properties(layer_type, tidl_layer.get('parameters', {})),
                     'macs': 0,
                     'gmacs': tidl_layer.get('gmacs', 0.0),
                     'inputs': tidl_layer.get('inputs', []),
@@ -1400,6 +1469,8 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
     compiled_html = compiled_html.replace('{{OVERVIEW_DATA}}', overview_json)
     compiled_html = compiled_html.replace('{{PERF_AVAILABILITY}}', perf_availability_json)
 
+    _validate_generated_html(compiled_html)
+
     logger.debug(f"\nWriting compiled HTML: {output_path}")
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(compiled_html)
@@ -1411,6 +1482,38 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
     logger.debug(f"  File size: {file_size_mb:.2f} MB")
 
     return json_data
+
+
+def _validate_generated_html(compiled_html: str) -> List[str]:
+    """Sanity-check the compiled HTML before it is written out.
+
+    Reports problems via logger.warning rather than raising, so that a cosmetic
+    template issue never blocks report generation.
+    """
+    import re
+
+    issues = []
+
+    leftover = set(re.findall(r'\{\{[A-Z_]+\}\}', compiled_html))
+    if leftover:
+        issues.append(f"unsubstituted placeholders: {', '.join(sorted(leftover))}")
+
+    for tag in ('script', 'section', 'table'):
+        opened = len(re.findall(r'<' + tag + r'[\s>]', compiled_html))
+        closed = compiled_html.count(f'</{tag}>')
+        if opened != closed:
+            issues.append(f"unbalanced <{tag}> tags: {opened} open vs {closed} close")
+
+    for required_id in ('model-details', 'tidl-model', 'performance', 'analysis', 'analysis-table'):
+        if f'id="{required_id}"' not in compiled_html:
+            issues.append(f"missing required element id: {required_id}")
+
+    if issues:
+        logger.warning("HTML validation reported issues:")
+        for issue in issues:
+            logger.warning(f"  - {issue}")
+
+    return issues
 
 
 def main(json_path, template_path, output_path, activations_json_path=None):
