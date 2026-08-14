@@ -301,3 +301,40 @@ def formatted_nargs(nargs_list, delimiters=(' ', ',')):
     #
     formatted_arg = list(filter(lambda x: x != '', formatted_arg))
     return formatted_arg
+
+
+def _format_yaml_field(v):
+    if not isinstance(v, str):
+        return v
+
+    if v in ('None', 'null'):
+        v = None
+    elif v in ('True', 'true'):
+        v = True
+    elif v in ('False', 'false'):
+        v = False
+
+    return v
+
+
+def _format_yaml_fields(inp):
+    if isinstance(inp, dict):
+        inp = {k: _format_yaml_fields(v) for k, v in inp.items()}
+    elif isinstance(inp, list):
+        inp = [_format_yaml_fields(v) for v in inp]
+    elif isinstance(inp, tuple):
+        inp = tuple([_format_yaml_fields(v) for v in inp])
+    elif isinstance(inp, set):
+        inp = set([_format_yaml_fields(v) for v in inp])
+    else:
+        inp = _format_yaml_field(inp)
+
+    return inp
+
+
+def load_and_format_yaml(file_path):
+    with open(file_path, 'r') as f:
+        yaml_config = yaml.safe_load(f)
+
+    yaml_config = _format_yaml_fields(yaml_config)
+    return yaml_config

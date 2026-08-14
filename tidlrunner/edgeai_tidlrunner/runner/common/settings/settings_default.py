@@ -70,13 +70,14 @@ SETTINGS_DEFAULT['commands.surgery'] = SETTINGS_DEFAULT['common.basic'] | {
     'work_path':                {'dest': 'common.work_path', 'default':'./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'work path'},
     'run_label':                {'dest': 'common.run_label', 'default': '', 'type': str, 'metavar': 'value', 'help': 'run_label to create run_dir'},
     'run_dir':                      {'dest': 'session.run_dir', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'run_dir'},
-    'pipeline_type':                    {'dest': 'common.pipeline_type', 'default': 'optimize', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},    
+    'pipeline_type':                    {'dest': 'common.pipeline_type', 'default': 'optimize', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},
+    'downgrade_onnx_ir_version':        {'dest': 'common.downgrade_onnx_ir_version', 'default': 9, 'type': int, 'metavar': 'value', 'help': 'downgrade ir_version, if the onnx model has higher value (temporary workaround until tidl-onnx-model-optimizer is updated).'},
     'input_optimization':               {'dest': 'session.input_optimization', 'default': False, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32'},
     'input_mean':                       {'dest': 'session.input_mean', 'default': (123.675, 116.28, 103.53), 'type': float, 'nargs': '*', 'metavar': 'value', 'help': 'mean values for input normalization (RGB channels)'},
     'input_scale':                      {'dest': 'session.input_scale', 'default': (0.017125, 0.017507, 0.017429), 'type': float, 'nargs': '*', 'metavar': 'value', 'help': 'scale values for input normalization (RGB channels)'},
-    'enable_model_surgery':                   {'dest': 'model_surgery.enable', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable model surgery optimizations'},
-    'simplify_mode':                   {'dest': 'model_surgery.simplify_mode', 'default': 'pre', 'type': utils.str_or_none_or_bool, 'metavar': 'value', 'help': 'enable model simplification optimizations'},
-    'shape_inference_mode':            {'dest': 'model_surgery.shape_inference_mode', 'default': 'all', 'type': utils.str_or_none_or_bool, 'metavar': 'value', 'help': 'enable shape inference during surgery optimization'},
+    'enable_model_surgery':             {'dest': 'model_surgery.enable', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable model surgery optimizations'},
+    'simplify_mode':                   {'dest': 'model_surgery.simplify_mode', 'default': 'pre', 'type': utils.str_or_none_or_bool, 'metavar': 'value', 'help': 'enable model simplification optimizations. supported values: pre, post, all, None. pre: before surgery, post: after surgery, all: both pre and post, None: disable simplification'},
+    'shape_inference_mode':            {'dest': 'model_surgery.shape_inference_mode', 'default': 'all', 'type': utils.str_or_none_or_bool, 'metavar': 'value', 'help': 'enable shape inference during surgery optimization. supported values: pre, post, all, None. pre: before surgery, post: after surgery, all: both pre and post, None: disable shape inference'},
 }
 
 register_help(

@@ -37,6 +37,7 @@ import re
 
 from .common import bases, utils, pipelines
 from .common.bases.pipeline_base import PipelineBase
+from .common import utils
 
 
 class PipelineManager(PipelineBase):
@@ -95,9 +96,7 @@ class PipelineManager(PipelineBase):
         is_aggregate_config_file = False
         if isinstance(config_path, str):
             if config_path.endswith('.yaml'):
-                with open(config_path) as fp:
-                    kwargs_config = yaml.safe_load(fp)
-                #
+                kwargs_config = utils.load_and_format_yaml(config_path)
                 kwargs_config.pop('command', None)
                 if 'configs' in kwargs_config:
                     configs = kwargs_config.get('configs')
@@ -222,9 +221,7 @@ class PipelineManager(PipelineBase):
                         config_base_path = os.path.dirname(config_path)
                         config_entry = os.path.join(config_base_path, config_entry)
 
-                    with open(config_entry) as fp:
-                        kwargs_cfg = yaml.safe_load(fp)
-  
+                    kwargs_cfg = utils.load_and_format_yaml(config_entry)
                 elif isinstance(config_entry, dict):
                     kwargs_cfg = utils.pretty_object(config_entry)
                 else:
