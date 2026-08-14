@@ -1,14 +1,14 @@
 # Options
 
-These options have a short form that is easy to use on the command line and an
-equivalent long form (the *Config Field*) that can be used in a config file.
-To understand how short options map to structured config fields see the
-**Config Field** column in the tables below.
+## Commandline and configfile options
+* These options have a short form that is easy to use on the commandline and an equivalent long form (the *Config Field*) that can be used in a config file.
+To understand how short options map to the config fields see the **Config Field** column in the tables below.
+* The **Default** column shows the default value for each option.
+* For boolean options, recommended values of flags are 0 or 1. (Other values such as True and False are also accepted, but can cause confusion due to the differences in how they are interpreted by argparse and by yaml loading.)
+* Details and usage of Model Surgery can be seen in [tidl-onnx-model-optimizer](https://github.com/TexasInstruments/edgeai-tidl-tools/blob/master/model-tools/tidl-onnx-model-optimizer/README.md#usage)
+* See [example config files](../../data/configs/) for a a variety of examples.
+* For more details, check [default settings](../edgeai_tidlrunner/runner/common/settings/settings_default.py)
 
-Also see the
-[default settings](../edgeai_tidlrunner/runner/common/settings/settings_default.py)
-where these are defined and the
-[example config files](../../data/configs/).
 
 ## Commands
 
@@ -38,8 +38,8 @@ Inspect model outputs and activation data
 | `--input_mean` | `session.input_mean` | `(123.675, 116.28, 103.53)` | mean values for input normalization (RGB channels) |
 | `--input_scale` | `session.input_scale` | `(0.017125, 0.017507, 0.017429)` | scale values for input normalization (RGB channels) |
 | `--enable_model_surgery` | `model_surgery.enable` | `True` | enable model surgery optimizations |
-| `--simplify_mode` | `model_surgery.simplify_mode` | `pre` | enable model simplification optimizations |
-| `--shape_inference_mode` | `model_surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
+| `--simplify_mode` | `model_surgery.simplify_mode` | `pre` | enable model simplification optimizations. supported values: pre, post, all, None. pre: before surgery, post: after surgery, all: both pre and post, None: disable simplification |
+| `--shape_inference_mode` | `model_surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization. supported values: pre, post, all, None. pre: before surgery, post: after surgery, all: both pre and post, None: disable shape inference |
 | `--task_type` | `common.task_type` | `` | type of AI task (classification, detection, segmentation etc.) |
 | `--task_name` | `common.task_name` | `` | specific name of the task (if any) |
 | `--num_frames` | `common.num_frames` | `1` | number of frames to process for accuracy evaluation |
@@ -131,8 +131,8 @@ Compile models and generate target-specific artifacts
 | `--input_mean` | `session.input_mean` | `(123.675, 116.28, 103.53)` | mean values for input normalization (RGB channels) |
 | `--input_scale` | `session.input_scale` | `(0.017125, 0.017507, 0.017429)` | scale values for input normalization (RGB channels) |
 | `--enable_model_surgery` | `model_surgery.enable` | `True` | enable model surgery optimizations |
-| `--simplify_mode` | `model_surgery.simplify_mode` | `pre` | enable model simplification optimizations |
-| `--shape_inference_mode` | `model_surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
+| `--simplify_mode` | `model_surgery.simplify_mode` | `pre` | enable model simplification optimizations. supported values: pre, post, all, None. pre: before surgery, post: after surgery, all: both pre and post, None: disable simplification |
+| `--shape_inference_mode` | `model_surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization. supported values: pre, post, all, None. pre: before surgery, post: after surgery, all: both pre and post, None: disable shape inference |
 | `--task_type` | `common.task_type` | `` | type of AI task (classification, detection, segmentation etc.) |
 | `--task_name` | `common.task_name` | `` | specific name of the task (if any) |
 | `--num_frames` | `common.num_frames` | `10` | number of frames to process |
@@ -218,8 +218,8 @@ Evaluate model accuracy against ground truth labels
 | `--input_mean` | `session.input_mean` | `(123.675, 116.28, 103.53)` | mean values for input normalization (RGB channels) |
 | `--input_scale` | `session.input_scale` | `(0.017125, 0.017507, 0.017429)` | scale values for input normalization (RGB channels) |
 | `--enable_model_surgery` | `model_surgery.enable` | `True` | enable model surgery optimizations |
-| `--simplify_mode` | `model_surgery.simplify_mode` | `pre` | enable model simplification optimizations |
-| `--shape_inference_mode` | `model_surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
+| `--simplify_mode` | `model_surgery.simplify_mode` | `pre` | enable model simplification optimizations. supported values: pre, post, all, None. pre: before surgery, post: after surgery, all: both pre and post, None: disable simplification |
+| `--shape_inference_mode` | `model_surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization. supported values: pre, post, all, None. pre: before surgery, post: after surgery, all: both pre and post, None: disable shape inference |
 | `--task_type` | `common.task_type` | `` | type of AI task (classification, detection, segmentation etc.) |
 | `--task_name` | `common.task_name` | `` | specific name of the task (if any) |
 | `--num_frames` | `common.num_frames` | `1000` | number of frames to process for accuracy evaluation |
@@ -345,8 +345,8 @@ Run inference using compiled models
 | `--input_mean` | `session.input_mean` | `(123.675, 116.28, 103.53)` | mean values for input normalization (RGB channels) |
 | `--input_scale` | `session.input_scale` | `(0.017125, 0.017507, 0.017429)` | scale values for input normalization (RGB channels) |
 | `--enable_model_surgery` | `model_surgery.enable` | `True` | enable model surgery optimizations |
-| `--simplify_mode` | `model_surgery.simplify_mode` | `pre` | enable model simplification optimizations |
-| `--shape_inference_mode` | `model_surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
+| `--simplify_mode` | `model_surgery.simplify_mode` | `pre` | enable model simplification optimizations. supported values: pre, post, all, None. pre: before surgery, post: after surgery, all: both pre and post, None: disable simplification |
+| `--shape_inference_mode` | `model_surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization. supported values: pre, post, all, None. pre: before surgery, post: after surgery, all: both pre and post, None: disable shape inference |
 | `--task_type` | `common.task_type` | `` | type of AI task (classification, detection, segmentation etc.) |
 | `--task_name` | `common.task_name` | `` | specific name of the task (if any) |
 | `--num_frames` | `common.num_frames` | `10` | number of frames to process |
@@ -436,8 +436,8 @@ Analyze model runtime and layer-level statistics
 | `--input_mean` | `session.input_mean` | `(123.675, 116.28, 103.53)` | mean values for input normalization (RGB channels) |
 | `--input_scale` | `session.input_scale` | `(0.017125, 0.017507, 0.017429)` | scale values for input normalization (RGB channels) |
 | `--enable_model_surgery` | `model_surgery.enable` | `True` | enable model surgery optimizations |
-| `--simplify_mode` | `model_surgery.simplify_mode` | `pre` | enable model simplification optimizations |
-| `--shape_inference_mode` | `model_surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
+| `--simplify_mode` | `model_surgery.simplify_mode` | `pre` | enable model simplification optimizations. supported values: pre, post, all, None. pre: before surgery, post: after surgery, all: both pre and post, None: disable simplification |
+| `--shape_inference_mode` | `model_surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization. supported values: pre, post, all, None. pre: before surgery, post: after surgery, all: both pre and post, None: disable shape inference |
 | `--task_type` | `common.task_type` | `` | type of AI task (classification, detection, segmentation etc.) |
 | `--task_name` | `common.task_name` | `` | specific name of the task (if any) |
 | `--num_frames` | `common.num_frames` | `1` | number of frames to process for accuracy evaluation |
@@ -572,8 +572,8 @@ Run model surgery optimizations on the input model
 | `--input_mean` | `session.input_mean` | `(123.675, 116.28, 103.53)` | mean values for input normalization (RGB channels) |
 | `--input_scale` | `session.input_scale` | `(0.017125, 0.017507, 0.017429)` | scale values for input normalization (RGB channels) |
 | `--enable_model_surgery` | `model_surgery.enable` | `True` | enable model surgery optimizations |
-| `--simplify_mode` | `model_surgery.simplify_mode` | `pre` | enable model simplification optimizations |
-| `--shape_inference_mode` | `model_surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization |
+| `--simplify_mode` | `model_surgery.simplify_mode` | `pre` | enable model simplification optimizations. supported values: pre, post, all, None. pre: before surgery, post: after surgery, all: both pre and post, None: disable simplification |
+| `--shape_inference_mode` | `model_surgery.shape_inference_mode` | `all` | enable shape inference during surgery optimization. supported values: pre, post, all, None. pre: before surgery, post: after surgery, all: both pre and post, None: disable shape inference |
 
 ## Dataloaders
 
