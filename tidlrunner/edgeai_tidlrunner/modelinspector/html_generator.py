@@ -22,6 +22,7 @@ Output:
 import json
 import sys
 import os
+import re
 import gzip
 import base64
 import logging
@@ -75,7 +76,22 @@ def _pair_to_str(value: Any, separator: str = 'x') -> Optional[str]:
     return None
 
 
-def format_layer_properties(layer_type: str, parameters: Dict[str, Any]) -> str:
+def _escape_for_script_block(json_text: str) -> str:
+    """Make a JSON string safe to embed literally inside an HTML <script> block.
+
+    Model-derived strings (layer names, file paths) can contain '</script>', which would
+    terminate the script element early and spill the remaining payload into the document.
+    Escaping '<' as \\u003c is transparent to JSON.parse and to a JS literal, and also
+    neutralises '<!--'. U+2028/U+2029 are valid in JSON but are line terminators in older
+    JS parsers, so they are escaped too.
+    """
+    return (json_text
+            .replace('<', '\\u003c')
+            .replace('\u2028', '\\u2028')
+            .replace('\u2029', '\\u2029'))
+
+
+def format_layer_properties(parameters: Dict[str, Any]) -> str:
     """Build a compact one-line summary of a TIDL layer's operational parameters.
 
     Deliberately excludes the layer type and GMACS, which have their own columns in
@@ -101,7 +117,9 @@ def format_layer_properties(layer_type: str, parameters: Dict[str, Any]) -> str:
 
     num_groups = parameters.get('numGroups')
     if isinstance(num_groups, int) and num_groups > 1:
-        if num_groups == num_in:
+        # A grouped conv is depthwise only when there is one group per input channel.
+        # num_in may be absent, in which case we cannot claim depthwise.
+        if num_in is not None and num_groups == num_in:
             parts.append("depthwise")
         else:
             parts.append(f"groups: {num_groups}")
@@ -910,7 +928,7 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
                     'layer_type': layer_type,
                     'layer_name': layer_name,
                     'parameters': tidl_layer.get('parameters', {}),
-                    'properties': format_layer_properties(layer_type, tidl_layer.get('parameters', {})),
+                    'properties': format_layer_properties(tidl_layer.get('parameters', {})),
                     'macs': 0,
                     'gmacs': tidl_layer.get('gmacs', 0.0),
                     'inputs': tidl_layer.get('inputs', []),
@@ -1457,19 +1475,32 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
         logger.debug(f"  No activation data provided (was --act_data=false used?)")
 
     logger.debug("\nReplacing template placeholders...")
-    compiled_html = template.replace('{{MODEL_DATA}}', model_json)
-    compiled_html = compiled_html.replace('{{SUBGRAPH_DATA}}', subgraph_json)
-    compiled_html = compiled_html.replace('{{TIDL_LAYER_DATA}}', tidl_json)
-    compiled_html = compiled_html.replace('{{ACTIVATION_DATA}}', activation_json)
-    compiled_html = compiled_html.replace('{{METRICS_DATA}}', metrics_json)
-    compiled_html = compiled_html.replace('{{CONFIG_DATA}}', config_json)
-    compiled_html = compiled_html.replace('{{CYCLES_DATA}}', cycles_json)
-    compiled_html = compiled_html.replace('{{MEMORY_DATA}}', memory_json)
-    compiled_html = compiled_html.replace('{{TREE_DATA}}', tree_json)
-    compiled_html = compiled_html.replace('{{OVERVIEW_DATA}}', overview_json)
-    compiled_html = compiled_html.replace('{{PERF_AVAILABILITY}}', perf_availability_json)
+    payloads = {
+        'MODEL_DATA': model_json,
+        'SUBGRAPH_DATA': subgraph_json,
+        'TIDL_LAYER_DATA': tidl_json,
+        'ACTIVATION_DATA': activation_json,
+        'METRICS_DATA': metrics_json,
+        'CONFIG_DATA': config_json,
+        'CYCLES_DATA': cycles_json,
+        'MEMORY_DATA': memory_json,
+        'TREE_DATA': tree_json,
+        'OVERVIEW_DATA': overview_json,
+        'PERF_AVAILABILITY': perf_availability_json,
+    }
 
-    _validate_generated_html(compiled_html)
+    # One pass, so a payload that happens to contain a '{{TOKEN}}' literal is not itself
+    # rewritten by a later substitution.
+    def _substitute(match):
+        return _escape_for_script_block(payloads[match.group(1)])
+
+    compiled_html = re.sub(
+        r'\{\{(' + '|'.join(payloads) + r')\}\}',
+        _substitute,
+        template,
+    )
+
+    _validate_generated_html(compiled_html, template)
 
     logger.debug(f"\nWriting compiled HTML: {output_path}")
     with open(output_path, 'w', encoding='utf-8') as f:
@@ -1484,14 +1515,16 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
     return json_data
 
 
-def _validate_generated_html(compiled_html: str) -> List[str]:
+def _validate_generated_html(compiled_html: str, template: str) -> List[str]:
     """Sanity-check the compiled HTML before it is written out.
+
+    Structural tag balance is checked against the *template*, not the compiled output:
+    the injected JSON contains strings like "<script" inside JS string literals, which
+    would otherwise be miscounted as real markup and produce false warnings.
 
     Reports problems via logger.warning rather than raising, so that a cosmetic
     template issue never blocks report generation.
     """
-    import re
-
     issues = []
 
     leftover = set(re.findall(r'\{\{[A-Z_]+\}\}', compiled_html))
@@ -1499,8 +1532,8 @@ def _validate_generated_html(compiled_html: str) -> List[str]:
         issues.append(f"unsubstituted placeholders: {', '.join(sorted(leftover))}")
 
     for tag in ('script', 'section', 'table'):
-        opened = len(re.findall(r'<' + tag + r'[\s>]', compiled_html))
-        closed = compiled_html.count(f'</{tag}>')
+        opened = len(re.findall(r'<' + tag + r'[\s>]', template))
+        closed = template.count(f'</{tag}>')
         if opened != closed:
             issues.append(f"unbalanced <{tag}> tags: {opened} open vs {closed} close")
 

@@ -465,18 +465,24 @@ class ActivationDataParser:
                 logger.debug(f"    Warning: No finite values available for histogram generation")
                 return {}
 
-            notidl_counts, notidl_edges = np.histogram(notidl_data, bins=100)
-            tidl_counts, tidl_edges = np.histogram(tidl_data, bins=100)
+            # Both series must share one set of bin edges. Binning them independently
+            # puts the two distributions on different x grids, so the overlaid bars in the
+            # report would compare unrelated value ranges.
+            lo = float(min(notidl_data.min(), tidl_data.min()))
+            hi = float(max(notidl_data.max(), tidl_data.max()))
+            if not np.isfinite(lo) or not np.isfinite(hi) or lo == hi:
+                # Degenerate (constant) tensor: widen slightly so np.histogram has a range
+                lo, hi = lo - 0.5, hi + 0.5
 
-            notidl_centers = (notidl_edges[:-1] + notidl_edges[1:]) / 2
-            tidl_centers = (tidl_edges[:-1] + tidl_edges[1:]) / 2
+            edges = np.linspace(lo, hi, 101)
+            notidl_counts, _ = np.histogram(notidl_data, bins=edges)
+            tidl_counts, _ = np.histogram(tidl_data, bins=edges)
 
-            notidl_centers = np.round(notidl_centers, 4)
-            tidl_centers = np.round(tidl_centers, 4)
+            centers = np.round((edges[:-1] + edges[1:]) / 2, 4)
 
-            notidl_centers_list = notidl_centers.tolist()
+            notidl_centers_list = centers.tolist()
             notidl_counts_list = notidl_counts.tolist()
-            tidl_centers_list = tidl_centers.tolist()
+            tidl_centers_list = notidl_centers_list
             tidl_counts_list = tidl_counts.tolist()
 
         except Exception as e:
