@@ -4799,14 +4799,14 @@ main {
                     <table id="analysis-table" class="operator-summary-table">
                         <thead>
                             <tr>
-                                <th>#</th>
-                                <th>Subgraph</th>
-                                <th>Layer Name</th>
-                                <th>Layer Type</th>
-                                <th>Properties</th>
-                                <th>SNR (dB)</th>
-                                <th>Histogram</th>
-                                <th>Scatter Plot</th>
+                                <th scope="col">#</th>
+                                <th scope="col">Subgraph</th>
+                                <th scope="col">Layer Name</th>
+                                <th scope="col">Layer Type</th>
+                                <th scope="col">Properties</th>
+                                <th scope="col">SNR (dB)</th>
+                                <th scope="col">Histogram</th>
+                                <th scope="col">Scatter Plot</th>
                             </tr>
                         </thead>
                         <tbody id="analysis-table-body"></tbody>
@@ -4830,8 +4830,12 @@ function syncThemeIcon() {
 // already on screen need their text/grid colors patched manually on toggle.
 function retintChartsForTheme() {
     if (typeof Chart === 'undefined' || !Chart.instances) return;
-    const textPrimary = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim();
-    const textSecondary = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim();
+    const styles = getComputedStyle(document.documentElement);
+    const textPrimary = styles.getPropertyValue('--text-primary').trim();
+    const textSecondary = styles.getPropertyValue('--text-secondary').trim();
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    // Grid lines are drawn as fixed rgba, so they wash out on the opposite background
+    const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)';
     Object.values(Chart.instances).forEach(chart => {
         try {
             const legendLabels = chart.options?.plugins?.legend?.labels;
@@ -4841,6 +4845,7 @@ function retintChartsForTheme() {
                 Object.values(scales).forEach(scale => {
                     if (scale.ticks) scale.ticks.color = textSecondary;
                     if (scale.title) scale.title.color = textSecondary;
+                    if (scale.grid && scale.grid.display !== false) scale.grid.color = gridColor;
                 });
             }
             chart.update('none');
@@ -5298,6 +5303,12 @@ function analysisEscapeHtml(text) {
     return div.innerHTML;
 }
 
+// analysisEscapeHtml() is not safe for attribute values: textContent leaves quotes
+// untouched, so a layer name containing a double quote would break out of the attribute.
+function analysisEscapeAttr(text) {
+    return analysisEscapeHtml(text).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 // Map of subgraph id -> { tidl_layer_id: snr_db } built once from METRICS_DATA.
 function buildAnalysisSnrLookup() {
     const lookup = {};
@@ -5325,6 +5336,9 @@ function renderAnalysisTable() {
 
     // Guard against "Cannot reinitialise DataTable" if this ever runs twice.
     if (window.jQuery && $.fn.DataTable && $.fn.DataTable.isDataTable('#analysis-table')) {
+        // Tear the charts down first: destroy() discards the rows that own them, which
+        // would otherwise leave orphaned Chart instances and observer registrations.
+        teardownAnalysisPlots();
         $('#analysis-table').DataTable().destroy();
     }
     tbody.innerHTML = '';
@@ -5339,26 +5353,37 @@ function renderAnalysisTable() {
         const sgData = TIDL_LAYER_DATA[sgId] || {};
         const layers = sgData.layers || [];
         const sgSnr = snrLookup[String(sgId)] || {};
-        // Activation data is keyed by numeric subgraph id, e.g. "0_3"
-        const sgNum = String(sgId).replace(/\D+/g, '') || '0';
+        // Activation data is keyed by numeric subgraph id, e.g. "0_3". Take only the
+        // trailing number: stripping every non-digit would map both "subgraph_1_0" and
+        // "subgraph_10" to "10" and cross-wire their plots.
+        const sgNumMatch = String(sgId).match(/(\d+)\s*$/);
+        const sgNum = sgNumMatch ? sgNumMatch[1] : '0';
 
         for (let i = 0; i < layers.length; i++) {
             const layer = layers[i];
             const idx = layer.layer_index;
             const snr = sgSnr[String(idx)];
-            const snrText = (snr === undefined || snr === null) ? 'N/A' : Number(snr).toFixed(1) + ' dB';
+            const hasSnr = !(snr === undefined || snr === null) && isFinite(Number(snr));
+            const snrText = hasSnr ? Number(snr).toFixed(1) + ' dB' : 'N/A';
+            // DataTables sorts on the raw cell text, which would order "9.5 dB" after
+            // "10.2 dB"; data-order gives it the numeric value instead. Missing SNR sinks
+            // to the bottom of an ascending sort rather than mixing in with real values.
+            const snrOrder = hasSnr ? Number(snr) : -1e9;
             const actKey = sgNum + '_' + idx;
+            const layerName = layer.layer_name == null ? '' : String(layer.layer_name);
 
             rowsHtml.push(
                 '<tr>' +
-                '<td>' + (rowCount + 1) + '</td>' +
+                '<td class="analysis-serial"></td>' +
                 '<td>' + analysisEscapeHtml(sgId) + '</td>' +
-                '<td>' + analysisEscapeHtml(layer.layer_name) + '</td>' +
+                '<td>' + analysisEscapeHtml(layerName) + '</td>' +
                 '<td>' + analysisEscapeHtml(String(layer.layer_type).replace('TIDL_', '')) + '</td>' +
                 '<td>' + analysisEscapeHtml(layer.properties || '') + '</td>' +
-                '<td>' + snrText + '</td>' +
-                '<td><div class="analysis-chart-box"><canvas class="analysis-mini-chart" data-plot="histogram" data-key="' + actKey + '"></canvas></div></td>' +
-                '<td><div class="analysis-chart-box"><canvas class="analysis-mini-chart" data-plot="scatter" data-key="' + actKey + '"></canvas></div></td>' +
+                '<td data-order="' + snrOrder + '">' + snrText + '</td>' +
+                '<td><div class="analysis-chart-box"><canvas class="analysis-mini-chart" data-plot="histogram" data-key="' + actKey + '"' +
+                    ' aria-label="Activation histogram for ' + analysisEscapeAttr(layerName) + '" role="img"></canvas></div></td>' +
+                '<td><div class="analysis-chart-box"><canvas class="analysis-mini-chart" data-plot="scatter" data-key="' + actKey + '"' +
+                    ' aria-label="Quantization scatter plot for ' + analysisEscapeAttr(layerName) + '" role="img"></canvas></div></td>' +
                 '</tr>'
             );
             rowCount++;
@@ -5380,15 +5405,29 @@ function renderAnalysisTable() {
             order: [],
             autoWidth: false,
             columnDefs: [
-                { targets: [5, 6, 7], orderable: false }
+                // Only the two chart columns are unsortable; SNR sorts numerically via data-order
+                { targets: [6, 7], orderable: false }
             ]
         });
         // Sorting/filtering re-inserts row elements, so re-check what needs drawing.
-        dt.on('draw', observeAnalysisPlots);
+        dt.on('draw', function() {
+            numberAnalysisRows();
+            observeAnalysisPlots();
+        });
     }
 
+    numberAnalysisRows();
     observeAnalysisPlots();
     analysisTableBuilt = true;
+}
+
+// The serial column reflects what the user is currently looking at, so it is renumbered
+// after every sort/filter rather than baked in at build time.
+function numberAnalysisRows() {
+    const cells = document.querySelectorAll('#analysis-table tbody td.analysis-serial');
+    for (let i = 0; i < cells.length; i++) {
+        cells[i].textContent = String(i + 1);
+    }
 }
 
 // ---- Analysis table plots ----
@@ -5401,7 +5440,42 @@ function analysisNoDataHtml() {
     return '<div class="analysis-nodata"><i class="fas fa-ban"></i><span>No activation data</span></div>';
 }
 
+// Chart colours follow the active theme. Hardcoded greys are invisible on the dark
+// background, so the palette is read from the CSS custom properties at build time and
+// the charts are rebuilt when the theme flips.
+function analysisChartPalette() {
+    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    return {
+        title: dark ? '#e9ecef' : '#495057',
+        tick: dark ? '#adb5bd' : '#6c757d',
+        grid: dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+        diagonal: dark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.35)'
+    };
+}
+
+// Compatibility path for reports whose JSON predates shared histogram binning.
+// The two series were binned independently there, so they sit on different x grids and
+// cannot share one label axis. Redistribute the TIDL counts onto the No-TIDL grid by
+// nearest centre so the overlaid bars compare the same value ranges.
+function analysisAlignHistogramCounts(targetCentres, sourceCentres, sourceCounts) {
+    const aligned = new Array(targetCentres.length).fill(0);
+    if (!targetCentres.length) return aligned;
+
+    const lo = targetCentres[0];
+    const step = targetCentres.length > 1 ? (targetCentres[targetCentres.length - 1] - lo) / (targetCentres.length - 1) : 0;
+
+    for (let i = 0; i < sourceCentres.length; i++) {
+        let idx = step > 0 ? Math.round((sourceCentres[i] - lo) / step) : 0;
+        if (idx < 0) idx = 0;
+        if (idx >= aligned.length) idx = aligned.length - 1;
+        aligned[idx] += sourceCounts[i] || 0;
+    }
+    return aligned;
+}
+
 function analysisBuildHistogramChart(canvas, hist) {
+    if (typeof Chart === 'undefined') return null;
+    const pal = analysisChartPalette();
     let tidlBins = [], tidlCounts = [], notidlBins = [], notidlCounts = [];
     if (hist.tidl_bins && hist.notidl_bins) {
         tidlBins = hist.tidl_bins; tidlCounts = hist.tidl_counts;
@@ -5411,6 +5485,15 @@ function analysisBuildHistogramChart(canvas, hist) {
         notidlBins = hist.notidl.centers || []; notidlCounts = hist.notidl.counts || [];
     }
     if (!notidlBins.length || !tidlBins.length) return null;
+
+    // Both series are drawn against the No-TIDL bin centres, so the TIDL counts must be
+    // on that same grid. Newer data already is; older data needs resampling.
+    let alignedTidlCounts = tidlCounts;
+    if (tidlBins.length !== notidlBins.length ||
+        tidlBins[0] !== notidlBins[0] ||
+        tidlBins[tidlBins.length - 1] !== notidlBins[notidlBins.length - 1]) {
+        alignedTidlCounts = analysisAlignHistogramCounts(notidlBins, tidlBins, tidlCounts);
+    }
 
     return new Chart(canvas, {
         type: 'bar',
@@ -5429,7 +5512,7 @@ function analysisBuildHistogramChart(canvas, hist) {
                 },
                 {
                     label: 'TIDL (INT8)',
-                    data: tidlCounts,
+                    data: alignedTidlCounts,
                     backgroundColor: 'rgba(66, 165, 245, 0.5)',
                     borderColor: 'rgba(21, 101, 192, 0.8)',
                     borderWidth: 1,
@@ -5466,21 +5549,21 @@ function analysisBuildHistogramChart(canvas, hist) {
             scales: {
                 x: {
                     stacked: true,
-                    title: { display: true, text: 'Activation Value', font: { size: 10, weight: '600' }, color: '#495057' },
-                    ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8, font: { size: 9 }, color: '#6c757d' },
+                    title: { display: true, text: 'Activation Value', font: { size: 10, weight: '600' }, color: pal.title },
+                    ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8, font: { size: 9 }, color: pal.tick },
                     grid: { display: false }
                 },
                 y: {
                     type: 'logarithmic',
-                    title: { display: true, text: 'Frequency (log)', font: { size: 10, weight: '600' }, color: '#495057' },
+                    title: { display: true, text: 'Frequency (log)', font: { size: 10, weight: '600' }, color: pal.title },
                     ticks: {
                         callback: function(v) {
                             const log = Math.log10(v);
                             return Math.abs(log - Math.round(log)) < 0.01 ? formatWithPrefix(v) : '';
                         },
-                        maxTicksLimit: 6, font: { size: 9 }, color: '#6c757d'
+                        maxTicksLimit: 6, font: { size: 9 }, color: pal.tick
                     },
-                    grid: { color: 'rgba(0,0,0,0.05)' }
+                    grid: { color: pal.grid }
                 }
             }
         }
@@ -5488,6 +5571,8 @@ function analysisBuildHistogramChart(canvas, hist) {
 }
 
 function analysisBuildScatterChart(canvas, scatter) {
+    if (typeof Chart === 'undefined') return null;
+    const pal = analysisChartPalette();
     let points = [];
     if (scatter.x && scatter.x.length) {
         points = scatter.x.map((v, i) => ({ x: v, y: scatter.y[i] }));
@@ -5526,7 +5611,7 @@ function analysisBuildScatterChart(canvas, scatter) {
                     label: 'y = x',
                     data: [{ x: axMin - range, y: axMin - range }, { x: axMax + range, y: axMax + range }],
                     type: 'line',
-                    borderColor: 'rgba(0, 0, 0, 0.35)',
+                    borderColor: pal.diagonal,
                     borderWidth: 2,
                     borderDash: [6, 4],
                     pointRadius: 0,
@@ -5555,8 +5640,8 @@ function analysisBuildScatterChart(canvas, scatter) {
                             const p = ctx.raw;
                             if (p.error === undefined) return '';
                             return [
-                                `TIDL (INT8): ${p.x.toFixed(5)}`,
-                                `No-TIDL (FP32): ${p.y.toFixed(5)}`,
+                                `No-TIDL (FP32): ${p.x.toFixed(5)}`,
+                                `TIDL (INT8): ${p.y.toFixed(5)}`,
                                 `Abs Error: ${p.error.toFixed(7)}`
                             ];
                         }
@@ -5571,15 +5656,15 @@ function analysisBuildScatterChart(canvas, scatter) {
             scales: {
                 x: {
                     type: 'linear', min: axMin, max: axMax,
-                    title: { display: true, text: 'TIDL (INT8)', font: { size: 10, weight: '600' }, color: '#495057' },
-                    ticks: { callback: v => formatWithPrefix(v), maxTicksLimit: 7, font: { size: 9 }, color: '#6c757d' },
-                    grid: { color: 'rgba(0,0,0,0.04)' }
+                    title: { display: true, text: 'No-TIDL (FP32)', font: { size: 10, weight: '600' }, color: pal.title },
+                    ticks: { callback: v => formatWithPrefix(v), maxTicksLimit: 7, font: { size: 9 }, color: pal.tick },
+                    grid: { color: pal.grid }
                 },
                 y: {
                     type: 'linear', min: axMin, max: axMax,
-                    title: { display: true, text: 'No-TIDL (FP32)', font: { size: 10, weight: '600' }, color: '#495057' },
-                    ticks: { callback: v => formatWithPrefix(v), maxTicksLimit: 6, font: { size: 9 }, color: '#6c757d' },
-                    grid: { color: 'rgba(0,0,0,0.04)' }
+                    title: { display: true, text: 'TIDL (INT8)', font: { size: 10, weight: '600' }, color: pal.title },
+                    ticks: { callback: v => formatWithPrefix(v), maxTicksLimit: 6, font: { size: 9 }, color: pal.tick },
+                    grid: { color: pal.grid }
                 }
             }
         }
@@ -5645,6 +5730,33 @@ function observeAnalysisPlots() {
 
     canvases.forEach(canvas => analysisPlotObserver.observe(canvas));
 }
+
+// Drop every live chart and stop observing. Used before a rebuild and by the theme
+// toggle, which needs the charts recreated to pick up the new palette.
+function teardownAnalysisPlots() {
+    document.querySelectorAll('#analysis-table canvas.analysis-mini-chart')
+        .forEach(destroyAnalysisPlot);
+    if (analysisPlotObserver) {
+        analysisPlotObserver.disconnect();
+        analysisPlotObserver = null;
+    }
+}
+
+// Chart.js bakes the palette in at construction time. Charts already on screen are
+// handled by retintChartsForTheme(); analysisChartPalette() covers the ones built later.
+
+// The charts are responsive, but Chart.js only re-measures on its own resize events;
+// a window resize while the tab is open can leave them at a stale size.
+let analysisResizeTimer = null;
+window.addEventListener('resize', function() {
+    if (!analysisTableBuilt) return;
+    clearTimeout(analysisResizeTimer);
+    analysisResizeTimer = setTimeout(function() {
+        document.querySelectorAll('#analysis-table canvas.analysis-mini-chart').forEach(function(canvas) {
+            if (canvas._analysisChart) canvas._analysisChart.resize();
+        });
+    }, 150);
+});
 
 // Initialize Cycles Chart (Grouped: Total Layer Cycles and IO Cycles side by side)
 let cyclesChart = null;
@@ -6053,21 +6165,25 @@ console.log('=== [V5] ACTIVATION DATA LOADED ===\n');
  * @returns {Object|null} Decompressed layer activation data or null
  */
 function decompressLayerActivation(layerKey) {
+    // The Analysis tab calls this for every layer scrolled into view, so the per-call
+    // tracing is opt-in. Set window.MI_DEBUG_ACTIVATION = true in the console to enable.
+    const trace = window.MI_DEBUG_ACTIVATION === true;
+
     // Check cache first
     if (ACTIVATION_DATA_CACHE[layerKey]) {
-        console.log(`[V5] Using cached activation data for layer ${layerKey}`);
+        if (trace) console.log(`[V5] Using cached activation data for layer ${layerKey}`);
         return ACTIVATION_DATA_CACHE[layerKey];
     }
 
     // Check if compressed data exists
     const compressedBase64 = ACTIVATION_DATA_COMPRESSED[layerKey];
     if (!compressedBase64) {
-        console.warn(`[V5] No activation data for layer ${layerKey}`);
+        if (trace) console.warn(`[V5] No activation data for layer ${layerKey}`);
         return null;
     }
 
     try {
-        console.log(`[V5] Decompressing activation data for layer ${layerKey}...`);
+        if (trace) console.log(`[V5] Decompressing activation data for layer ${layerKey}...`);
         const startTime = performance.now();
 
         // Decode base64 to binary string
@@ -6096,7 +6212,7 @@ function decompressLayerActivation(layerKey) {
         ACTIVATION_DATA_CACHE[layerKey] = layerData;
 
         const endTime = performance.now();
-        console.log(`[V5] Layer ${layerKey} decompressed successfully in ${(endTime - startTime).toFixed(2)}ms`);
+        if (trace) console.log(`[V5] Layer ${layerKey} decompressed successfully in ${(endTime - startTime).toFixed(2)}ms`);
 
         return layerData;
 
@@ -7372,10 +7488,10 @@ function renderChartJSScatter(nodeIndex, scatterData) {
 
     const ctx = canvas.getContext('2d');
 
-    // Prepare scatter data points: {x: TIDL (INT8), y: No-TIDL (FP32)}
+    // Prepare scatter data points: {x: No-TIDL (FP32) reference, y: TIDL (INT8)}
     const allPoints = scatterData.points.map(p => ({
-        x: p.x,  // TIDL (INT8)
-        y: p.y,  // No-TIDL (FP32)
+        x: p.x,  // No-TIDL (FP32)
+        y: p.y,  // TIDL (INT8)
         error: Math.abs(p.y - p.x)
     }));
 
@@ -7467,8 +7583,8 @@ function renderChartJSScatter(nodeIndex, scatterData) {
                         label: function(context) {
                             const point = context.raw;
                             return [
-                                `TIDL (INT8):  ${point.x.toFixed(5)}`,
-                                `No-TIDL (FP32): ${point.y.toFixed(5)}`,
+                                `No-TIDL (FP32): ${point.x.toFixed(5)}`,
+                                `TIDL (INT8):  ${point.y.toFixed(5)}`,
                                 `Abs Error:     ${point.error.toFixed(7)}`
                             ];
                         }
@@ -7535,7 +7651,7 @@ function renderChartJSScatter(nodeIndex, scatterData) {
                     max: scatterData.axis.max,
                     title: {
                         display: true,
-                        text: 'TIDL (INT8)',
+                        text: 'No-TIDL (FP32)',
                         font: { size: 12, weight: '600' },
                         color: '#495057',
                         padding: { top: 8 }
@@ -7558,7 +7674,7 @@ function renderChartJSScatter(nodeIndex, scatterData) {
                     max: scatterData.axis.max,
                     title: {
                         display: true,
-                        text: 'No-TIDL (FP32)',
+                        text: 'TIDL (INT8)',
                         font: { size: 12, weight: '600' },
                         color: '#495057',
                         padding: { bottom: 8 }
@@ -11139,8 +11255,8 @@ function renderActivationPlots(nodeIndex, subgraphId, dataKeyIndex) {
                                     const p = ctx.raw;
                                     if (p.error === undefined) return '';
                                     return [
-                                        `TIDL (INT8): ${p.x.toFixed(5)}`,
-                                        `No-TIDL (FP32): ${p.y.toFixed(5)}`,
+                                        `No-TIDL (FP32): ${p.x.toFixed(5)}`,
+                                        `TIDL (INT8): ${p.y.toFixed(5)}`,
                                         `Abs Error: ${p.error.toFixed(7)}`
                                     ];
                                 }
@@ -11177,7 +11293,7 @@ function renderActivationPlots(nodeIndex, subgraphId, dataKeyIndex) {
                             type: 'linear',
                             min: axMin,
                             max: axMax,
-                            title: { display: true, text: 'TIDL (INT8)', font: { size: 11, weight: '600' }, color: '#495057' },
+                            title: { display: true, text: 'No-TIDL (FP32)', font: { size: 11, weight: '600' }, color: '#495057' },
                             ticks: { callback: function(v) { return formatWithPrefix(v); }, font: { size: 10 }, color: '#6c757d' },
                             grid: { color: 'rgba(0,0,0,0.04)' }
                         },
@@ -11185,7 +11301,7 @@ function renderActivationPlots(nodeIndex, subgraphId, dataKeyIndex) {
                             type: 'linear',
                             min: axMin,
                             max: axMax,
-                            title: { display: true, text: 'No-TIDL (FP32)', font: { size: 11, weight: '600' }, color: '#495057' },
+                            title: { display: true, text: 'TIDL (INT8)', font: { size: 11, weight: '600' }, color: '#495057' },
                             ticks: { callback: function(v) { return formatWithPrefix(v); }, font: { size: 10 }, color: '#6c757d' },
                             grid: { color: 'rgba(0,0,0,0.04)' }
                         }
@@ -11373,7 +11489,7 @@ function renderD3Scatter(containerId, scatterData) {
                 .style('pointer-events', 'none')
                 .style('z-index', '10000')
                 .style('border', '1px solid #ff9800')
-                .html(`<b>TIDL (INT8):</b> ${d.x.toFixed(4)}<br><b>No-TIDL (FP32):</b> ${d.y.toFixed(4)}<br><b>Error:</b> ${Math.abs(d.y - d.x).toFixed(6)}`);
+                .html(`<b>No-TIDL (FP32):</b> ${d.x.toFixed(4)}<br><b>TIDL (INT8):</b> ${d.y.toFixed(4)}<br><b>Error:</b> ${Math.abs(d.y - d.x).toFixed(6)}`);
 
             tooltip.style('left', (event.pageX + 10) + 'px')
                    .style('top', (event.pageY - 28) + 'px');
