@@ -555,6 +555,40 @@ class DetectionFilter():
         return bbox, info_dict
 
 
+class DetectionNMS():
+    """Per-class IoU NMS. Expects bbox rows: [x1, y1, x2, y2, class_id, score]."""
+    def __init__(self, nms_threshold=0.45):
+        self.nms_threshold = nms_threshold
+
+    def __call__(self, bbox, info_dict):
+        if bbox.shape[0] == 0:
+            return bbox, info_dict
+        keep = []
+        for cls_id in np.unique(bbox[:, 4]):
+            mask = bbox[:, 4] == cls_id
+            cls_boxes = bbox[mask]
+            order = cls_boxes[:, 5].argsort()[::-1]
+            cls_boxes = cls_boxes[order]
+            suppressed = np.zeros(len(cls_boxes), dtype=bool)
+            for i in range(len(cls_boxes)):
+                if suppressed[i]:
+                    continue
+                keep.append(cls_boxes[i])
+                ix1, iy1, ix2, iy2 = cls_boxes[i, :4]
+                for j in range(i + 1, len(cls_boxes)):
+                    if suppressed[j]:
+                        continue
+                    jx1, jy1, jx2, jy2 = cls_boxes[j, :4]
+                    inter_x1 = max(ix1, jx1); inter_y1 = max(iy1, jy1)
+                    inter_x2 = min(ix2, jx2); inter_y2 = min(iy2, jy2)
+                    inter = max(0.0, inter_x2 - inter_x1) * max(0.0, inter_y2 - inter_y1)
+                    union = (ix2 - ix1) * (iy2 - iy1) + (jx2 - jx1) * (jy2 - jy1) - inter
+                    if union > 0 and inter / union > self.nms_threshold:
+                        suppressed[j] = True
+        bbox = np.stack(keep, axis=0) if keep else bbox[:0]
+        return bbox, info_dict
+
+
 class LogitsToLabelScore():
     def __init__(self, scores_index=0, bbox_index=1, objectness_index=None, background_class_id=None, score_fn='softmax', model_output_type=None):
         '''
