@@ -113,6 +113,8 @@ def upgrade_kwargs(**kwargs):
         kwargs_out['common.dataset_type_dict'] = None
         kwargs_out['session.runtime_options.object_detection:confidence_threshold'] = 0.05
         kwargs_out['session.runtime_options.object_detection:top_k'] = 500
+        kwargs_out['postprocess.detection_threshold'] = 0.05
+        kwargs_out['postprocess.detection_top_k'] = 500
     #
 
     if kwargs_out.get('session.name', None) is None:
