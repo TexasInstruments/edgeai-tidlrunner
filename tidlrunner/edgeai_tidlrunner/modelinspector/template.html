@@ -4682,7 +4682,7 @@ main {
                     <!-- Metrics Graph Section -->
                     <div class="metrics-graph-section" style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid rgba(128, 128, 128, 0.1);">
                         <div class="perf-chart-header">
-                            <h3 title="Quantization accuracy analysis — compares FP32 vs INT8 layer outputs. Higher values indicate more quantization error. Layers with high error may need higher precision or deny-listing.">Metrics Graph</h3>
+                            <h3 title="Quantization accuracy analysis — compares FP32 vs quantized layer outputs. Higher values indicate more quantization error. Layers with high error may need higher precision or deny-listing.">Metrics Graph</h3>
                             <div class="perf-chart-controls">
                                 <select id="metric-selector" class="perf-select" title="SNR = Signal-to-Quantization-Noise Ratio (higher is better). Mean/Median/Max = absolute difference metrics.">
                                     <option value="snr_db" selected>SNR (dB)</option>
@@ -5371,6 +5371,7 @@ function renderAnalysisTable() {
             const snrOrder = hasSnr ? Number(snr) : -1e9;
             const actKey = sgNum + '_' + idx;
             const layerName = layer.layer_name == null ? '' : String(layer.layer_name);
+            const tensorBits = (layer.tensor_bits === undefined || layer.tensor_bits === null) ? '' : String(layer.tensor_bits);
 
             rowsHtml.push(
                 '<tr>' +
@@ -5380,9 +5381,9 @@ function renderAnalysisTable() {
                 '<td>' + analysisEscapeHtml(String(layer.layer_type).replace('TIDL_', '')) + '</td>' +
                 '<td>' + analysisEscapeHtml(layer.properties || '') + '</td>' +
                 '<td data-order="' + snrOrder + '">' + snrText + '</td>' +
-                '<td><div class="analysis-chart-box"><canvas class="analysis-mini-chart" data-plot="histogram" data-key="' + actKey + '"' +
+                '<td><div class="analysis-chart-box"><canvas class="analysis-mini-chart" data-plot="histogram" data-key="' + actKey + '" data-bits="' + tensorBits + '"' +
                     ' aria-label="Activation histogram for ' + analysisEscapeAttr(layerName) + '" role="img"></canvas></div></td>' +
-                '<td><div class="analysis-chart-box"><canvas class="analysis-mini-chart" data-plot="scatter" data-key="' + actKey + '"' +
+                '<td><div class="analysis-chart-box"><canvas class="analysis-mini-chart" data-plot="scatter" data-key="' + actKey + '" data-bits="' + tensorBits + '"' +
                     ' aria-label="Quantization scatter plot for ' + analysisEscapeAttr(layerName) + '" role="img"></canvas></div></td>' +
                 '</tr>'
             );
@@ -5473,9 +5474,10 @@ function analysisAlignHistogramCounts(targetCentres, sourceCentres, sourceCounts
     return aligned;
 }
 
-function analysisBuildHistogramChart(canvas, hist) {
+function analysisBuildHistogramChart(canvas, hist, bits) {
     if (typeof Chart === 'undefined') return null;
     const pal = analysisChartPalette();
+    const tidlLabel = 'TIDL (' + (bits || 8) + ' bits)';
     let tidlBins = [], tidlCounts = [], notidlBins = [], notidlCounts = [];
     if (hist.tidl_bins && hist.notidl_bins) {
         tidlBins = hist.tidl_bins; tidlCounts = hist.tidl_counts;
@@ -5511,7 +5513,7 @@ function analysisBuildHistogramChart(canvas, hist) {
                     categoryPercentage: 1.0
                 },
                 {
-                    label: 'TIDL (INT8)',
+                    label: tidlLabel,
                     data: alignedTidlCounts,
                     backgroundColor: 'rgba(66, 165, 245, 0.5)',
                     borderColor: 'rgba(21, 101, 192, 0.8)',
@@ -5570,9 +5572,10 @@ function analysisBuildHistogramChart(canvas, hist) {
     });
 }
 
-function analysisBuildScatterChart(canvas, scatter) {
+function analysisBuildScatterChart(canvas, scatter, bits) {
     if (typeof Chart === 'undefined') return null;
     const pal = analysisChartPalette();
+    const tidlLabel = 'TIDL (' + (bits || 8) + ' bits)';
     let points = [];
     if (scatter.x && scatter.x.length) {
         points = scatter.x.map((v, i) => ({ x: v, y: scatter.y[i] }));
@@ -5641,7 +5644,7 @@ function analysisBuildScatterChart(canvas, scatter) {
                             if (p.error === undefined) return '';
                             return [
                                 `No-TIDL (FP32): ${p.x.toFixed(5)}`,
-                                `TIDL (INT8): ${p.y.toFixed(5)}`,
+                                `${tidlLabel}: ${p.y.toFixed(5)}`,
                                 `Abs Error: ${p.error.toFixed(7)}`
                             ];
                         }
@@ -5662,7 +5665,7 @@ function analysisBuildScatterChart(canvas, scatter) {
                 },
                 y: {
                     type: 'linear', min: axMin, max: axMax,
-                    title: { display: true, text: 'TIDL (INT8)', font: { size: 10, weight: '600' }, color: pal.title },
+                    title: { display: true, text: tidlLabel, font: { size: 10, weight: '600' }, color: pal.title },
                     ticks: { callback: v => formatWithPrefix(v), maxTicksLimit: 6, font: { size: 9 }, color: pal.tick },
                     grid: { color: pal.grid }
                 }
@@ -5675,14 +5678,15 @@ function createAnalysisPlot(canvas) {
     if (canvas._analysisChart || canvas.dataset.empty === '1') return;
 
     const key = canvas.dataset.key;
+    const bits = canvas.dataset.bits ? Number(canvas.dataset.bits) : null;
     const data = (typeof ACTIVATION_DATA_COMPRESSED !== 'undefined' && ACTIVATION_DATA_COMPRESSED[key])
         ? decompressLayerActivation(key) : null;
 
     let chart = null;
     if (data) {
         chart = canvas.dataset.plot === 'histogram'
-            ? (data.histogram ? analysisBuildHistogramChart(canvas, data.histogram) : null)
-            : (data.scatter ? analysisBuildScatterChart(canvas, data.scatter) : null);
+            ? (data.histogram ? analysisBuildHistogramChart(canvas, data.histogram, bits) : null)
+            : (data.scatter ? analysisBuildScatterChart(canvas, data.scatter, bits) : null);
     }
 
     if (chart) {
@@ -7468,8 +7472,9 @@ function calculateScatterStats(points) {
  * @param {number} nodeIndex - Node index
  * @param {Object} scatterData - Scatter data with points, diagonal, axis, and stats
  */
-function renderChartJSScatter(nodeIndex, scatterData) {
+function renderChartJSScatter(nodeIndex, scatterData, tensorBits) {
     const startTime = performance.now();
+    const tidlLabel = 'TIDL (' + (tensorBits || 8) + ' bits)';
     console.log(`[Scatter] Rendering activation scatter for node ${nodeIndex}`);
 
     const canvasId = `activation-scatter-${nodeIndex}`;
@@ -7488,10 +7493,10 @@ function renderChartJSScatter(nodeIndex, scatterData) {
 
     const ctx = canvas.getContext('2d');
 
-    // Prepare scatter data points: {x: No-TIDL (FP32) reference, y: TIDL (INT8)}
+    // Prepare scatter data points: {x: No-TIDL (FP32) reference, y: TIDL (quantized)}
     const allPoints = scatterData.points.map(p => ({
         x: p.x,  // No-TIDL (FP32)
-        y: p.y,  // TIDL (INT8)
+        y: p.y,  // TIDL (quantized)
         error: Math.abs(p.y - p.x)
     }));
 
@@ -7584,7 +7589,7 @@ function renderChartJSScatter(nodeIndex, scatterData) {
                             const point = context.raw;
                             return [
                                 `No-TIDL (FP32): ${point.x.toFixed(5)}`,
-                                `TIDL (INT8):  ${point.y.toFixed(5)}`,
+                                `${tidlLabel}:  ${point.y.toFixed(5)}`,
                                 `Abs Error:     ${point.error.toFixed(7)}`
                             ];
                         }
@@ -7674,7 +7679,7 @@ function renderChartJSScatter(nodeIndex, scatterData) {
                     max: scatterData.axis.max,
                     title: {
                         display: true,
-                        text: 'TIDL (INT8)',
+                        text: tidlLabel,
                         font: { size: 12, weight: '600' },
                         color: '#495057',
                         padding: { bottom: 8 }
@@ -10402,7 +10407,7 @@ class Graph {
                     if (!skipTypes.includes(node.layer_type)) {
                         // Key: {sgNum}_{layer_index} — same as stored in ACTIVATION_DATA_COMPRESSED
                         const sgNum = parseInt(String(this.currentSubgraph).replace(/\D+/g, '')) || 0;
-                        renderActivationPlots(node.index, sgNum, node.index);
+                        renderActivationPlots(node.index, sgNum, node.index, node.tensor_bits);
                     }
                 }
             }, 100);
@@ -10971,10 +10976,11 @@ let plotResizeObserver = null;
  * @param {number} nodeIndex - ONNX node index (not TIDL layer index!)
  * @param {number} subgraphId - Subgraph index
  */
-function renderActivationPlots(nodeIndex, subgraphId, dataKeyIndex) {
+function renderActivationPlots(nodeIndex, subgraphId, dataKeyIndex, tensorBits) {
     // nodeIndex = TIDL node index (for canvas element IDs)
     // dataKeyIndex = ONNX node index (for activation data lookup), defaults to nodeIndex
     const lookupIdx = dataKeyIndex !== undefined ? dataKeyIndex : nodeIndex;
+    const tidlLabel = 'TIDL (' + (tensorBits || 8) + ' bits)';
 
     if (typeof ACTIVATION_DATA_COMPRESSED === 'undefined') return;
 
@@ -11078,7 +11084,7 @@ function renderActivationPlots(nodeIndex, subgraphId, dataKeyIndex) {
                             categoryPercentage: 1.0
                         },
                         {
-                            label: 'TIDL (INT8)',
+                            label: tidlLabel,
                             data: tidlCounts,
                             backgroundColor: 'rgba(66, 165, 245, 0.5)',
                             borderColor: 'rgba(21, 101, 192, 0.8)',
@@ -11256,7 +11262,7 @@ function renderActivationPlots(nodeIndex, subgraphId, dataKeyIndex) {
                                     if (p.error === undefined) return '';
                                     return [
                                         `No-TIDL (FP32): ${p.x.toFixed(5)}`,
-                                        `TIDL (INT8): ${p.y.toFixed(5)}`,
+                                        `${tidlLabel}: ${p.y.toFixed(5)}`,
                                         `Abs Error: ${p.error.toFixed(7)}`
                                     ];
                                 }
@@ -11301,7 +11307,7 @@ function renderActivationPlots(nodeIndex, subgraphId, dataKeyIndex) {
                             type: 'linear',
                             min: axMin,
                             max: axMax,
-                            title: { display: true, text: 'TIDL (INT8)', font: { size: 11, weight: '600' }, color: '#495057' },
+                            title: { display: true, text: tidlLabel, font: { size: 11, weight: '600' }, color: '#495057' },
                             ticks: { callback: function(v) { return formatWithPrefix(v); }, font: { size: 10 }, color: '#6c757d' },
                             grid: { color: 'rgba(0,0,0,0.04)' }
                         }
@@ -11318,9 +11324,10 @@ function renderActivationPlots(nodeIndex, subgraphId, dataKeyIndex) {
  * @param {string} containerId - Container element ID
  * @param {Object} scatterData - Scatter data with points, diagonal, axis, and stats
  */
-function renderD3Scatter(containerId, scatterData) {
+function renderD3Scatter(containerId, scatterData, tensorBits) {
     const container = document.getElementById(containerId);
     if (!container) return;
+    const tidlLabel = 'TIDL (' + (tensorBits || 8) + ' bits)';
 
     // Dimensions
     const margin = {top: 80, right: 90, bottom: 60, left: 70};
@@ -11489,7 +11496,7 @@ function renderD3Scatter(containerId, scatterData) {
                 .style('pointer-events', 'none')
                 .style('z-index', '10000')
                 .style('border', '1px solid #ff9800')
-                .html(`<b>No-TIDL (FP32):</b> ${d.x.toFixed(4)}<br><b>TIDL (INT8):</b> ${d.y.toFixed(4)}<br><b>Error:</b> ${Math.abs(d.y - d.x).toFixed(6)}`);
+                .html(`<b>No-TIDL (FP32):</b> ${d.x.toFixed(4)}<br><b>${tidlLabel}:</b> ${d.y.toFixed(4)}<br><b>Error:</b> ${Math.abs(d.y - d.x).toFixed(6)}`);
 
             tooltip.style('left', (event.pageX + 10) + 'px')
                    .style('top', (event.pageY - 28) + 'px');
@@ -11593,7 +11600,7 @@ function renderD3Scatter(containerId, scatterData) {
         .attr('text-anchor', 'middle')
         .style('font-size', '14px')
         .style('fill', '#fff')
-        .text('TIDL (INT8)');
+        .text('No-TIDL (FP32)');
 
     // Y-axis label
     svg.append('text')
@@ -11603,7 +11610,7 @@ function renderD3Scatter(containerId, scatterData) {
         .attr('text-anchor', 'middle')
         .style('font-size', '14px')
         .style('fill', '#fff')
-        .text('No-TIDL (FP32)');
+        .text(tidlLabel);
 
     // Stats annotation
     const stats = scatterData.stats;

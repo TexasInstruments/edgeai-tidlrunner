@@ -1376,6 +1376,12 @@ class TIDLSubgraphParser:
         if 'numOutChannels' in params:
             layer_info['numOutChannels'] = params['numOutChannels']
 
+        if 'weightsElementSizeInBits' in params:
+            try:
+                layer_info['tensor_bits'] = int(params['weightsElementSizeInBits'])
+            except (ValueError, TypeError):
+                layer_info['tensor_bits'] = None
+
         return layer_info
 
     def _extract_graph_structure(self, soup, layers, subgraph_id=0) -> Tuple[List[Dict], List[Dict]]:
@@ -2793,7 +2799,7 @@ def discover_files_from_workdir(model_dir_path: str) -> Dict[str, str]:
     else:
         logger.debug("[NOT FOUND] ONNX model not found")
 
-    graphviz_files = glob.glob(os.path.join(model_dir_path, 'artifacts/tempDir/graphvizInfo.txt'), recursive=False)
+    graphviz_files = glob.glob(os.path.join(model_dir_path, '*/artifacts/tempDir/graphvizInfo.txt'), recursive=False)
     if graphviz_files:
         discovered['graphviz'] = graphviz_files[0]
         logger.debug(f"[FOUND] graphvizInfo: {os.path.relpath(discovered['graphviz'])}")
@@ -3505,29 +3511,6 @@ def load_memory_data(model_dir_path: str) -> Dict[int, List[Dict[str, Any]]]:
 
 def main(work_dirs_path, output_json_path, extract_activations=False):
     """Main function to extract all artifact data to JSON"""
-    if len(sys.argv) < 3:
-        logger.debug("=" * 70)
-        logger.debug("Data Extractor - Extract TIDL Artifacts to JSON")
-        logger.debug("=" * 70)
-        logger.debug("\nUsage: python data_extractor.py <model_dir/> <output.json> [--act_data=false]")
-        logger.debug("\nArguments:")
-        logger.debug("  model_dir/   - Direct path to model directory (e.g., work_dirs/compile/AM69A/cl_onnx_model_name/)")
-        logger.debug("  output.json  - Output JSON file path (will be compressed)")
-        logger.debug("  --act_data   - Extract activations data to separate file (enabled by default, use --act_data=false to disable)")
-        logger.debug("\nExample:")
-        logger.debug("  python data_extractor.py work_dirs/compile/AM69A/cl-ort-resnet18/ model_data.json")
-        logger.debug("  python data_extractor.py work_dirs/compile/AM69A/cl-ort-resnet18/ model_data.json --act_data=false")
-        logger.debug("\nThe script will automatically discover and parse:")
-        logger.debug("  - ONNX model from <model_dir>/model/*.onnx")
-        logger.debug("  - GraphViz info from <model_dir>/artifacts/tempDir/graphvizInfo.txt")
-        logger.debug("  - Subgraph files from <model_dir>/artifacts/tempDir/")
-        logger.debug("  - Metrics from <model_dir>/analyze.xlsx")
-        logger.debug("  - Activation data from layer_info.txt and binary files (enabled by default)")
-        logger.debug("  - Config/Result from <model_dir>/tidl/*.yaml")
-        logger.debug("  - Performance data from <model_dir>/tidl/artifacts/tempDir/**/*.csv")
-        logger.debug("=" * 70)
-        sys.exit(1)
-
     # Use the function parameters (passed when called programmatically)
     model_dir_path = work_dirs_path
     # output_json_path already set from parameter
@@ -3871,6 +3854,7 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
                     'layer_id': layer_idx,
                     'layer_type': layer['layer_type'],
                     'layer_name': layer['layer_name'],
+                    'tensor_bits': layer.get('tensor_bits'),
                     'onnx_mapping': {
                         'onnx_node_indices': onnx_indices,
                         'onnx_node_names': onnx_names,
@@ -4125,6 +4109,19 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
             for idx, name in enumerate(onnx_layer_names)
         }
 
+        # Nodes explicitly excluded by the user's own deny list are genuinely
+        # ARM — unlike a "will be delegated in post-processing" node (the
+        # motivating case for the forward-fill below, e.g. NMS absorbed into
+        # a detection-output layer), a deny-listed node was never a candidate
+        # for hardware delegation at all. Without this exclusion the forward
+        # walk below treats "sits between two TIDL-owned nodes" the same as
+        # "hardware absorbed this op", incorrectly claiming a deny-listed
+        # node into whatever TIDL layer happens to be downstream.
+        deny_listed_names = {
+            name for idx, name in enumerate(onnx_layer_names)
+            if 'deny list' in (node_support_by_idx.get(idx, {}).get('diagInfo') or '').lower()
+        }
+
         owned_onnx_nodes = set()
         for tidl_subgraph in enhanced_tidl_data.values():
             for layer in tidl_subgraph.get('layers', []):
@@ -4155,6 +4152,8 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
                             continue
                         if nxt in compiler_claimed_tvm_nodes:
                             continue  # belongs to a tvmgen_* subgraph — don't cross the seam
+                        if nxt in deny_listed_names:
+                            continue  # explicitly excluded by the user — genuinely ARM
                         tag = name_to_tidl_subgraph.get(nxt)
                         if tag and tag != f'tidl_{subgraph_id}':
                             continue  # belongs to a different tidl_N subgraph — don't cross the seam
