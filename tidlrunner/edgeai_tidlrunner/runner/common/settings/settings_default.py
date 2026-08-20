@@ -155,11 +155,11 @@ SETTINGS_DEFAULT['commands.compile'] = SETTINGS_DEFAULT['common.basic'] | SETTIN
     # runtime_settings.runtime_options.object_detection
     'meta_arch_type':           {'dest': 'session.runtime_options.object_detection:meta_arch_type', 'default': argparse.SUPPRESS, 'type': int, 'metavar': 'value', 'help': 'meta architecture type for object detection'},
     'meta_arch_file_path':      {'dest': 'session.runtime_options.object_detection:meta_layers_names_list', 'default': argparse.SUPPRESS, 'type': str, 'metavar': 'value', 'help': 'path to meta architecture file'},
-    # defined under postprocess and copied to runtime_options.object_detection using COPY_SETTINGS_DEFAULT
-    # 'detection_threshold':      {'dest': 'session.runtime_options.object_detection:confidence_threshold', 'default': 0.3, 'type': float, 'metavar': 'value', 'help': 'confidence threshold for object detection'},
-    # 'detection_top_k':          {'dest': 'session.runtime_options.object_detection:top_k', 'default': 200, 'type': int, 'metavar': 'value', 'help': 'number of top detections to keep before NMS'},
-    # 'nms_threshold':            {'dest': 'session.runtime_options.object_detection:nms_threshold', 'default': 0.45, 'type': float, 'metavar': 'value', 'help': 'NMS threshold for object detection'},    
-    # 'keep_top_k':               {'dest': 'session.runtime_options.object_detection:keep_top_k', 'default': 200, 'type': int, 'metavar': 'value', 'help': 'number of top detections to keep after NMS'},   
+    # TODO: revisit, as these are also defined under postprocess
+    'runtime_detection_threshold':      {'dest': 'session.runtime_options.object_detection:confidence_threshold', 'default': 0.3, 'type': float, 'metavar': 'value', 'help': 'confidence threshold for object detection'},
+    'runtime_detection_top_k':          {'dest': 'session.runtime_options.object_detection:top_k', 'default': 200, 'type': int, 'metavar': 'value', 'help': 'number of top detections to keep before NMS'},
+    'runtime_detection_nms_threshold':  {'dest': 'session.runtime_options.object_detection:nms_threshold', 'default': 0.45, 'type': float, 'metavar': 'value', 'help': 'NMS threshold for object detection'},    
+    'runtime_detection_keep_top_k':     {'dest': 'session.runtime_options.object_detection:keep_top_k', 'default': 200, 'type': int, 'metavar': 'value', 'help': 'number of top detections to keep after NMS'},   
     # runtime_settings.runtime_options as a dict
     'runtime_options_dict':     {'dest': 'session.runtime_options_dict', 'default': None, 'type': utils.str_to_literal, 'metavar': 'value', 'help': 'runtime_options as a dict. example: "{"advanced_options:enable_shape_folding:0"}"'},        
     # preprocess
@@ -176,10 +176,11 @@ SETTINGS_DEFAULT['commands.compile'] = SETTINGS_DEFAULT['common.basic'] | SETTIN
     # postprocess
     'postprocess_enable':       {'dest': 'common.postprocess_enable', 'default': False, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable postprocessing after inference'},
     'postprocess_name':         {'dest': 'postprocess.name', 'default': None, 'type': str, 'metavar': 'value', 'help': 'name of the postprocessing pipeline'},
-    'detection_threshold':      {'dest':'postprocess.detection_threshold', 'default':0.3, 'type':utils.float_or_none, 'metavar':'value', 'help': 'detection confidence threshold for postprocessing'},
-    'detection_top_k':          {'dest':'postprocess.detection_top_k', 'default':200, 'type':utils.int_or_none, 'metavar':'value', 'help': 'top-k detections to keep in postprocessing'},
-    'detection_keep_top_k':     {'dest':'postprocess.detection_keep_top_k', 'default':200, 'type':utils.int_or_none, 'metavar':'value', 'help': 'number of detections to keep after NMS in postprocessing'},
-    'detection_nms_threshold':  {'dest':'postprocess.detection_nms_threshold', 'default':0.45, 'type':utils.float_or_none, 'metavar':'value', 'help': 'NMS IoU threshold for postprocessing'},
+    # TODO: revisit, as these are also defined under session.runtime_options
+    'postprocess_detection_threshold':      {'dest':'postprocess.detection_threshold', 'default':0.3, 'type':utils.float_or_none, 'metavar':'value', 'help': 'detection confidence threshold for postprocessing. eg. 0.3'},
+    'postprocess_detection_top_k':          {'dest':'postprocess.detection_top_k', 'default':None, 'type':utils.int_or_none, 'metavar':'value', 'help': 'top-k detections to keep in postprocessing. eg. 200'},
+    'postprocess_detection_keep_top_k':     {'dest':'postprocess.detection_keep_top_k', 'default':200, 'type':utils.int_or_none, 'metavar':'value', 'help': 'number of detections to keep after NMS in postprocessing. eg. 200'},
+    'postprocess_detection_nms_threshold':  {'dest':'postprocess.detection_nms_threshold', 'default':None, 'type':utils.float_or_none, 'metavar':'value', 'help': 'NMS IoU threshold for postprocessing. eg. 0.45'},
 }
 
 register_help(
@@ -191,10 +192,10 @@ register_help(
 COPY_SETTINGS_DEFAULT['commands.compile'] = COPY_SETTINGS_DEFAULT['common.basic'] | COPY_SETTINGS_DEFAULT['commands.surgery'] | {
     'session.data_layout': 'preprocess.data_layout', 
     'postprocess.data_layout': 'preprocess.data_layout',
-    'session.runtime_options.object_detection:confidence_threshold': 'postprocess.detection_threshold',
-    'session.runtime_options.object_detection:keep_top_k': 'postprocess.detection_keep_top_k',
-    'session.runtime_options.object_detection:top_k': 'postprocess.detection_top_k',
-    'session.runtime_options.object_detection:nms_threshold': 'postprocess.detection_nms_threshold',
+    # 'session.runtime_options.object_detection:confidence_threshold': 'postprocess.detection_threshold',
+    # 'session.runtime_options.object_detection:keep_top_k': 'postprocess.detection_keep_top_k',
+    # 'session.runtime_options.object_detection:top_k': 'postprocess.detection_top_k',
+    # 'session.runtime_options.object_detection:nms_threshold': 'postprocess.detection_nms_threshold',
 }
 
 ##########################################################################
