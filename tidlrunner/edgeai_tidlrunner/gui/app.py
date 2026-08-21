@@ -42,6 +42,7 @@ from nicegui import ui
 
 from edgeai_tidlrunner.version import __version__
 from . import fields
+from . import theme
 from .pathpicker import choose_path
 from .process import CommandRunner, cli_prefix
 
@@ -87,11 +88,13 @@ class RunnerPage:
         self.command_preview: ui.label = None
         self.run_button: ui.button = None
         self.stop_button: ui.button = None
-        self.status: ui.label = None
+        self.status: ui.badge = None
+        self.spinner: ui.spinner = None
+        self.dark: ui.dark_mode = None
         self.report: Optional[str] = None
         self.report_select: ui.select = None
         self.report_view: ui.element = None
-        self.report_placeholder: ui.label = None
+        self.report_placeholder: ui.element = None
 
     # ------------------------------------------------------------------ state
 
@@ -174,14 +177,18 @@ class RunnerPage:
         groups = fields.grouped_fields(self.command)
         main = groups.pop('Main', [])
         if main:
-            with ui.card().classes('w-full'):
-                ui.label('Main').classes('text-subtitle2 text-weight-medium')
+            with ui.element('div').classes('tidl-card w-full p-3'):
+                with ui.row().classes('items-center gap-2 q-mb-sm'):
+                    ui.icon(theme.COMMAND_ICONS.get(self.command, 'tune')).classes('text-primary')
+                    ui.label(self.command).classes('text-subtitle2 text-weight-bold')
+                    ui.badge(f'{len(main)} main options').props('outline color=grey-7')
                 with ui.grid(columns=2).classes('w-full gap-2'):
                     for spec in main:
                         self.build_field(spec)
         for group_name, specs in groups.items():
-            with ui.expansion(f'{group_name}  ({len(specs)})').classes('w-full border rounded'):
-                with ui.grid(columns=2).classes('w-full gap-2 p-2'):
+            with ui.expansion(group_name, icon=theme.GROUP_ICONS.get(group_name, 'settings')) \
+                    .classes('tidl-group w-full').props('dense-toggle expand-separator'):
+                with ui.grid(columns=2).classes('w-full gap-2 p-3'):
                     for spec in specs:
                         self.build_field(spec)
 
@@ -190,14 +197,16 @@ class RunnerPage:
     def build_inspector(self) -> None:
         with ui.column().classes('w-full h-full gap-2 p-2').style('min-height: 0'):
             with ui.row().classes('w-full items-center no-wrap gap-2'):
+                ui.icon('description').classes('tidl-dim')
                 self.report_select = ui.select({}, label='report',
                                                on_change=lambda e: self.show_report(e.value))
-                self.report_select.props('dense outlined').classes('grow')
+                self.report_select.props('dense outlined options-dense').classes('grow')
                 ui.button(icon='open_in_new', on_click=self.open_report_tab) \
-                    .props('flat dense').tooltip('open in a new browser tab')
-            self.report_placeholder = ui.label(
-                'no model inspector report yet - run compile or inspect first') \
-                .classes('text-caption text-grey p-2')
+                    .props('flat dense round').tooltip('open in a new browser tab')
+            with ui.column().classes('w-full items-center gap-2 p-8') as self.report_placeholder:
+                ui.icon('insights').classes('text-5xl tidl-dim')
+                ui.label('No model inspector report yet').classes('text-subtitle2')
+                ui.label('Run compile or inspect to generate one').classes('text-caption tidl-dim')
             self.report_view = ui.element('iframe') \
                 .classes('w-full grow rounded').style('border: 0; min-height: 0')
         self.show_report(None)
@@ -256,7 +265,10 @@ class RunnerPage:
         running = state == 'running'
         self.run_button.set_enabled(not running)
         self.stop_button.set_enabled(running)
+        self.spinner.set_visibility(running)
+        colour = {'running': 'primary', 'idle': 'grey-7', 'done': 'positive'}.get(state, 'negative')
         self.status.text = state
+        self.status.props(f'outline color={colour}')
 
     def poll(self) -> None:
         for kind, payload in self.runner.drain():
@@ -274,60 +286,81 @@ class RunnerPage:
     # ------------------------------------------------------------------ page
 
     def build(self) -> None:
-        with ui.header().classes('items-center justify-between py-2'):
-            ui.label(f'tidlrunner {__version__}').classes('text-h6')
-            with ui.row().classes('items-center gap-3'):
+        theme.apply()
+
+        with ui.header().classes('tidl-header items-center justify-between px-4 py-2'):
+            with ui.row().classes('items-center gap-3 no-wrap'):
+                ui.icon('developer_board').classes('text-3xl text-red-5')
+                with ui.column().classes('gap-0'):
+                    ui.label('tidlrunner').classes('tidl-brand text-h6 text-weight-bold leading-none')
+                    ui.label('TIDL model compilation and evaluation') \
+                        .classes('text-caption text-grey-5 leading-none')
+                ui.badge(__version__).props('outline color=white').classes('self-center')
+            with ui.row().classes('items-center gap-3 no-wrap'):
                 ui.select(self.commands, value=self.command, label='command',
                           on_change=lambda e: self.select_command(e.value)) \
-                    .props('dense outlined dark').classes('w-44')
-                dark = ui.dark_mode()
-                ui.switch('dark', on_change=lambda e: dark.enable() if e.value else dark.disable())
+                    .props('dense outlined dark options-dense').classes('w-44')
+                self.dark = ui.dark_mode()
+                ui.button(icon='dark_mode', on_click=self.toggle_dark) \
+                    .props('flat round dense color=white').tooltip('toggle dark mode')
 
-        with ui.splitter(value=52).classes('w-full').style('height: calc(100vh - 6rem)') as splitter:
+        with ui.splitter(value=52).classes('w-full').style('height: calc(100vh - 5.5rem)') as splitter:
             with splitter.before:
-                with ui.column().classes('w-full h-full overflow-auto p-3 gap-3'):
-                    with ui.row().classes('w-full items-center no-wrap gap-1'):
-                        cwd_input = ui.input(label='working directory', value=self.cwd,
-                                             on_change=lambda e: self.set_cwd(e.value))
-                        cwd_input.props('dense outlined').classes('grow')
-                        ui.button(icon='folder_open',
-                                  on_click=lambda _: self.browse_cwd(cwd_input)).props('flat dense')
-                        ui.button('Reset options', icon='restart_alt', on_click=self.reset).props('flat dense no-caps')
+                with ui.column().classes('tidl-scroll w-full h-full overflow-auto p-4 gap-3'):
+                    with ui.element('div').classes('tidl-card w-full p-3'):
+                        with ui.row().classes('w-full items-center no-wrap gap-2'):
+                            ui.icon('folder').classes('tidl-dim')
+                            cwd_input = ui.input(label='working directory', value=self.cwd,
+                                                 on_change=lambda e: self.set_cwd(e.value))
+                            cwd_input.props('dense outlined').classes('grow')
+                            ui.button(icon='folder_open',
+                                      on_click=lambda _: self.browse_cwd(cwd_input)) \
+                                .props('flat dense round').tooltip('browse')
+                            ui.button(icon='restart_alt', on_click=self.reset) \
+                                .props('flat dense round').tooltip('reset options to defaults')
                     self.form()
 
             with splitter.after:
-                with ui.column().classes('w-full h-full p-3 gap-2'):
-                    with ui.row().classes('w-full items-center gap-2'):
-                        self.run_button = ui.button('Run', icon='play_arrow', on_click=self.start_run)
+                with ui.column().classes('w-full h-full p-4 gap-3').style('min-height: 0'):
+                    with ui.row().classes('w-full items-center gap-2 no-wrap'):
+                        self.run_button = ui.button('Run', icon='play_arrow', on_click=self.start_run) \
+                            .props('unelevated no-caps').classes('px-4')
                         self.stop_button = ui.button('Stop', icon='stop', on_click=self.stop_run) \
-                            .props('outline color=negative')
-                        ui.button('Clear log', icon='delete_sweep',
-                                  on_click=lambda: self.log.clear()).props('flat no-caps')
+                            .props('outline no-caps color=negative')
                         ui.space()
-                        self.status = ui.label('idle').classes('text-caption text-grey')
-                    self.command_preview = ui.label().classes(
-                        'w-full font-mono text-xs bg-grey-2 dark:bg-grey-9 rounded p-2 break-all select-all')
+                        self.spinner = ui.spinner('dots', size='1.4rem').classes('text-primary')
+                        self.status = ui.badge('idle').props('outline color=grey-7')
+                        ui.button(icon='delete_sweep', on_click=lambda: self.log.clear()) \
+                            .props('flat dense round').tooltip('clear log')
 
-                    with ui.tabs().classes('w-full').props('dense align=left') as tabs:
+                    with ui.row().classes('w-full items-start no-wrap gap-1'):
+                        self.command_preview = ui.label().classes(
+                            'tidl-preview tidl-scroll grow text-xs p-3 break-all select-all')
+                        ui.button(icon='content_copy', on_click=self.copy_command) \
+                            .props('flat dense round').tooltip('copy command')
+
+                    with ui.tabs().classes('tidl-tabs w-full').props('dense align=left inline-label') as tabs:
                         log_tab = ui.tab('Log', icon='terminal')
                         inspector_tab = ui.tab('Model Inspector', icon='insights')
-                    # quasar's panel wrapper is auto-height, so a percentage-height
-                    # iframe collapses unless the chain is forced to 100%
-                    ui.add_css('''
-                        .tidl-panels { min-height: 0; }
-                        .tidl-panels > .q-panel-parent { height: 100%; }
-                        .tidl-panels .q-tab-panel { height: 100%; }
-                    ''')
                     with ui.tab_panels(tabs, value=log_tab).classes('w-full grow tidl-panels') \
                             .props('keep-alive'):
                         with ui.tab_panel(log_tab).classes('p-0'):
-                            self.log = ui.log(max_lines=20000).classes('w-full h-full font-mono text-xs')
+                            self.log = ui.log(max_lines=20000) \
+                                .classes('tidl-log tidl-scroll w-full h-full font-mono text-xs p-2')
                         with ui.tab_panel(inspector_tab).classes('p-0'):
                             self.build_inspector()
 
         self.stop_button.set_enabled(False)
+        self.spinner.set_visibility(False)
         self.refresh_preview()
         ui.timer(0.2, self.poll)
+
+    def toggle_dark(self) -> None:
+        self.dark.toggle()
+
+    def copy_command(self) -> None:
+        ui.clipboard.write(self.command_preview.text)
+        ui.notify('command copied', type='positive')
 
     async def browse_cwd(self, widget: ui.input) -> None:
         selected = await choose_path(widget.value or self.cwd, dirs_only=True)
