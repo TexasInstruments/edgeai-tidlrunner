@@ -1090,9 +1090,24 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
             )
 
             if has_embedded:
-                # Already in JSON — skip raw .bin loading, will be read from layer loop below
-                activation_data = {}
+                # Already in JSON — extract it for template compression
                 logger.debug(f"  Using activation data embedded in JSON")
+                activation_data = {}
+                for sgId, sgData in json_data['runtime'].get('subgraphs', {}).items():
+                    if not sgId.startswith('tidl_'):
+                        continue
+                    try:
+                        sg_num = int(sgId[len('tidl_'):])
+                    except ValueError:
+                        continue
+                    for layer in sgData.get('layers', []):
+                        layer_idx = layer.get('layer_index') or layer.get('layer_id')
+                        if layer_idx is None:
+                            continue
+                        act_key = f'{sg_num}_{layer_idx}'
+                        if 'activation_data' in layer:
+                            activation_data[act_key] = layer['activation_data']
+                logger.debug(f"  Extracted {len(activation_data)} layers with activation data")
             elif os.path.exists(model_dir):
                 activation_data = load_activation_data_from_model_dir(model_dir, tidl_data)
             else:

@@ -921,27 +921,31 @@ class TIDLSubgraphParser:
         if not self.node_support:
             return None
 
+        # A tensor has exactly one producer, so check the name as-is first —
+        # it's often already a real ONNX tensor name. Stripping suffixes
+        # before this check is unsafe: some tensors are genuinely named
+        # "<x>_output_0" as their real, full name, and stripping that first
+        # can collide with an unrelated node that happens to be named "<x>".
+        if hasattr(self, 'tensor_to_node_map') and self.tensor_to_node_map:
+            if tidl_output_name in self.tensor_to_node_map:
+                return self.tensor_to_node_map[tidl_output_name]
+
         onnx_node_name = tidl_output_name
         if onnx_node_name.endswith('_output_0'):
             onnx_node_name = onnx_node_name[:-9]
         if onnx_node_name.endswith('_netFormat'):
             onnx_node_name = onnx_node_name[:-10]
-        # TIDL appends its own "__N" disambiguation suffix when a composite
-        # op (e.g. LSTM) gets internally decomposed into multiple netLog
-        # entries sharing the same base name — e.g. a TIDL_SliceLayer for
-        # LSTM's gate-splitting shows up as "/glstm/.../LSTM__10", not the
-        # real ONNX node name "/glstm/.../LSTM". Strip it before matching.
         onnx_node_name = re.sub(r'__\d+$', '', onnx_node_name)
 
-        # First try: match by node name
-        for node_idx, node_data in self.node_support.items():
-            if node_data.get('node_name') == onnx_node_name:
-                return node_idx
-
-        # Second try: match by output tensor name in the ONNX layer details
         if hasattr(self, 'tensor_to_node_map') and self.tensor_to_node_map:
             if onnx_node_name in self.tensor_to_node_map:
                 return self.tensor_to_node_map[onnx_node_name]
+
+        # Composite multi-output ops (e.g. LSTM): netLog's per-gate buffer
+        # name doesn't correspond to any single tensor, only to the node.
+        for node_idx, node_data in self.node_support.items():
+            if node_data.get('node_name') == onnx_node_name:
+                return node_idx
 
         return None
 
@@ -2799,7 +2803,14 @@ def discover_files_from_workdir(model_dir_path: str) -> Dict[str, str]:
     else:
         logger.debug("[NOT FOUND] ONNX model not found")
 
-    graphviz_files = glob.glob(os.path.join(model_dir_path, '*/artifacts/tempDir/graphvizInfo.txt'), recursive=False)
+    # Compile output layout varies: a plain single-runtime compile puts this
+    # directly under artifacts/tempDir/, while a multi-variant compile (e.g.
+    # tidl/tidl32/notidl side-by-side comparison runs) nests it one level
+    # deeper under each variant's own subdirectory — check both.
+    graphviz_files = (
+        glob.glob(os.path.join(model_dir_path, 'artifacts/tempDir/graphvizInfo.txt'), recursive=False) or
+        glob.glob(os.path.join(model_dir_path, '*/artifacts/tempDir/graphvizInfo.txt'), recursive=False)
+    )
     if graphviz_files:
         discovered['graphviz'] = graphviz_files[0]
         logger.debug(f"[FOUND] graphvizInfo: {os.path.relpath(discovered['graphviz'])}")

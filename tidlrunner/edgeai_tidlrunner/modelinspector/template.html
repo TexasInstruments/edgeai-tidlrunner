@@ -217,6 +217,14 @@ Chart.defaults.color = '#495057';
 }
 
 /* Analysis tab (DataTables) */
+.analysis-nodata-cell {
+    color: var(--text-secondary);
+    font-style: italic;
+    font-size: 0.75rem;
+    padding: 4px 2px;
+    text-align: center;
+}
+
 [data-theme="dark"] .dataTables_wrapper .dataTables_filter input,
 [data-theme="dark"] .dataTables_wrapper .dataTables_length select {
     background: var(--card-background);
@@ -418,7 +426,14 @@ body {
     font-size: var(--font-size-base);
     line-height: var(--line-height-normal);
     font-weight: 400;
-    min-height: 100vh;
+    /* A definite (not min-) height so flex descendants have a real bound to
+       divide up — needed for #analysis's flex-fill chain to clip/scroll
+       internally instead of growing unbounded. Content taller than 100vh
+       (any tab) still scrolls the page normally: a definite height on the
+       root/body doesn't stop overflow from propagating to the viewport,
+       it only gives percentage/flex children something concrete to size
+       against. */
+    height: 100vh;
     display: flex;
     flex-direction: column;
     overflow-x: hidden;
@@ -1119,6 +1134,11 @@ header.scrolled {
 /* ==================== MAIN CONTENT ==================== */
 main {
     flex: 1;
+    /* Without this, a flex item's automatic min-height defaults to its
+       content's size, which for the Analysis tab's 274-row table means
+       main refuses to shrink below that — breaking the whole fill-to-
+       viewport chain one level above where #analysis itself sets it. */
+    min-height: 0;
     width: 100%;
     padding: var(--card-gap);   /* uniform 24px on all sides */
     display: flex;
@@ -1779,13 +1799,60 @@ main {
     font-size: 0.85rem;
 }
 
+/* Full width of its section (matching the other charts here), with the 4
+   columns given fixed proportions instead of the browser's default
+   content-based auto layout — without this, short cell text (a layer
+   number, "-10.1") leaves huge uneven gaps at full section width. */
+.snr-table-container .operator-summary-table {
+    table-layout: fixed;
+}
+.snr-table-container .operator-summary-table th:nth-child(1),
+.snr-table-container .operator-summary-table td:nth-child(1) { width: 15%; }
+.snr-table-container .operator-summary-table th:nth-child(2),
+.snr-table-container .operator-summary-table td:nth-child(2) { width: 30%; }
+.snr-table-container .operator-summary-table th:nth-child(3),
+.snr-table-container .operator-summary-table td:nth-child(3) { width: 35%; }
+.snr-table-container .operator-summary-table th:nth-child(4),
+.snr-table-container .operator-summary-table td:nth-child(4) { width: 20%; }
+
 /* ==================== ANALYSIS TAB TABLE ==================== */
 /* DataTables handles paging, so the container itself must not scroll-clip */
-/* No pagination: every layer is listed, so scroll inside the card and keep the
-   column headers pinned via the shared sticky thead rule. */
+/* No pagination: every layer is listed, so the table scrolls inside the card
+   and keeps the column headers pinned via the shared sticky thead rule.
+   The card fills whatever height remains below the header/tab-bar chrome
+   (flex chain below, scoped to #analysis only) instead of a fixed vh
+   fraction, so it adapts to any viewport height without leaving dead
+   space or forcing the outer page to scroll. */
+#analysis.tab-content.active {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+#analysis .model-details-container {
+    flex: 1;
+    min-height: 0;
+}
+#analysis .card {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+#analysis .card-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
 #analysis-table-container {
-    max-height: 78vh;
+    /* Overrides .operator-summary-table-container's max-height: clamp(...) —
+       that generic cap would otherwise stop flex-grow from filling the card. */
+    max-height: none;
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
+    overflow-x: auto;
     border: 1px solid var(--border-color);
     background: transparent;
 }
@@ -1814,14 +1881,14 @@ main {
     width: 100%;
 }
 
-#analysis-table th:nth-child(1), #analysis-table td:nth-child(1) { width: 3.5%; }
-#analysis-table th:nth-child(2), #analysis-table td:nth-child(2) { width: 5%; }
-#analysis-table th:nth-child(3), #analysis-table td:nth-child(3) { width: 8%; }
-#analysis-table th:nth-child(4), #analysis-table td:nth-child(4) { width: 9%; }
-#analysis-table th:nth-child(5), #analysis-table td:nth-child(5) { width: 14%; }
-#analysis-table th:nth-child(6), #analysis-table td:nth-child(6) { width: 6%; }
-#analysis-table th:nth-child(7), #analysis-table td:nth-child(7) { width: 27.25%; }
-#analysis-table th:nth-child(8), #analysis-table td:nth-child(8) { width: 27.25%; }
+#analysis-table th:nth-child(1), #analysis-table td:nth-child(1) { width: 3%; }
+#analysis-table th:nth-child(2), #analysis-table td:nth-child(2) { width: 4%; }
+#analysis-table th:nth-child(3), #analysis-table td:nth-child(3) { width: 7%; }
+#analysis-table th:nth-child(4), #analysis-table td:nth-child(4) { width: 8%; }
+#analysis-table th:nth-child(5), #analysis-table td:nth-child(5) { width: 12%; }
+#analysis-table th:nth-child(6), #analysis-table td:nth-child(6) { width: 5%; }
+#analysis-table th:nth-child(7), #analysis-table td:nth-child(7) { width: 30.5%; }
+#analysis-table th:nth-child(8), #analysis-table td:nth-child(8) { width: 30.5%; }
 
 /* Left-justify every column, overriding the shared table centering */
 #analysis-table th,
@@ -1837,9 +1904,19 @@ main {
     word-break: break-word;
 }
 
-/* Taller rows so the interactive plots are comfortable to read */
+/* Taller rows so the interactive plots are comfortable to read
+   Rows with charts need 300px; rows with "No data" text are compact */
 #analysis-table tbody tr {
+    height: auto;
+    border-bottom: 1px solid var(--border-color);
+}
+#analysis-table tbody tr[data-has-charts="true"] {
     height: 300px;
+}
+/* Compact (no-chart) rows sit close together with little else to tell them
+   apart — a faint zebra stripe makes each row's boundary easy to follow. */
+#analysis-table tbody tr[data-has-charts="false"]:nth-child(even) {
+    background-color: var(--gray-50, rgba(128, 128, 128, 0.06));
 }
 
 /* Chart cells: minimal side padding, so the plots run edge to edge */
@@ -5309,6 +5386,23 @@ function analysisEscapeAttr(text) {
     return analysisEscapeHtml(text).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+// A layer can have an activation_data *entry* whose arrays are all empty (e.g.
+// TIDL_DataLayer/ConstDataLayer/DataConvertLayer stubs — nothing meaningful to
+// histogram). Key-existence in ACTIVATION_DATA_COMPRESSED isn't enough to decide
+// whether to draw a chart; decompressing to check array lengths is cheap (small
+// per-layer blobs) and the result is cached, so createAnalysisPlot's later use
+// of the same key is a cache hit, not repeated work.
+function analysisLayerHasRealData(actKey) {
+    if (typeof ACTIVATION_DATA_COMPRESSED === 'undefined' || !ACTIVATION_DATA_COMPRESSED[actKey]) return false;
+    const d = decompressLayerActivation(actKey);
+    if (!d) return false;
+    const hist = d.histogram || {};
+    const scat = d.scatter || {};
+    return (hist.tidl_counts && hist.tidl_counts.length > 0) ||
+           (hist.notidl_counts && hist.notidl_counts.length > 0) ||
+           (scat.x && scat.x.length > 0);
+}
+
 // Map of subgraph id -> { tidl_layer_id: snr_db } built once from METRICS_DATA.
 function buildAnalysisSnrLookup() {
     const lookup = {};
@@ -5343,6 +5437,17 @@ function renderAnalysisTable() {
     }
     tbody.innerHTML = '';
 
+    // ACTIVATION_DATA_COMPRESSED (built from the JSON's per-layer activation_data)
+    // is the single source of truth for which layers have activation data —
+    // TIDL_LAYER_DATA never carries the field itself, so check this instead.
+    // Per-layer real-data checks below are cached, so this pre-pass is free.
+    let hasAnyActivationData = false;
+    if (typeof ACTIVATION_DATA_COMPRESSED !== 'undefined') {
+        for (const k of Object.keys(ACTIVATION_DATA_COMPRESSED)) {
+            if (analysisLayerHasRealData(k)) { hasAnyActivationData = true; break; }
+        }
+    }
+
     const snrLookup = buildAnalysisSnrLookup();
     const rowsHtml = [];
     let rowCount = 0;
@@ -5362,29 +5467,49 @@ function renderAnalysisTable() {
         for (let i = 0; i < layers.length; i++) {
             const layer = layers[i];
             const idx = layer.layer_index;
+            const actKey = sgNum + '_' + idx;
+            const hasActivationData = analysisLayerHasRealData(actKey);
             const snr = sgSnr[String(idx)];
-            const hasSnr = !(snr === undefined || snr === null) && isFinite(Number(snr));
+            const hasSnr = !(snr === undefined || snr === null) && isFinite(Number(snr)) && hasActivationData;
             const snrText = hasSnr ? Number(snr).toFixed(1) + ' dB' : 'N/A';
             // DataTables sorts on the raw cell text, which would order "9.5 dB" after
             // "10.2 dB"; data-order gives it the numeric value instead. Missing SNR sinks
             // to the bottom of an ascending sort rather than mixing in with real values.
             const snrOrder = hasSnr ? Number(snr) : -1e9;
-            const actKey = sgNum + '_' + idx;
             const layerName = layer.layer_name == null ? '' : String(layer.layer_name);
             const tensorBits = (layer.tensor_bits === undefined || layer.tensor_bits === null) ? '' : String(layer.tensor_bits);
 
+            let snrCell, histogramCell, scatterCell;
+
+            if (!hasAnyActivationData) {
+                // No activation data anywhere — these cells won't be visible anyway
+                snrCell = '<td></td>';
+                histogramCell = '<td></td>';
+                scatterCell = '<td></td>';
+            } else if (hasActivationData) {
+                // This layer has activation data — show chart and SNR
+                snrCell = '<td data-order="' + snrOrder + '">' + snrText + '</td>';
+                histogramCell = '<td><div class="analysis-chart-box"><canvas class="analysis-mini-chart" data-plot="histogram" data-key="' + actKey + '" data-bits="' + tensorBits + '"' +
+                    ' aria-label="Activation histogram for ' + analysisEscapeAttr(layerName) + '" role="img"></canvas></div></td>';
+                scatterCell = '<td><div class="analysis-chart-box"><canvas class="analysis-mini-chart" data-plot="scatter" data-key="' + actKey + '" data-bits="' + tensorBits + '"' +
+                    ' aria-label="Quantization scatter plot for ' + analysisEscapeAttr(layerName) + '" role="img"></canvas></div></td>';
+            } else {
+                // This layer has NO activation data, but others do — show placeholder text
+                snrCell = '<td data-order="-1e9">No activation data present</td>';
+                histogramCell = '<td><div class="analysis-nodata-cell">No activation data present</div></td>';
+                scatterCell = '<td><div class="analysis-nodata-cell">No activation data present</div></td>';
+            }
+
             rowsHtml.push(
-                '<tr>' +
+                '<tr data-has-charts="' + (hasActivationData && hasAnyActivationData ? 'true' : 'false') + '">' +
                 '<td class="analysis-serial"></td>' +
                 '<td>' + analysisEscapeHtml(sgId) + '</td>' +
                 '<td>' + analysisEscapeHtml(layerName) + '</td>' +
                 '<td>' + analysisEscapeHtml(String(layer.layer_type).replace('TIDL_', '')) + '</td>' +
                 '<td>' + analysisEscapeHtml(layer.properties || '') + '</td>' +
-                '<td data-order="' + snrOrder + '">' + snrText + '</td>' +
-                '<td><div class="analysis-chart-box"><canvas class="analysis-mini-chart" data-plot="histogram" data-key="' + actKey + '" data-bits="' + tensorBits + '"' +
-                    ' aria-label="Activation histogram for ' + analysisEscapeAttr(layerName) + '" role="img"></canvas></div></td>' +
-                '<td><div class="analysis-chart-box"><canvas class="analysis-mini-chart" data-plot="scatter" data-key="' + actKey + '" data-bits="' + tensorBits + '"' +
-                    ' aria-label="Quantization scatter plot for ' + analysisEscapeAttr(layerName) + '" role="img"></canvas></div></td>' +
+                snrCell +
+                histogramCell +
+                scatterCell +
                 '</tr>'
             );
             rowCount++;
@@ -5396,6 +5521,23 @@ function renderAnalysisTable() {
     const countEl = document.getElementById('analysis-layer-count');
     if (countEl) {
         countEl.textContent = rowCount + ' layers across ' + sgIds.length + ' subgraph' + (sgIds.length === 1 ? '' : 's');
+    }
+
+    // If no layer has activation data, hide the 3 columns (SNR, Histogram, Scatter)
+    if (!hasAnyActivationData) {
+        const headerCells = table.querySelectorAll('thead th');
+        const bodyCells = table.querySelectorAll('tbody td');
+        if (headerCells[5]) headerCells[5].style.display = 'none';  // SNR header
+        if (headerCells[6]) headerCells[6].style.display = 'none';  // Histogram header
+        if (headerCells[7]) headerCells[7].style.display = 'none';  // Scatter header
+
+        // Hide the corresponding cells in each row
+        for (let i = 0; i < bodyCells.length; i++) {
+            const cellIndex = i % 8; // 8 columns total
+            if (cellIndex === 5 || cellIndex === 6 || cellIndex === 7) {
+                bodyCells[i].style.display = 'none';
+            }
+        }
     }
 
     if (window.jQuery && $.fn.DataTable) {
@@ -6956,6 +7098,21 @@ function getSnrColor(value) {
     return SNR_THRESHOLDS.excellent;
 }
 
+// A handful of outlier layers (e.g. one layer with much higher quantization
+// error than the rest) drag Chart.js's auto-computed linear axis max way
+// past where the bulk of the data sits, flattening every other bar near
+// zero. A flat percentile cap "fixes" that but clips the outlier to a flat
+// top, hiding how much bigger it actually is. A log scale instead keeps
+// every bar's *relative* height honest across a wide dynamic range — small
+// and large values both stay visible, nothing is clipped.
+function needsLogScale(values) {
+    const sorted = values.filter(v => isFinite(v) && v > 0).sort((a, b) => a - b);
+    if (sorted.length < 2) return false;
+    const p95 = sorted[Math.min(Math.floor(sorted.length * 0.95), sorted.length - 1)];
+    const trueMax = sorted[sorted.length - 1];
+    return p95 > 0 && trueMax > p95 * 2;
+}
+
 // Chart.js Bar Chart (for non-SNR metrics)
 function renderChartJSBar(canvasId, data, subgraphId) {
     const canvas = document.getElementById(canvasId);
@@ -6989,6 +7146,12 @@ function renderChartJSBar(canvasId, data, subgraphId) {
 
     const backgroundColors = data.map(() => 'rgba(33, 150, 243, 0.8)');
     const borderColors = data.map(() => 'rgba(33, 150, 243, 1)');
+    // Chart.js bakes colors in at construction time (Chart.defaults.color is a
+    // fixed light-mode grey) — read the live theme now instead of relying on
+    // retintChartsForTheme(), which only re-colors charts that already existed
+    // at the moment the theme was toggled, not ones created afterward.
+    const pal = analysisChartPalette();
+    const useLogScale = needsLogScale(values);
 
     metricsBarChart = new Chart(ctx, {
         type: 'bar',
@@ -7040,22 +7203,28 @@ function renderChartJSBar(canvasId, data, subgraphId) {
                     title: {
                         display: true,
                         text: 'Layer [ID] Type',
+                        color: pal.title,
                         font: { size: 13, weight: 'bold' }
                     },
-                    ticks: { maxRotation: 45, minRotation: 45, font: { size: 10 } },
-                    grid: { color: 'rgba(128,128,128,0.1)' }
+                    ticks: { maxRotation: 45, minRotation: 45, font: { size: 10 }, color: pal.tick },
+                    grid: { color: pal.grid }
                 },
                 y: {
+                    type: useLogScale ? 'logarithmic' : 'linear',
                     title: {
                         display: true,
-                        text: METRIC_LABELS[currentMetric],
+                        text: METRIC_LABELS[currentMetric] + (useLogScale ? ' (log scale)' : ''),
+                        color: pal.title,
                         font: { size: 13, weight: 'bold' }
                     },
                     ticks: {
+                        color: pal.tick,
                         callback: function(value) { return formatWithPrefix(value); }
                     },
-                    grid: { color: 'rgba(128,128,128,0.1)' },
-                    beginAtZero: true
+                    grid: { color: pal.grid },
+                    // beginAtZero only makes sense on a linear scale — log
+                    // scales derive their own positive-valued minimum instead.
+                    beginAtZero: !useLogScale
                 }
             }
         }
@@ -7844,8 +8013,14 @@ function renderMetricsCharts() {
         };
     });
 
-    // Use the static canvas — same approach as memory/cycles charts
-    applyChartScroll('metrics-scroll-wrapper', chartData.length, 1, 18);
+    // Use the static canvas — same approach as memory/cycles charts.
+    // SNR renders a compact table instead of the wide per-layer canvas (see
+    // renderChartJSBar's isSnr branch) — sizing the scroll wrapper for
+    // per-layer bars in that case leaves a huge, mostly-empty horizontal
+    // scrollbar with nothing meaningful to scroll to. Passing 0 bars makes
+    // applyChartScroll reset the wrapper to normal (non-scrolling) width.
+    const numBarsForScroll = (currentMetric === 'snr_db') ? 0 : chartData.length;
+    applyChartScroll('metrics-scroll-wrapper', numBarsForScroll, 1, 18);
     renderChartJSBar('metrics-chart', chartData, subgraphId);
 }
 
