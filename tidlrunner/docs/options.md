@@ -82,10 +82,6 @@ Inspect model outputs and activation data
 | `--output_feature_16bit_names_search` | `session.output_feature_16bit_names_search` | `` | a list contaning tuples of start and end nodes - it will be used to generate advanced_options:output_feature_16bit_names_list. example: /decoder/Concat_3:None, /aux/Relu_5:None |
 | `--meta_arch_type` | `session.runtime_options.object_detection:meta_arch_type` | `==SUPPRESS==` | meta architecture type for object detection |
 | `--meta_arch_file_path` | `session.runtime_options.object_detection:meta_layers_names_list` | `==SUPPRESS==` | path to meta architecture file |
-| `--detection_threshold` | `session.runtime_options.object_detection:confidence_threshold` | `0.3` | confidence threshold for object detection |
-| `--detection_top_k` | `session.runtime_options.object_detection:top_k` | `200` | number of top detections to keep before NMS |
-| `--nms_threshold` | `session.runtime_options.object_detection:nms_threshold` | `0.45` | NMS threshold for object detection |
-| `--keep_top_k` | `session.runtime_options.object_detection:keep_top_k` | `200` | number of top detections to keep after NMS |
 | `--runtime_options_dict` | `session.runtime_options_dict` | `` | runtime_options as a dict. example: "{"advanced_options:enable_shape_folding:0"}" |
 | `--preprocess_name` | `preprocess.name` | `` | name of the preprocessing pipeline |
 | `--resize` | `preprocess.resize` | `` | resize dimensions for input images (height width) |
@@ -98,6 +94,11 @@ Inspect model outputs and activation data
 | `--audio_model_type` | `preprocess.audio_model_type` | `` | audio model architecture (vggish11, yamnet, gtcrn, gcrn) |
 | `--postprocess_enable` | `common.postprocess_enable` | `False` | enable postprocessing after inference |
 | `--postprocess_name` | `postprocess.name` | `` | name of the postprocessing pipeline |
+| `--postprocess_detection_threshold` | `postprocess.detection_threshold` | `0.3` | detection confidence threshold for postprocessing. eg. 0.3 |
+| `--postprocess_detection_top_k` | `postprocess.detection_top_k` | `200` | top-k detections to keep in postprocessing. eg. 200 |
+| `--postprocess_detection_nms_threshold` | `postprocess.detection_nms_threshold` | `0.45` | NMS IoU threshold for postprocessing. eg. 0.45 |
+| `--postprocess_detection_keep_top_k` | `postprocess.detection_keep_top_k` | `200` | number of detections to keep after NMS in postprocessing. eg. 200 |
+| `--postprocess_detection_nms_enable` | `postprocess.enable_nms` | `False` | NMS IoU threshold for postprocessing. eg. 0 for disable, 1 for enable |
 | `--display_benchmark` | `common.display_benchmark` | `False` | display benchmark statistics after inference on EVM |
 | `--save_output` | `postprocess.save_output` | `True` | save postprocessed output to files |
 | `--save_output_frames` | `postprocess.save_output_frames` | `10` | number of output frames to save |
@@ -175,10 +176,6 @@ Compile models and generate target-specific artifacts
 | `--output_feature_16bit_names_search` | `session.output_feature_16bit_names_search` | `` | a list contaning tuples of start and end nodes - it will be used to generate advanced_options:output_feature_16bit_names_list. example: /decoder/Concat_3:None, /aux/Relu_5:None |
 | `--meta_arch_type` | `session.runtime_options.object_detection:meta_arch_type` | `==SUPPRESS==` | meta architecture type for object detection |
 | `--meta_arch_file_path` | `session.runtime_options.object_detection:meta_layers_names_list` | `==SUPPRESS==` | path to meta architecture file |
-| `--detection_threshold` | `session.runtime_options.object_detection:confidence_threshold` | `0.3` | confidence threshold for object detection |
-| `--detection_top_k` | `session.runtime_options.object_detection:top_k` | `200` | number of top detections to keep before NMS |
-| `--nms_threshold` | `session.runtime_options.object_detection:nms_threshold` | `0.45` | NMS threshold for object detection |
-| `--keep_top_k` | `session.runtime_options.object_detection:keep_top_k` | `200` | number of top detections to keep after NMS |
 | `--runtime_options_dict` | `session.runtime_options_dict` | `` | runtime_options as a dict. example: "{"advanced_options:enable_shape_folding:0"}" |
 | `--preprocess_name` | `preprocess.name` | `` | name of the preprocessing pipeline |
 | `--resize` | `preprocess.resize` | `` | resize dimensions for input images (height width) |
@@ -191,6 +188,11 @@ Compile models and generate target-specific artifacts
 | `--audio_model_type` | `preprocess.audio_model_type` | `` | audio model architecture (vggish11, yamnet, gtcrn, gcrn) |
 | `--postprocess_enable` | `common.postprocess_enable` | `False` | enable postprocessing after inference |
 | `--postprocess_name` | `postprocess.name` | `` | name of the postprocessing pipeline |
+| `--postprocess_detection_threshold` | `postprocess.detection_threshold` | `0.3` | detection confidence threshold for postprocessing. eg. 0.3 |
+| `--postprocess_detection_top_k` | `postprocess.detection_top_k` | `200` | top-k detections to keep in postprocessing. eg. 200 |
+| `--postprocess_detection_nms_threshold` | `postprocess.detection_nms_threshold` | `0.45` | NMS IoU threshold for postprocessing. eg. 0.45 |
+| `--postprocess_detection_keep_top_k` | `postprocess.detection_keep_top_k` | `200` | number of detections to keep after NMS in postprocessing. eg. 200 |
+| `--postprocess_detection_nms_enable` | `postprocess.enable_nms` | `False` | NMS IoU threshold for postprocessing. eg. 0 for disable, 1 for enable |
 
 ### evaluate
 
@@ -262,10 +264,6 @@ Evaluate model accuracy against ground truth labels
 | `--output_feature_16bit_names_search` | `session.output_feature_16bit_names_search` | `` | a list contaning tuples of start and end nodes - it will be used to generate advanced_options:output_feature_16bit_names_list. example: /decoder/Concat_3:None, /aux/Relu_5:None |
 | `--meta_arch_type` | `session.runtime_options.object_detection:meta_arch_type` | `==SUPPRESS==` | meta architecture type for object detection |
 | `--meta_arch_file_path` | `session.runtime_options.object_detection:meta_layers_names_list` | `==SUPPRESS==` | path to meta architecture file |
-| `--detection_threshold` | `session.runtime_options.object_detection:confidence_threshold` | `0.3` | confidence threshold for object detection |
-| `--detection_top_k` | `session.runtime_options.object_detection:top_k` | `200` | number of top detections to keep before NMS |
-| `--nms_threshold` | `session.runtime_options.object_detection:nms_threshold` | `0.45` | NMS threshold for object detection |
-| `--keep_top_k` | `session.runtime_options.object_detection:keep_top_k` | `200` | number of top detections to keep after NMS |
 | `--runtime_options_dict` | `session.runtime_options_dict` | `` | runtime_options as a dict. example: "{"advanced_options:enable_shape_folding:0"}" |
 | `--preprocess_name` | `preprocess.name` | `` | name of the preprocessing pipeline |
 | `--resize` | `preprocess.resize` | `` | resize dimensions for input images (height width) |
@@ -278,6 +276,11 @@ Evaluate model accuracy against ground truth labels
 | `--audio_model_type` | `preprocess.audio_model_type` | `` | audio model architecture (vggish11, yamnet, gtcrn, gcrn) |
 | `--postprocess_enable` | `common.postprocess_enable` | `True` | enable postprocessing after inference |
 | `--postprocess_name` | `postprocess.name` | `` | name of the postprocessing pipeline |
+| `--postprocess_detection_threshold` | `postprocess.detection_threshold` | `0.3` | detection confidence threshold for postprocessing. eg. 0.3 |
+| `--postprocess_detection_top_k` | `postprocess.detection_top_k` | `200` | top-k detections to keep in postprocessing. eg. 200 |
+| `--postprocess_detection_nms_threshold` | `postprocess.detection_nms_threshold` | `0.45` | NMS IoU threshold for postprocessing. eg. 0.45 |
+| `--postprocess_detection_keep_top_k` | `postprocess.detection_keep_top_k` | `200` | number of detections to keep after NMS in postprocessing. eg. 200 |
+| `--postprocess_detection_nms_enable` | `postprocess.enable_nms` | `False` | NMS IoU threshold for postprocessing. eg. 0 for disable, 1 for enable |
 | `--label_path` | `dataloader.label_path` | `` | path to ground truth labels for accuracy evaluation |
 | `--postprocess_resize_with_pad` | `postprocess.resize_with_pad` | `False` | resize output with padding to maintain aspect ratio |
 | `--postprocess_normalized_detections` | `postprocess.normalized_detections` | `False` | whether detections are normalized coordinates |
@@ -389,10 +392,6 @@ Run inference using compiled models
 | `--output_feature_16bit_names_search` | `session.output_feature_16bit_names_search` | `` | a list contaning tuples of start and end nodes - it will be used to generate advanced_options:output_feature_16bit_names_list. example: /decoder/Concat_3:None, /aux/Relu_5:None |
 | `--meta_arch_type` | `session.runtime_options.object_detection:meta_arch_type` | `==SUPPRESS==` | meta architecture type for object detection |
 | `--meta_arch_file_path` | `session.runtime_options.object_detection:meta_layers_names_list` | `==SUPPRESS==` | path to meta architecture file |
-| `--detection_threshold` | `session.runtime_options.object_detection:confidence_threshold` | `0.3` | confidence threshold for object detection |
-| `--detection_top_k` | `session.runtime_options.object_detection:top_k` | `200` | number of top detections to keep before NMS |
-| `--nms_threshold` | `session.runtime_options.object_detection:nms_threshold` | `0.45` | NMS threshold for object detection |
-| `--keep_top_k` | `session.runtime_options.object_detection:keep_top_k` | `200` | number of top detections to keep after NMS |
 | `--runtime_options_dict` | `session.runtime_options_dict` | `` | runtime_options as a dict. example: "{"advanced_options:enable_shape_folding:0"}" |
 | `--preprocess_name` | `preprocess.name` | `` | name of the preprocessing pipeline |
 | `--resize` | `preprocess.resize` | `` | resize dimensions for input images (height width) |
@@ -405,6 +404,11 @@ Run inference using compiled models
 | `--audio_model_type` | `preprocess.audio_model_type` | `` | audio model architecture (vggish11, yamnet, gtcrn, gcrn) |
 | `--postprocess_enable` | `common.postprocess_enable` | `False` | enable postprocessing after inference |
 | `--postprocess_name` | `postprocess.name` | `` | name of the postprocessing pipeline |
+| `--postprocess_detection_threshold` | `postprocess.detection_threshold` | `0.3` | detection confidence threshold for postprocessing. eg. 0.3 |
+| `--postprocess_detection_top_k` | `postprocess.detection_top_k` | `200` | top-k detections to keep in postprocessing. eg. 200 |
+| `--postprocess_detection_nms_threshold` | `postprocess.detection_nms_threshold` | `0.45` | NMS IoU threshold for postprocessing. eg. 0.45 |
+| `--postprocess_detection_keep_top_k` | `postprocess.detection_keep_top_k` | `200` | number of detections to keep after NMS in postprocessing. eg. 200 |
+| `--postprocess_detection_nms_enable` | `postprocess.enable_nms` | `False` | NMS IoU threshold for postprocessing. eg. 0 for disable, 1 for enable |
 | `--display_benchmark` | `common.display_benchmark` | `False` | display benchmark statistics after inference on EVM |
 | `--save_output` | `postprocess.save_output` | `True` | save postprocessed output to files |
 | `--save_output_frames` | `postprocess.save_output_frames` | `10` | number of output frames to save |
@@ -480,10 +484,6 @@ Analyze model runtime and layer-level statistics
 | `--output_feature_16bit_names_search` | `session.output_feature_16bit_names_search` | `` | a list contaning tuples of start and end nodes - it will be used to generate advanced_options:output_feature_16bit_names_list. example: /decoder/Concat_3:None, /aux/Relu_5:None |
 | `--meta_arch_type` | `session.runtime_options.object_detection:meta_arch_type` | `==SUPPRESS==` | meta architecture type for object detection |
 | `--meta_arch_file_path` | `session.runtime_options.object_detection:meta_layers_names_list` | `==SUPPRESS==` | path to meta architecture file |
-| `--detection_threshold` | `session.runtime_options.object_detection:confidence_threshold` | `0.3` | confidence threshold for object detection |
-| `--detection_top_k` | `session.runtime_options.object_detection:top_k` | `200` | number of top detections to keep before NMS |
-| `--nms_threshold` | `session.runtime_options.object_detection:nms_threshold` | `0.45` | NMS threshold for object detection |
-| `--keep_top_k` | `session.runtime_options.object_detection:keep_top_k` | `200` | number of top detections to keep after NMS |
 | `--runtime_options_dict` | `session.runtime_options_dict` | `` | runtime_options as a dict. example: "{"advanced_options:enable_shape_folding:0"}" |
 | `--preprocess_name` | `preprocess.name` | `` | name of the preprocessing pipeline |
 | `--resize` | `preprocess.resize` | `` | resize dimensions for input images (height width) |
@@ -496,6 +496,11 @@ Analyze model runtime and layer-level statistics
 | `--audio_model_type` | `preprocess.audio_model_type` | `` | audio model architecture (vggish11, yamnet, gtcrn, gcrn) |
 | `--postprocess_enable` | `common.postprocess_enable` | `False` | enable postprocessing after inference |
 | `--postprocess_name` | `postprocess.name` | `` | name of the postprocessing pipeline |
+| `--postprocess_detection_threshold` | `postprocess.detection_threshold` | `0.3` | detection confidence threshold for postprocessing. eg. 0.3 |
+| `--postprocess_detection_top_k` | `postprocess.detection_top_k` | `200` | top-k detections to keep in postprocessing. eg. 200 |
+| `--postprocess_detection_nms_threshold` | `postprocess.detection_nms_threshold` | `0.45` | NMS IoU threshold for postprocessing. eg. 0.45 |
+| `--postprocess_detection_keep_top_k` | `postprocess.detection_keep_top_k` | `200` | number of detections to keep after NMS in postprocessing. eg. 200 |
+| `--postprocess_detection_nms_enable` | `postprocess.enable_nms` | `False` | NMS IoU threshold for postprocessing. eg. 0 for disable, 1 for enable |
 | `--display_benchmark` | `common.display_benchmark` | `False` | display benchmark statistics after inference on EVM |
 | `--save_output` | `postprocess.save_output` | `True` | save postprocessed output to files |
 | `--save_output_frames` | `postprocess.save_output_frames` | `10` | number of output frames to save |
