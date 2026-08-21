@@ -111,7 +111,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
     @classmethod
     def create_transforms_detection_base(cls, settings, formatter=None, resize_with_pad=False, keypoint=False, object6dpose=False, normalized_detections=True, transpose_indices=None, model_output_type=None, concat_details=None,
                                      shuffle_indices=None, squeeze_axis=0, reshape_list=None, ignore_index=None, logits_bbox_to_bbox_ls=False,
-                                     detection_threshold=None, detection_nms_threshold=None, detection_top_k=None, detection_keep_top_k=None, save_output=False, save_output_frames=50, show_output=False, **kwargs):
+                                     detection_threshold=None, detection_nms_threshold=None, detection_top_k=None, detection_keep_top_k=None, enable_nms=False, save_output=False, save_output_frames=50, show_output=False, **kwargs):
 
         # detection_threshold = detection_threshold or settings.detection_threshold
 
@@ -161,7 +161,7 @@ class PostProcessTransforms(transforms_base.TransformsCompose):
             transforms_list += [DetectionFilter(detection_threshold=detection_threshold,
                                                       detection_keep_top_k=detection_keep_top_k)]
         #
-        if detection_nms_threshold is not None:
+        if enable_nms and detection_nms_threshold is not None:
             transforms_list += [DetectionNMS(nms_threshold=detection_nms_threshold)]
         #
         if keypoint:

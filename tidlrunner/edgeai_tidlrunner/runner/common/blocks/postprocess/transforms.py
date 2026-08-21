@@ -537,7 +537,7 @@ class DetectionFilter():
         if self.detection_threshold is not None:
             detection_threshold = info_dict['runtime_options'].get('object_detection:confidence_threshold', None) \
                         if self.detection_threshold is True else self.detection_threshold
-            assert detection_threshold is not None, f'invalid values of detection_threshold: {detection_threshold}'
+            assert detection_threshold is not None, f'invalid values of detection_threshold: {detection_threshold} in {__file__}'
             bbox_score = bbox[:, 5]
             bbox_selected = (bbox_score >= detection_threshold)
             bbox = bbox[bbox_selected, ...]
@@ -545,7 +545,7 @@ class DetectionFilter():
         if self.detection_keep_top_k is not None:
             detection_keep_top_k = info_dict['runtime_options'].get('object_detection:keep_top_k', None) \
                         if self.detection_keep_top_k is True else self.detection_keep_top_k
-            assert detection_keep_top_k is not None, f'invalid values of detection_keep_top_k: {detection_keep_top_k}'
+            assert detection_keep_top_k is not None, f'invalid values of detection_keep_top_k: {detection_keep_top_k} in {__file__}'
             if bbox.shape[0] > detection_keep_top_k:
                 bbox = sorted(bbox, key=lambda b: b[5])
                 bbox = np.stack(bbox, axis=0)
@@ -558,6 +558,7 @@ class DetectionFilter():
 class DetectionNMS():
     """Per-class IoU NMS. Expects bbox rows: [x1, y1, x2, y2, class_id, score]."""
     def __init__(self, nms_threshold=0.45):
+        assert nms_threshold is not None and nms_threshold > 0.0, f'invalid nms_threshold: {nms_threshold} in {__file__}'
         self.nms_threshold = nms_threshold
 
     def __call__(self, bbox, info_dict):

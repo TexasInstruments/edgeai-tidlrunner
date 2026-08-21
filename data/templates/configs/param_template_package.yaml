@@ -52,5 +52,6 @@ postprocess:
   logits_bbox_to_bbox_ls: false
   keypoint: false
   object6dpose: false  
+  enable_nms: false
 metric:
   label_offset_pred: null
