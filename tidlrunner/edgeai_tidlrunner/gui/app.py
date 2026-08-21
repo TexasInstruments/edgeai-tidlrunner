@@ -30,15 +30,36 @@
 
 import argparse
 import os
+import re
 import shlex
-from typing import Dict
+from typing import Dict, Optional
+from urllib.parse import quote
 
+from fastapi import HTTPException
+from fastapi.responses import FileResponse
+from nicegui import app as fastapi_app
 from nicegui import ui
 
 from edgeai_tidlrunner.version import __version__
 from . import fields
 from .pathpicker import choose_path
 from .process import CommandRunner, cli_prefix
+
+REPORT_ROUTE = '/tidlrunner/modelinspector'
+
+# printed by GenerateModelInspectorHTML when a report is written
+_REPORT_LINE = re.compile(r'HTML generation successful\.\s*Output at:\s*(\S+)')
+
+# only paths reported by a run may be served, so the route cannot be used to
+# read arbitrary files
+_served_reports: set = set()
+
+
+@fastapi_app.get(REPORT_ROUTE)
+def _serve_report(path: str) -> FileResponse:
+    if path not in _served_reports or not os.path.isfile(path):
+        raise HTTPException(status_code=404, detail='report not found')
+    return FileResponse(path, media_type='text/html')
 
 
 def _is_true(text: str) -> bool:
@@ -67,6 +88,10 @@ class RunnerPage:
         self.run_button: ui.button = None
         self.stop_button: ui.button = None
         self.status: ui.label = None
+        self.report: Optional[str] = None
+        self.report_select: ui.select = None
+        self.report_view: ui.element = None
+        self.report_placeholder: ui.label = None
 
     # ------------------------------------------------------------------ state
 
@@ -160,6 +185,53 @@ class RunnerPage:
                     for spec in specs:
                         self.build_field(spec)
 
+    # ------------------------------------------------------- model inspector
+
+    def build_inspector(self) -> None:
+        with ui.column().classes('w-full h-full gap-2 p-2').style('min-height: 0'):
+            with ui.row().classes('w-full items-center no-wrap gap-2'):
+                self.report_select = ui.select({}, label='report',
+                                               on_change=lambda e: self.show_report(e.value))
+                self.report_select.props('dense outlined').classes('grow')
+                ui.button(icon='open_in_new', on_click=self.open_report_tab) \
+                    .props('flat dense').tooltip('open in a new browser tab')
+            self.report_placeholder = ui.label(
+                'no model inspector report yet - run compile or inspect first') \
+                .classes('text-caption text-grey p-2')
+            self.report_view = ui.element('iframe') \
+                .classes('w-full grow rounded').style('border: 0; min-height: 0')
+        self.show_report(None)
+
+    def report_url(self, path: str) -> str:
+        return f'{REPORT_ROUTE}?path={quote(path)}'
+
+    def show_report(self, path: Optional[str]) -> None:
+        self.report = path
+        if self.report_select.value != path:
+            self.report_select.value = path
+        self.report_placeholder.set_visibility(not path)
+        self.report_view.set_visibility(bool(path))
+        if path:
+            self.report_view.props(f'src="{self.report_url(path)}"')
+
+    def open_report_tab(self) -> None:
+        if not self.report:
+            ui.notify('no report selected', type='warning')
+            return
+        ui.navigate.to(self.report_url(self.report), new_tab=True)
+
+    def register_report(self, path: str) -> None:
+        """Add a report a run just announced in the log, and show it."""
+        path = os.path.abspath(os.path.join(self.cwd, path))
+        if not os.path.isfile(path):
+            return
+        _served_reports.add(path)
+        options = dict(self.report_select.options or {})
+        options[path] = os.path.relpath(path, self.cwd)
+        self.report_select.options = options
+        self.report_select.update()
+        self.show_report(path)
+
     # ------------------------------------------------------------------- run
 
     def start_run(self) -> None:
@@ -190,6 +262,9 @@ class RunnerPage:
         for kind, payload in self.runner.drain():
             if kind == 'line':
                 self.log.push(payload)
+                match = _REPORT_LINE.search(payload)
+                if match:
+                    self.register_report(match.group(1))
             else:
                 self.log.push(f'--- finished with exit code {payload} ---')
                 self.update_run_state('done' if payload == 0 else f'failed ({payload})')
@@ -213,7 +288,7 @@ class RunnerPage:
                 with ui.column().classes('w-full h-full overflow-auto p-3 gap-3'):
                     with ui.row().classes('w-full items-center no-wrap gap-1'):
                         cwd_input = ui.input(label='working directory', value=self.cwd,
-                                             on_change=lambda e: setattr(self, 'cwd', e.value or os.getcwd()))
+                                             on_change=lambda e: self.set_cwd(e.value))
                         cwd_input.props('dense outlined').classes('grow')
                         ui.button(icon='folder_open',
                                   on_click=lambda _: self.browse_cwd(cwd_input)).props('flat dense')
@@ -232,7 +307,23 @@ class RunnerPage:
                         self.status = ui.label('idle').classes('text-caption text-grey')
                     self.command_preview = ui.label().classes(
                         'w-full font-mono text-xs bg-grey-2 dark:bg-grey-9 rounded p-2 break-all select-all')
-                    self.log = ui.log(max_lines=20000).classes('w-full grow font-mono text-xs')
+
+                    with ui.tabs().classes('w-full').props('dense align=left') as tabs:
+                        log_tab = ui.tab('Log', icon='terminal')
+                        inspector_tab = ui.tab('Model Inspector', icon='insights')
+                    # quasar's panel wrapper is auto-height, so a percentage-height
+                    # iframe collapses unless the chain is forced to 100%
+                    ui.add_css('''
+                        .tidl-panels { min-height: 0; }
+                        .tidl-panels > .q-panel-parent { height: 100%; }
+                        .tidl-panels .q-tab-panel { height: 100%; }
+                    ''')
+                    with ui.tab_panels(tabs, value=log_tab).classes('w-full grow tidl-panels') \
+                            .props('keep-alive'):
+                        with ui.tab_panel(log_tab).classes('p-0'):
+                            self.log = ui.log(max_lines=20000).classes('w-full h-full font-mono text-xs')
+                        with ui.tab_panel(inspector_tab).classes('p-0'):
+                            self.build_inspector()
 
         self.stop_button.set_enabled(False)
         self.refresh_preview()
@@ -242,8 +333,11 @@ class RunnerPage:
         selected = await choose_path(widget.value or self.cwd, dirs_only=True)
         if selected:
             widget.value = selected
-            self.cwd = selected
-            self.refresh_preview()
+            self.set_cwd(selected)
+
+    def set_cwd(self, path: str) -> None:
+        self.cwd = path or os.getcwd()
+        self.refresh_preview()
 
 
 @ui.page('/')
