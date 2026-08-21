@@ -125,7 +125,7 @@ class GenerateModelInspectorHTML(CompileModelBase):
         # Activation data is embedded in the JSON (no separate activations file needed)
         try:
             gen_html(output_json_path, template_file, output_html_path)
-            print(f'INFO: Model Inspector - HTML generation successful')
+            print(f'INFO: Model Inspector - HTML generation successful. Output at: {output_html_path}')
         except Exception as e:
             print(f'INFO: Model Inspector - HTML generation skipped due to missing compile artifacts: {e}')
 
