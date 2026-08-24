@@ -28,6 +28,9 @@
 
 import numpy as np
 import yaml
+from typing import List
+from enum import Enum
+
 from .params_base import ParamsBase
 
 
@@ -338,3 +341,8 @@ def load_and_format_yaml(file_path):
 
     yaml_config = _format_yaml_fields(yaml_config)
     return yaml_config
+
+
+def enum_to_list(enum_type: Enum) -> List[str]:
+    return [v for k, v in vars(enum_type).items()
+            if k.isupper() and not k.endswith('_DEFAULT')]

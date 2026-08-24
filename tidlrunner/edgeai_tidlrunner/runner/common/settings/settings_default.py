@@ -33,12 +33,13 @@ import sys
 import warnings
 import argparse
 
-from edgeai_tidlrunner.rtwrapper.options import options_default
+from edgeai_tidlrunner.rtwrapper.options import options_default, enumerations
 from . import constants
 from .constants import presets, SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
 from ...common import utils
 from ...common.bases import settings_base
 from .settings_help import register_help
+
 
 RUNTIME_SETTINGS_DEFAULT = {
     # whether to run the inference on TIDL or on ARM without TIDL
@@ -112,7 +113,7 @@ SETTINGS_DEFAULT['commands.compile'] = SETTINGS_DEFAULT['common.basic'] | SETTIN
     'upgrade_config':           {'dest': 'common.upgrade_config', 'default': True, 'type': str, 'metavar': 'value', 'help': 'upgrade edgeai-benchmark config to work with tidlrunner'},
     'model_selection':          {'dest': 'common.model_selection', 'default': None, 'type': utils.str_or_none, 'metavar': 'value', 'help': 'select a subset of models to run - path of the model is compared using this model_selection regex to select a particular model or not'},
     'model_shortlist':          {'dest': 'common.model_shortlist', 'default': constants.MODEL_SHORTLIST_DEFAULT, 'type': utils.int_or_none, 'metavar': 'value', 'help': 'select a subset of models to run - models configs with model_shortlist value <= this specified value will be used'},
-    'preset_selection':         {'dest': 'common.preset_selection', 'default': None, 'type': utils.str_or_none, 'metavar': 'value', 'help': 'select a preset for speed accuracy trade-off: None, SPEED, ACCURACY, BALANCED'},
+    'preset_selection':         {'dest': 'common.preset_selection', 'default': None, 'type': utils.str_or_none, 'metavar': 'value', 'choices': utils.enum_to_list(constants.ModelCompilationPreset), 'help': 'select a preset for speed accuracy trade-off: None, SPEED, ACCURACY, BALANCED'},
     'config_template':          {'dest': 'common.config_template', 'default':'data/templates/configs/param_template_config.yaml', 'type':str, 'metavar':'value', 'help':'param template path'},
     'incremental':              {'dest': 'common.incremental', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', 'help':'param template path'},
     'clear_run_dir':            {'dest': 'common.clear_run_dir', 'default':True, 'type':utils.str_to_bool, 'metavar':'value', 'help':'clear_run_dir'},
@@ -125,23 +126,23 @@ SETTINGS_DEFAULT['commands.compile'] = SETTINGS_DEFAULT['common.basic'] | SETTIN
     'model_id':                 {'dest': 'session.model_id', 'default': None, 'type': str, 'metavar': 'value', 'help': 'unique id of a model - optional'},
     'artifacts_folder':         {'dest': 'session.artifacts_folder', 'default': None, 'type': str, 'metavar': 'value', 'help': 'folder to store compilation artifacts'},
     ## runtime
-    'runtime_name':             {'dest': 'session.name', 'default': None, 'type': str, 'group': 'runtime_name', 'metavar': 'value', '_gui':True, 'help': 'name of the runtime session'},
+    'runtime_name':             {'dest': 'session.name', 'default': None, 'type': str, 'group': 'runtime_name', 'metavar': 'value', 'choices': utils.enum_to_list(enumerations.RuntimeType), '_gui':True, 'help': 'name of the runtime session'},
     'session_type_dict':        {'dest': 'common.session_type_dict', 'default': None, 'type': str, 'group': 'runtime_name', 'metavar': 'value', 'help': 'mapping of model extensions to session names'},
     # input_data
     'dataset_type_dict':        {'dest': 'common.dataset_type_dict', 'default': {'imagenet':'imagenetv2c'}, 'type': utils.str_to_dict, 'metavar': 'value', 'help': 'dataset_type maping. example: imagenet:imagenetv2c, cocoseg21:coco'},
     'data_name':                {'dest': 'dataloader.name', 'default': None, 'type': str, 'metavar': 'value', 'help': 'name of the input dataset'},
     'data_path':                {'dest': 'dataloader.path', 'default': None, 'type': str, 'metavar': 'path', 'help': 'path to the input data directory'},
     # runtime_settings
-    'target_device':            {'dest': 'session.target_device', 'default': presets.TargetDeviceType.TARGET_DEVICE_AM62A, 'type': str, 'metavar': 'value', '_gui':True, 'help': 'target device for inference (AM68A, AM69A, etc.)'},
+    'target_device':            {'dest': 'session.target_device', 'default': presets.TargetDeviceType.TARGET_DEVICE_AM62A, 'type': str, 'metavar': 'value', 'choices': utils.enum_to_list(enumerations.TargetDeviceType), '_gui':True, 'help': 'target device for inference (AM68A, AM69A, etc.)'},
     'tidl_offload':             {'dest': 'session.tidl_offload', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', '_gui':True, 'help': 'enable TIDL acceleration for inference'},
     'graph_optimization_level': {'dest': 'session.onnxruntime:graph_optimization_level', 'default': presets.GraphOptimizationLevel.ORT_DISABLE_ALL, 'type': int, 'metavar': 'value', 'help': 'ONNX Runtime graph optimization level'},
     # runtime_settings.runtime_options
-    'tensor_bits':              {'dest': 'session.runtime_options.tensor_bits', 'default': 8, 'type': int, 'metavar': 'value', '_gui':True, 'help': 'quantization bit-width for tensors (8 or 16)'},
-    'debug_level':              {'dest': 'session.runtime_options.debug_level', 'default': 0, 'type': int, 'metavar': 'value', '_gui':True, 'help': 'debug level for compile and infer'},
+    'tensor_bits':              {'dest': 'session.runtime_options.tensor_bits', 'default': 8, 'type': int, 'metavar': 'value', 'choices': utils.enum_to_list(enumerations.TensorBits), '_gui':True, 'help': 'quantization bit-width for tensors (8 or 16)'},
+    'debug_level':              {'dest': 'session.runtime_options.debug_level', 'default': 0, 'type': int, 'metavar': 'value', 'choices': utils.enum_to_list(enumerations.DebugLevel), '_gui':True, 'help': 'debug level for compile and infer'},
     'deny_list_layer_type':     {'dest': 'session.runtime_options.deny_list:layer_type', 'default': '', 'type': utils.str_or_empty, 'nargs':'*', 'metavar': 'value', '_gui':True, 'help': 'comma separated layer types to exclude from TIDL offload'},
     'deny_list_layer_name':     {'dest': 'session.runtime_options.deny_list:layer_name', 'default': '', 'type': utils.str_or_empty, 'nargs':'*', 'metavar': 'value', '_gui':True, 'help': 'comma separated layer names to exclude from TIDL offload'},
     'deny_list_layer_name_search':     {'dest': 'session.deny_list_layer_name_search', 'default': '', 'type': utils.str_to_list_of_tuples, 'metavar': 'value', 'help': 'a list contaning tuples of start and end nodes - it will be used to generate deny_list:layer_name. example: /decoder/Concat_3:None, /aux/Relu_5:None'},
-    'accuracy_level':  {'dest': 'session.runtime_options.accuracy_level', 'default': presets.AccurcyLevel.ACCURACY_LEVEL_ADVANCED1, 'type': int, 'metavar': 'value', '_gui':True, 'help': 'calibration method to use: 0 - frame minmax with running avg, 1 - frame histogram with running avg across frames and bias calibration, 2 - global histogram and bias calibration'},
+    'accuracy_level':  {'dest': 'session.runtime_options.accuracy_level', 'default': presets.AccurcyLevel.ACCURACY_LEVEL_ADVANCED1, 'type': int, 'metavar': 'value', 'choices': utils.enum_to_list(enumerations.AccurcyLevel), '_gui':True, 'help': 'calibration method to use: 0 - frame minmax with running avg, 1 - frame histogram with running avg across frames and bias calibration, 2 - global histogram and bias calibration'},
     'enable_tfr_optimization':  {'dest': 'session.runtime_options.advanced_options:enable_tfr_optimization', 'default': 0, 'type': int, 'metavar': 'value', '_gui':True, 'help': 'transformer specific range calibation optimizations - uses float range. 0 - range update for every iteration, 1 - use float range'},
     'quantization_scale_type':  {'dest': 'session.runtime_options.advanced_options:quantization_scale_type', 'default': None, 'type': int, 'metavar': 'value', '_gui':True, 'help': 'type of quantization scale to use'},
     'calibration_frames':       {'dest': 'session.runtime_options.advanced_options:calibration_frames', 'default': 12, 'type': int, 'metavar': 'value', '_gui':True, 'help': 'number of frames for quantization calibration'},
@@ -149,7 +150,7 @@ SETTINGS_DEFAULT['commands.compile'] = SETTINGS_DEFAULT['common.basic'] | SETTIN
     'prequantized_model':   {'dest': 'session.runtime_options.advanced_options:prequantized_model', 'default': argparse.SUPPRESS, 'type': utils.int_or_none, 'metavar': 'value', 'help': 'whether prequantized model'},
     'quant_params_file_path':   {'dest': 'session.runtime_options.advanced_options:quant_params_proto_path', 'default': argparse.SUPPRESS, 'type': utils.str_or_none_or_bool, 'metavar': 'value', 'help': 'path to quantization parameters file'},
     'max_num_subgraph_nodes':   {'dest': 'session.runtime_options.advanced_options:max_num_subgraph_nodes', 'default': 3000, 'type': int, 'metavar': 'value', 'help': 'maximum number of nodes in a subgraph'},    
-    'add_data_convert_ops':    {'dest': 'session.runtime_options.advanced_options:add_data_convert_ops', 'default': presets.DataConvertOps.DATA_CONVERT_OPS_INPUT_OUTPUT, 'type': int, 'metavar': 'value', 'help': 'data convert in DSP (0: disable, 1: input, 2: output, 3: input and output) - otherwise it will happen in ARM'}, 
+    'add_data_convert_ops':    {'dest': 'session.runtime_options.advanced_options:add_data_convert_ops', 'default': presets.DataConvertOps.DATA_CONVERT_OPS_INPUT_OUTPUT, 'type': int, 'metavar': 'value', 'choices': utils.enum_to_list(enumerations.DataConvertOps), 'help': 'data convert in DSP (0: disable, 1: input, 2: output, 3: input and output) - otherwise it will happen in ARM'}, 
     'output_feature_16bit_names_list':   {'dest': 'session.runtime_options.advanced_options:output_feature_16bit_names_list', 'default': argparse.SUPPRESS, 'type': utils.str_or_empty, 'metavar': 'value', 'help': 'list of output layers to keep in 16-bit precision'},
     'output_feature_16bit_names_search':     {'dest': 'session.output_feature_16bit_names_search', 'default': '', 'type': utils.str_to_list_of_tuples, 'metavar': 'value', 'help': 'a list contaning tuples of start and end nodes - it will be used to generate advanced_options:output_feature_16bit_names_list. example: /decoder/Concat_3:None, /aux/Relu_5:None'},    
     # runtime_settings.runtime_options.object_detection
@@ -166,7 +167,7 @@ SETTINGS_DEFAULT['commands.compile'] = SETTINGS_DEFAULT['common.basic'] | SETTIN
     'preprocess_name':          {'dest':'preprocess.name', 'default':None, 'type':str, 'metavar':'value', 'group':'preprocess_name', 'help': 'name of the preprocessing pipeline'},
     'resize':                   {'dest':'preprocess.resize', 'default':None, 'type':int, 'nargs':'*', 'metavar':'value', 'help': 'resize dimensions for input images (height width)'},
     'crop':                     {'dest':'preprocess.crop', 'default':None, 'type':int, 'nargs':'*', 'metavar':'value', 'help': 'crop dimensions for input images (height width)'},
-    'data_layout':              {'dest':'preprocess.data_layout', 'default':None, 'type':str, 'metavar':'value', 'help': 'data layout format (NCHW, NHWC)'},
+    'data_layout':              {'dest':'preprocess.data_layout', 'default':None, 'type':str, 'metavar':'value', 'choices':utils.enum_to_list(enumerations.DataLayoutType), 'help': 'data layout format (NCHW, NHWC)'},
     'reverse_channels':         {'dest':'preprocess.reverse_channels', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', 'help': 'reverse color channel order (RGB to BGR)'},
     'resize_with_pad':          {'dest':'preprocess.resize_with_pad', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', 'help': 'resize image with padding to maintain aspect ratio'},
     # audio preprocess
@@ -315,7 +316,7 @@ COPY_SETTINGS_DEFAULT['commands.extract'] = COPY_SETTINGS_DEFAULT['common.basic'
 SETTINGS_DEFAULT['commands.report'] = SETTINGS_DEFAULT['common.basic'] | {
     'command': {'default': None, 'type': str, '_positional':True, 'metavar': 'report', 'help': 'run report command'},
     'pipeline_type':          {'dest': 'common.pipeline_type', 'default': 'compile', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},
-    'target_device':          {'dest': 'session.target_device', 'default': None, 'type': str, 'metavar': 'value', '_gui':True, 'help': 'target device for report (AM62A, AM69A, etc. None for all devices)'},
+    'target_device':          {'dest': 'session.target_device', 'default': None, 'type': str, 'metavar': 'value', 'choices': utils.enum_to_list(enumerations.TargetDeviceType), '_gui':True, 'help': 'target device for report (AM62A, AM69A, etc. None for all devices)'},
     'report_mode':            {'dest': 'common.report.mode', 'default': 'detailed', 'type': str, 'metavar': 'value', 'choices': ['summary', 'detailed'], '_gui':True, 'help': 'report generation mode (summary or detailed)'},
     'report_path':            {'dest': 'common.report.path', 'default': './work_dirs/{run_label}/{pipeline_type}', 'type': str, 'metavar': 'value', '_gui':True, 'help': 'path where reports will be generated'},
     'run_label':              {'dest': 'common.run_label', 'default': '', 'type': str, 'metavar': 'value', 'help': 'run_label to create run_dir'},
@@ -336,8 +337,8 @@ COPY_SETTINGS_DEFAULT['commands.report'] = COPY_SETTINGS_DEFAULT['common.basic']
 SETTINGS_DEFAULT['commands.package'] = SETTINGS_DEFAULT['common.basic'] | {
     'command': {'default': None, 'type': str, '_positional':True, 'metavar': 'package', 'help': 'run package command'},
     'pipeline_type':        {'dest': 'common.pipeline_type', 'default': 'package', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'}, 
-    'target_device':        {'dest': 'session.target_device', 'default': presets.TargetDeviceType.TARGET_DEVICE_DEFAULT, 'type': str, 'metavar': 'value', '_gui':True, 'help': 'target device for inference (AM68A, AM69A, etc.)'},
-    'tensor_bits':          {'dest': 'session.runtime_options.tensor_bits', 'default': 8, 'type': int, 'metavar': 'value', '_gui':True, 'help': 'quantization bit-width for tensors (8 or 16)'},
+    'target_device':        {'dest': 'session.target_device', 'default': presets.TargetDeviceType.TARGET_DEVICE_DEFAULT, 'type': str, 'metavar': 'value', 'choices': utils.enum_to_list(enumerations.TargetDeviceType), '_gui':True, 'help': 'target device for inference (AM68A, AM69A, etc.)'},
+    'tensor_bits':          {'dest': 'session.runtime_options.tensor_bits', 'default': 8, 'type': int, 'metavar': 'value', 'choices': utils.enum_to_list(enumerations.TensorBits), '_gui':True, 'help': 'quantization bit-width for tensors (8 or 16)'},
     'work_path':                {'dest': 'common.work_path', 'default':'./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, '_gui':True, 'metavar':'value', 'help':'work path'},
     'run_label':            {'dest': 'common.run_label', 'default': '', 'type': str, 'metavar': 'value', 'help': 'run_label to create run_dir'},
     'package_path':         {'dest': 'common.package_path', 'default':'./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', '_gui':True, 'help':'packaged path'},

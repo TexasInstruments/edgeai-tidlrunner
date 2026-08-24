@@ -34,6 +34,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from edgeai_tidlrunner.rtwrapper.options import enumerations
+from edgeai_tidlrunner.runner.common import utils
 from edgeai_tidlrunner.runner.common.settings import settings_default  # noqa: F401  (populates SETTINGS_DEFAULT)
 from edgeai_tidlrunner.runner.common.settings.constants import SETTINGS_DEFAULT
 
@@ -112,30 +113,25 @@ GROUP_ORDER = (
 )
 
 
-def _enum_to_list(enum_type) -> List[str]:
-    return [v for k, v in vars(enum_type).items()
-            if k.startswith('TARGET_DEVICE_') and not k.endswith('_DEFAULT')]
-
-
 # explicit choices for args that argparse leaves as free-form
 _EXPLICIT_CHOICES: Dict[str, List[str]] = {
-    'target_device': _enum_to_list(enumerations.TargetDeviceType),
-    'target_machine': _enum_to_list(enumerations.TargetMachineType),
-    'tensor_bits': _enum_to_list(enumerations.TensorBits),
-    'accuracy_level': _enum_to_list(enumerations.AccurcyLevel),
-    'debug_level': _enum_to_list(enumerations.DebugLevel),
-    'add_data_convert_ops': _enum_to_list(enumerations.DataConvertOps),
-    'data_layout': _enum_to_list(enumerations.DataLayoutType),
-    'runtime_name': _enum_to_list(enumerations.RuntimeType),
-    'enable_tfr_optimization': ['0', '1'],
-    'pipeline_type': ['compile', 'infer', 'optimize', 'extract', 'package'],
-    'capture_log': ['adaptive', 'True', 'False'],
-    'analyze_level': ['0', '1', '2'],
-    'graph_optimization_level': ['0', '1', '2', '99'],
-    'simplify_mode': ['pre', 'post', 'all', 'None'],
-    'shape_inference_mode': ['pre', 'post', 'all', 'None'],
-    'preset_selection': ['None', 'SPEED', 'ACCURACY', 'BALANCED'],
-    'audio_model_type': ['vggish11', 'yamnet', 'gtcrn', 'gcrn'],
+    # 'target_device': utils.enum_to_list(enumerations.TargetDeviceType),
+    # 'target_machine': utils.enum_to_list(enumerations.TargetMachineType),
+    # 'tensor_bits': utils.enum_to_list(enumerations.TensorBits),
+    # 'accuracy_level': utils.enum_to_list(enumerations.AccurcyLevel),
+    # 'debug_level': utils.enum_to_list(enumerations.DebugLevel),
+    # 'add_data_convert_ops': utils.enum_to_list(enumerations.DataConvertOps),
+    # 'data_layout': utils.enum_to_list(enumerations.DataLayoutType),
+    # 'runtime_name': utils.enum_to_list(enumerations.RuntimeType),
+    # 'enable_tfr_optimization': ['0', '1'],
+    # 'pipeline_type': ['compile', 'infer', 'optimize', 'extract', 'package'],
+    # 'capture_log': ['adaptive', 'True', 'False'],
+    # 'analyze_level': ['0', '1', '2'],
+    # 'graph_optimization_level': ['0', '1', '2', '99'],
+    # 'simplify_mode': ['pre', 'post', 'all', 'None'],
+    # 'shape_inference_mode': ['pre', 'post', 'all', 'None'],
+    # 'preset_selection': ['None', 'SPEED', 'ACCURACY', 'BALANCED'],
+    # 'audio_model_type': ['vggish11', 'yamnet', 'gtcrn', 'gcrn'],
 }
 
 _BOOL_TYPE_NAMES = frozenset({'str_to_bool'})
