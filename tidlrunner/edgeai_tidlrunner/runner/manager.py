@@ -355,7 +355,7 @@ class PipelineManager(PipelineBase):
 
         # if there is more than one model or command or parallel_processes is set, we need to launch in ParallelRunner
         # or else we can directly run it
-        if (parallel_processes and multiple_models) or (multiple_models or multiple_commands):
+        if (parallel_processes or multiple_models) or (multiple_models or multiple_commands):
             for task_list in task_entries.values():
                 for task_entry in task_list:
                     proc_name = task_entry['proc_name']
@@ -368,7 +368,7 @@ class PipelineManager(PipelineBase):
                     task_entry['proc_func'] = functools.partial(utils.ProcessWithQueue.create, proc_name, proc_func, proc_info, proc_env)
                 #
             #
-            if (parallel_processes and multiple_models):
+            if (parallel_processes or multiple_models):
                 runner_obj = utils.ParallelRunner(parallel_processes=parallel_processes, overall_timeout=overall_timeout, instance_timeout=instance_timeout)
             else:
                 runner_obj = utils.SequentialRunner(parallel_processes=parallel_processes, with_progressbar=multiple_models)

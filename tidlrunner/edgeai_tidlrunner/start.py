@@ -159,7 +159,12 @@ def start_with_proper_environment(START_CLS=StartRunner, **kwargs):
                 start_kwargs[kwarg_key] = command_kwargs[cmd_key]
             #
         #
-        rtwrapper.restart_with_proper_environment(**start_kwargs)
+        # certain runtime may need a new process to be launched with proper environment variables set
+        # this can be done by either restarting the current process or by setting parallel_processes option
+        # parallel_processes will use a new process for each model compilation, so it will ensure that proper environment is propagated
+        # for now using set_proper_environment with parallel_process instead of restart_with_proper_environment
+        rtwrapper.set_proper_environment(**start_kwargs) # rtwrapper.restart_with_proper_environment(**start_kwargs)
+        START_CLS.main(**kwargs)
     else:
         # TIDL_TOOLS_PATH is not needed in EVM, but just set it to empty to pass through checks for it
         os.environ['TIDL_TOOLS_PATH'] = os.environ.get('TIDL_TOOLS_PATH', '')

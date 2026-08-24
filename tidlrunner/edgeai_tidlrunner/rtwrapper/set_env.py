@@ -170,6 +170,14 @@ def set_environment(update_artifacts=True, **kwargs):
     print("INFO: Environment variables for TIDL Runner have been set successfully.")
 
 
+def set_proper_environment(**kwargs):
+    """
+    Restart the process with correct environment.
+    This should be called only if TIDL_TOOLS_PATH or LD_LIBRARY_PATH is not properly set
+    """
+    set_environment(**kwargs)
+
+
 def restart_with_proper_environment(**kwargs):
     """
     Restart the process with correct environment.
