@@ -65,8 +65,8 @@ COPY_SETTINGS_DEFAULT['common.basic'] = {}
 ##########################################################################
 SETTINGS_DEFAULT['commands.surgery'] = SETTINGS_DEFAULT['common.basic'] | {
     'command': {'default': None, 'type': str, '_positional':True, 'metavar': 'surgery', 'help': 'run surgery command'},
-    'model_path':                       {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', '_gui':True, 'help': 'input model'},
     'config_path':                      {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', '_gui':True, 'help': 'path to configuration file'},
+    'model_path':                       {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', '_gui':True, 'help': 'input model'},
     'work_path':                {'dest': 'common.work_path', 'default':'./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', '_gui':True, 'help':'work path'},
     'run_label':                {'dest': 'common.run_label', 'default': '', 'type': str, 'metavar': 'value', 'help': 'run_label to create run_dir'},
     'run_dir':                      {'dest': 'session.run_dir', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', '_gui':True, 'help':'run_dir'},
@@ -97,8 +97,8 @@ COPY_SETTINGS_DEFAULT['commands.surgery'] = COPY_SETTINGS_DEFAULT['common.basic'
 ##########################################################################
 SETTINGS_DEFAULT['commands.compile'] = SETTINGS_DEFAULT['common.basic'] | SETTINGS_DEFAULT['commands.surgery'] | {
     'command': {'default': None, 'type': str, '_positional':True, 'metavar': 'compile', 'help': 'run compile command'},
-    'model_path':               {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', '_gui':True, 'help': 'input model'},
     'config_path':              {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', '_gui':True, 'help': 'path to configuration file'},
+    'model_path':               {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', '_gui':True, 'help': 'input model'},
     'work_path':                {'dest': 'common.work_path', 'default':'./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', '_gui':True, 'help':'work path'},
     'run_label':                {'dest': 'common.run_label', 'default': '', 'type': str, 'metavar': 'value', 'help': 'run_label to create run_dir'},
     'run_dir':                  {'dest': 'session.run_dir', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', '_gui':True, 'help':'run_dir'},
@@ -288,8 +288,8 @@ COPY_SETTINGS_DEFAULT['commands.analyze'] = COPY_SETTINGS_DEFAULT['commands.insp
 ##########################################################################
 SETTINGS_DEFAULT['commands.extract'] = SETTINGS_DEFAULT['common.basic'] | {
     'command': {'default': None, 'type': str, '_positional':True, 'metavar': 'extract', 'help': 'run extract command'},
-    'model_path':             {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
     'config_path':            {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'},
+    'model_path':             {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
     'work_path':                {'dest': 'common.work_path', 'default':'./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'work path'},
     'run_label':                {'dest': 'common.run_label', 'default': '', 'type': str, 'metavar': 'value', 'help': 'run_label to create run_dir'},
     'run_dir':            {'dest': 'session.run_dir', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'run_dir'},

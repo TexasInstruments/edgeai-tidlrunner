@@ -32,7 +32,7 @@ import argparse
 import os
 import re
 import shlex
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 from urllib.parse import quote
 
 from fastapi import HTTPException
@@ -82,6 +82,7 @@ class RunnerPage:
         self.commands = fields.command_names()
         self.command = 'compile' if 'compile' in self.commands else self.commands[0]
         self.values: Dict[str, str] = fields.default_values(self.command)
+        self.group_selected: Dict[str, str] = fields.default_group_selection(self.command)
         self.cwd = os.getcwd()
         self.runner = CommandRunner()
         self.log: ui.log = None
@@ -99,7 +100,7 @@ class RunnerPage:
     # ------------------------------------------------------------------ state
 
     def argv(self):
-        return cli_prefix() + fields.build_argv(self.command, self.values)
+        return cli_prefix() + fields.build_argv(self.command, self.values, self.group_selected)
 
     def refresh_preview(self) -> None:
         self.command_preview.text = shlex.join(self.argv())
@@ -108,20 +109,32 @@ class RunnerPage:
         self.values[name] = text
         self.refresh_preview()
 
+    def set_group_selection(self, group_name: str, name: str) -> None:
+        self.group_selected[group_name] = name
+        self.form.refresh()
+        self.refresh_preview()
+
     def select_command(self, command: str) -> None:
         # keep any value the user explicitly changed, if the new command has that option
         overrides = {name: value for name, value in self.values.items()
                      if value != fields.default_values(self.command).get(name)}
+        prev_group_selected = self.group_selected
         self.command = command
         self.values = fields.default_values(command)
         for name, value in overrides.items():
             if name in self.values:
                 self.values[name] = value
+        new_groups = fields.arg_groups(command)
+        self.group_selected = fields.default_group_selection(command)
+        for group_name, selected_name in prev_group_selected.items():
+            if group_name in new_groups and any(m.name == selected_name for m in new_groups[group_name]):
+                self.group_selected[group_name] = selected_name
         self.form.refresh()
         self.refresh_preview()
 
     def reset(self) -> None:
         self.values = fields.default_values(self.command)
+        self.group_selected = fields.default_group_selection(self.command)
         self.form.refresh()
         self.refresh_preview()
         ui.notify('options reset to defaults')
@@ -130,35 +143,36 @@ class RunnerPage:
 
     def build_field(self, spec: fields.Field) -> None:
         value = self.values.get(spec.name, spec.default_text)
+        label = f'{spec.name} ({spec.help})' if spec.help else spec.name
         tooltip = f'{spec.help}\n[{spec.dest}]'.strip()
 
         if spec.kind == 'bool':
-            widget = ui.switch(spec.name, value=_is_true(value),
+            widget = ui.switch(label, value=_is_true(value),
                                on_change=lambda e, n=spec.name: self.set_value(n, '1' if e.value else '0'))
             widget.classes('w-full')
         elif spec.kind == 'select':
             options = list(spec.choices)
             if value and value not in options:
                 options.insert(0, value)
-            widget = ui.select(options, value=value or None, label=spec.name, with_input=True,
+            widget = ui.select(options, value=value or None, label=label, with_input=True,
                                on_change=lambda e, n=spec.name: self.set_value(n, '' if e.value is None else str(e.value)))
             widget.props('dense outlined').classes('w-full')
         elif spec.kind in ('int', 'float'):
             number = None if value == '' else (int(float(value)) if spec.kind == 'int' else float(value))
-            widget = ui.number(label=spec.name, value=number,
+            widget = ui.number(label=label, value=number,
                                precision=0 if spec.kind == 'int' else None,
                                on_change=lambda e, n=spec.name, k=spec.kind: self.set_value(n, _number_to_text(e.value, k)))
             widget.props('dense outlined').classes('w-full')
         elif spec.browse:
             with ui.row().classes('w-full items-center no-wrap gap-1'):
-                widget = ui.input(label=spec.name, value=value,
+                widget = ui.input(label=label, value=value,
                                   on_change=lambda e, n=spec.name: self.set_value(n, e.value or ''))
                 widget.props('dense outlined').classes('grow')
                 ui.button(icon='folder_open',
                           on_click=lambda _, w=widget, s=spec: self.browse(w, s)) \
                     .props('flat dense').tooltip(f'browse for {spec.browse}')
         else:
-            widget = ui.input(label=spec.name, value=value,
+            widget = ui.input(label=label, value=value,
                               on_change=lambda e, n=spec.name: self.set_value(n, e.value or ''))
             widget.props('dense outlined').classes('w-full')
 
@@ -172,6 +186,31 @@ class RunnerPage:
             widget.value = selected
             self.set_value(spec.name, selected)
 
+    def build_arg_group(self, members: List[fields.Field]) -> None:
+        """Radio selector for a set of mutually exclusive arguments (argparse 'group')."""
+        group_name = members[0].arg_group
+        selected = self.group_selected.get(group_name, members[0].name)
+        options = {m.name: (f'{m.name} ({m.help})' if m.help else m.name) for m in members}
+        with ui.column().classes('w-full gap-1'):
+            ui.radio(options, value=selected,
+                     on_change=lambda e, g=group_name: self.set_group_selection(g, e.value)) \
+                .props('inline dense')
+            for m in members:
+                if m.name == selected:
+                    self.build_field(m)
+
+    def build_fields(self, specs: List[fields.Field]) -> None:
+        arg_groups = fields.arg_groups(self.command)
+        rendered = set()
+        for spec in specs:
+            if spec.arg_group in arg_groups:
+                if spec.arg_group in rendered:
+                    continue
+                rendered.add(spec.arg_group)
+                self.build_arg_group(arg_groups[spec.arg_group])
+            else:
+                self.build_field(spec)
+
     @ui.refreshable_method
     def form(self) -> None:
         groups = fields.grouped_fields(self.command)
@@ -182,15 +221,14 @@ class RunnerPage:
                     ui.icon(theme.COMMAND_ICONS.get(self.command, 'tune')).classes('text-primary')
                     ui.label(self.command).classes('text-subtitle2 text-weight-bold')
                     ui.badge(f'{len(main)} main options').props('outline color=grey-7')
-                with ui.grid(columns=2).classes('w-full gap-2'):
-                    for spec in main:
-                        self.build_field(spec)
+                ui.separator().classes('q-mb-sm')
+                with ui.column().classes('w-full gap-2'):
+                    self.build_fields(main)
         for group_name, specs in groups.items():
             with ui.expansion(group_name, icon=theme.GROUP_ICONS.get(group_name, 'settings')) \
                     .classes('tidl-group w-full').props('dense-toggle expand-separator'):
-                with ui.grid(columns=2).classes('w-full gap-2 p-3'):
-                    for spec in specs:
-                        self.build_field(spec)
+                with ui.column().classes('w-full gap-2 p-3'):
+                    self.build_fields(specs)
 
     # ------------------------------------------------------- model inspector
 
@@ -297,9 +335,6 @@ class RunnerPage:
                         .classes('text-caption text-grey-5 leading-none')
                 ui.badge(__version__).props('outline color=white').classes('self-center')
             with ui.row().classes('items-center gap-3 no-wrap'):
-                ui.select(self.commands, value=self.command, label='command',
-                          on_change=lambda e: self.select_command(e.value)) \
-                    .props('dense outlined dark options-dense').classes('w-44')
                 self.dark = ui.dark_mode()
                 ui.button(icon='dark_mode', on_click=self.toggle_dark) \
                     .props('flat round dense color=white').tooltip('toggle dark mode')
@@ -318,15 +353,19 @@ class RunnerPage:
                                 .props('flat dense round').tooltip('browse')
                             ui.button(icon='restart_alt', on_click=self.reset) \
                                 .props('flat dense round').tooltip('reset options to defaults')
+                    with ui.row().classes('w-full items-center no-wrap gap-2'):
+                        ui.select(self.commands, value=self.command, label='command',
+                                  on_change=lambda e: self.select_command(e.value)) \
+                            .props('dense outlined options-dense').classes('grow')
+                        self.run_button = ui.button('Run', icon='play_arrow', on_click=self.start_run) \
+                            .props('unelevated no-caps').classes('px-4')
+                        self.stop_button = ui.button('Stop', icon='stop', on_click=self.stop_run) \
+                            .props('outline no-caps color=negative')
                     self.form()
 
             with splitter.after:
                 with ui.column().classes('w-full h-full p-4 gap-3').style('min-height: 0'):
                     with ui.row().classes('w-full items-center gap-2 no-wrap'):
-                        self.run_button = ui.button('Run', icon='play_arrow', on_click=self.start_run) \
-                            .props('unelevated no-caps').classes('px-4')
-                        self.stop_button = ui.button('Stop', icon='stop', on_click=self.stop_run) \
-                            .props('outline no-caps color=negative')
                         ui.space()
                         self.spinner = ui.spinner('dots', size='1.4rem').classes('text-primary')
                         self.status = ui.badge('idle').props('outline color=grey-7')

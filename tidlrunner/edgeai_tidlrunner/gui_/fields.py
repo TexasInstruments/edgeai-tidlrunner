@@ -53,16 +53,18 @@ COMMAND_ORDER = (
 
 # shown at the top of the form, in this order, outside the collapsible groups
 PRIMARY_ARGS = (
-    'model_path',
     'config_path',
+    'model_path',
     'target_device',
-    'target_machine',
+    # 'target_machine',
     'tensor_bits',
+    'calibration_frames',
+    'calibration_iterations',
     'num_frames',
-    'data_name',
-    'data_path',
-    'label_path',
-    'run_label',
+    # 'data_name',
+    # 'data_path',
+    # 'label_path',
+    # 'run_label',
     'work_path',
 )
 
@@ -152,6 +154,7 @@ class Field:
     choices: List[str] = field(default_factory=list)
     nargs: bool = False
     browse: Optional[str] = None    # 'file' | 'dir' | None
+    arg_group: Optional[str] = None  # name of the mutually exclusive argparse group, if any
 
 
 def command_names() -> List[str]:
@@ -214,6 +217,7 @@ def _make_field(name: str, spec: Dict[str, Any]) -> Field:
         choices=choices,
         nargs=bool(spec.get('nargs')),
         browse=browse,
+        arg_group=spec.get('group'),
     )
 
 
@@ -247,10 +251,30 @@ def default_values(command: str) -> Dict[str, str]:
     return {f.name: f.default_text for f in get_fields(command)}
 
 
-def build_argv(command: str, values: Dict[str, str]) -> List[str]:
+def arg_groups(command: str) -> Dict[str, List[Field]]:
+    """Mutually exclusive argument groups (argparse 'group' key) with 2+ GUI fields,
+    in field declaration order."""
+    groups: Dict[str, List[Field]] = {}
+    for f in get_fields(command):
+        if f.arg_group:
+            groups.setdefault(f.arg_group, []).append(f)
+    return {name: members for name, members in groups.items() if len(members) > 1}
+
+
+def default_group_selection(command: str) -> Dict[str, str]:
+    """Default selected member (first declared) for each mutually exclusive group."""
+    return {name: members[0].name for name, members in arg_groups(command).items()}
+
+
+def build_argv(command: str, values: Dict[str, str],
+                group_selected: Optional[Dict[str, str]] = None) -> List[str]:
     """Build CLI tokens for the non-default values only."""
+    group_selected = group_selected or {}
     argv = [command]
     for f in get_fields(command):
+        if f.arg_group in group_selected and group_selected[f.arg_group] != f.name:
+            # only the member selected via the mutually exclusive radio group is emitted
+            continue
         text = (values.get(f.name) or '').strip()
         if text == f.default_text.strip() or (not text and not f.default_text):
             continue
