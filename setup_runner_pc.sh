@@ -102,7 +102,7 @@ TIDL_TOOLS_TYPE=${TIDL_TOOLS_TYPE} TIDL_TOOLS_VERSION=${TIDL_TOOLS_VERSION} tidl
 
 ######################################################################
 echo "INFO: installing edgeai_tidlrunner package..."
-pip3 install -e ./tidlrunner[pc]
+pip3 install -e ./tidlrunner[pc,gui]
 
 #######################################################################
 echo "INFO: completed installation."

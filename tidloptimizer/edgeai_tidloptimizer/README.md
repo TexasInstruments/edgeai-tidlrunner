@@ -1,4 +1,0 @@
-# edgeai-tidloptimizer
-
-TODO
-

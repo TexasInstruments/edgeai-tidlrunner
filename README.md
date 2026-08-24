@@ -9,9 +9,8 @@ Easy to use commandline tool for "Bring Your Own Edge AI Models" (BYOM) - to wor
 
 ## Introduction
 
-There are two packages in this repository with different purposes.
-1. [tidlrunner](tidlrunner): Tool for Model Compilation, Inference, Analysis or Benchmark. 
-2. tidloptimizer: Experimental tool for advanced model optimization (This is an experimental feature and recommend users not to use it as of now). 
+There repository containes the following package:
+* [tidlrunner](tidlrunner): Tool for Model Compilation, Inference, Benchmark and Inspection/Analysis.
 
 ## Documentation for tidlrunner
 

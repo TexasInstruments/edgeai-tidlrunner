@@ -3,7 +3,7 @@
 Model compilation is done on an x86 PC (Ubuntu Linux recommended). Scripts starting with setup_runner_pc are used to prepare and install dependencies on PC. Scripts starting with setup_runner_evm are for installing dependencies on EVM/device.
 
 ## Python environment
-We recommend to create a new Python environment for with tidlrunner in the Python environment name. (tidlrunner or my-tidlrunner or similar -- the name "tidlrunner" is recommended in the Python environment name to avoid confusion with tidloptimizer, which has a different set of requirements and needs a different environment) 
+We recommend to create a new Python environment with tidlrunner in the Python environment name. (tidlrunner or my-tidlrunner or similar -- to avoid confusion with other environments) 
 
 We also recommend to use Python 3.10 as of now as the tidl-tools used for model compilation on PC are compatible with that version of Python.
 

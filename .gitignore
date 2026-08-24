@@ -17,6 +17,7 @@ dist/
 /work_dirs/*
 
 /dependencies
+/pandaset-devkit
 
 /tools/tidl_tools_package/bin*
 /tools/tidl_tools_package/bin/
