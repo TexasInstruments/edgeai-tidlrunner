@@ -65,7 +65,7 @@ class TensorBits:
 class AccurcyLevel:
     ACCURACY_LEVEL_BASIC = 0
     ACCURACY_LEVEL_ADVANCED1 = 1
-    ACCURACY_LEVEL_ADVANCED2 = 1
+    ACCURACY_LEVEL_ADVANCED2 = 2
 
 
 class DataConvertOps:
@@ -108,6 +108,12 @@ class TargetMachineType:
 class DataLayoutType:
     NCHW = 'NCHW'
     NHWC = 'NHWC'
+
+
+class TensorBits:
+    TENSOR_BITS_8 = 8
+    TENSOR_BITS_16 = 16
+    TENSOR_BITS_32 = 32
 
 
 # supported model types

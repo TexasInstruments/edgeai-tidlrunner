@@ -64,20 +64,20 @@ COPY_SETTINGS_DEFAULT['common.basic'] = {}
 
 ##########################################################################
 SETTINGS_DEFAULT['commands.surgery'] = SETTINGS_DEFAULT['common.basic'] | {
-    'command': {'default': None, 'type': str, 'positional':True, 'metavar': 'surgery', 'help': 'run surgery command'},
-    'model_path':                       {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
-    'config_path':                      {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'},    
-    'work_path':                {'dest': 'common.work_path', 'default':'./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'work path'},
+    'command': {'default': None, 'type': str, '_positional':True, 'metavar': 'surgery', 'help': 'run surgery command'},
+    'model_path':                       {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', '_gui':True, 'help': 'input model'},
+    'config_path':                      {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', '_gui':True, 'help': 'path to configuration file'},
+    'work_path':                {'dest': 'common.work_path', 'default':'./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', '_gui':True, 'help':'work path'},
     'run_label':                {'dest': 'common.run_label', 'default': '', 'type': str, 'metavar': 'value', 'help': 'run_label to create run_dir'},
-    'run_dir':                      {'dest': 'session.run_dir', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'run_dir'},
+    'run_dir':                      {'dest': 'session.run_dir', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', '_gui':True, 'help':'run_dir'},
     'pipeline_type':                    {'dest': 'common.pipeline_type', 'default': 'optimize', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},
-    'downgrade_onnx_ir_version':        {'dest': 'common.downgrade_onnx_ir_version', 'default': 9, 'type': int, 'metavar': 'value', 'help': 'downgrade ir_version, if the onnx model has higher value (temporary workaround until tidl-onnx-model-optimizer is updated).'},
-    'input_optimization':               {'dest': 'session.input_optimization', 'default': False, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32'},
-    'input_mean':                       {'dest': 'session.input_mean', 'default': (123.675, 116.28, 103.53), 'type': float, 'nargs': '*', 'metavar': 'value', 'help': 'mean values for input normalization (RGB channels)'},
-    'input_scale':                      {'dest': 'session.input_scale', 'default': (0.017125, 0.017507, 0.017429), 'type': float, 'nargs': '*', 'metavar': 'value', 'help': 'scale values for input normalization (RGB channels)'},
-    'enable_model_surgery':             {'dest': 'model_surgery.enable', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable model surgery optimizations'},
-    'simplify_mode':                   {'dest': 'model_surgery.simplify_mode', 'default': 'pre', 'type': utils.str_or_none_or_bool, 'metavar': 'value', 'help': 'enable model simplification optimizations. supported values: pre, post, all, None. pre: before surgery, post: after surgery, all: both pre and post, None: disable simplification'},
-    'shape_inference_mode':            {'dest': 'model_surgery.shape_inference_mode', 'default': 'all', 'type': utils.str_or_none_or_bool, 'metavar': 'value', 'help': 'enable shape inference during surgery optimization. supported values: pre, post, all, None. pre: before surgery, post: after surgery, all: both pre and post, None: disable shape inference'},
+    'downgrade_onnx_ir_version':        {'dest': 'common.downgrade_onnx_ir_version', 'default': 9, 'type': int, 'metavar': 'value', '_gui':True, 'help': 'downgrade ir_version, if the onnx model has higher value (temporary workaround until tidl-onnx-model-optimizer is updated).'},
+    'input_optimization':               {'dest': 'session.input_optimization', 'default': False, 'type': utils.str_to_bool, 'metavar': 'value', '_gui':True, 'help': 'merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32'},
+    'input_mean':                       {'dest': 'session.input_mean', 'default': (123.675, 116.28, 103.53), 'type': float, 'nargs': '*', 'metavar': 'value', '_gui':True, 'help': 'mean values for input normalization (RGB channels)'},
+    'input_scale':                      {'dest': 'session.input_scale', 'default': (0.017125, 0.017507, 0.017429), 'type': float, 'nargs': '*', 'metavar': 'value', '_gui':True, 'help': 'scale values for input normalization (RGB channels)'},
+    'enable_model_surgery':             {'dest': 'model_surgery.enable', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', '_gui':True, 'help': 'enable model surgery optimizations'},
+    'simplify_mode':                   {'dest': 'model_surgery.simplify_mode', 'default': 'pre', 'type': utils.str_or_none_or_bool, 'metavar': 'value', '_gui':True, 'help': 'enable model simplification optimizations. supported values: pre, post, all, None. pre: before surgery, post: after surgery, all: both pre and post, None: disable simplification'},
+    'shape_inference_mode':            {'dest': 'model_surgery.shape_inference_mode', 'default': 'all', 'type': utils.str_or_none_or_bool, 'metavar': 'value', '_gui':True, 'help': 'enable shape inference during surgery optimization. supported values: pre, post, all, None. pre: before surgery, post: after surgery, all: both pre and post, None: disable shape inference'},
 }
 
 register_help(
@@ -96,17 +96,17 @@ COPY_SETTINGS_DEFAULT['commands.surgery'] = COPY_SETTINGS_DEFAULT['common.basic'
 # compile is used to indicate a more sophisticated import - populate real data_path for that.
 ##########################################################################
 SETTINGS_DEFAULT['commands.compile'] = SETTINGS_DEFAULT['common.basic'] | SETTINGS_DEFAULT['commands.surgery'] | {
-    'command': {'default': None, 'type': str, 'positional':True, 'metavar': 'compile', 'help': 'run compile command'},
-    'model_path':               {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
-    'config_path':              {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'}, 
-    'work_path':                {'dest': 'common.work_path', 'default':'./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'work path'},
+    'command': {'default': None, 'type': str, '_positional':True, 'metavar': 'compile', 'help': 'run compile command'},
+    'model_path':               {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', '_gui':True, 'help': 'input model'},
+    'config_path':              {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', '_gui':True, 'help': 'path to configuration file'},
+    'work_path':                {'dest': 'common.work_path', 'default':'./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', '_gui':True, 'help':'work path'},
     'run_label':                {'dest': 'common.run_label', 'default': '', 'type': str, 'metavar': 'value', 'help': 'run_label to create run_dir'},
-    'run_dir':                  {'dest': 'session.run_dir', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', 'help':'run_dir'},
+    'run_dir':                  {'dest': 'session.run_dir', 'default':'{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}', 'type':str, 'metavar':'value', '_gui':True, 'help':'run_dir'},
     'pipeline_type':            {'dest': 'common.pipeline_type', 'default': 'compile', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},
     # common options
     'task_type':                {'dest': 'common.task_type', 'default': None, 'type': str, 'metavar': 'value', 'help': 'type of AI task (classification, detection, segmentation etc.)'},
     'task_name':                {'dest': 'common.task_name', 'default': None, 'type': str, 'metavar': 'value', 'help': 'specific name of the task (if any)'},
-    'num_frames':               {'dest': 'common.num_frames', 'default': 10, 'type': int, 'metavar': 'value', 'help': 'number of frames to process'},
+    'num_frames':               {'dest': 'common.num_frames', 'default': 10, 'type': int, 'metavar': 'value', '_gui':True, 'help': 'number of frames to process'},
     'input_dataset':            {'dest': 'common.input_dataset', 'default': None, 'type': utils.str_or_none, 'metavar': 'value', 'help': 'name of the input dataset - to override  dataloader settings (if needed) based on the dataset_type_dict mapping - OPTIONAL'},
     'display_step':             {'dest': 'common.display_step', 'default': 0.1, 'type': str, 'metavar': 'value', 'help': 'interval for displaying progress information'},
     'upgrade_config':           {'dest': 'common.upgrade_config', 'default': True, 'type': str, 'metavar': 'value', 'help': 'upgrade edgeai-benchmark config to work with tidlrunner'},
@@ -125,27 +125,27 @@ SETTINGS_DEFAULT['commands.compile'] = SETTINGS_DEFAULT['common.basic'] | SETTIN
     'model_id':                 {'dest': 'session.model_id', 'default': None, 'type': str, 'metavar': 'value', 'help': 'unique id of a model - optional'},
     'artifacts_folder':         {'dest': 'session.artifacts_folder', 'default': None, 'type': str, 'metavar': 'value', 'help': 'folder to store compilation artifacts'},
     ## runtime
-    'runtime_name':             {'dest': 'session.name', 'default': None, 'type': str, 'group': 'runtime_name', 'metavar': 'value', 'help': 'name of the runtime session'},
+    'runtime_name':             {'dest': 'session.name', 'default': None, 'type': str, 'group': 'runtime_name', 'metavar': 'value', '_gui':True, 'help': 'name of the runtime session'},
     'session_type_dict':        {'dest': 'common.session_type_dict', 'default': None, 'type': str, 'group': 'runtime_name', 'metavar': 'value', 'help': 'mapping of model extensions to session names'},
     # input_data
     'dataset_type_dict':        {'dest': 'common.dataset_type_dict', 'default': {'imagenet':'imagenetv2c'}, 'type': utils.str_to_dict, 'metavar': 'value', 'help': 'dataset_type maping. example: imagenet:imagenetv2c, cocoseg21:coco'},
     'data_name':                {'dest': 'dataloader.name', 'default': None, 'type': str, 'metavar': 'value', 'help': 'name of the input dataset'},
     'data_path':                {'dest': 'dataloader.path', 'default': None, 'type': str, 'metavar': 'path', 'help': 'path to the input data directory'},
     # runtime_settings
-    'target_device':            {'dest': 'session.target_device', 'default': presets.TargetDeviceType.TARGET_DEVICE_AM62A, 'type': str, 'metavar': 'value', 'help': 'target device for inference (AM68A, AM69A, etc.)'},
-    'tidl_offload':             {'dest': 'session.tidl_offload', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable TIDL acceleration for inference'},
+    'target_device':            {'dest': 'session.target_device', 'default': presets.TargetDeviceType.TARGET_DEVICE_AM62A, 'type': str, 'metavar': 'value', '_gui':True, 'help': 'target device for inference (AM68A, AM69A, etc.)'},
+    'tidl_offload':             {'dest': 'session.tidl_offload', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', '_gui':True, 'help': 'enable TIDL acceleration for inference'},
     'graph_optimization_level': {'dest': 'session.onnxruntime:graph_optimization_level', 'default': presets.GraphOptimizationLevel.ORT_DISABLE_ALL, 'type': int, 'metavar': 'value', 'help': 'ONNX Runtime graph optimization level'},
     # runtime_settings.runtime_options
-    'tensor_bits':              {'dest': 'session.runtime_options.tensor_bits', 'default': 8, 'type': int, 'metavar': 'value', 'help': 'quantization bit-width for tensors (8 or 16)'},
-    'debug_level':              {'dest': 'session.runtime_options.debug_level', 'default': 0, 'type': int, 'metavar': 'value', 'help': 'debug level for compile and infer'},
-    'deny_list_layer_type':     {'dest': 'session.runtime_options.deny_list:layer_type', 'default': '', 'type': utils.str_or_empty, 'nargs':'*', 'metavar': 'value', 'help': 'comma separated layer types to exclude from TIDL offload'},
-    'deny_list_layer_name':     {'dest': 'session.runtime_options.deny_list:layer_name', 'default': '', 'type': utils.str_or_empty, 'nargs':'*', 'metavar': 'value', 'help': 'comma separated layer names to exclude from TIDL offload'},
+    'tensor_bits':              {'dest': 'session.runtime_options.tensor_bits', 'default': 8, 'type': int, 'metavar': 'value', '_gui':True, 'help': 'quantization bit-width for tensors (8 or 16)'},
+    'debug_level':              {'dest': 'session.runtime_options.debug_level', 'default': 0, 'type': int, 'metavar': 'value', '_gui':True, 'help': 'debug level for compile and infer'},
+    'deny_list_layer_type':     {'dest': 'session.runtime_options.deny_list:layer_type', 'default': '', 'type': utils.str_or_empty, 'nargs':'*', 'metavar': 'value', '_gui':True, 'help': 'comma separated layer types to exclude from TIDL offload'},
+    'deny_list_layer_name':     {'dest': 'session.runtime_options.deny_list:layer_name', 'default': '', 'type': utils.str_or_empty, 'nargs':'*', 'metavar': 'value', '_gui':True, 'help': 'comma separated layer names to exclude from TIDL offload'},
     'deny_list_layer_name_search':     {'dest': 'session.deny_list_layer_name_search', 'default': '', 'type': utils.str_to_list_of_tuples, 'metavar': 'value', 'help': 'a list contaning tuples of start and end nodes - it will be used to generate deny_list:layer_name. example: /decoder/Concat_3:None, /aux/Relu_5:None'},
-    'accuracy_level':  {'dest': 'session.runtime_options.accuracy_level', 'default': presets.AccurcyLevel.ACCURACY_LEVEL_ADVANCED1, 'type': int, 'metavar': 'value', 'help': 'calibration method to use: 0 - frame minmax with running avg, 1 - frame histogram with running avg across frames and bias calibration, 2 - global histogram and bias calibration'},
-    'enable_tfr_optimization':  {'dest': 'session.runtime_options.advanced_options:enable_tfr_optimization', 'default': 0, 'type': int, 'metavar': 'value', 'help': 'transformer specific range calibation optimizations - uses float range. 0 - range update for every iteration, 1 - use float range'},
-    'quantization_scale_type':  {'dest': 'session.runtime_options.advanced_options:quantization_scale_type', 'default': None, 'type': int, 'metavar': 'value', 'help': 'type of quantization scale to use'},
-    'calibration_frames':       {'dest': 'session.runtime_options.advanced_options:calibration_frames', 'default': 12, 'type': int, 'metavar': 'value', 'help': 'number of frames for quantization calibration'},
-    'calibration_iterations':   {'dest': 'session.runtime_options.advanced_options:calibration_iterations', 'default': 12, 'type': int, 'metavar': 'value', 'help': 'number of calibration iterations'},
+    'accuracy_level':  {'dest': 'session.runtime_options.accuracy_level', 'default': presets.AccurcyLevel.ACCURACY_LEVEL_ADVANCED1, 'type': int, 'metavar': 'value', '_gui':True, 'help': 'calibration method to use: 0 - frame minmax with running avg, 1 - frame histogram with running avg across frames and bias calibration, 2 - global histogram and bias calibration'},
+    'enable_tfr_optimization':  {'dest': 'session.runtime_options.advanced_options:enable_tfr_optimization', 'default': 0, 'type': int, 'metavar': 'value', '_gui':True, 'help': 'transformer specific range calibation optimizations - uses float range. 0 - range update for every iteration, 1 - use float range'},
+    'quantization_scale_type':  {'dest': 'session.runtime_options.advanced_options:quantization_scale_type', 'default': None, 'type': int, 'metavar': 'value', '_gui':True, 'help': 'type of quantization scale to use'},
+    'calibration_frames':       {'dest': 'session.runtime_options.advanced_options:calibration_frames', 'default': 12, 'type': int, 'metavar': 'value', '_gui':True, 'help': 'number of frames for quantization calibration'},
+    'calibration_iterations':   {'dest': 'session.runtime_options.advanced_options:calibration_iterations', 'default': 12, 'type': int, 'metavar': 'value', '_gui':True, 'help': 'number of calibration iterations'},
     'prequantized_model':   {'dest': 'session.runtime_options.advanced_options:prequantized_model', 'default': argparse.SUPPRESS, 'type': utils.int_or_none, 'metavar': 'value', 'help': 'whether prequantized model'},
     'quant_params_file_path':   {'dest': 'session.runtime_options.advanced_options:quant_params_proto_path', 'default': argparse.SUPPRESS, 'type': utils.str_or_none_or_bool, 'metavar': 'value', 'help': 'path to quantization parameters file'},
     'max_num_subgraph_nodes':   {'dest': 'session.runtime_options.advanced_options:max_num_subgraph_nodes', 'default': 3000, 'type': int, 'metavar': 'value', 'help': 'maximum number of nodes in a subgraph'},    
@@ -177,10 +177,10 @@ SETTINGS_DEFAULT['commands.compile'] = SETTINGS_DEFAULT['common.basic'] | SETTIN
     'postprocess_enable':       {'dest': 'common.postprocess_enable', 'default': False, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'enable postprocessing after inference'},
     'postprocess_name':         {'dest': 'postprocess.name', 'default': None, 'type': str, 'metavar': 'value', 'help': 'name of the postprocessing pipeline'},
     # TODO: revisit, as these are also defined under session.runtime_options
-    'postprocess_detection_threshold':      {'dest':'postprocess.detection_threshold', 'default':0.3, 'type':utils.float_or_none, 'metavar':'value', 'help': 'detection confidence threshold for postprocessing. eg. 0.3'},
-    'postprocess_detection_top_k':          {'dest':'postprocess.detection_top_k', 'default':200, 'type':utils.int_or_none, 'metavar':'value', 'help': 'top-k detections to keep in postprocessing. eg. 200'},
-    'postprocess_detection_nms_threshold':  {'dest':'postprocess.detection_nms_threshold', 'default':0.45, 'type':utils.float_or_none, 'metavar':'value', 'help': 'NMS IoU threshold for postprocessing. eg. 0.45'},
-    'postprocess_detection_keep_top_k':     {'dest':'postprocess.detection_keep_top_k', 'default':200, 'type':utils.int_or_none, 'metavar':'value', 'help': 'number of detections to keep after NMS in postprocessing. eg. 200'},
+    'postprocess_detection_threshold':      {'dest':'postprocess.detection_threshold', 'default':0.3, 'type':utils.float_or_none, 'metavar':'value', '_gui':True, 'help': 'detection confidence threshold for postprocessing. eg. 0.3'},
+    'postprocess_detection_top_k':          {'dest':'postprocess.detection_top_k', 'default':200, 'type':utils.int_or_none, 'metavar':'value', '_gui':True, 'help': 'top-k detections to keep in postprocessing. eg. 200'},
+    'postprocess_detection_nms_threshold':  {'dest':'postprocess.detection_nms_threshold', 'default':0.45, 'type':utils.float_or_none, 'metavar':'value', '_gui':True, 'help': 'NMS IoU threshold for postprocessing. eg. 0.45'},
+    'postprocess_detection_keep_top_k':     {'dest':'postprocess.detection_keep_top_k', 'default':200, 'type':utils.int_or_none, 'metavar':'value', '_gui':True, 'help': 'number of detections to keep after NMS in postprocessing. eg. 200'},
     'postprocess_detection_nms_enable':     {'dest':'postprocess.enable_nms', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', 'help': 'NMS IoU threshold for postprocessing. eg. 0 for disable, 1 for enable'},
 }
 
@@ -201,12 +201,12 @@ COPY_SETTINGS_DEFAULT['commands.compile'] = COPY_SETTINGS_DEFAULT['common.basic'
 
 ##########################################################################
 SETTINGS_DEFAULT['commands.infer'] = SETTINGS_DEFAULT['commands.compile'] | {
-    'command': {'default': None, 'type': str, 'positional':True, 'metavar': 'infer', 'help': 'run infer command'},
-    'display_benchmark':        {'dest': 'common.display_benchmark', 'default': False, 'type': utils.str_to_bool, 'nargs': '?', 'const': True, 'metavar': 'value', 'help': 'display benchmark statistics after inference on EVM'},
+    'command': {'default': None, 'type': str, '_positional':True, 'metavar': 'infer', 'help': 'run infer command'},
+    'display_benchmark':        {'dest': 'common.display_benchmark', 'default': False, 'type': utils.str_to_bool, 'nargs': '?', 'const': True, 'metavar': 'value', '_gui':True, 'help': 'display benchmark statistics after inference on EVM'},
     # save or show output
-    'save_output':            {'dest':'postprocess.save_output', 'default':True, 'type':utils.str_to_bool, 'metavar':'value', 'help': 'save postprocessed output to files'},
-    'save_output_frames':     {'dest':'postprocess.save_output_frames', 'default':10, 'type':int, 'metavar':'value', 'help': 'number of output frames to save'},
-    'show_output':            {'dest':'postprocess.show_output', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', 'help': 'show postprocessed output images on screen (using opencv imshow)'},
+    'save_output':            {'dest':'postprocess.save_output', 'default':True, 'type':utils.str_to_bool, 'metavar':'value', '_gui':True, 'help': 'save postprocessed output to files'},
+    'save_output_frames':     {'dest':'postprocess.save_output_frames', 'default':10, 'type':int, 'metavar':'value', '_gui':True, 'help': 'number of output frames to save'},
+    'show_output':            {'dest':'postprocess.show_output', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', '_gui':True, 'help': 'show postprocessed output images on screen (using opencv imshow)'},
 }
 
 register_help(
@@ -222,7 +222,7 @@ COPY_SETTINGS_DEFAULT['commands.infer'] = COPY_SETTINGS_DEFAULT['commands.compil
 ##########################################################################
 # accuracy requires label_path as well
 SETTINGS_DEFAULT['commands.evaluate'] = SETTINGS_DEFAULT['commands.compile'] | {
-    'command': {'default': None, 'type': str, 'positional':True, 'metavar': 'evaluate', 'help': 'run evaluate command'},
+    'command': {'default': None, 'type': str, '_positional':True, 'metavar': 'evaluate', 'help': 'run evaluate command'},
     'label_path':                         {'dest': 'dataloader.label_path', 'default':None, 'type':str, 'metavar':'path', 'help': 'path to ground truth labels for accuracy evaluation'},
     # increase number of frames for infer_accuracy
     'num_frames': {'dest': 'common.num_frames', 'default': 1000, 'type': int, 'metavar': 'value', 'help': 'number of frames to process for accuracy evaluation'},
@@ -238,9 +238,9 @@ SETTINGS_DEFAULT['commands.evaluate'] = SETTINGS_DEFAULT['commands.compile'] | {
     'postprocess_logits_bbox_to_bbox_ls': {'dest':'postprocess.logits_bbox_to_bbox_ls', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', 'help': 'convert logits bounding box format to bounding box list'},
     'postprocess_keypoint':               {'dest':'postprocess.keypoint', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', 'help': 'enable keypoint postprocessing'},
     # save or show output
-    'save_output':            {'dest':'postprocess.save_output', 'default':True, 'type':utils.str_to_bool, 'metavar':'value', 'help': 'save postprocessed output to files'},
-    'save_output_frames':     {'dest':'postprocess.save_output_frames', 'default':10, 'type':int, 'metavar':'value', 'help': 'number of output frames to save'},
-    'show_output':            {'dest':'postprocess.show_output', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', 'help': 'show postprocessed output images on screen (using opencv imshow)'},
+    'save_output':            {'dest':'postprocess.save_output', 'default':True, 'type':utils.str_to_bool, 'metavar':'value', '_gui':True, 'help': 'save postprocessed output to files'},
+    'save_output_frames':     {'dest':'postprocess.save_output_frames', 'default':10, 'type':int, 'metavar':'value', '_gui':True, 'help': 'number of output frames to save'},
+    'show_output':            {'dest':'postprocess.show_output', 'default':False, 'type':utils.str_to_bool, 'metavar':'value', '_gui':True, 'help': 'show postprocessed output images on screen (using opencv imshow)'},
 }
 
 register_help(
@@ -254,10 +254,10 @@ COPY_SETTINGS_DEFAULT['commands.evaluate'] = COPY_SETTINGS_DEFAULT['commands.com
 
 ##########################################################################
 SETTINGS_DEFAULT['commands.inspect'] = SETTINGS_DEFAULT['commands.infer'] | {
-    'command': {'default': None, 'type': str, 'positional':True, 'metavar': 'inspect', 'help': 'run inspect command'},
+    'command': {'default': None, 'type': str, '_positional':True, 'metavar': 'inspect', 'help': 'run inspect command'},
     # 'pipeline_type':                      {'dest': 'common.pipeline_type', 'default': 'inspect', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},
-    'analyze_level':                      {'dest': 'common.analyze_level', 'default': 2, 'type': int, 'metavar': 'value', 'help': 'analyze_level - 0: basic, 1: whole model stats, 2: whole model and per layer stats'},
-    'num_frames': {'dest': 'common.num_frames', 'default': 1, 'type': int, 'metavar': 'value', 'help': 'number of frames to process for accuracy evaluation'},
+    'analyze_level':                      {'dest': 'common.analyze_level', 'default': 2, 'type': int, 'metavar': 'value', '_gui':True, 'help': 'analyze_level - 0: basic, 1: whole model stats, 2: whole model and per layer stats'},
+    'num_frames': {'dest': 'common.num_frames', 'default': 1, 'type': int, 'metavar': 'value', '_gui':True, 'help': 'number of frames to process for accuracy evaluation'},
     'act_data':                           {'dest': 'common.act_data', 'default': True, 'type': utils.str_to_bool, 'nargs': '?', 'const': True, 'metavar': 'value', 'help': 'extract activation data for model inspector visualization (enabled by default, use --act_data=false to disable)'},
 }
 
@@ -273,7 +273,7 @@ COPY_SETTINGS_DEFAULT['commands.inspect'] = COPY_SETTINGS_DEFAULT['commands.infe
 
 ##########################################################################
 SETTINGS_DEFAULT['commands.analyze'] = SETTINGS_DEFAULT['commands.inspect'] | {
-    'command': {'default': None, 'type': str, 'positional':True, 'metavar': 'analyze', 'help': 'run analyze command'},
+    'command': {'default': None, 'type': str, '_positional':True, 'metavar': 'analyze', 'help': 'run analyze command'},
 }
 
 register_help(
@@ -287,7 +287,7 @@ COPY_SETTINGS_DEFAULT['commands.analyze'] = COPY_SETTINGS_DEFAULT['commands.insp
 
 ##########################################################################
 SETTINGS_DEFAULT['commands.extract'] = SETTINGS_DEFAULT['common.basic'] | {
-    'command': {'default': None, 'type': str, 'positional':True, 'metavar': 'extract', 'help': 'run extract command'},
+    'command': {'default': None, 'type': str, '_positional':True, 'metavar': 'extract', 'help': 'run extract command'},
     'model_path':             {'dest': 'session.model_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'input model'},
     'config_path':            {'dest': 'common.config_path', 'default': None, 'type': str, 'group':'model', 'metavar': 'value', 'help': 'path to configuration file'},
     'work_path':                {'dest': 'common.work_path', 'default':'./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'work path'},
@@ -313,11 +313,11 @@ COPY_SETTINGS_DEFAULT['commands.extract'] = COPY_SETTINGS_DEFAULT['common.basic'
 
 ##########################################################################
 SETTINGS_DEFAULT['commands.report'] = SETTINGS_DEFAULT['common.basic'] | {
-    'command': {'default': None, 'type': str, 'positional':True, 'metavar': 'report', 'help': 'run report command'},
+    'command': {'default': None, 'type': str, '_positional':True, 'metavar': 'report', 'help': 'run report command'},
     'pipeline_type':          {'dest': 'common.pipeline_type', 'default': 'compile', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},
-    'target_device':          {'dest': 'session.target_device', 'default': None, 'type': str, 'metavar': 'value', 'help': 'target device for report (AM62A, AM69A, etc. None for all devices)'},
-    'report_mode':            {'dest': 'common.report.mode', 'default': 'detailed', 'type': str, 'metavar': 'value', 'choices': ['summary', 'detailed'], 'help': 'report generation mode (summary or detailed)'},
-    'report_path':            {'dest': 'common.report.path', 'default': './work_dirs/{run_label}/{pipeline_type}', 'type': str, 'metavar': 'value', 'help': 'path where reports will be generated'},
+    'target_device':          {'dest': 'session.target_device', 'default': None, 'type': str, 'metavar': 'value', '_gui':True, 'help': 'target device for report (AM62A, AM69A, etc. None for all devices)'},
+    'report_mode':            {'dest': 'common.report.mode', 'default': 'detailed', 'type': str, 'metavar': 'value', 'choices': ['summary', 'detailed'], '_gui':True, 'help': 'report generation mode (summary or detailed)'},
+    'report_path':            {'dest': 'common.report.path', 'default': './work_dirs/{run_label}/{pipeline_type}', 'type': str, 'metavar': 'value', '_gui':True, 'help': 'path where reports will be generated'},
     'run_label':              {'dest': 'common.run_label', 'default': '', 'type': str, 'metavar': 'value', 'help': 'run_label to create run_dir'},
     'report_perfsim':         {'dest': 'common.report_perfsim', 'default': True, 'type': utils.str_to_bool, 'metavar': 'value', 'help': 'include perfsim report'},
 }
@@ -334,13 +334,13 @@ COPY_SETTINGS_DEFAULT['commands.report'] = COPY_SETTINGS_DEFAULT['common.basic']
 
 ##########################################################################
 SETTINGS_DEFAULT['commands.package'] = SETTINGS_DEFAULT['common.basic'] | {
-    'command': {'default': None, 'type': str, 'positional':True, 'metavar': 'package', 'help': 'run package command'},
+    'command': {'default': None, 'type': str, '_positional':True, 'metavar': 'package', 'help': 'run package command'},
     'pipeline_type':        {'dest': 'common.pipeline_type', 'default': 'package', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'}, 
-    'target_device':        {'dest': 'session.target_device', 'default': presets.TargetDeviceType.TARGET_DEVICE_DEFAULT, 'type': str, 'metavar': 'value', 'help': 'target device for inference (AM68A, AM69A, etc.)'},
-    'tensor_bits':          {'dest': 'session.runtime_options.tensor_bits', 'default': 8, 'type': int, 'metavar': 'value', 'help': 'quantization bit-width for tensors (8 or 16)'},
-    'work_path':                {'dest': 'common.work_path', 'default':'./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'work path'},
+    'target_device':        {'dest': 'session.target_device', 'default': presets.TargetDeviceType.TARGET_DEVICE_DEFAULT, 'type': str, 'metavar': 'value', '_gui':True, 'help': 'target device for inference (AM68A, AM69A, etc.)'},
+    'tensor_bits':          {'dest': 'session.runtime_options.tensor_bits', 'default': 8, 'type': int, 'metavar': 'value', '_gui':True, 'help': 'quantization bit-width for tensors (8 or 16)'},
+    'work_path':                {'dest': 'common.work_path', 'default':'./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, '_gui':True, 'metavar':'value', 'help':'work path'},
     'run_label':            {'dest': 'common.run_label', 'default': '', 'type': str, 'metavar': 'value', 'help': 'run_label to create run_dir'},
-    'package_path':         {'dest': 'common.package_path', 'default':'./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', 'help':'packaged path'},
+    'package_path':         {'dest': 'common.package_path', 'default':'./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, 'metavar':'value', '_gui':True, 'help':'packaged path'},
     'param_template':       {'dest': 'common.param_template', 'default':'data/templates/configs/param_template_package.yaml', 'type':str, 'metavar':'value', 'help':'param template path'},
 }
 

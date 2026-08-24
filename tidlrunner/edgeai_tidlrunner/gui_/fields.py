@@ -110,29 +110,29 @@ GROUP_ORDER = (
 )
 
 
-def _target_devices() -> List[str]:
-    return [v for k, v in vars(enumerations.TargetDeviceType).items()
+def _enum_to_list(enum_type) -> List[str]:
+    return [v for k, v in vars(enum_type).items()
             if k.startswith('TARGET_DEVICE_') and not k.endswith('_DEFAULT')]
 
 
 # explicit choices for args that argparse leaves as free-form
 _EXPLICIT_CHOICES: Dict[str, List[str]] = {
-    'target_device': _target_devices(),
-    'target_machine': ['pc', 'evm'],
-    'tensor_bits': ['8', '16'],
-    'accuracy_level': ['0', '1', '2'],
-    'debug_level': ['0', '1', '2', '3', '4', '5', '6'],
-    'analyze_level': ['0', '1', '2'],
-    'add_data_convert_ops': ['0', '1', '2', '3'],
-    'graph_optimization_level': ['0', '1', '2', '99'],
+    'target_device': _enum_to_list(enumerations.TargetDeviceType),
+    'target_machine': _enum_to_list(enumerations.TargetMachineType),
+    'tensor_bits': _enum_to_list(enumerations.TensorBits),
+    'accuracy_level': _enum_to_list(enumerations.AccurcyLevel),
+    'debug_level': _enum_to_list(enumerations.DebugLevel),
+    'add_data_convert_ops': _enum_to_list(enumerations.DataConvertOps),
+    'data_layout': _enum_to_list(enumerations.DataLayoutType),
+    'runtime_name': _enum_to_list(enumerations.RuntimeType),
     'enable_tfr_optimization': ['0', '1'],
-    'data_layout': ['NCHW', 'NHWC'],
-    'runtime_name': ['onnxrt', 'tflitert', 'tvmrt'],
+    'pipeline_type': ['compile', 'infer', 'optimize', 'extract', 'package'],
+    'capture_log': ['adaptive', 'True', 'False'],
+    'analyze_level': ['0', '1', '2'],
+    'graph_optimization_level': ['0', '1', '2', '99'],
     'simplify_mode': ['pre', 'post', 'all', 'None'],
     'shape_inference_mode': ['pre', 'post', 'all', 'None'],
-    'capture_log': ['adaptive', 'True', 'False'],
     'preset_selection': ['None', 'SPEED', 'ACCURACY', 'BALANCED'],
-    'pipeline_type': ['compile', 'infer', 'optimize', 'extract', 'package'],
     'audio_model_type': ['vggish11', 'yamnet', 'gtcrn', 'gcrn'],
 }
 
@@ -196,6 +196,10 @@ def _group_of(dest: str) -> str:
 
 
 def _make_field(name: str, spec: Dict[str, Any]) -> Field:
+    gui = spec.get('_gui', False)
+    if not gui:
+        return None
+    
     dest = spec.get('dest', name)
     kind = _kind_of(name, spec)
     choices = [str(c) for c in spec.get('choices', [])] or _EXPLICIT_CHOICES.get(name, [])
@@ -217,7 +221,8 @@ def get_fields(command: str) -> List[Field]:
     """All GUI fields for a command, primary ones first, then in declaration order."""
     args_dict = SETTINGS_DEFAULT[f'commands.{command}']
     fields = [_make_field(name, spec) for name, spec in args_dict.items()
-              if name != 'command' and not spec.get('positional')]
+              if name != 'command' and not spec.get('_positional')]
+    fields = [f for f in fields if f is not None]
     order = {name: index for index, name in enumerate(PRIMARY_ARGS)}
     primary = sorted((f for f in fields if f.name in order), key=lambda f: order[f.name])
     for f in primary:
