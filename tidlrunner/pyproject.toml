@@ -61,6 +61,10 @@ pc = [
 evm = [
 ]
 
+gui = [
+    "nicegui>=2.0",
+]
+
 dev = [
     "pytest",
     "black",
@@ -81,6 +85,7 @@ audio = [
 [project.scripts]
 # tidlrunner-tools-install = "edgeai_tidlrunner.download:main" # not required anymore as the recent onnx-graphsurgeon can be put into requirements
 tidlrunner-cli = "edgeai_tidlrunner.main:main"
+tidlrunner-gui = "edgeai_tidlrunner.main_gui:main"
 
 [tool.setuptools]
 include-package-data = true
