@@ -217,6 +217,14 @@ Chart.defaults.color = '#495057';
 }
 
 /* Analysis tab (DataTables) */
+.analysis-nodata-cell {
+    color: var(--text-secondary);
+    font-style: italic;
+    font-size: 0.75rem;
+    padding: 4px 2px;
+    text-align: center;
+}
+
 [data-theme="dark"] .dataTables_wrapper .dataTables_filter input,
 [data-theme="dark"] .dataTables_wrapper .dataTables_length select {
     background: var(--card-background);
@@ -418,7 +426,14 @@ body {
     font-size: var(--font-size-base);
     line-height: var(--line-height-normal);
     font-weight: 400;
-    min-height: 100vh;
+    /* A definite (not min-) height so flex descendants have a real bound to
+       divide up — needed for #analysis's flex-fill chain to clip/scroll
+       internally instead of growing unbounded. Content taller than 100vh
+       (any tab) still scrolls the page normally: a definite height on the
+       root/body doesn't stop overflow from propagating to the viewport,
+       it only gives percentage/flex children something concrete to size
+       against. */
+    height: 100vh;
     display: flex;
     flex-direction: column;
     overflow-x: hidden;
@@ -1119,6 +1134,11 @@ header.scrolled {
 /* ==================== MAIN CONTENT ==================== */
 main {
     flex: 1;
+    /* Without this, a flex item's automatic min-height defaults to its
+       content's size, which for the Analysis tab's 274-row table means
+       main refuses to shrink below that — breaking the whole fill-to-
+       viewport chain one level above where #analysis itself sets it. */
+    min-height: 0;
     width: 100%;
     padding: var(--card-gap);   /* uniform 24px on all sides */
     display: flex;
@@ -1779,13 +1799,60 @@ main {
     font-size: 0.85rem;
 }
 
+/* Full width of its section (matching the other charts here), with the 4
+   columns given fixed proportions instead of the browser's default
+   content-based auto layout — without this, short cell text (a layer
+   number, "-10.1") leaves huge uneven gaps at full section width. */
+.snr-table-container .operator-summary-table {
+    table-layout: fixed;
+}
+.snr-table-container .operator-summary-table th:nth-child(1),
+.snr-table-container .operator-summary-table td:nth-child(1) { width: 15%; }
+.snr-table-container .operator-summary-table th:nth-child(2),
+.snr-table-container .operator-summary-table td:nth-child(2) { width: 30%; }
+.snr-table-container .operator-summary-table th:nth-child(3),
+.snr-table-container .operator-summary-table td:nth-child(3) { width: 35%; }
+.snr-table-container .operator-summary-table th:nth-child(4),
+.snr-table-container .operator-summary-table td:nth-child(4) { width: 20%; }
+
 /* ==================== ANALYSIS TAB TABLE ==================== */
 /* DataTables handles paging, so the container itself must not scroll-clip */
-/* No pagination: every layer is listed, so scroll inside the card and keep the
-   column headers pinned via the shared sticky thead rule. */
+/* No pagination: every layer is listed, so the table scrolls inside the card
+   and keeps the column headers pinned via the shared sticky thead rule.
+   The card fills whatever height remains below the header/tab-bar chrome
+   (flex chain below, scoped to #analysis only) instead of a fixed vh
+   fraction, so it adapts to any viewport height without leaving dead
+   space or forcing the outer page to scroll. */
+#analysis.tab-content.active {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+#analysis .model-details-container {
+    flex: 1;
+    min-height: 0;
+}
+#analysis .card {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+#analysis .card-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
 #analysis-table-container {
-    max-height: 78vh;
+    /* Overrides .operator-summary-table-container's max-height: clamp(...) —
+       that generic cap would otherwise stop flex-grow from filling the card. */
+    max-height: none;
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
+    overflow-x: auto;
     border: 1px solid var(--border-color);
     background: transparent;
 }
@@ -1814,14 +1881,14 @@ main {
     width: 100%;
 }
 
-#analysis-table th:nth-child(1), #analysis-table td:nth-child(1) { width: 3.5%; }
-#analysis-table th:nth-child(2), #analysis-table td:nth-child(2) { width: 5%; }
-#analysis-table th:nth-child(3), #analysis-table td:nth-child(3) { width: 8%; }
-#analysis-table th:nth-child(4), #analysis-table td:nth-child(4) { width: 9%; }
-#analysis-table th:nth-child(5), #analysis-table td:nth-child(5) { width: 14%; }
-#analysis-table th:nth-child(6), #analysis-table td:nth-child(6) { width: 6%; }
-#analysis-table th:nth-child(7), #analysis-table td:nth-child(7) { width: 27.25%; }
-#analysis-table th:nth-child(8), #analysis-table td:nth-child(8) { width: 27.25%; }
+#analysis-table th:nth-child(1), #analysis-table td:nth-child(1) { width: 3%; }
+#analysis-table th:nth-child(2), #analysis-table td:nth-child(2) { width: 4%; }
+#analysis-table th:nth-child(3), #analysis-table td:nth-child(3) { width: 7%; }
+#analysis-table th:nth-child(4), #analysis-table td:nth-child(4) { width: 8%; }
+#analysis-table th:nth-child(5), #analysis-table td:nth-child(5) { width: 12%; }
+#analysis-table th:nth-child(6), #analysis-table td:nth-child(6) { width: 5%; }
+#analysis-table th:nth-child(7), #analysis-table td:nth-child(7) { width: 30.5%; }
+#analysis-table th:nth-child(8), #analysis-table td:nth-child(8) { width: 30.5%; }
 
 /* Left-justify every column, overriding the shared table centering */
 #analysis-table th,
@@ -1837,9 +1904,19 @@ main {
     word-break: break-word;
 }
 
-/* Taller rows so the interactive plots are comfortable to read */
+/* Taller rows so the interactive plots are comfortable to read
+   Rows with charts need 300px; rows with "No data" text are compact */
 #analysis-table tbody tr {
+    height: auto;
+    border-bottom: 1px solid var(--border-color);
+}
+#analysis-table tbody tr[data-has-charts="true"] {
     height: 300px;
+}
+/* Compact (no-chart) rows sit close together with little else to tell them
+   apart — a faint zebra stripe makes each row's boundary easy to follow. */
+#analysis-table tbody tr[data-has-charts="false"]:nth-child(even) {
+    background-color: var(--gray-50, rgba(128, 128, 128, 0.06));
 }
 
 /* Chart cells: minimal side padding, so the plots run edge to edge */
@@ -4682,7 +4759,7 @@ main {
                     <!-- Metrics Graph Section -->
                     <div class="metrics-graph-section" style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid rgba(128, 128, 128, 0.1);">
                         <div class="perf-chart-header">
-                            <h3 title="Quantization accuracy analysis — compares FP32 vs INT8 layer outputs. Higher values indicate more quantization error. Layers with high error may need higher precision or deny-listing.">Metrics Graph</h3>
+                            <h3 title="Quantization accuracy analysis — compares FP32 vs quantized layer outputs. Higher values indicate more quantization error. Layers with high error may need higher precision or deny-listing.">Metrics Graph</h3>
                             <div class="perf-chart-controls">
                                 <select id="metric-selector" class="perf-select" title="SNR = Signal-to-Quantization-Noise Ratio (higher is better). Mean/Median/Max = absolute difference metrics.">
                                     <option value="snr_db" selected>SNR (dB)</option>
@@ -4710,7 +4787,7 @@ main {
                 <!-- Floating nav group — top-left over canvas: buttons + selector inline -->
                 <div style="position:absolute;top:12px;left:12px;z-index:20;display:flex;align-items:center;gap:5px;">
                     <button id="btn-view-overview" class="sg-nav-btn active" onclick="_sgNavClick('overview')">Overview</button>
-                    <button id="btn-view-tidl"     class="sg-nav-btn"        onclick="_sgNavClick('tidl')">TIDL/TVM</button>
+                    <button id="btn-view-tidl"     class="sg-nav-btn"        onclick="_sgNavClick('tidl')">NPU</button>
                     <button id="btn-view-onnx"     class="sg-nav-btn"        onclick="_sgNavClick('onnx')">ONNX</button>
                     <!-- Divider + selector — only visible in TIDL/ONNX mode -->
                     <div id="subgraph-selector-bar" style="display:none;align-items:center;gap:5px;">
@@ -5309,6 +5386,23 @@ function analysisEscapeAttr(text) {
     return analysisEscapeHtml(text).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+// A layer can have an activation_data *entry* whose arrays are all empty (e.g.
+// TIDL_DataLayer/ConstDataLayer/DataConvertLayer stubs — nothing meaningful to
+// histogram). Key-existence in ACTIVATION_DATA_COMPRESSED isn't enough to decide
+// whether to draw a chart; decompressing to check array lengths is cheap (small
+// per-layer blobs) and the result is cached, so createAnalysisPlot's later use
+// of the same key is a cache hit, not repeated work.
+function analysisLayerHasRealData(actKey) {
+    if (typeof ACTIVATION_DATA_COMPRESSED === 'undefined' || !ACTIVATION_DATA_COMPRESSED[actKey]) return false;
+    const d = decompressLayerActivation(actKey);
+    if (!d) return false;
+    const hist = d.histogram || {};
+    const scat = d.scatter || {};
+    return (hist.tidl_counts && hist.tidl_counts.length > 0) ||
+           (hist.notidl_counts && hist.notidl_counts.length > 0) ||
+           (scat.x && scat.x.length > 0);
+}
+
 // Map of subgraph id -> { tidl_layer_id: snr_db } built once from METRICS_DATA.
 function buildAnalysisSnrLookup() {
     const lookup = {};
@@ -5343,6 +5437,17 @@ function renderAnalysisTable() {
     }
     tbody.innerHTML = '';
 
+    // ACTIVATION_DATA_COMPRESSED (built from the JSON's per-layer activation_data)
+    // is the single source of truth for which layers have activation data —
+    // TIDL_LAYER_DATA never carries the field itself, so check this instead.
+    // Per-layer real-data checks below are cached, so this pre-pass is free.
+    let hasAnyActivationData = false;
+    if (typeof ACTIVATION_DATA_COMPRESSED !== 'undefined') {
+        for (const k of Object.keys(ACTIVATION_DATA_COMPRESSED)) {
+            if (analysisLayerHasRealData(k)) { hasAnyActivationData = true; break; }
+        }
+    }
+
     const snrLookup = buildAnalysisSnrLookup();
     const rowsHtml = [];
     let rowCount = 0;
@@ -5362,28 +5467,49 @@ function renderAnalysisTable() {
         for (let i = 0; i < layers.length; i++) {
             const layer = layers[i];
             const idx = layer.layer_index;
+            const actKey = sgNum + '_' + idx;
+            const hasActivationData = analysisLayerHasRealData(actKey);
             const snr = sgSnr[String(idx)];
-            const hasSnr = !(snr === undefined || snr === null) && isFinite(Number(snr));
+            const hasSnr = !(snr === undefined || snr === null) && isFinite(Number(snr)) && hasActivationData;
             const snrText = hasSnr ? Number(snr).toFixed(1) + ' dB' : 'N/A';
             // DataTables sorts on the raw cell text, which would order "9.5 dB" after
             // "10.2 dB"; data-order gives it the numeric value instead. Missing SNR sinks
             // to the bottom of an ascending sort rather than mixing in with real values.
             const snrOrder = hasSnr ? Number(snr) : -1e9;
-            const actKey = sgNum + '_' + idx;
             const layerName = layer.layer_name == null ? '' : String(layer.layer_name);
+            const tensorBits = (layer.tensor_bits === undefined || layer.tensor_bits === null) ? '' : String(layer.tensor_bits);
+
+            let snrCell, histogramCell, scatterCell;
+
+            if (!hasAnyActivationData) {
+                // No activation data anywhere — these cells won't be visible anyway
+                snrCell = '<td></td>';
+                histogramCell = '<td></td>';
+                scatterCell = '<td></td>';
+            } else if (hasActivationData) {
+                // This layer has activation data — show chart and SNR
+                snrCell = '<td data-order="' + snrOrder + '">' + snrText + '</td>';
+                histogramCell = '<td><div class="analysis-chart-box"><canvas class="analysis-mini-chart" data-plot="histogram" data-key="' + actKey + '" data-bits="' + tensorBits + '"' +
+                    ' aria-label="Activation histogram for ' + analysisEscapeAttr(layerName) + '" role="img"></canvas></div></td>';
+                scatterCell = '<td><div class="analysis-chart-box"><canvas class="analysis-mini-chart" data-plot="scatter" data-key="' + actKey + '" data-bits="' + tensorBits + '"' +
+                    ' aria-label="Quantization scatter plot for ' + analysisEscapeAttr(layerName) + '" role="img"></canvas></div></td>';
+            } else {
+                // This layer has NO activation data, but others do — show placeholder text
+                snrCell = '<td data-order="-1e9">No activation data present</td>';
+                histogramCell = '<td><div class="analysis-nodata-cell">No activation data present</div></td>';
+                scatterCell = '<td><div class="analysis-nodata-cell">No activation data present</div></td>';
+            }
 
             rowsHtml.push(
-                '<tr>' +
+                '<tr data-has-charts="' + (hasActivationData && hasAnyActivationData ? 'true' : 'false') + '">' +
                 '<td class="analysis-serial"></td>' +
                 '<td>' + analysisEscapeHtml(sgId) + '</td>' +
                 '<td>' + analysisEscapeHtml(layerName) + '</td>' +
                 '<td>' + analysisEscapeHtml(String(layer.layer_type).replace('TIDL_', '')) + '</td>' +
                 '<td>' + analysisEscapeHtml(layer.properties || '') + '</td>' +
-                '<td data-order="' + snrOrder + '">' + snrText + '</td>' +
-                '<td><div class="analysis-chart-box"><canvas class="analysis-mini-chart" data-plot="histogram" data-key="' + actKey + '"' +
-                    ' aria-label="Activation histogram for ' + analysisEscapeAttr(layerName) + '" role="img"></canvas></div></td>' +
-                '<td><div class="analysis-chart-box"><canvas class="analysis-mini-chart" data-plot="scatter" data-key="' + actKey + '"' +
-                    ' aria-label="Quantization scatter plot for ' + analysisEscapeAttr(layerName) + '" role="img"></canvas></div></td>' +
+                snrCell +
+                histogramCell +
+                scatterCell +
                 '</tr>'
             );
             rowCount++;
@@ -5395,6 +5521,23 @@ function renderAnalysisTable() {
     const countEl = document.getElementById('analysis-layer-count');
     if (countEl) {
         countEl.textContent = rowCount + ' layers across ' + sgIds.length + ' subgraph' + (sgIds.length === 1 ? '' : 's');
+    }
+
+    // If no layer has activation data, hide the 3 columns (SNR, Histogram, Scatter)
+    if (!hasAnyActivationData) {
+        const headerCells = table.querySelectorAll('thead th');
+        const bodyCells = table.querySelectorAll('tbody td');
+        if (headerCells[5]) headerCells[5].style.display = 'none';  // SNR header
+        if (headerCells[6]) headerCells[6].style.display = 'none';  // Histogram header
+        if (headerCells[7]) headerCells[7].style.display = 'none';  // Scatter header
+
+        // Hide the corresponding cells in each row
+        for (let i = 0; i < bodyCells.length; i++) {
+            const cellIndex = i % 8; // 8 columns total
+            if (cellIndex === 5 || cellIndex === 6 || cellIndex === 7) {
+                bodyCells[i].style.display = 'none';
+            }
+        }
     }
 
     if (window.jQuery && $.fn.DataTable) {
@@ -5473,9 +5616,10 @@ function analysisAlignHistogramCounts(targetCentres, sourceCentres, sourceCounts
     return aligned;
 }
 
-function analysisBuildHistogramChart(canvas, hist) {
+function analysisBuildHistogramChart(canvas, hist, bits) {
     if (typeof Chart === 'undefined') return null;
     const pal = analysisChartPalette();
+    const tidlLabel = 'TIDL (' + (bits || 8) + ' bits)';
     let tidlBins = [], tidlCounts = [], notidlBins = [], notidlCounts = [];
     if (hist.tidl_bins && hist.notidl_bins) {
         tidlBins = hist.tidl_bins; tidlCounts = hist.tidl_counts;
@@ -5511,7 +5655,7 @@ function analysisBuildHistogramChart(canvas, hist) {
                     categoryPercentage: 1.0
                 },
                 {
-                    label: 'TIDL (INT8)',
+                    label: tidlLabel,
                     data: alignedTidlCounts,
                     backgroundColor: 'rgba(66, 165, 245, 0.5)',
                     borderColor: 'rgba(21, 101, 192, 0.8)',
@@ -5570,9 +5714,10 @@ function analysisBuildHistogramChart(canvas, hist) {
     });
 }
 
-function analysisBuildScatterChart(canvas, scatter) {
+function analysisBuildScatterChart(canvas, scatter, bits) {
     if (typeof Chart === 'undefined') return null;
     const pal = analysisChartPalette();
+    const tidlLabel = 'TIDL (' + (bits || 8) + ' bits)';
     let points = [];
     if (scatter.x && scatter.x.length) {
         points = scatter.x.map((v, i) => ({ x: v, y: scatter.y[i] }));
@@ -5641,7 +5786,7 @@ function analysisBuildScatterChart(canvas, scatter) {
                             if (p.error === undefined) return '';
                             return [
                                 `No-TIDL (FP32): ${p.x.toFixed(5)}`,
-                                `TIDL (INT8): ${p.y.toFixed(5)}`,
+                                `${tidlLabel}: ${p.y.toFixed(5)}`,
                                 `Abs Error: ${p.error.toFixed(7)}`
                             ];
                         }
@@ -5662,7 +5807,7 @@ function analysisBuildScatterChart(canvas, scatter) {
                 },
                 y: {
                     type: 'linear', min: axMin, max: axMax,
-                    title: { display: true, text: 'TIDL (INT8)', font: { size: 10, weight: '600' }, color: pal.title },
+                    title: { display: true, text: tidlLabel, font: { size: 10, weight: '600' }, color: pal.title },
                     ticks: { callback: v => formatWithPrefix(v), maxTicksLimit: 6, font: { size: 9 }, color: pal.tick },
                     grid: { color: pal.grid }
                 }
@@ -5675,14 +5820,15 @@ function createAnalysisPlot(canvas) {
     if (canvas._analysisChart || canvas.dataset.empty === '1') return;
 
     const key = canvas.dataset.key;
+    const bits = canvas.dataset.bits ? Number(canvas.dataset.bits) : null;
     const data = (typeof ACTIVATION_DATA_COMPRESSED !== 'undefined' && ACTIVATION_DATA_COMPRESSED[key])
         ? decompressLayerActivation(key) : null;
 
     let chart = null;
     if (data) {
         chart = canvas.dataset.plot === 'histogram'
-            ? (data.histogram ? analysisBuildHistogramChart(canvas, data.histogram) : null)
-            : (data.scatter ? analysisBuildScatterChart(canvas, data.scatter) : null);
+            ? (data.histogram ? analysisBuildHistogramChart(canvas, data.histogram, bits) : null)
+            : (data.scatter ? analysisBuildScatterChart(canvas, data.scatter, bits) : null);
     }
 
     if (chart) {
@@ -5839,8 +5985,30 @@ function updateCyclesChart(subgraphNum) {
 
     // Build datasets from active cycle types
     // On EVM: dmaPipeupCycles is DMA setup only (not true IO) — skip IO entirely.
-    const _isEVMCycles = (typeof PERF_AVAILABILITY !== 'undefined') &&
-                         PERF_AVAILABILITY.source === 'evm_hardware';
+    // performance_source is per-subgraph — a single run can mix EVM-measured
+    // and PC-simulated subgraphs (e.g. a partial/interrupted hardware run),
+    // so this can't be read from one global flag.
+    const _sgPerfSource = (typeof TIDL_LAYER_DATA !== 'undefined' &&
+        TIDL_LAYER_DATA['tidl_' + subgraphNum]) ?
+        TIDL_LAYER_DATA['tidl_' + subgraphNum].performance_source : 'pc_simulation';
+    const _isEVMCycles = (_sgPerfSource === 'evm_hardware');
+
+    // Cycles label: show "(Rough Estimates)" for PC, no suffix for EVM —
+    // reflects THIS subgraph's own source, not a report-wide assumption.
+    const cyclesLabel = document.getElementById('cycles-label-text');
+    if (cyclesLabel) {
+        cyclesLabel.textContent = _isEVMCycles ? 'Cycles Per Layer' : 'Cycles Per Layer (Rough Estimates)';
+    }
+    // IO button: hidden on EVM subgraphs (dmaPipeupCycles isn't true IO), shown
+    // on PC-simulated ones — mirrors the 'io' dataset filter just below. Gated
+    // on has_io (whether IO data exists in the report at all) so a report with
+    // no IO data anywhere doesn't flash the button visible on a PC subgraph.
+    const btnIOToggle = document.getElementById('cycles-btn-io');
+    const _reportHasIO = (typeof PERF_AVAILABILITY !== 'undefined') && PERF_AVAILABILITY.has_io;
+    if (btnIOToggle) {
+        btnIOToggle.style.display = (_reportHasIO && !_isEVMCycles) ? '' : 'none';
+    }
+
     const datasets = [];
     let numDatasets = 0;
     for (const cycType of ['total', 'io', 'kernel']) {
@@ -6952,6 +7120,21 @@ function getSnrColor(value) {
     return SNR_THRESHOLDS.excellent;
 }
 
+// A handful of outlier layers (e.g. one layer with much higher quantization
+// error than the rest) drag Chart.js's auto-computed linear axis max way
+// past where the bulk of the data sits, flattening every other bar near
+// zero. A flat percentile cap "fixes" that but clips the outlier to a flat
+// top, hiding how much bigger it actually is. A log scale instead keeps
+// every bar's *relative* height honest across a wide dynamic range — small
+// and large values both stay visible, nothing is clipped.
+function needsLogScale(values) {
+    const sorted = values.filter(v => isFinite(v) && v > 0).sort((a, b) => a - b);
+    if (sorted.length < 2) return false;
+    const p95 = sorted[Math.min(Math.floor(sorted.length * 0.95), sorted.length - 1)];
+    const trueMax = sorted[sorted.length - 1];
+    return p95 > 0 && trueMax > p95 * 2;
+}
+
 // Chart.js Bar Chart (for non-SNR metrics)
 function renderChartJSBar(canvasId, data, subgraphId) {
     const canvas = document.getElementById(canvasId);
@@ -6985,6 +7168,12 @@ function renderChartJSBar(canvasId, data, subgraphId) {
 
     const backgroundColors = data.map(() => 'rgba(33, 150, 243, 0.8)');
     const borderColors = data.map(() => 'rgba(33, 150, 243, 1)');
+    // Chart.js bakes colors in at construction time (Chart.defaults.color is a
+    // fixed light-mode grey) — read the live theme now instead of relying on
+    // retintChartsForTheme(), which only re-colors charts that already existed
+    // at the moment the theme was toggled, not ones created afterward.
+    const pal = analysisChartPalette();
+    const useLogScale = needsLogScale(values);
 
     metricsBarChart = new Chart(ctx, {
         type: 'bar',
@@ -7036,22 +7225,28 @@ function renderChartJSBar(canvasId, data, subgraphId) {
                     title: {
                         display: true,
                         text: 'Layer [ID] Type',
+                        color: pal.title,
                         font: { size: 13, weight: 'bold' }
                     },
-                    ticks: { maxRotation: 45, minRotation: 45, font: { size: 10 } },
-                    grid: { color: 'rgba(128,128,128,0.1)' }
+                    ticks: { maxRotation: 45, minRotation: 45, font: { size: 10 }, color: pal.tick },
+                    grid: { color: pal.grid }
                 },
                 y: {
+                    type: useLogScale ? 'logarithmic' : 'linear',
                     title: {
                         display: true,
-                        text: METRIC_LABELS[currentMetric],
+                        text: METRIC_LABELS[currentMetric] + (useLogScale ? ' (log scale)' : ''),
+                        color: pal.title,
                         font: { size: 13, weight: 'bold' }
                     },
                     ticks: {
+                        color: pal.tick,
                         callback: function(value) { return formatWithPrefix(value); }
                     },
-                    grid: { color: 'rgba(128,128,128,0.1)' },
-                    beginAtZero: true
+                    grid: { color: pal.grid },
+                    // beginAtZero only makes sense on a linear scale — log
+                    // scales derive their own positive-valued minimum instead.
+                    beginAtZero: !useLogScale
                 }
             }
         }
@@ -7468,8 +7663,9 @@ function calculateScatterStats(points) {
  * @param {number} nodeIndex - Node index
  * @param {Object} scatterData - Scatter data with points, diagonal, axis, and stats
  */
-function renderChartJSScatter(nodeIndex, scatterData) {
+function renderChartJSScatter(nodeIndex, scatterData, tensorBits) {
     const startTime = performance.now();
+    const tidlLabel = 'TIDL (' + (tensorBits || 8) + ' bits)';
     console.log(`[Scatter] Rendering activation scatter for node ${nodeIndex}`);
 
     const canvasId = `activation-scatter-${nodeIndex}`;
@@ -7488,10 +7684,10 @@ function renderChartJSScatter(nodeIndex, scatterData) {
 
     const ctx = canvas.getContext('2d');
 
-    // Prepare scatter data points: {x: No-TIDL (FP32) reference, y: TIDL (INT8)}
+    // Prepare scatter data points: {x: No-TIDL (FP32) reference, y: TIDL (quantized)}
     const allPoints = scatterData.points.map(p => ({
         x: p.x,  // No-TIDL (FP32)
-        y: p.y,  // TIDL (INT8)
+        y: p.y,  // TIDL (quantized)
         error: Math.abs(p.y - p.x)
     }));
 
@@ -7584,7 +7780,7 @@ function renderChartJSScatter(nodeIndex, scatterData) {
                             const point = context.raw;
                             return [
                                 `No-TIDL (FP32): ${point.x.toFixed(5)}`,
-                                `TIDL (INT8):  ${point.y.toFixed(5)}`,
+                                `${tidlLabel}:  ${point.y.toFixed(5)}`,
                                 `Abs Error:     ${point.error.toFixed(7)}`
                             ];
                         }
@@ -7674,7 +7870,7 @@ function renderChartJSScatter(nodeIndex, scatterData) {
                     max: scatterData.axis.max,
                     title: {
                         display: true,
-                        text: 'TIDL (INT8)',
+                        text: tidlLabel,
                         font: { size: 12, weight: '600' },
                         color: '#495057',
                         padding: { bottom: 8 }
@@ -7839,8 +8035,14 @@ function renderMetricsCharts() {
         };
     });
 
-    // Use the static canvas — same approach as memory/cycles charts
-    applyChartScroll('metrics-scroll-wrapper', chartData.length, 1, 18);
+    // Use the static canvas — same approach as memory/cycles charts.
+    // SNR renders a compact table instead of the wide per-layer canvas (see
+    // renderChartJSBar's isSnr branch) — sizing the scroll wrapper for
+    // per-layer bars in that case leaves a huge, mostly-empty horizontal
+    // scrollbar with nothing meaningful to scroll to. Passing 0 bars makes
+    // applyChartScroll reset the wrapper to normal (non-scrolling) width.
+    const numBarsForScroll = (currentMetric === 'snr_db') ? 0 : chartData.length;
+    applyChartScroll('metrics-scroll-wrapper', numBarsForScroll, 1, 18);
     renderChartJSBar('metrics-chart', chartData, subgraphId);
 }
 
@@ -8167,10 +8369,21 @@ function renderSubgraphONNX(subgraphId) {
         const srcName = e.source_node_name;
         const tgtName = e.target_node_name;
         if (onnxNameSet.has(srcName) && onnxNameSet.has(tgtName)) {
-            const key = srcName + '|' + tgtName;
+            // Key includes the tensor, not just the node pair — a source
+            // with multiple outputs can legitimately have two DIFFERENT
+            // real edges to the SAME target (e.g. a Split whose two
+            // outputs both feed one Concat); keying on (source, target)
+            // alone silently drops one of those as a false duplicate.
+            const tensor = e.connection_info?.tensor || '';
+            const key = srcName + '|' + tgtName + '|' + tensor;
             if (!edgesSet.has(key)) {
                 edgesSet.add(key);
-                edges.push({ source: 'onnx_' + srcName, target: 'onnx_' + tgtName });
+                // connection_info carries this edge's OWN tensor shape —
+                // without it, the renderer falls back to the source node's
+                // aggregate outputshape, which is wrong for any node with
+                // more than one output (shows the first output's shape on
+                // every edge, regardless of which output it actually is).
+                edges.push({ source: 'onnx_' + srcName, target: 'onnx_' + tgtName, connection_info: e.connection_info || {} });
             }
         }
     });
@@ -8634,7 +8847,32 @@ function edgeElbowPath(x1, y1, x2, y2, midYFrac, detourOffset) {
 // the visible curve (even inside an unrelated node).
 function computeEdgePoints(d, x1, y1, x2, y2) {
     if (d.points && d.points.length > 2) {
-        const mid = d.points.slice(1, -1);
+        // Dagre routes each edge independently around NODES, not around other
+        // EDGES — two edges sharing the same source and target (e.g. a Split
+        // whose two real outputs both feed one Concat) can come back with
+        // near-identical middle waypoints even though setEdge gave them
+        // distinct names. _srcPortOffset/_tgtPortOffset already separate the
+        // endpoints (see the port-spread block above) but computeEdgePoints
+        // only ever applied that offset to the first/last point — the whole
+        // middle stretch, where the label sits, stayed on dagre's shared
+        // route and rendered as one overlapping line.
+        //
+        // A single constant shift for every middle point doesn't work: it
+        // has no reason to equal either endpoint's own offset, so the path
+        // visibly kinks right where the (unshifted) anchor meets the
+        // (shifted) middle section — looking like the line doesn't actually
+        // reach the node. Interpolate the shift by vertical progress instead
+        // (dagre routes top-to-bottom, so y is monotonic): it equals
+        // _srcPortOffset exactly at y1 and _tgtPortOffset exactly at y2, so
+        // both ends line up with their real anchors and only the interior
+        // bows out.
+        const srcOffset = d._srcPortOffset || 0;
+        const tgtOffset = d._tgtPortOffset || 0;
+        const mid = d.points.slice(1, -1).map(p => {
+            const t = (y2 !== y1) ? Math.max(0, Math.min(1, (p.y - y1) / (y2 - y1))) : 0.5;
+            const shift = srcOffset + (tgtOffset - srcOffset) * t;
+            return { x: p.x + shift, y: p.y };
+        });
         return [{ x: x1, y: y1 }, ...mid, { x: x2, y: y2 }];
     }
     return edgeElbowPoints(x1, y1, x2, y2, d._midYFrac, d._detourOffset);
@@ -8898,7 +9136,11 @@ class Graph {
         // encoder/decoder subgraphs), so it gets extra breathing room to
         // avoid the tangled look of default spacing.
         const isOverviewGraph = nodes.some(n => n.is_overview);
-        const g = new dagre.graphlib.Graph();
+        // multigraph: true is required for setEdge's unique-name 4th arg below —
+        // without it, dagre rejects named edges outright (two real edges sharing
+        // a source/target, e.g. a Split feeding the same Concat twice, need to
+        // be named to stay distinct instead of colliding into one).
+        const g = new dagre.graphlib.Graph({ multigraph: true });
         g.setGraph(isOverviewGraph ? {
             rankdir: 'TB',
             nodesep: 50,        // Horizontal room between sibling subgraphs
@@ -8945,12 +9187,19 @@ class Graph {
             });
         });
 
-        // Add edges to Dagre
-        edges.forEach(edge => {
+        // Add edges to Dagre. setEdge's optional 4th arg is a unique edge
+        // *name* — without it, dagre keys purely on (v, w), so two real
+        // edges sharing the same source/target (e.g. a Split whose two
+        // outputs both feed the same Concat — legitimate ONNX topology,
+        // not a duplicate) silently collapse into one: the second setEdge
+        // call overwrites the first, and both entries in `edges` then read
+        // back the SAME routed path/points, rendering as one visually
+        // doubled/overlapping label instead of two distinct edges.
+        edges.forEach((edge, edgeIdx) => {
             const srcId = edge.source.id || edge.source;
             const tgtId = edge.target.id || edge.target;
             if (g.hasNode(srcId) && g.hasNode(tgtId)) {
-                g.setEdge(srcId, tgtId);
+                g.setEdge(srcId, tgtId, {}, String(edgeIdx));
             }
         });
 
@@ -8962,10 +9211,10 @@ class Graph {
         // path instead of a straight line between node centers, which is
         // what made graphs with many skip-connections (e.g. Overview) look
         // like a tangled hairball.
-        edges.forEach(edge => {
+        edges.forEach((edge, edgeIdx) => {
             const srcId = edge.source.id || edge.source;
             const tgtId = edge.target.id || edge.target;
-            const dagreEdge = g.edge(srcId, tgtId);
+            const dagreEdge = g.edge(srcId, tgtId, String(edgeIdx));
             if (dagreEdge && dagreEdge.points) {
                 edge.points = dagreEdge.points;
             }
@@ -9017,10 +9266,10 @@ class Graph {
         // x so the fan-out doesn't cross over itself. Offsets are stored
         // on the edge datum so updateEdges (drag/click) reuses the same
         // values instead of recomputing or falling out of sync.
-        const PORT_SPREAD_WIDTH = 60;
+        const PORT_SPREAD_WIDTH = 90;
         const spreadOffsets = (count) => {
             if (count <= 1) return [0];
-            const step = Math.min(PORT_SPREAD_WIDTH / (count - 1), 20);
+            const step = Math.min(PORT_SPREAD_WIDTH / (count - 1), 30);
             const span = step * (count - 1);
             return Array.from({ length: count }, (_, i) => -span / 2 + i * step);
         };
@@ -9049,6 +9298,46 @@ class Graph {
             });
             const offsets = spreadOffsets(list.length);
             list.forEach((e, i) => { e._tgtPortOffset = offsets[i]; });
+        });
+
+        // True parallel edges — same source AND same target (e.g. a Split
+        // whose two real outputs both feed one Concat) — need much more
+        // separation than the general port-spread above gives them. That
+        // spread is shared across every edge leaving/entering the node
+        // (bySource/byTarget groups by ONE endpoint only), so with several
+        // other edges mixed in, two edges that share BOTH endpoints can
+        // still land only one small step apart. Give this specific case
+        // its own generous, dedicated offset — enough that both their
+        // lines and their (much wider than the line itself) labels clear
+        // each other along the entire path, not just at the anchors.
+        const byPair = new Map();
+        edges.forEach(e => {
+            const srcId = e.source.id || e.source, tgtId = e.target.id || e.target;
+            const key = srcId + '=>' + tgtId;
+            if (!byPair.has(key)) byPair.set(key, []);
+            byPair.get(key).push(e);
+        });
+        // REPLACE (not add to) the general fan-out offset for this pair —
+        // adding on top of whatever bySource/byTarget already assigned could
+        // push the anchor past the node's own half-width, landing the
+        // arrowhead beside the box instead of on its border. A small, fixed
+        // value close to the node center is always safe: even the narrowest
+        // node (the 100px-wide IO/Tensor pills) has 50px of half-width to
+        // work with, and 12px comfortably clears the line-width without
+        // risking that.
+        const PARALLEL_EDGE_STEP = 12;
+        byPair.forEach(list => {
+            if (list.length < 2) return;
+            list.forEach((e, i) => {
+                const offset = (i - (list.length - 1) / 2) * PARALLEL_EDGE_STEP;
+                e._srcPortOffset = offset;
+                e._tgtPortOffset = offset;
+                // Stagger the label vertically too — a label is far wider
+                // than the line-spacing alone can clear, so two labels at
+                // the same height would still overlap even well-separated
+                // lines. Alternate above/below the shared path midpoint.
+                e._labelYNudge = (i % 2 === 0 ? -1 : 1) * 12 * Math.ceil((i + 1) / 2);
+            });
         });
 
         // Jog-height staggering: edges that cross the same pair of ranks
@@ -9138,13 +9427,23 @@ class Graph {
                     const x2 = targetNode.x + (d._tgtPortOffset || 0);
                     const y2 = targetNode.y - nodeHalfH(targetNode);
                     const mid = pointAtPathMidpoint(computeEdgePoints(d, x1, y1, x2, y2));
-                    return `translate(${mid.x},${mid.y})`;
+                    return `translate(${mid.x},${mid.y + (d._labelYNudge || 0)})`;
                 }
                 return 'translate(0,0)';
             });
 
-        // Helper: get shape text for an edge's source node (empty string if N/A)
+        // Helper: get shape text for THIS specific edge's tensor. A node's own
+        // outputshape is an aggregate across ALL of its outputs (a multi-output
+        // node like Split joins every output's shape into one string) — using
+        // that as a stand-in for "the shape of the one tensor this edge
+        // carries" doubles/garbles the label whenever the source node has more
+        // than one output. connection_info.shape is the specific tensor's own
+        // shape and must be preferred whenever it's present.
         const getEdgeShape = d => {
+            const perEdgeShape = d.connection_info?.shape;
+            if (Array.isArray(perEdgeShape) && perEdgeShape.length > 0) {
+                return perEdgeShape.filter(v => v > 0).join(', ');
+            }
             const sourceNode = nodeMap.get(d.source.id || d.source);
             const raw = sourceNode?.layerdetails?.outputshape || sourceNode?.outputshape || '';
             const cleaned = raw.replace(/[\[\]]/g, '').trim();
@@ -9580,7 +9879,7 @@ class Graph {
                     const x2 = targetNode.x + (d._tgtPortOffset || 0);
                     const y2 = targetNode.y - edgeAnchorHalfHeight(targetNode);
                     const mid = pointAtPathMidpoint(computeEdgePoints(d, x1, y1, x2, y2));
-                    return `translate(${mid.x},${mid.y})`;
+                    return `translate(${mid.x},${mid.y + (d._labelYNudge || 0)})`;
                 }
                 return 'translate(0,0)';
             });
@@ -10402,7 +10701,7 @@ class Graph {
                     if (!skipTypes.includes(node.layer_type)) {
                         // Key: {sgNum}_{layer_index} — same as stored in ACTIVATION_DATA_COMPRESSED
                         const sgNum = parseInt(String(this.currentSubgraph).replace(/\D+/g, '')) || 0;
-                        renderActivationPlots(node.index, sgNum, node.index);
+                        renderActivationPlots(node.index, sgNum, node.index, node.tensor_bits);
                     }
                 }
             }, 100);
@@ -10971,10 +11270,11 @@ let plotResizeObserver = null;
  * @param {number} nodeIndex - ONNX node index (not TIDL layer index!)
  * @param {number} subgraphId - Subgraph index
  */
-function renderActivationPlots(nodeIndex, subgraphId, dataKeyIndex) {
+function renderActivationPlots(nodeIndex, subgraphId, dataKeyIndex, tensorBits) {
     // nodeIndex = TIDL node index (for canvas element IDs)
     // dataKeyIndex = ONNX node index (for activation data lookup), defaults to nodeIndex
     const lookupIdx = dataKeyIndex !== undefined ? dataKeyIndex : nodeIndex;
+    const tidlLabel = 'TIDL (' + (tensorBits || 8) + ' bits)';
 
     if (typeof ACTIVATION_DATA_COMPRESSED === 'undefined') return;
 
@@ -11078,7 +11378,7 @@ function renderActivationPlots(nodeIndex, subgraphId, dataKeyIndex) {
                             categoryPercentage: 1.0
                         },
                         {
-                            label: 'TIDL (INT8)',
+                            label: tidlLabel,
                             data: tidlCounts,
                             backgroundColor: 'rgba(66, 165, 245, 0.5)',
                             borderColor: 'rgba(21, 101, 192, 0.8)',
@@ -11256,7 +11556,7 @@ function renderActivationPlots(nodeIndex, subgraphId, dataKeyIndex) {
                                     if (p.error === undefined) return '';
                                     return [
                                         `No-TIDL (FP32): ${p.x.toFixed(5)}`,
-                                        `TIDL (INT8): ${p.y.toFixed(5)}`,
+                                        `${tidlLabel}: ${p.y.toFixed(5)}`,
                                         `Abs Error: ${p.error.toFixed(7)}`
                                     ];
                                 }
@@ -11301,7 +11601,7 @@ function renderActivationPlots(nodeIndex, subgraphId, dataKeyIndex) {
                             type: 'linear',
                             min: axMin,
                             max: axMax,
-                            title: { display: true, text: 'TIDL (INT8)', font: { size: 11, weight: '600' }, color: '#495057' },
+                            title: { display: true, text: tidlLabel, font: { size: 11, weight: '600' }, color: '#495057' },
                             ticks: { callback: function(v) { return formatWithPrefix(v); }, font: { size: 10 }, color: '#6c757d' },
                             grid: { color: 'rgba(0,0,0,0.04)' }
                         }
@@ -11318,9 +11618,10 @@ function renderActivationPlots(nodeIndex, subgraphId, dataKeyIndex) {
  * @param {string} containerId - Container element ID
  * @param {Object} scatterData - Scatter data with points, diagonal, axis, and stats
  */
-function renderD3Scatter(containerId, scatterData) {
+function renderD3Scatter(containerId, scatterData, tensorBits) {
     const container = document.getElementById(containerId);
     if (!container) return;
+    const tidlLabel = 'TIDL (' + (tensorBits || 8) + ' bits)';
 
     // Dimensions
     const margin = {top: 80, right: 90, bottom: 60, left: 70};
@@ -11489,7 +11790,7 @@ function renderD3Scatter(containerId, scatterData) {
                 .style('pointer-events', 'none')
                 .style('z-index', '10000')
                 .style('border', '1px solid #ff9800')
-                .html(`<b>No-TIDL (FP32):</b> ${d.x.toFixed(4)}<br><b>TIDL (INT8):</b> ${d.y.toFixed(4)}<br><b>Error:</b> ${Math.abs(d.y - d.x).toFixed(6)}`);
+                .html(`<b>No-TIDL (FP32):</b> ${d.x.toFixed(4)}<br><b>${tidlLabel}:</b> ${d.y.toFixed(4)}<br><b>Error:</b> ${Math.abs(d.y - d.x).toFixed(6)}`);
 
             tooltip.style('left', (event.pageX + 10) + 'px')
                    .style('top', (event.pageY - 28) + 'px');
@@ -11593,7 +11894,7 @@ function renderD3Scatter(containerId, scatterData) {
         .attr('text-anchor', 'middle')
         .style('font-size', '14px')
         .style('fill', '#fff')
-        .text('TIDL (INT8)');
+        .text('No-TIDL (FP32)');
 
     // Y-axis label
     svg.append('text')
@@ -11603,7 +11904,7 @@ function renderD3Scatter(containerId, scatterData) {
         .attr('text-anchor', 'middle')
         .style('font-size', '14px')
         .style('fill', '#fff')
-        .text('No-TIDL (FP32)');
+        .text(tidlLabel);
 
     // Stats annotation
     const stats = scatterData.stats;
@@ -12553,17 +12854,20 @@ document.addEventListener('DOMContentLoaded', function() {
         const cyclesSec = document.getElementById('cycles-chart-section');
         if (cyclesSec) cyclesSec.style.display = PA.has_cycles ? '' : 'none';
 
-        // Cycles label: show "(Rough Estimates)" for PC, no suffix for EVM
-        const cyclesLabel = document.getElementById('cycles-label-text');
-        if (cyclesLabel) cyclesLabel.textContent = isEVM ? 'Cycles Per Layer' : 'Cycles Per Layer (Rough Estimates)';
+        // Cycles label is set per-subgraph inside updateCyclesChart() instead —
+        // performance_source can differ between subgraphs in the same run, so
+        // it can't be decided once here from one report-wide flag.
 
         // Cycles toggle buttons:
-        // - IO button: dmaPipeupCycles is DMA setup only, not true IO — hide on EVM.
+        // - IO button: dmaPipeupCycles is DMA setup only, not true IO — hide on
+        //   EVM. Per-subgraph visibility (matching the dataset filter) is set
+        //   inside updateCyclesChart(); this only sets the has_io gate (whether
+        //   IO data exists in the report at all).
         // - Kernel button: hide if all-zero.
         // - Total is always shown when cycles section is visible.
         const btnIO     = document.getElementById('cycles-btn-io');
         const btnKernel = document.getElementById('cycles-btn-kernel');
-        if (btnIO)     btnIO.style.display     = (!isEVM && PA.has_io)   ? '' : 'none';
+        if (btnIO)     btnIO.style.display     = PA.has_io                ? '' : 'none';
         if (btnKernel) btnKernel.style.display  = PA.has_kernel           ? '' : 'none';
 
         // Cycles disclaimer text
