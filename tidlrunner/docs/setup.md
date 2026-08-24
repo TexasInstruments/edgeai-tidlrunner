@@ -69,7 +69,7 @@ TIDL_TOOLS_VERSION="11.2.x" ./setup_runner_pc_gpu.sh
 
 ##### Environment variables (for information only)
 * tidl-tools require TIDL_TOOLS_PATH and LD_LIBRARY_PATH to be set to appropriate folder.  For example: tools/tidl_tools_package/bin/<target_device>/tidl_tools. 
-* This is automatically taken care of by [`restart_with_proper_environment` in rtwrapper here](../edgeai_tidlrunner/rtwrapper/set_env.py). See how it is used in [main.py](../edgeai_tidlrunner/main.py)
+* This is automatically taken care of by [`restart_with_proper_environment` in rtwrapper here](../edgeai_tidlrunner/rtwrapper/set_env.py). See how it is used in [cli.py](../edgeai_tidlrunner/cli.py)
 
 
 ## Setup on EVM

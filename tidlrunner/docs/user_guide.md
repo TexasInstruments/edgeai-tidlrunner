@@ -2,7 +2,7 @@
 
 `tidlrunner-cli` is the primary commandline tool interface that can be used. It is generally assumed that the `tidlrunner-cli` tool will be run from the root of this repository (but it is not an explicit requirement). Outputs of the tool will be placed into [work_dirs](../../work_dirs) by default.
 
-Note: Alternatively, you can choose to run this script with Python and provide arguments: [tidlrunner/edgeai_tidlrunner/main.py](../edgeai_tidlrunner/main.py). This is the interface to be used for debugging using VSCode or any other Python IDE.
+Note: Alternatively, you can choose to run this script with Python and provide arguments: [tidlrunner/edgeai_tidlrunner/cli.py](../edgeai_tidlrunner/cli.py). This is the interface to be used for debugging using VSCode or any other Python IDE.
 
 There are two primary ways to use this tool: Config file based usage and commandline based usage.
 

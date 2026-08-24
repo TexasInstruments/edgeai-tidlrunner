@@ -84,8 +84,8 @@ audio = [
 
 [project.scripts]
 # tidlrunner-tools-install = "edgeai_tidlrunner.download:main" # not required anymore as the recent onnx-graphsurgeon can be put into requirements
-tidlrunner-cli = "edgeai_tidlrunner.main:main"
-tidlrunner-gui = "edgeai_tidlrunner.main_gui:main"
+tidlrunner-cli = "edgeai_tidlrunner.cli:main"
+tidlrunner-gui = "edgeai_tidlrunner.gui:main"
 
 [tool.setuptools]
 include-package-data = true

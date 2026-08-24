@@ -32,7 +32,7 @@ import sys
 
 def main(**kwargs):
     try:
-        from edgeai_tidlrunner.gui.app import main as gui_main
+        from edgeai_tidlrunner.gui_.app import main as gui_app_main
     except ImportError as exception:
         print(f'ERROR: {exception}')
         print('INFO: the gui needs additional packages - install via: pip install "edgeai-tidlrunner[gui]"')
@@ -40,7 +40,7 @@ def main(**kwargs):
 
     # the gui launches tidlrunner-cli as a child process, so it does not need
     # TIDL_TOOLS_PATH itself - the cli sets up its own environment
-    gui_main(**kwargs)
+    gui_app_main(**kwargs)
 
 
 if __name__ == "__main__":
