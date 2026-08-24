@@ -758,6 +758,14 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
         for i, layer_name in enumerate(layer_names):
             layer = transformed_layers[layer_name]
             outputs = layer.get('output', [])
+            # Per-tensor shape lookup for THIS node's own outputs — a multi-
+            # output node (e.g. Split) has one shape per output, not one
+            # shared shape; every edge must use its own specific tensor's
+            # shape, not "the node's shape" in general.
+            output_shape_by_tensor = {
+                m.get('name'): m.get('shape', [])
+                for m in layer.get('output_metadata', [])
+            }
 
             # Find connections to other layers
             for j, target_layer_name in enumerate(layer_names):
@@ -779,7 +787,7 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
                             'target_node_name': target_layer_name,
                             'connection_info': {
                                 'tensor': output_tensor,
-                                'shape': []  # Can extract from output_details if needed
+                                'shape': output_shape_by_tensor.get(output_tensor, [])
                             }
                         })
 
@@ -1065,6 +1073,9 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
                 'evm_execution_time_ms_per_frame': subgraph_info.get(
                     'evm_execution_time_ms_per_frame', None
                 ),
+                # 'evm_hardware' or 'pc_simulation' — per subgraph, since a single
+                # run can mix both (e.g. a partial/interrupted hardware run).
+                'performance_source': subgraph_info.get('performance_source', 'pc_simulation'),
             }
 
     # Extract performance and metrics data from unified schema

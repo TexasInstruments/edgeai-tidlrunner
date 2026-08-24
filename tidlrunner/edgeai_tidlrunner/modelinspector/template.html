@@ -4787,7 +4787,7 @@ main {
                 <!-- Floating nav group — top-left over canvas: buttons + selector inline -->
                 <div style="position:absolute;top:12px;left:12px;z-index:20;display:flex;align-items:center;gap:5px;">
                     <button id="btn-view-overview" class="sg-nav-btn active" onclick="_sgNavClick('overview')">Overview</button>
-                    <button id="btn-view-tidl"     class="sg-nav-btn"        onclick="_sgNavClick('tidl')">TIDL/TVM</button>
+                    <button id="btn-view-tidl"     class="sg-nav-btn"        onclick="_sgNavClick('tidl')">NPU</button>
                     <button id="btn-view-onnx"     class="sg-nav-btn"        onclick="_sgNavClick('onnx')">ONNX</button>
                     <!-- Divider + selector — only visible in TIDL/ONNX mode -->
                     <div id="subgraph-selector-bar" style="display:none;align-items:center;gap:5px;">
@@ -5985,8 +5985,30 @@ function updateCyclesChart(subgraphNum) {
 
     // Build datasets from active cycle types
     // On EVM: dmaPipeupCycles is DMA setup only (not true IO) — skip IO entirely.
-    const _isEVMCycles = (typeof PERF_AVAILABILITY !== 'undefined') &&
-                         PERF_AVAILABILITY.source === 'evm_hardware';
+    // performance_source is per-subgraph — a single run can mix EVM-measured
+    // and PC-simulated subgraphs (e.g. a partial/interrupted hardware run),
+    // so this can't be read from one global flag.
+    const _sgPerfSource = (typeof TIDL_LAYER_DATA !== 'undefined' &&
+        TIDL_LAYER_DATA['tidl_' + subgraphNum]) ?
+        TIDL_LAYER_DATA['tidl_' + subgraphNum].performance_source : 'pc_simulation';
+    const _isEVMCycles = (_sgPerfSource === 'evm_hardware');
+
+    // Cycles label: show "(Rough Estimates)" for PC, no suffix for EVM —
+    // reflects THIS subgraph's own source, not a report-wide assumption.
+    const cyclesLabel = document.getElementById('cycles-label-text');
+    if (cyclesLabel) {
+        cyclesLabel.textContent = _isEVMCycles ? 'Cycles Per Layer' : 'Cycles Per Layer (Rough Estimates)';
+    }
+    // IO button: hidden on EVM subgraphs (dmaPipeupCycles isn't true IO), shown
+    // on PC-simulated ones — mirrors the 'io' dataset filter just below. Gated
+    // on has_io (whether IO data exists in the report at all) so a report with
+    // no IO data anywhere doesn't flash the button visible on a PC subgraph.
+    const btnIOToggle = document.getElementById('cycles-btn-io');
+    const _reportHasIO = (typeof PERF_AVAILABILITY !== 'undefined') && PERF_AVAILABILITY.has_io;
+    if (btnIOToggle) {
+        btnIOToggle.style.display = (_reportHasIO && !_isEVMCycles) ? '' : 'none';
+    }
+
     const datasets = [];
     let numDatasets = 0;
     for (const cycType of ['total', 'io', 'kernel']) {
@@ -8347,10 +8369,21 @@ function renderSubgraphONNX(subgraphId) {
         const srcName = e.source_node_name;
         const tgtName = e.target_node_name;
         if (onnxNameSet.has(srcName) && onnxNameSet.has(tgtName)) {
-            const key = srcName + '|' + tgtName;
+            // Key includes the tensor, not just the node pair — a source
+            // with multiple outputs can legitimately have two DIFFERENT
+            // real edges to the SAME target (e.g. a Split whose two
+            // outputs both feed one Concat); keying on (source, target)
+            // alone silently drops one of those as a false duplicate.
+            const tensor = e.connection_info?.tensor || '';
+            const key = srcName + '|' + tgtName + '|' + tensor;
             if (!edgesSet.has(key)) {
                 edgesSet.add(key);
-                edges.push({ source: 'onnx_' + srcName, target: 'onnx_' + tgtName });
+                // connection_info carries this edge's OWN tensor shape —
+                // without it, the renderer falls back to the source node's
+                // aggregate outputshape, which is wrong for any node with
+                // more than one output (shows the first output's shape on
+                // every edge, regardless of which output it actually is).
+                edges.push({ source: 'onnx_' + srcName, target: 'onnx_' + tgtName, connection_info: e.connection_info || {} });
             }
         }
     });
@@ -8814,7 +8847,32 @@ function edgeElbowPath(x1, y1, x2, y2, midYFrac, detourOffset) {
 // the visible curve (even inside an unrelated node).
 function computeEdgePoints(d, x1, y1, x2, y2) {
     if (d.points && d.points.length > 2) {
-        const mid = d.points.slice(1, -1);
+        // Dagre routes each edge independently around NODES, not around other
+        // EDGES — two edges sharing the same source and target (e.g. a Split
+        // whose two real outputs both feed one Concat) can come back with
+        // near-identical middle waypoints even though setEdge gave them
+        // distinct names. _srcPortOffset/_tgtPortOffset already separate the
+        // endpoints (see the port-spread block above) but computeEdgePoints
+        // only ever applied that offset to the first/last point — the whole
+        // middle stretch, where the label sits, stayed on dagre's shared
+        // route and rendered as one overlapping line.
+        //
+        // A single constant shift for every middle point doesn't work: it
+        // has no reason to equal either endpoint's own offset, so the path
+        // visibly kinks right where the (unshifted) anchor meets the
+        // (shifted) middle section — looking like the line doesn't actually
+        // reach the node. Interpolate the shift by vertical progress instead
+        // (dagre routes top-to-bottom, so y is monotonic): it equals
+        // _srcPortOffset exactly at y1 and _tgtPortOffset exactly at y2, so
+        // both ends line up with their real anchors and only the interior
+        // bows out.
+        const srcOffset = d._srcPortOffset || 0;
+        const tgtOffset = d._tgtPortOffset || 0;
+        const mid = d.points.slice(1, -1).map(p => {
+            const t = (y2 !== y1) ? Math.max(0, Math.min(1, (p.y - y1) / (y2 - y1))) : 0.5;
+            const shift = srcOffset + (tgtOffset - srcOffset) * t;
+            return { x: p.x + shift, y: p.y };
+        });
         return [{ x: x1, y: y1 }, ...mid, { x: x2, y: y2 }];
     }
     return edgeElbowPoints(x1, y1, x2, y2, d._midYFrac, d._detourOffset);
@@ -9078,7 +9136,11 @@ class Graph {
         // encoder/decoder subgraphs), so it gets extra breathing room to
         // avoid the tangled look of default spacing.
         const isOverviewGraph = nodes.some(n => n.is_overview);
-        const g = new dagre.graphlib.Graph();
+        // multigraph: true is required for setEdge's unique-name 4th arg below —
+        // without it, dagre rejects named edges outright (two real edges sharing
+        // a source/target, e.g. a Split feeding the same Concat twice, need to
+        // be named to stay distinct instead of colliding into one).
+        const g = new dagre.graphlib.Graph({ multigraph: true });
         g.setGraph(isOverviewGraph ? {
             rankdir: 'TB',
             nodesep: 50,        // Horizontal room between sibling subgraphs
@@ -9125,12 +9187,19 @@ class Graph {
             });
         });
 
-        // Add edges to Dagre
-        edges.forEach(edge => {
+        // Add edges to Dagre. setEdge's optional 4th arg is a unique edge
+        // *name* — without it, dagre keys purely on (v, w), so two real
+        // edges sharing the same source/target (e.g. a Split whose two
+        // outputs both feed the same Concat — legitimate ONNX topology,
+        // not a duplicate) silently collapse into one: the second setEdge
+        // call overwrites the first, and both entries in `edges` then read
+        // back the SAME routed path/points, rendering as one visually
+        // doubled/overlapping label instead of two distinct edges.
+        edges.forEach((edge, edgeIdx) => {
             const srcId = edge.source.id || edge.source;
             const tgtId = edge.target.id || edge.target;
             if (g.hasNode(srcId) && g.hasNode(tgtId)) {
-                g.setEdge(srcId, tgtId);
+                g.setEdge(srcId, tgtId, {}, String(edgeIdx));
             }
         });
 
@@ -9142,10 +9211,10 @@ class Graph {
         // path instead of a straight line between node centers, which is
         // what made graphs with many skip-connections (e.g. Overview) look
         // like a tangled hairball.
-        edges.forEach(edge => {
+        edges.forEach((edge, edgeIdx) => {
             const srcId = edge.source.id || edge.source;
             const tgtId = edge.target.id || edge.target;
-            const dagreEdge = g.edge(srcId, tgtId);
+            const dagreEdge = g.edge(srcId, tgtId, String(edgeIdx));
             if (dagreEdge && dagreEdge.points) {
                 edge.points = dagreEdge.points;
             }
@@ -9197,10 +9266,10 @@ class Graph {
         // x so the fan-out doesn't cross over itself. Offsets are stored
         // on the edge datum so updateEdges (drag/click) reuses the same
         // values instead of recomputing or falling out of sync.
-        const PORT_SPREAD_WIDTH = 60;
+        const PORT_SPREAD_WIDTH = 90;
         const spreadOffsets = (count) => {
             if (count <= 1) return [0];
-            const step = Math.min(PORT_SPREAD_WIDTH / (count - 1), 20);
+            const step = Math.min(PORT_SPREAD_WIDTH / (count - 1), 30);
             const span = step * (count - 1);
             return Array.from({ length: count }, (_, i) => -span / 2 + i * step);
         };
@@ -9229,6 +9298,46 @@ class Graph {
             });
             const offsets = spreadOffsets(list.length);
             list.forEach((e, i) => { e._tgtPortOffset = offsets[i]; });
+        });
+
+        // True parallel edges — same source AND same target (e.g. a Split
+        // whose two real outputs both feed one Concat) — need much more
+        // separation than the general port-spread above gives them. That
+        // spread is shared across every edge leaving/entering the node
+        // (bySource/byTarget groups by ONE endpoint only), so with several
+        // other edges mixed in, two edges that share BOTH endpoints can
+        // still land only one small step apart. Give this specific case
+        // its own generous, dedicated offset — enough that both their
+        // lines and their (much wider than the line itself) labels clear
+        // each other along the entire path, not just at the anchors.
+        const byPair = new Map();
+        edges.forEach(e => {
+            const srcId = e.source.id || e.source, tgtId = e.target.id || e.target;
+            const key = srcId + '=>' + tgtId;
+            if (!byPair.has(key)) byPair.set(key, []);
+            byPair.get(key).push(e);
+        });
+        // REPLACE (not add to) the general fan-out offset for this pair —
+        // adding on top of whatever bySource/byTarget already assigned could
+        // push the anchor past the node's own half-width, landing the
+        // arrowhead beside the box instead of on its border. A small, fixed
+        // value close to the node center is always safe: even the narrowest
+        // node (the 100px-wide IO/Tensor pills) has 50px of half-width to
+        // work with, and 12px comfortably clears the line-width without
+        // risking that.
+        const PARALLEL_EDGE_STEP = 12;
+        byPair.forEach(list => {
+            if (list.length < 2) return;
+            list.forEach((e, i) => {
+                const offset = (i - (list.length - 1) / 2) * PARALLEL_EDGE_STEP;
+                e._srcPortOffset = offset;
+                e._tgtPortOffset = offset;
+                // Stagger the label vertically too — a label is far wider
+                // than the line-spacing alone can clear, so two labels at
+                // the same height would still overlap even well-separated
+                // lines. Alternate above/below the shared path midpoint.
+                e._labelYNudge = (i % 2 === 0 ? -1 : 1) * 12 * Math.ceil((i + 1) / 2);
+            });
         });
 
         // Jog-height staggering: edges that cross the same pair of ranks
@@ -9318,13 +9427,23 @@ class Graph {
                     const x2 = targetNode.x + (d._tgtPortOffset || 0);
                     const y2 = targetNode.y - nodeHalfH(targetNode);
                     const mid = pointAtPathMidpoint(computeEdgePoints(d, x1, y1, x2, y2));
-                    return `translate(${mid.x},${mid.y})`;
+                    return `translate(${mid.x},${mid.y + (d._labelYNudge || 0)})`;
                 }
                 return 'translate(0,0)';
             });
 
-        // Helper: get shape text for an edge's source node (empty string if N/A)
+        // Helper: get shape text for THIS specific edge's tensor. A node's own
+        // outputshape is an aggregate across ALL of its outputs (a multi-output
+        // node like Split joins every output's shape into one string) — using
+        // that as a stand-in for "the shape of the one tensor this edge
+        // carries" doubles/garbles the label whenever the source node has more
+        // than one output. connection_info.shape is the specific tensor's own
+        // shape and must be preferred whenever it's present.
         const getEdgeShape = d => {
+            const perEdgeShape = d.connection_info?.shape;
+            if (Array.isArray(perEdgeShape) && perEdgeShape.length > 0) {
+                return perEdgeShape.filter(v => v > 0).join(', ');
+            }
             const sourceNode = nodeMap.get(d.source.id || d.source);
             const raw = sourceNode?.layerdetails?.outputshape || sourceNode?.outputshape || '';
             const cleaned = raw.replace(/[\[\]]/g, '').trim();
@@ -9760,7 +9879,7 @@ class Graph {
                     const x2 = targetNode.x + (d._tgtPortOffset || 0);
                     const y2 = targetNode.y - edgeAnchorHalfHeight(targetNode);
                     const mid = pointAtPathMidpoint(computeEdgePoints(d, x1, y1, x2, y2));
-                    return `translate(${mid.x},${mid.y})`;
+                    return `translate(${mid.x},${mid.y + (d._labelYNudge || 0)})`;
                 }
                 return 'translate(0,0)';
             });
@@ -12735,17 +12854,20 @@ document.addEventListener('DOMContentLoaded', function() {
         const cyclesSec = document.getElementById('cycles-chart-section');
         if (cyclesSec) cyclesSec.style.display = PA.has_cycles ? '' : 'none';
 
-        // Cycles label: show "(Rough Estimates)" for PC, no suffix for EVM
-        const cyclesLabel = document.getElementById('cycles-label-text');
-        if (cyclesLabel) cyclesLabel.textContent = isEVM ? 'Cycles Per Layer' : 'Cycles Per Layer (Rough Estimates)';
+        // Cycles label is set per-subgraph inside updateCyclesChart() instead —
+        // performance_source can differ between subgraphs in the same run, so
+        // it can't be decided once here from one report-wide flag.
 
         // Cycles toggle buttons:
-        // - IO button: dmaPipeupCycles is DMA setup only, not true IO — hide on EVM.
+        // - IO button: dmaPipeupCycles is DMA setup only, not true IO — hide on
+        //   EVM. Per-subgraph visibility (matching the dataset filter) is set
+        //   inside updateCyclesChart(); this only sets the has_io gate (whether
+        //   IO data exists in the report at all).
         // - Kernel button: hide if all-zero.
         // - Total is always shown when cycles section is visible.
         const btnIO     = document.getElementById('cycles-btn-io');
         const btnKernel = document.getElementById('cycles-btn-kernel');
-        if (btnIO)     btnIO.style.display     = (!isEVM && PA.has_io)   ? '' : 'none';
+        if (btnIO)     btnIO.style.display     = PA.has_io                ? '' : 'none';
         if (btnKernel) btnKernel.style.display  = PA.has_kernel           ? '' : 'none';
 
         // Cycles disclaimer text

@@ -254,7 +254,12 @@ class ActivationDataParser:
                 logger.debug(f"    Warning: File not found: {bin_path}")
                 return None
 
-            data = np.fromfile(bin_path, dtype=float)
+            # Every trace/output .bin on disk is written as float32 (see
+            # _write_outputs_to_bin in analyze.py). dtype=float is float64 —
+            # reading a float32 file 8 bytes at a time mashes each pair of
+            # real values together into one meaningless number and halves
+            # the element count. Must match the on-disk dtype exactly.
+            data = np.fromfile(bin_path, dtype=np.float32)
             self.data_cache[bin_path] = data
             return data
 
@@ -264,145 +269,52 @@ class ActivationDataParser:
 
     def _smart_sample_scatter_points(self, tidl_data: np.ndarray, notidl_data: np.ndarray,
                                       max_points: int = 2000) -> Tuple[np.ndarray, np.ndarray]:
-        """Smart sampling using best-fit line as reference to preserve outliers
+        """Systematic sampling: sort by the FP32 reference value, then take
+        evenly-strided points.
+
+        Sorted by notidl (not tidl) deliberately: TIDL values are quantized
+        to ~256 int8 levels, so sorting by them creates large tie groups —
+        many points sharing one TIDL value but spanning a wide range of real
+        FP32 values — and which of those ties lands on the stride is
+        arbitrary. notidl is continuous, so ties are effectively impossible,
+        and sampling uniformly across it means uniform coverage of the real
+        activation range, which is what this plot is actually meant to show
+        (how well quantization tracks the true signal across its full
+        spectrum) — not the artificial bucket structure quantization imposes.
+
+        Sorting first also means the sample's index positions land
+        proportionally to each value range's actual point density — a range
+        with many points naturally gets more indices, so it keeps
+        proportionally more samples, while a sparse range keeps fewer. The
+        first and last sorted points (the extremes) always land exactly on
+        the stride, so the true min/max are never dropped by chance the way
+        they could be under random sampling. It's also fully deterministic:
+        the same input always produces the same sampled points.
 
         Args:
             tidl_data: TIDL (quantized) activation values
             notidl_data: Original FP32 activation values
-            max_points: Maximum number of points to keep (default 4000)
+            max_points: Number of points to keep (default 2000)
 
         Returns:
             Tuple of (sampled_tidl_data, sampled_notidl_data)
         """
         total_points = len(tidl_data)
-
-        # Adaptive minimum: ensure we have enough points for visualization
-        # For small datasets, keep more; for large datasets, aim for max_points
-        if total_points <= 2000:
-            return tidl_data, notidl_data
-        elif total_points <= 8000:
-            min_points = int(total_points * 0.4)  # Keep at least 40% for small-medium datasets
-        else:
-            min_points = max(2000, int(max_points * 0.5))  # At least 2000 or 50% of max_points
-
-        # If already under max limit, return all points
         if total_points <= max_points:
             return tidl_data, notidl_data
 
-        try:
-            # Calculate best-fit line through all points
-            # Try sklearn first (more robust), fallback to numpy
-            try:
-                from sklearn.linear_model import LinearRegression
-                X = tidl_data.reshape(-1, 1)
-                y = notidl_data
-                model = LinearRegression()
-                model.fit(X, y)
-                slope = float(model.coef_[0])
-                intercept = float(model.intercept_)
-            except ImportError:
-                # Fallback to numpy polyfit
-                coeffs = np.polyfit(tidl_data, notidl_data, 1)
-                slope = float(coeffs[0])
-                intercept = float(coeffs[1])
+        sort_order = np.argsort(notidl_data)
+        tidl_sorted = tidl_data[sort_order]
+        notidl_sorted = notidl_data[sort_order]
 
-            # Calculate perpendicular distance from best-fit line
-            # Distance = |y - (mx + b)| / sqrt(1 + m^2)
-            predicted = slope * tidl_data + intercept
-            distances = np.abs(notidl_data - predicted) / np.sqrt(1 + slope**2)
+        # Float stride (not integer division) so max_points is hit exactly
+        # even when total_points isn't a clean multiple of it.
+        stride = total_points / max_points
+        indices = np.minimum((np.arange(max_points) * stride).astype(int), total_points - 1)
 
-            # Adaptive thresholds based on percentiles
-            p50 = np.percentile(distances, 50)
-            p75 = np.percentile(distances, 75)
-            p90 = np.percentile(distances, 90)
-            p95 = np.percentile(distances, 95)
+        logger.debug(f"    Systematic sampling: {total_points} -> {max_points} points (stride={stride:.2f})")
 
-            # Zone-based sampling with different rates
-            # Format: (lower_bound, upper_bound, sampling_rate, zone_name)
-            zones = [
-                (p95, np.inf, 1.0, 'critical'),    # Keep ALL outliers
-                (p90, p95, 0.8, 'poor'),            # Keep 80% of poor points
-                (p75, p90, 0.4, 'fair'),            # Keep 40% of fair points
-                (p50, p75, 0.15, 'good'),           # Keep 15% of good points
-                (0.0, p50, 0.15, 'excellent')       # Keep 5% of excellent points
-            ]
-
-            # Build index list for each zone
-            selected_indices = []
-            np.random.seed(42)  # Reproducible sampling
-
-            for lower, upper, rate, zone_name in zones:
-                # Find points in this zone
-                mask = (distances >= lower) & (distances < upper)
-                zone_indices = np.where(mask)[0]
-
-                if len(zone_indices) == 0:
-                    continue
-
-                # Sample from this zone
-                n_to_sample = int(np.ceil(len(zone_indices) * rate))
-                if n_to_sample > len(zone_indices):
-                    n_to_sample = len(zone_indices)
-
-                sampled_indices = np.random.choice(zone_indices, n_to_sample, replace=False)
-                selected_indices.extend(sampled_indices)
-
-            # Convert to array
-            selected_indices = np.array(selected_indices)
-
-            # If we don't have enough points, fill up by sampling more from better zones
-            if len(selected_indices) < min_points:
-                # Get all unselected indices
-                all_indices = np.arange(total_points)
-                selected_set = set(selected_indices)
-                unselected_indices = np.array([i for i in all_indices if i not in selected_set])
-
-                if len(unselected_indices) > 0:
-                    # How many more points do we need?
-                    needed = min_points - len(selected_indices)
-                    needed = min(needed, len(unselected_indices))
-
-                    # Sample from unselected points, preferring those closer to outliers
-                    unselected_distances = distances[unselected_indices]
-                    # Sort by distance (descending) and take the top 'needed' points
-                    sorted_unselected = unselected_indices[np.argsort(-unselected_distances)]
-                    additional_indices = sorted_unselected[:needed]
-
-                    selected_indices = np.concatenate([selected_indices, additional_indices])
-
-            # Limit to max_points if we have too many
-            if len(selected_indices) > max_points:
-                # Prioritize by distance (keep worst outliers)
-                sorted_by_distance = selected_indices[np.argsort(-distances[selected_indices])]
-                selected_indices = sorted_by_distance[:max_points]
-
-            # Validation: ensure we kept the worst outlier
-            max_distance_idx = np.argmax(distances)
-            if max_distance_idx not in selected_indices:
-                # Replace a random good point with the max outlier
-                good_zone_mask = distances[selected_indices] < p75
-                if np.any(good_zone_mask):
-                    good_indices_in_selection = np.where(good_zone_mask)[0]
-                    replace_idx = np.random.choice(good_indices_in_selection)
-                    selected_indices[replace_idx] = max_distance_idx
-
-            # Return sampled data
-            sampled_tidl = tidl_data[selected_indices]
-            sampled_notidl = notidl_data[selected_indices]
-
-            # Print sampling summary
-            reduction_pct = (1 - len(selected_indices) / total_points) * 100
-            logger.debug(f"    Smart sampling: {total_points} -> {len(selected_indices)} points ({reduction_pct:.1f}% reduction, min: {min_points})")
-            logger.debug(f"    Best-fit line: y = {slope:.4f}*x + {intercept:.4f}")
-
-            return sampled_tidl, sampled_notidl
-
-        except Exception as e:
-            logger.debug(f"    Warning: Smart sampling failed ({e}), using random sampling")
-            # Fallback to simple random sampling
-            np.random.seed(42)
-            indices = np.random.choice(total_points, max_points, replace=False)
-            return tidl_data[indices], notidl_data[indices]
+        return tidl_sorted[indices], notidl_sorted[indices]
 
     def _sample_data(self, data: np.ndarray, max_samples: int = 50000) -> np.ndarray:
         """Sample data for visualization"""
@@ -2936,7 +2848,8 @@ def _merge_compiler_subgraphs(combined_data: Dict[str, Any], compiler_json: Dict
             missing.append(sg_id)
             continue
         for key in ('subgraph_id', 'tidl_tool_version', 'tensor_bits',
-                    'total_gmacs', 'num_layers', 'layers', 'target_device'):
+                    'total_gmacs', 'num_layers', 'layers', 'target_device',
+                    'performance_source'):
             if key in detail:
                 stub[key] = detail[key]
         injected += 1
@@ -3193,6 +3106,13 @@ def update_with_evm_perf(json_path: str) -> bool:
     with open(json_path, 'r', encoding='utf-8') as fh:
         data = json.load(fh)
 
+    # Default every subgraph to pc_simulation first — only the ones that
+    # actually get matched to a /tmp/..._perf.csv below get promoted to
+    # evm_hardware. Without this, a subgraph that was never measured on the
+    # EVM in this run would have no performance_source field at all.
+    for sg_info in data.get('runtime', {}).get('subgraphs', {}).values():
+        sg_info.setdefault('performance_source', 'pc_simulation')
+
     updated = False
     for csv_path in sorted(csv_files):
         m = _re.search(r'tidl_trace_subgraph_(\d+)_perf\.csv', csv_path)
@@ -3232,6 +3152,12 @@ def update_with_evm_perf(json_path: str) -> bool:
             }
             matched += 1
             updated = True
+
+        # Only THIS subgraph got real EVM cycle data — a run can mix EVM and
+        # PC-simulated subgraphs (e.g. an interrupted/partial hardware run),
+        # so this must not be inferred for every subgraph in the file.
+        if matched > 0:
+            subgraph['performance_source'] = 'evm_hardware'
 
         logger.debug(f'  Subgraph {sg_num}: matched {matched}/{len(perf_map)} layers '
               f'from {os.path.basename(csv_path)}')
@@ -3893,7 +3819,11 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
                 'total_gmacs': tidl_info.get('total_gmacs', 0.0),
                 'num_layers': len(layers_array),
                 'total_time_us': 0.0,  # Will be calculated later
-                'layers': layers_array  # Array format
+                'layers': layers_array,  # Array format
+                # Default until (and unless) update_with_evm_perf later promotes
+                # this specific subgraph to 'evm_hardware' — a single run can mix
+                # both sources across subgraphs, so this must stay per-subgraph.
+                'performance_source': 'pc_simulation',
             }
 
         # Extract ONNX model inputs/outputs
@@ -4372,6 +4302,7 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
                 'outputs': _dedupe_preserve_order(_boundary_output_value(t, subgraph_key) for t in boundary_outputs),
                 'layers': tidl_subgraph['layers'],
                 'target_device': target_device,
+                'performance_source': tidl_subgraph.get('performance_source', 'pc_simulation'),
             }
 
             unified_subgraphs[subgraph_key] = ordered_tidl_subgraph
