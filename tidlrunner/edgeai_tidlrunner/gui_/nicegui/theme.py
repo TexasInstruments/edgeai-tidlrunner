@@ -26,35 +26,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Colours, icons and stylesheet shared by the tidlrunner GUI."""
+"""Colours and stylesheet of the nicegui frontend."""
 
 from nicegui import ui
 
-BRAND = '#cc0000'
-
-COMMAND_ICONS = {
-    'compile': 'memory',
-    'infer': 'bolt',
-    'evaluate': 'assessment',
-    'inspect': 'insights',
-    'analyze': 'query_stats',
-    'surgery': 'healing',
-    'extract': 'unarchive',
-    'report': 'summarize',
-    'package': 'inventory_2',
-}
-
-GROUP_ICONS = {
-    'Main': 'tune',
-    'Model surgery': 'healing',
-    'Runtime options': 'memory',
-    'Dataset': 'dataset',
-    'Preprocess': 'filter_center_focus',
-    'Postprocess': 'auto_fix_high',
-    'Session': 'lan',
-    'General': 'settings',
-    'Other': 'more_horiz',
-}
+from ..common.icons import BRAND
 
 _CSS = '''
 :root {

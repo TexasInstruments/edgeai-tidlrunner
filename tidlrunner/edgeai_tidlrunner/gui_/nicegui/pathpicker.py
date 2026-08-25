@@ -33,15 +33,12 @@ from typing import Optional
 
 from nicegui import ui
 
+from ..common import browse
+
 
 async def choose_path(start: str = '', dirs_only: bool = False) -> Optional[str]:
     """Open a modal browser and return the selected path, or None if cancelled."""
-    current = pathlib.Path(start).expanduser() if start else pathlib.Path.cwd()
-    if current.is_file():
-        current = current.parent
-    if not current.is_dir():
-        current = pathlib.Path.cwd()
-    state = {'dir': current.resolve()}
+    state = {'dir': browse.start_directory(start)}
 
     with ui.dialog() as dialog, ui.card().classes('w-[46rem] max-w-full'):
         title = ui.label().classes('text-sm font-mono truncate w-full')
@@ -68,18 +65,14 @@ async def choose_path(start: str = '', dirs_only: bool = False) -> Optional[str]
             parent = state['dir'].parent
             if parent != state['dir']:
                 entry_button('..', 'arrow_upward', lambda: navigate(parent))
-            try:
-                entries = sorted(state['dir'].iterdir(),
-                                 key=lambda p: (not p.is_dir(), p.name.lower()))
-            except OSError as exception:
-                ui.label(f'cannot read directory: {exception}').classes('text-negative text-sm p-2')
+            entries, error = browse.list_directory(state['dir'], show_hidden.value, dirs_only)
+            if error:
+                ui.label(error).classes('text-negative text-sm p-2')
                 return
             for entry in entries:
-                if entry.name.startswith('.') and not show_hidden.value:
-                    continue
                 if entry.is_dir():
                     entry_button(entry.name, 'folder', lambda e=entry: navigate(e))
-                elif not dirs_only:
+                else:
                     entry_button(entry.name, 'description', lambda e=entry: dialog.submit(str(e)))
 
     show_hidden.on_value_change(lambda _: render())

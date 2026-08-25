@@ -30,7 +30,6 @@
 
 import argparse
 import os
-import re
 import shlex
 from typing import Dict, List, Optional
 from urllib.parse import quote
@@ -41,15 +40,14 @@ from nicegui import app as fastapi_app
 from nicegui import ui
 
 from edgeai_tidlrunner.version import __version__
-from . import fields
+from ..common import fields
+from ..common import icons
+from ..common import reports
+from ..common.process import CommandRunner, cli_prefix
 from . import theme
 from .pathpicker import choose_path
-from .process import CommandRunner, cli_prefix
 
 REPORT_ROUTE = '/tidlrunner/modelinspector'
-
-# printed by GenerateModelInspectorHTML when a report is written
-_REPORT_LINE = re.compile(r'HTML generation successful\.\s*Output at:\s*(\S+)')
 
 # only paths reported by a run may be served, so the route cannot be used to
 # read arbitrary files
@@ -61,18 +59,6 @@ def _serve_report(path: str) -> FileResponse:
     if path not in _served_reports or not os.path.isfile(path):
         raise HTTPException(status_code=404, detail='report not found')
     return FileResponse(path, media_type='text/html')
-
-
-def _is_true(text: str) -> bool:
-    return str(text).strip().lower() in ('1', 'true', 'yes')
-
-
-def _number_to_text(value, kind: str) -> str:
-    if value is None or value == '':
-        return ''
-    if kind == 'int':
-        return str(int(value))
-    return str(value)
 
 
 class RunnerPage:
@@ -147,7 +133,7 @@ class RunnerPage:
         tooltip = f'{spec.help}\n[{spec.dest}]'.strip()
 
         if spec.kind == 'bool':
-            widget = ui.switch(label, value=_is_true(value),
+            widget = ui.switch(label, value=fields.is_true(value),
                                on_change=lambda e, n=spec.name: self.set_value(n, '1' if e.value else '0'))
             widget.classes('w-full')
         elif spec.kind == 'select':
@@ -161,7 +147,7 @@ class RunnerPage:
             number = None if value == '' else (int(float(value)) if spec.kind == 'int' else float(value))
             widget = ui.number(label=label, value=number,
                                precision=0 if spec.kind == 'int' else None,
-                               on_change=lambda e, n=spec.name, k=spec.kind: self.set_value(n, _number_to_text(e.value, k)))
+                               on_change=lambda e, n=spec.name, k=spec.kind: self.set_value(n, fields.number_to_text(e.value, k)))
             widget.props('dense outlined').classes('w-full')
         elif spec.browse:
             with ui.row().classes('w-full items-center no-wrap gap-1'):
@@ -218,14 +204,14 @@ class RunnerPage:
         if main:
             with ui.element('div').classes('tidl-card w-full p-3'):
                 with ui.row().classes('items-center gap-2 q-mb-sm'):
-                    ui.icon(theme.COMMAND_ICONS.get(self.command, 'tune')).classes('text-primary')
+                    ui.icon(icons.command_icon(self.command)).classes('text-primary')
                     ui.label(self.command).classes('text-subtitle2 text-weight-bold')
                     ui.badge(f'{len(main)} main options').props('outline color=grey-7')
                 ui.separator().classes('q-mb-sm')
                 with ui.column().classes('w-full gap-2'):
                     self.build_fields(main)
         for group_name, specs in groups.items():
-            with ui.expansion(group_name, icon=theme.GROUP_ICONS.get(group_name, 'settings')) \
+            with ui.expansion(group_name, icon=icons.group_icon(group_name)) \
                     .classes('tidl-group w-full').props('dense-toggle expand-separator'):
                 with ui.column().classes('w-full gap-2 p-3'):
                     self.build_fields(specs)
@@ -269,9 +255,6 @@ class RunnerPage:
 
     def register_report(self, path: str) -> None:
         """Add a report a run just announced in the log, and show it."""
-        path = os.path.abspath(os.path.join(self.cwd, path))
-        if not os.path.isfile(path):
-            return
         _served_reports.add(path)
         options = dict(self.report_select.options or {})
         options[path] = os.path.relpath(path, self.cwd)
@@ -312,9 +295,9 @@ class RunnerPage:
         for kind, payload in self.runner.drain():
             if kind == 'line':
                 self.log.push(payload)
-                match = _REPORT_LINE.search(payload)
-                if match:
-                    self.register_report(match.group(1))
+                report_path = reports.resolve_report_line(payload, self.cwd)
+                if report_path:
+                    self.register_report(report_path)
             else:
                 self.log.push(f'--- finished with exit code {payload} ---')
                 self.update_run_state('done' if payload == 0 else f'failed ({payload})')

@@ -159,6 +159,31 @@ def command_names() -> List[str]:
     return ordered + sorted(available - set(ordered))
 
 
+def is_true(text: Any) -> bool:
+    """Interpret the stored text form of a boolean field."""
+    return str(text).strip().lower() in ('1', 'true', 'yes')
+
+
+def number_to_text(value: Any, kind: str) -> str:
+    """Store the value of a numeric widget back as CLI text."""
+    if value is None or value == '':
+        return ''
+    if kind == 'int':
+        return str(int(value))
+    return str(value)
+
+
+def text_to_number(text: str, kind: str) -> Optional[float]:
+    """Initial value for a numeric widget, or None when the field is empty."""
+    text = (text or '').strip()
+    if not text:
+        return None
+    try:
+        return int(float(text)) if kind == 'int' else float(text)
+    except ValueError:
+        return None
+
+
 def _value_to_text(value: Any) -> str:
     if value is None or value is argparse.SUPPRESS:
         return ''
