@@ -80,6 +80,7 @@ class RunnerPage:
         self.cwd = os.getcwd()
         self.runner = CommandRunner()
         self.log: ui.log = None
+        self.progress_label: Optional[ui.label] = None
         self.command_preview: ui.label = None
         self.run_button: ui.button = None
         self.stop_button: ui.button = None
@@ -286,11 +287,11 @@ class RunnerPage:
             ui.notify('a run is already in progress', type='warning')
             return
         argv = self.argv()
-        self.log.push(f'$ {shlex.join(argv)}')
+        self.push_log_line(f'$ {shlex.join(argv)}')
         try:
             self.runner.start(argv, cwd=self.cwd)
         except OSError as exception:
-            self.log.push(f'ERROR: could not start: {exception}')
+            self.push_log_line(f'ERROR: could not start: {exception}')
             ui.notify(f'could not start: {exception}', type='negative')
             return
         self.run_started_at = time.time()
@@ -302,7 +303,7 @@ class RunnerPage:
 
     def stop_run(self) -> None:
         self.runner.stop()
-        self.log.push('INFO: stop requested')
+        self.push_log_line('INFO: stop requested')
 
     def update_run_state(self, state: str) -> None:
         running = state == 'running'
@@ -315,15 +316,35 @@ class RunnerPage:
         dot_class = {'running': 'tidl-dot--running', 'idle': '', 'done': 'tidl-dot--done'}.get(state, 'tidl-dot--failed')
         self.status_dot.classes(remove='tidl-dot--running tidl-dot--done tidl-dot--failed', add=dot_class)
 
+    def clear_log(self) -> None:
+        self.log.clear()
+        self.progress_label = None
+
+    def push_log_line(self, text: str) -> None:
+        """Commit a real line to the log, ending any in-place progress update."""
+        self.log.push(text)
+        self.progress_label = None
+
+    def push_progress(self, text: str) -> None:
+        """Show a carriage-return-terminated update (e.g. a tqdm bar) in place,
+        overwriting the previous one instead of growing the log."""
+        if self.progress_label is None or self.progress_label.is_deleted:
+            with self.log:
+                self.progress_label = ui.label(text)
+        else:
+            self.progress_label.text = text
+
     def poll(self) -> None:
         for kind, payload in self.runner.drain():
             if kind == 'line':
-                self.log.push(payload)
+                self.push_log_line(payload)
                 report_path = reports.resolve_report_line(payload, self.cwd)
                 if report_path:
                     self.register_report(report_path)
+            elif kind == 'progress':
+                self.push_progress(payload)
             else:
-                self.log.push(f'--- finished with exit code {payload} ---')
+                self.push_log_line(f'--- finished with exit code {payload} ---')
                 self.update_run_state('done' if payload == 0 else f'failed ({payload})')
                 duration = time.time() - self.run_started_at if self.run_started_at else None
                 self.stat_exit.text = f'exit: {payload}'
@@ -396,7 +417,7 @@ class RunnerPage:
                         self.stat_reports = ui.chip('reports: 0', icon='insights').props('outline color=grey-7')
                         self.spinner = ui.spinner('dots', size='1.4rem').classes('text-primary')
                         self.status = ui.badge('idle').props('outline color=grey-7')
-                        ui.button(icon='delete_sweep', on_click=lambda: self.log.clear()) \
+                        ui.button(icon='delete_sweep', on_click=self.clear_log) \
                             .props('flat dense round').tooltip('clear log')
 
                     with ui.tab_panels(tabs, value=log_tab).classes('w-full grow tidl-panels') \

@@ -28,14 +28,20 @@
 
 """Runs tidlrunner-cli as a child process and streams its output line by line."""
 
+import io
 import os
 import queue
+import re
 import shutil
 import signal
 import subprocess
 import sys
 import threading
 from typing import List, Optional, Tuple
+
+# CSI escape sequences (cursor movement, colour codes, ...) - tqdm and the C
+# backend's own progress bars emit these; a plain-text log has no use for them
+_ANSI_RE = re.compile(r'\x1b\[[0-9;?]*[a-zA-Z]')
 
 
 def cli_prefix() -> List[str]:
@@ -50,7 +56,10 @@ class CommandRunner:
     """Non-blocking wrapper around a single tidlrunner-cli invocation.
 
     Output lines and the final exit code arrive on ``events`` as
-    ``('line', text)`` and ``('exit', returncode)`` tuples.
+    ``('line', text)``, ``('progress', text)`` and ``('exit', returncode)``
+    tuples. ``'progress'`` carries a carriage-return-terminated update (e.g. a
+    tqdm progress bar) that is meant to overwrite the previously displayed one
+    rather than start a new line, same as it would in a real terminal.
     """
 
     def __init__(self) -> None:
@@ -79,9 +88,7 @@ class CommandRunner:
             env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            text=True,
-            errors='replace',
-            bufsize=1,
+            bufsize=0,
             start_new_session=True,
         )
         with self._lock:
@@ -89,11 +96,24 @@ class CommandRunner:
         threading.Thread(target=self._pump, args=(process,), daemon=True).start()
 
     def _pump(self, process: subprocess.Popen) -> None:
+        # newline='' disables newline translation, so a bare '\r' (a progress
+        # bar overwriting itself) can still be told apart from a real '\n'
+        # once decoded - universal-newlines text mode would collapse both into
+        # '\n' and lose that distinction before we ever see it
+        stream = io.TextIOWrapper(process.stdout, encoding='utf-8', errors='replace', newline='')
         try:
-            for line in process.stdout:
-                self.events.put(('line', line.rstrip('\n')))
+            for raw_line in stream:
+                if raw_line.endswith('\r\n'):
+                    text, kind = raw_line[:-2], 'line'
+                elif raw_line.endswith('\n'):
+                    text, kind = raw_line[:-1], 'line'
+                elif raw_line.endswith('\r'):
+                    text, kind = raw_line[:-1], 'progress'
+                else:
+                    text, kind = raw_line, 'line'  # unterminated tail at EOF
+                self.events.put((kind, _ANSI_RE.sub('', text)))
         finally:
-            process.stdout.close()
+            stream.close()
             self.events.put(('exit', process.wait()))
 
     def stop(self) -> None:
