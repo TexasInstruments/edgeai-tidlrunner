@@ -76,6 +76,7 @@ class RunnerPage:
         self.run_button: ui.button = None
         self.stop_button: ui.button = None
         self.status: ui.badge = None
+        self.status_dot: ui.element = None
         self.spinner: ui.spinner = None
         self.dark: ui.dark_mode = None
         self.report: Optional[str] = None
@@ -227,8 +228,9 @@ class RunnerPage:
                 self.report_select.props('dense outlined options-dense').classes('grow')
                 ui.button(icon='open_in_new', on_click=self.open_report_tab) \
                     .props('flat dense round').tooltip('open in a new browser tab')
-            with ui.column().classes('w-full items-center gap-2 p-8') as self.report_placeholder:
-                ui.icon('insights').classes('text-5xl tidl-dim')
+            with ui.column().classes('w-full items-center gap-3 p-8') as self.report_placeholder:
+                with ui.element('div').classes('tidl-empty-icon'):
+                    ui.icon('insights').classes('text-3xl text-primary')
                 ui.label('No model inspector report yet').classes('text-subtitle2')
                 ui.label('Run compile or inspect to generate one').classes('text-caption tidl-dim')
             self.report_view = ui.element('iframe') \
@@ -290,6 +292,8 @@ class RunnerPage:
         colour = {'running': 'primary', 'idle': 'grey-7', 'done': 'positive'}.get(state, 'negative')
         self.status.text = state
         self.status.props(f'outline color={colour}')
+        dot_class = {'running': 'tidl-dot--running', 'idle': '', 'done': 'tidl-dot--done'}.get(state, 'tidl-dot--failed')
+        self.status_dot.classes(remove='tidl-dot--running tidl-dot--done tidl-dot--failed', add=dot_class)
 
     def poll(self) -> None:
         for kind, payload in self.runner.drain():
@@ -317,8 +321,10 @@ class RunnerPage:
                     ui.label('TIDL model compilation and evaluation') \
                         .classes('text-caption text-grey-5 leading-none')
                 ui.badge(__version__).props('outline color=white').classes('self-center')
+                with ui.row().classes('tidl-status-chip self-center'):
+                    self.status_dot = ui.element('div').classes('tidl-dot').tooltip('run status')
             with ui.row().classes('items-center gap-3 no-wrap'):
-                self.dark = ui.dark_mode()
+                self.dark = ui.dark_mode(False)
                 ui.button(icon='dark_mode', on_click=self.toggle_dark) \
                     .props('flat round dense color=white').tooltip('toggle dark mode')
 
@@ -341,9 +347,9 @@ class RunnerPage:
                                   on_change=lambda e: self.select_command(e.value)) \
                             .props('dense outlined options-dense').classes('grow')
                         self.run_button = ui.button('Run', icon='play_arrow', on_click=self.start_run) \
-                            .props('unelevated no-caps').classes('px-4')
+                            .props('unelevated no-caps').classes('tidl-run px-4')
                         self.stop_button = ui.button('Stop', icon='stop', on_click=self.stop_run) \
-                            .props('outline no-caps color=negative')
+                            .props('outline no-caps color=negative').classes('tidl-stop')
                     self.form()
 
             with splitter.after:
@@ -355,11 +361,11 @@ class RunnerPage:
                         ui.button(icon='delete_sweep', on_click=lambda: self.log.clear()) \
                             .props('flat dense round').tooltip('clear log')
 
-                    with ui.row().classes('w-full items-start no-wrap gap-1'):
-                        self.command_preview = ui.label().classes(
-                            'tidl-preview tidl-scroll grow text-xs p-3 break-all select-all')
+                    with ui.row().classes('tidl-preview tidl-scroll grow items-start no-wrap gap-1 text-xs p-3'):
+                        ui.label('$').classes('tidl-prompt')
+                        self.command_preview = ui.label().classes('break-all select-all grow')
                         ui.button(icon='content_copy', on_click=self.copy_command) \
-                            .props('flat dense round').tooltip('copy command')
+                            .props('flat dense round color=grey-4').tooltip('copy command')
 
                     with ui.tabs().classes('tidl-tabs w-full').props('dense align=left inline-label') as tabs:
                         log_tab = ui.tab('Log', icon='terminal')
