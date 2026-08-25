@@ -71,7 +71,6 @@ body {
 /* header: dark slate with a glowing brand-red edge */
 .tidl-header {
     background: linear-gradient(100deg, #10131a 0%, #1b2230 55%, #341620 100%);
-    position: relative;
     box-shadow: 0 2px 20px rgba(0, 0, 0, .35);
 }
 .tidl-header::after {
@@ -152,7 +151,7 @@ body {
     border: 1px solid rgba(204, 0, 0, .28);
     border-radius: var(--tidl-radius);
     line-height: 1.5;
-    max-height: 5.5rem;
+    max-height: 4rem;
     overflow: auto;
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .02), 0 0 20px -8px rgba(204, 0, 0, .45);
 }

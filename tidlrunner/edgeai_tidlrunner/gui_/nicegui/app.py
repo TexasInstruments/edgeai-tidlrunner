@@ -380,27 +380,25 @@ class RunnerPage:
 
             with splitter.after:
                 with ui.column().classes('w-full h-full p-4 gap-3').style('min-height: 0'):
-                    with ui.row().classes('w-full items-center gap-2 no-wrap'):
-                        ui.space()
-                        self.spinner = ui.spinner('dots', size='1.4rem').classes('text-primary')
-                        self.status = ui.badge('idle').props('outline color=grey-7')
-                        ui.button(icon='delete_sweep', on_click=lambda: self.log.clear()) \
-                            .props('flat dense round').tooltip('clear log')
-
-                    with ui.row().classes('w-full items-center gap-2 no-wrap'):
-                        self.stat_exit = ui.chip('exit: -', icon='flag').props('outline color=grey-7')
-                        self.stat_duration = ui.chip('time: -', icon='schedule').props('outline color=grey-7')
-                        self.stat_reports = ui.chip('reports: 0', icon='insights').props('outline color=grey-7')
-
                     with ui.row().classes('tidl-preview tidl-scroll grow items-start no-wrap gap-1 text-xs p-3'):
                         ui.label('$').classes('tidl-prompt')
                         self.command_preview = ui.label().classes('break-all select-all grow')
                         ui.button(icon='content_copy', on_click=self.copy_command) \
                             .props('flat dense round color=grey-4').tooltip('copy command')
 
-                    with ui.tabs().classes('tidl-tabs w-full').props('dense align=left inline-label') as tabs:
-                        log_tab = ui.tab('Log', icon='terminal')
-                        inspector_tab = ui.tab('Model Inspector', icon='insights')
+                    with ui.row().classes('tidl-tabs w-full items-center no-wrap gap-2'):
+                        with ui.tabs().props('dense align=left inline-label') as tabs:
+                            log_tab = ui.tab('Log', icon='terminal')
+                            inspector_tab = ui.tab('Model Inspector', icon='insights')
+                        ui.space()
+                        self.stat_exit = ui.chip('exit: -', icon='flag').props('outline color=grey-7')
+                        self.stat_duration = ui.chip('time: -', icon='schedule').props('outline color=grey-7')
+                        self.stat_reports = ui.chip('reports: 0', icon='insights').props('outline color=grey-7')
+                        self.spinner = ui.spinner('dots', size='1.4rem').classes('text-primary')
+                        self.status = ui.badge('idle').props('outline color=grey-7')
+                        ui.button(icon='delete_sweep', on_click=lambda: self.log.clear()) \
+                            .props('flat dense round').tooltip('clear log')
+
                     with ui.tab_panels(tabs, value=log_tab).classes('w-full grow tidl-panels') \
                             .props('keep-alive'):
                         with ui.tab_panel(log_tab).classes('p-0'):
