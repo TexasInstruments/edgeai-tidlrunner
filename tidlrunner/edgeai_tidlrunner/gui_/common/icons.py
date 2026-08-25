@@ -54,6 +54,34 @@ GROUP_ICONS = {
     'Other': 'more_horiz',
 }
 
+# per-command accent hues, drawn from Quasar's classic multi-hue semantic
+# palette (cyan/green/purple/teal/amber/indigo/blue/pink) - compile keeps the
+# TI brand red since it's the flagship command
+COMMAND_COLORS = {
+    'compile': BRAND,
+    'infer': '#31ccec',
+    'evaluate': '#21ba45',
+    'inspect': '#9c27b0',
+    'analyze': '#26a69a',
+    'surgery': '#f2c037',
+    'extract': '#3f51b5',
+    'report': '#1e88e5',
+    'package': '#e91e63',
+}
+
+# per-group accent hues; 'Main' is excluded - it follows the current
+# command's colour dynamically instead of a fixed one
+GROUP_COLORS = {
+    'Model surgery': '#f4511e',
+    'Runtime options': '#f2c037',
+    'Dataset': '#26a69a',
+    'Preprocess': '#9c27b0',
+    'Postprocess': '#e91e63',
+    'Session': '#31ccec',
+    'General': '#3f51b5',
+    'Other': '#94a3b8',
+}
+
 
 def command_icon(command: str) -> str:
     return COMMAND_ICONS.get(command, 'tune')
@@ -61,3 +89,11 @@ def command_icon(command: str) -> str:
 
 def group_icon(group: str) -> str:
     return GROUP_ICONS.get(group, 'settings')
+
+
+def command_color(command: str) -> str:
+    return COMMAND_COLORS.get(command, BRAND)
+
+
+def group_color(group: str) -> str:
+    return GROUP_COLORS.get(group, BRAND)

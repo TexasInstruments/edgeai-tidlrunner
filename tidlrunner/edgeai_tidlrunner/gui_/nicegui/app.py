@@ -31,6 +31,7 @@
 import argparse
 import os
 import shlex
+import time
 from typing import Dict, List, Optional
 from urllib.parse import quote
 
@@ -61,6 +62,13 @@ def _serve_report(path: str) -> FileResponse:
     return FileResponse(path, media_type='text/html')
 
 
+def _format_duration(seconds: float) -> str:
+    if seconds < 60:
+        return f'{seconds:.1f}s'
+    minutes, remainder = divmod(int(seconds), 60)
+    return f'{minutes}m {remainder:02d}s'
+
+
 class RunnerPage:
     """Per-client state and widgets."""
 
@@ -83,6 +91,10 @@ class RunnerPage:
         self.report_select: ui.select = None
         self.report_view: ui.element = None
         self.report_placeholder: ui.element = None
+        self.run_started_at: Optional[float] = None
+        self.stat_exit: ui.chip = None
+        self.stat_duration: ui.chip = None
+        self.stat_reports: ui.chip = None
 
     # ------------------------------------------------------------------ state
 
@@ -203,9 +215,10 @@ class RunnerPage:
         groups = fields.grouped_fields(self.command)
         main = groups.pop('Main', [])
         if main:
-            with ui.element('div').classes('tidl-card w-full p-3'):
+            accent = icons.command_color(self.command)
+            with ui.element('div').classes('tidl-card w-full p-3').style(f'border-left-color: {accent}'):
                 with ui.row().classes('items-center gap-2 q-mb-sm'):
-                    ui.icon(icons.command_icon(self.command)).classes('text-primary')
+                    ui.icon(icons.command_icon(self.command)).style(f'color: {accent}')
                     ui.label(self.command).classes('text-subtitle2 text-weight-bold')
                     ui.badge(f'{len(main)} main options').props('outline color=grey-7')
                 ui.separator().classes('q-mb-sm')
@@ -213,7 +226,8 @@ class RunnerPage:
                     self.build_fields(main)
         for group_name, specs in groups.items():
             with ui.expansion(group_name, icon=icons.group_icon(group_name)) \
-                    .classes('tidl-group w-full').props('dense-toggle expand-separator'):
+                    .classes('tidl-group w-full').props('dense-toggle expand-separator') \
+                    .style(f'--tidl-group-accent: {icons.group_color(group_name)}'):
                 with ui.column().classes('w-full gap-2 p-3'):
                     self.build_fields(specs)
 
@@ -263,6 +277,7 @@ class RunnerPage:
         self.report_select.options = options
         self.report_select.update()
         self.show_report(path)
+        self.stat_reports.text = f'reports: {len(options)}'
 
     # ------------------------------------------------------------------- run
 
@@ -278,6 +293,11 @@ class RunnerPage:
             self.log.push(f'ERROR: could not start: {exception}')
             ui.notify(f'could not start: {exception}', type='negative')
             return
+        self.run_started_at = time.time()
+        self.stat_exit.text = 'exit: …'
+        self.stat_exit.props('outline color=grey-7')
+        self.stat_duration.text = 'time: …'
+        self.stat_duration.props('outline color=grey-7')
         self.update_run_state('running')
 
     def stop_run(self) -> None:
@@ -305,6 +325,12 @@ class RunnerPage:
             else:
                 self.log.push(f'--- finished with exit code {payload} ---')
                 self.update_run_state('done' if payload == 0 else f'failed ({payload})')
+                duration = time.time() - self.run_started_at if self.run_started_at else None
+                self.stat_exit.text = f'exit: {payload}'
+                self.stat_exit.props(f'outline color={"positive" if payload == 0 else "negative"}')
+                if duration is not None:
+                    self.stat_duration.text = f'time: {_format_duration(duration)}'
+                    self.stat_duration.props('outline color=grey-7')
                 ui.notify('run finished' if payload == 0 else f'run failed (exit {payload})',
                           type='positive' if payload == 0 else 'negative')
 
@@ -360,6 +386,11 @@ class RunnerPage:
                         self.status = ui.badge('idle').props('outline color=grey-7')
                         ui.button(icon='delete_sweep', on_click=lambda: self.log.clear()) \
                             .props('flat dense round').tooltip('clear log')
+
+                    with ui.row().classes('w-full items-center gap-2 no-wrap'):
+                        self.stat_exit = ui.chip('exit: -', icon='flag').props('outline color=grey-7')
+                        self.stat_duration = ui.chip('time: -', icon='schedule').props('outline color=grey-7')
+                        self.stat_reports = ui.chip('reports: 0', icon='insights').props('outline color=grey-7')
 
                     with ui.row().classes('tidl-preview tidl-scroll grow items-start no-wrap gap-1 text-xs p-3'):
                         ui.label('$').classes('tidl-prompt')
