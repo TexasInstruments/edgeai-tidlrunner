@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Copyright (c) 2018-2025, Texas Instruments
 # All Rights Reserved.
 #
@@ -27,36 +29,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from . import common
-from .interfaces import *
-
-
-target_modules = [
-    common
-]
-
-
-def get_command_pipelines(**kwargs):
-    all_pipelines = dict()
-    for t in target_modules:
-        all_pipelines = all_pipelines | t.get_command_pipelines()
-
-    return all_pipelines
-
-
-def get_command_names(**kwargs):
-    all_pipelines = get_command_pipelines(**kwargs)
-    return list(all_pipelines.keys())
-
-
-def get_pipeline(pipeline_name):
-    command_pipelines_dict = get_command_pipelines()
-    supported_pipeline_names = list(command_pipelines_dict.keys())
-    assert pipeline_name in supported_pipeline_names, f'ERROR: invalid pipeline name: {pipeline_name} - must be one of {supported_pipeline_names}'
-    for t in target_modules:
-        t_pipelines = t.get_command_pipelines()
-        if pipeline_name in t_pipelines:
-            return t.get_pipeline(pipeline_name)
-
-    return None
+##################################################################
+# compile and evaluate accuracy using aggregate configs file
+#----------------------------------------------------------------
+tidlrunner-cli inspect --config_path ./data/configs/modelzoo/configs.yaml --model_shortlist 100 "$@"
 
