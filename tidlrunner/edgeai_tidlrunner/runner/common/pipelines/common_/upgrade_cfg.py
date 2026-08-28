@@ -108,13 +108,22 @@ def upgrade_kwargs(**kwargs):
         kwargs_out['common.num_frames'] = min(100, kwargs_out['common.num_frames'])
         kwargs_out['session.runtime_options.advanced_options:calibration_frames'] = 5
         kwargs_out['session.runtime_options.advanced_options:calibration_iterations'] = 5
-    elif preset_selection.lower() == constants.ModelCompilationPreset.PRESET_ACCURACY.lower():
+    elif preset_selection.lower() == constants.ModelCompilationPreset.PRESET_BALANCED.lower():
         # default dataset_type_dict has imagenet mapping to imagenetv2c for quick testing - remove this mapping
         kwargs_out['common.dataset_type_dict'] = None
         kwargs_out['session.runtime_options.object_detection:confidence_threshold'] = 0.05
         kwargs_out['session.runtime_options.object_detection:top_k'] = 500
         kwargs_out['postprocess.detection_threshold'] = 0.05
         kwargs_out['postprocess.detection_top_k'] = 500
+    elif preset_selection.lower() == constants.ModelCompilationPreset.PRESET_ACCURACY.lower():
+        # default dataset_type_dict has imagenet mapping to imagenetv2c for quick testing - remove this mapping
+        kwargs_out['common.dataset_type_dict'] = None
+        kwargs_out['session.runtime_options.object_detection:confidence_threshold'] = 0.001
+        kwargs_out['session.runtime_options.object_detection:top_k'] = None
+        kwargs_out['session.runtime_options.object_detection:keep_top_k'] = None
+        kwargs_out['postprocess.detection_threshold'] = 0.001
+        kwargs_out['postprocess.detection_top_k'] = None
+        kwargs_out['postprocess.detection_keep_top_k'] = None
     #
 
     if kwargs_out.get('session.name', None) is None:
