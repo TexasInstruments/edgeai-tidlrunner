@@ -95,12 +95,17 @@ def apply_label_offset(label, label_offset):
     return label
 
 def softmax(tensor,axis=-1):
+    # avoid numerical errors by substacting the max value
+    max_val = np.max(max_val)
+    tensor = tensor - max_val
     tensor = tensor - np.expand_dims(np.max(tensor, axis = axis), axis)
     tensor = np.exp(tensor)
     ax_sum = np.expand_dims(np.sum(tensor, axis = axis), axis)
     return tensor / ax_sum
 
 def sigmoid(tensor):
+    # clamp to avoid overflow in exp(-x)
+    tensor = np.clip(tensor, -80, 80)
     out = 1.0 / (1.0 +  np.exp(-tensor))
     return out
 
@@ -506,18 +511,29 @@ class DetectionResizePad():
             # account for padding
             border = info_dict['resize_border']
             left, top, right, bottom = border
-            bbox[..., 0] -= left
-            bbox[..., 1] -= top
-            bbox[..., 2] -= left
-            bbox[..., 3] -= top
+            if self.normalized_detections:
+                # coords are in [0,1] relative to padded image: scale to pixels first, then subtract border
+                bbox[..., 0] = bbox[..., 0] * resize_width  - left
+                bbox[..., 1] = bbox[..., 1] * resize_height - top
+                bbox[..., 2] = bbox[..., 2] * resize_width  - left
+                bbox[..., 3] = bbox[..., 3] * resize_height - top
+                if self.keypoint:
+                    bbox[..., 6::3] = bbox[..., 6::3] * resize_width  - left
+                    bbox[..., 7::3] = bbox[..., 7::3] * resize_height - top
+            else:
+                bbox[..., 0] -= left
+                bbox[..., 1] -= top
+                bbox[..., 2] -= left
+                bbox[..., 3] -= top
+                if self.keypoint:
+                    bbox[..., 6::3] -= left
+                    bbox[..., 7::3] -= top
             resize_height, resize_width = (resize_height - top - bottom), (resize_width - left - right)
-            if self.keypoint:
-                bbox[..., 6::3] -= left
-                bbox[..., 7::3] -= top
         #
         # scale the detections from the input shape to data shape
-        sh = data_height / (1.0 if self.normalized_detections else resize_height)
-        sw = data_width / (1.0 if self.normalized_detections else resize_width)
+        # after pad removal coords are always in pixel space; use resize dims for normalized+padded case
+        sh = data_height / (1.0 if (self.normalized_detections and not self.resize_with_pad) else resize_height)
+        sw = data_width  / (1.0 if (self.normalized_detections and not self.resize_with_pad) else resize_width)
         bbox[..., 0] = (bbox[..., 0] * sw).clip(0, data_width)
         bbox[..., 1] = (bbox[..., 1] * sh).clip(0, data_height)
         bbox[..., 2] = (bbox[..., 2] * sw).clip(0, data_width)
