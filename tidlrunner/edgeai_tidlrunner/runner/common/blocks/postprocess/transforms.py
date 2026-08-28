@@ -95,15 +95,18 @@ def apply_label_offset(label, label_offset):
     return label
 
 def softmax(tensor,axis=-1):
+    # avoid numerical errors by substacting the max value
+    max_val = np.max(max_val)
+    tensor = tensor - max_val
     tensor = tensor - np.expand_dims(np.max(tensor, axis = axis), axis)
     tensor = np.exp(tensor)
     ax_sum = np.expand_dims(np.sum(tensor, axis = axis), axis)
     return tensor / ax_sum
 
 def sigmoid(tensor):
-    # for x<0 use exp(x)/(1+exp(x)) to avoid overflow in exp(-x)
-    pos = tensor >= 0
-    out = np.where(pos, 1.0 / (1.0 + np.exp(-np.abs(tensor))), np.exp(np.where(pos, 0, tensor)) / (1.0 + np.exp(np.where(pos, 0, tensor))))
+    # clamp to avoid overflow in exp(-x)
+    tensor = np.clip(tensor, -80, 80)
+    out = 1.0 / (1.0 +  np.exp(-tensor))
     return out
 
 
