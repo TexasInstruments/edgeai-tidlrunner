@@ -935,6 +935,7 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
                     'layer_index': layer_index,
                     'layer_type': layer_type,
                     'layer_name': layer_name,
+                    'tensor_bits': tidl_layer.get('tensor_bits'),
                     'parameters': tidl_layer.get('parameters', {}),
                     'properties': format_layer_properties(tidl_layer.get('parameters', {})),
                     'macs': 0,
@@ -968,6 +969,7 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
                     'tidl_supported': True,
                     'inputshape': str(input_shape) if input_shape else 'N/A',
                     'outputshape': str(output_shape),
+                    'tensor_bits': tidl_layer.get('tensor_bits'),
                     'layer_data': {
                         'raw_text': raw_text,
                         'layer_index': layer_index,

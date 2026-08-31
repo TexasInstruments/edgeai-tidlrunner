@@ -3650,6 +3650,17 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
         # Get node_support for lookups
         node_support = subgraph_data.get('node_support', {})
 
+        # A boundary DataLayer/DataConvertLayer is normally skipped for
+        # activation comparison (no meaningful upstream computation for the
+        # model's own INPUT layer) — but the same layer types are also how a
+        # TIDL subgraph's own FINAL output boundary is represented, and that
+        # one is exactly the tensor a user most needs accuracy data for. Skip
+        # only the ones that are NOT one of the model's real graph outputs.
+        _model_output_names = {
+            o.get('name') for o in model_data.get('model_details', {}).get('output_shape', [])
+            if o.get('name')
+        }
+
         for subgraph_id, tidl_info in tidl_data.items():
             enhanced_layers = {}  # Changed from list to dict
 
@@ -3770,7 +3781,12 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
                 # Determine activation data and bin_files
                 layer_type_str = layer.get('layer_type', '')
                 act_key = f"{subgraph_id}_{layer_idx}"
-                skip_activation = layer_type_str in ('TIDL_DataLayer', 'TIDL_DataConvertLayer')
+                is_model_output = layer.get('layer_name') in _model_output_names
+                # TIDL's trace capture for TIDL_SliceLayer is unreliable, so skip it.
+                skip_activation = (
+                    layer_type_str in ('TIDL_DataLayer', 'TIDL_DataConvertLayer', 'TIDL_SliceLayer')
+                    and not is_model_output
+                )
                 if not skip_activation and activation_data and act_key in activation_data:
                     act = activation_data[act_key]
                     act_data = {
