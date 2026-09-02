@@ -43,5 +43,6 @@ from .parallel_runner import ParallelRunner
 
 class SequentialRunner(ParallelRunner):
     def __init__(self, *args, parallel_processes=0, with_progressbar=False, **kwargs):
-        super().__init__(*args, parallel_processes=parallel_processes, with_progressbar=with_progressbar, **kwargs)
-
+        # parallel_processes is set to 0 to ensure that the runner runs sequentially, overriding any value passed in args or kwargs.
+        assert parallel_processes == 0, "ERROR: SequentialRunner should not have parallel processes."
+        super().__init__(*args, parallel_processes=0, with_progressbar=with_progressbar, **kwargs)

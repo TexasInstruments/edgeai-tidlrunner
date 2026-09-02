@@ -35,6 +35,7 @@ import warnings
 import yaml
 import re
 
+from ..rtwrapper.core import presets
 from .common import bases, utils, pipelines
 from .common.bases.pipeline_base import PipelineBase
 from .common import utils
@@ -325,6 +326,7 @@ class PipelineManager(PipelineBase):
                 parallel_devices = command_kwargs['common.parallel_devices']
                 instance_timeout = command_kwargs.get('common.instance_timeout', None)
                 overall_timeout = command_kwargs.get('common.overall_timeout', None)
+                target_machine = command_kwargs['session.target_machine']
 
                 if command_kwargs['common.capture_log'] == bases.settings_base.CaptureLogModes.CAPTURE_LOG_MODE_ADAPTIVE:
                     # CAPTURE_LOG_MODE_TEE is not working now - need to fix it before using here
@@ -353,27 +355,26 @@ class PipelineManager(PipelineBase):
             task_entries.update({model_key:task_list})
         #
 
+        # create a process for each task entry - this is required to ensure that each command runs in a separate process and is cleanedup proprely
+        # this is especially important now, as we are using set_proper_environment instead of restart_with_proper_environment in start.py
+        for task_list in task_entries.values():
+            for task_entry in task_list:
+                proc_name = task_entry['proc_name']
+                proc_func = task_entry['proc_func']
+                proc_info = task_entry['proc_info']
+                proc_env = task_entry['proc_env'] 
+                # there are multiple commands given to be run back to back - running them on the same process can be problematic
+                # so we will run them using multiprocessing - using separate process for each sub-command
+                # this is useful for cases like 'compile,evaluate' or 'import,infer'
+                task_entry['proc_func'] = functools.partial(utils.ProcessWithQueue.create, proc_name, proc_func, proc_info, proc_env)
+            #
+        #
+
         # if there is more than one model or command or parallel_processes is set, we need to launch in ParallelRunner
-        # or else we can directly run it
-        if (parallel_processes or multiple_models) or (multiple_models or multiple_commands):
-            for task_list in task_entries.values():
-                for task_entry in task_list:
-                    proc_name = task_entry['proc_name']
-                    proc_func = task_entry['proc_func']
-                    proc_info = task_entry['proc_info']
-                    proc_env = task_entry['proc_env'] 
-                    # there are multiple commands given to be run back to back - running them on the same process can be problematic
-                    # so we will run them using multiprocessing - using separate process for each sub-command
-                    # this is useful for cases like 'compile,evaluate' or 'import,infer'
-                    task_entry['proc_func'] = functools.partial(utils.ProcessWithQueue.create, proc_name, proc_func, proc_info, proc_env)
-                #
-            #
-            if (parallel_processes or multiple_models):
-                runner_obj = utils.ParallelRunner(parallel_processes=parallel_processes, overall_timeout=overall_timeout, instance_timeout=instance_timeout)
-            else:
-                runner_obj = utils.SequentialRunner(parallel_processes=parallel_processes, with_progressbar=multiple_models)
-            #
+        with_parallel_runner = (target_machine == presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION)
+        if with_parallel_runner and (parallel_processes or multiple_models or multiple_commands):
+            runner_obj = utils.ParallelRunner(parallel_processes=parallel_processes, with_progressbar=multiple_models, overall_timeout=overall_timeout, instance_timeout=instance_timeout)
         else:
-            runner_obj = utils.SequentialRunner()
+            runner_obj = utils.SequentialRunner(with_progressbar=multiple_models, overall_timeout=overall_timeout, instance_timeout=instance_timeout)
         #
         return runner_obj.run(task_entries)
