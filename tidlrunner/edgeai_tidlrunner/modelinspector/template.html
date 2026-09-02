@@ -1857,6 +1857,27 @@ main {
     background: transparent;
 }
 
+/* Search box is moved to the legend area (top-right) by JS after DataTables
+   builds it, so it never scrolls away with the table rows. */
+#analysis-search-slot .dataTables_filter {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    white-space: nowrap;
+}
+#analysis-search-slot .dataTables_filter label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    font-size: 0.85rem;
+}
+#analysis-search-slot .dataTables_filter input {
+    margin: 0;
+    min-width: 200px;
+}
+
 #analysis-table thead th {
     position: sticky;
     top: 0;
@@ -1883,12 +1904,13 @@ main {
 
 #analysis-table th:nth-child(1), #analysis-table td:nth-child(1) { width: 3%; }
 #analysis-table th:nth-child(2), #analysis-table td:nth-child(2) { width: 4%; }
-#analysis-table th:nth-child(3), #analysis-table td:nth-child(3) { width: 7%; }
-#analysis-table th:nth-child(4), #analysis-table td:nth-child(4) { width: 8%; }
-#analysis-table th:nth-child(5), #analysis-table td:nth-child(5) { width: 12%; }
-#analysis-table th:nth-child(6), #analysis-table td:nth-child(6) { width: 5%; }
-#analysis-table th:nth-child(7), #analysis-table td:nth-child(7) { width: 30.5%; }
-#analysis-table th:nth-child(8), #analysis-table td:nth-child(8) { width: 30.5%; }
+#analysis-table th:nth-child(3), #analysis-table td:nth-child(3) { width: 4%; }
+#analysis-table th:nth-child(4), #analysis-table td:nth-child(4) { width: 7%; }
+#analysis-table th:nth-child(5), #analysis-table td:nth-child(5) { width: 8%; }
+#analysis-table th:nth-child(6), #analysis-table td:nth-child(6) { width: 12%; }
+#analysis-table th:nth-child(7), #analysis-table td:nth-child(7) { width: 5%; }
+#analysis-table th:nth-child(8), #analysis-table td:nth-child(8) { width: 28.5%; }
+#analysis-table th:nth-child(9), #analysis-table td:nth-child(9) { width: 28.5%; }
 
 /* Left-justify every column, overriding the shared table centering */
 #analysis-table th,
@@ -1920,8 +1942,8 @@ main {
 }
 
 /* Chart cells: minimal side padding, so the plots run edge to edge */
-#analysis-table td:nth-child(7),
-#analysis-table td:nth-child(8) {
+#analysis-table td:nth-child(8),
+#analysis-table td:nth-child(9) {
     padding: 0.35rem 0.2rem;
 }
 
@@ -1929,14 +1951,15 @@ main {
     padding: 0.5rem 0.4rem;
 }
 
-/* Serial number column */
-#analysis-table td:nth-child(1) {
+/* Serial number and layer number columns */
+#analysis-table td:nth-child(1),
+#analysis-table td:nth-child(2) {
     color: var(--text-secondary);
     font-size: 0.75rem;
     font-variant-numeric: tabular-nums;
 }
 
-#analysis-table td:nth-child(5) {
+#analysis-table td:nth-child(6) {
     font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
     font-size: 0.7rem;
     line-height: 1.3;
@@ -1980,9 +2003,17 @@ main {
     font-size: 0.75rem;
     color: var(--text-secondary);
     display: flex;
-    gap: 1rem;
+    justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
     margin-bottom: 0.6rem;
+}
+
+.analysis-legend-hints {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
 }
 
 .analysis-legend .swatch {
@@ -4868,15 +4899,19 @@ main {
             </div>
             <div class="card-body">
                 <div class="analysis-legend">
-                    <span><i class="fas fa-mouse-pointer"></i> Hover a plot for exact values</span>
-                    <span><i class="fas fa-search-plus"></i> Ctrl + scroll to zoom</span>
-                    <span><i class="fas fa-arrows-alt"></i> Drag to pan</span>
+                    <div class="analysis-legend-hints">
+                        <span><i class="fas fa-mouse-pointer"></i> Hover a plot for exact values</span>
+                        <span><i class="fas fa-search-plus"></i> Ctrl + scroll to zoom</span>
+                        <span><i class="fas fa-arrows-alt"></i> Drag to pan</span>
+                    </div>
+                    <div id="analysis-search-slot" class="perf-chart-controls"></div>
                 </div>
                 <div class="operator-summary-table-container" id="analysis-table-container">
                     <table id="analysis-table" class="operator-summary-table">
                         <thead>
                             <tr>
                                 <th scope="col">#</th>
+                                <th scope="col">Layer #</th>
                                 <th scope="col">Subgraph</th>
                                 <th scope="col">Layer Name</th>
                                 <th scope="col">Layer Type</th>
@@ -5503,6 +5538,7 @@ function renderAnalysisTable() {
             rowsHtml.push(
                 '<tr data-has-charts="' + (hasActivationData && hasAnyActivationData ? 'true' : 'false') + '">' +
                 '<td class="analysis-serial"></td>' +
+                '<td data-order="' + idx + '">' + analysisEscapeHtml(String(idx)) + '</td>' +
                 '<td>' + analysisEscapeHtml(sgId) + '</td>' +
                 '<td>' + analysisEscapeHtml(layerName) + '</td>' +
                 '<td>' + analysisEscapeHtml(String(layer.layer_type).replace('TIDL_', '')) + '</td>' +
@@ -5527,14 +5563,14 @@ function renderAnalysisTable() {
     if (!hasAnyActivationData) {
         const headerCells = table.querySelectorAll('thead th');
         const bodyCells = table.querySelectorAll('tbody td');
-        if (headerCells[5]) headerCells[5].style.display = 'none';  // SNR header
-        if (headerCells[6]) headerCells[6].style.display = 'none';  // Histogram header
-        if (headerCells[7]) headerCells[7].style.display = 'none';  // Scatter header
+        if (headerCells[6]) headerCells[6].style.display = 'none';  // SNR header
+        if (headerCells[7]) headerCells[7].style.display = 'none';  // Histogram header
+        if (headerCells[8]) headerCells[8].style.display = 'none';  // Scatter header
 
         // Hide the corresponding cells in each row
         for (let i = 0; i < bodyCells.length; i++) {
-            const cellIndex = i % 8; // 8 columns total
-            if (cellIndex === 5 || cellIndex === 6 || cellIndex === 7) {
+            const cellIndex = i % 9; // 9 columns total
+            if (cellIndex === 6 || cellIndex === 7 || cellIndex === 8) {
                 bodyCells[i].style.display = 'none';
             }
         }
@@ -5549,9 +5585,15 @@ function renderAnalysisTable() {
             autoWidth: false,
             columnDefs: [
                 // Only the two chart columns are unsortable; SNR sorts numerically via data-order
-                { targets: [6, 7], orderable: false }
+                { targets: [7, 8], orderable: false }
             ]
         });
+        // Move search box from inside table container to the legend area (top-right)
+        const filterEl = document.querySelector('#analysis-table_filter');
+        const searchSlot = document.getElementById('analysis-search-slot');
+        if (filterEl && searchSlot) {
+            searchSlot.appendChild(filterEl);
+        }
         // Sorting/filtering re-inserts row elements, so re-check what needs drawing.
         dt.on('draw', function() {
             numberAnalysisRows();
