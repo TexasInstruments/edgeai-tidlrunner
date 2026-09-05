@@ -123,6 +123,10 @@ class CommonPipelineBase(bases.PipelineBase):
         run_dir = run_dir.replace('{run_label}', run_label)
         run_dir = run_dir.replace('{target_device}/', target_device_slash)
         run_dir = run_dir.replace('{target_device}', target_device_str)
+        tidl_offload = self.kwargs.get('session.tidl_offload', True)
+        if not tidl_offload:
+            # TIDL bypassed -> no quantization, so "Nbits" is meaningless; label it plainly
+            run_dir = run_dir.replace('{tensor_bits}bits', 'notidl')
         run_dir = run_dir.replace('{tensor_bits}/', tensor_bits_slash)
         run_dir = run_dir.replace('{tensor_bits}', tensor_bits_str)
         run_dir = run_dir.replace('{model_id}_', model_id_underscore)
