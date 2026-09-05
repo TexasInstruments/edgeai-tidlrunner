@@ -42,4 +42,4 @@ model_info:
   metric_reference:
     accuracy_top1%: 77.0  # TIDL INT8 (tidl_offload=1), fold-10, 837 samples
   compact_name: vggish11_tvmrt
-  shortlisted: false
+  shortlisted: true

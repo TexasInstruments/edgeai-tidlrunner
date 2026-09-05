@@ -1,11 +1,5 @@
-# GCRN speech enhancement -- TVM runtime (tvmrt) AM62D feasibility variant (C7x TIDL offload)
-# Usage: tidlrunner-cli {compile,infer,evaluate} --config_path data/configs/samples/models/audio/speech_enhancement/voicebank_demand_16k/gcrn_g16_fixed_4sec_tvmrt_config.yaml
-#
-# Feasibility trial of the AM62D TVM 12.01 RC toolchain (bundled x86 TIDL tools 11.02.16.00)
-# driven through this repo's tvmrt pipeline. Unlike the AM62A ARM-only variant, this offloads
-# to the AM62D C7x DSP (tidl_offload: true) and quantizes to 16-bit (matches the RC reference).
-# Requires the env wrapper am62d_run.sh so TIDL_TOOLS_PATH/LD_LIBRARY_PATH/ARM64_GCC_PATH/
-# CGT7X_ROOT/SOC point at the wheel-bundled AM62D tools before Python starts.
+# GCRN speech enhancement -- ONNX runtime (tvmrt) AM62A (C7x TIDL offload)
+# Usage: tidlrunner-cli {compile,infer,evaluate} --config_path data/configs/samples/models/audio/speech_enhancement/voicebank_demand_16k/gcrn_g16_fixed_4sec_config.yaml
 # Note: GCRN expects fixed 4-second input; GCRNSTFTTransform pads/truncates to audio_duration*sample_rate samples
 task_type: audio_speechenhancement
 common:
@@ -33,7 +27,7 @@ session:
     advanced_options:quantization_scale_type: 4
 
   model_path: gcrn_g16_fixed_4sec.onnx
-  model_id: ase-0202
+  model_id: ase-0211
   input_details: null
   output_details: null
   num_inputs: 1

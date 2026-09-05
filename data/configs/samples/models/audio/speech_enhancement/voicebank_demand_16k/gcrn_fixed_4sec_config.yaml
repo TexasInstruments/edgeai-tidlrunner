@@ -1,8 +1,9 @@
-# GCRN speech enhancement (ARM-only, no TIDL offload)
+# GCRN speech enhancement -- ONNX runtime (onnxrt) AM62A (C7x TIDL offload)
 # Usage: tidlrunner-cli {compile,infer,evaluate} --config_path data/configs/subset/models/audio/speech_enhancement/voicebank_demand_16k/gcrn_config.yaml
-# Note: GCRN not yet supported by TIDL; runs on ARM Cortex-A only (tidl_offload: false)
 # Note: GCRN expects fixed 4-second input; GCRNSTFTTransform pads/truncates to audio_duration*sample_rate samples
 task_type: audio_speechenhancement
+common:
+  capture_log: true  # capture stdout into a timestamped run.log for stage-by-stage compile logs
 dataloader:
   name: speech_enhancement_dataloader
   path: ./data/datasets/VoiceBank-DEMAND-16k
@@ -11,15 +12,19 @@ preprocess:
   audio_model_type: gcrn  # dispatches GCRNSTFTTransform (Hamming window, n_fft=320, hop=160, center=True)
   audio_duration: 4.0     # pad/truncate to 4s; GCRN expects exactly (1, 2, 401, 161)
 postprocess: {}  # dispatched via PostProcessTransforms.from_kwargs() using task_type
-model_surgery:
-  enable: false
+model_surgery: false
 session:
   session_name: onnxrt
   target_device: AM62A
-  tidl_offload: false  # ARM-only execution; GCRN not yet supported by TIDL
+  tidl_offload: true  # offload to AM62D C7x DSP via bundled TIDL tools
   input_optimization: false  # disable image-specific input normalization
   input_mean: null  # override image default (123.675, 116.28, 103.53)
   input_scale: null  # override image default (0.017125, 0.017507, 0.017429)
+  runtime_options:
+    tensor_bits: 16  # RC reference default for GCRN on AM62D
+    advanced_options:calibration_frames: 12  # TVM import path runs calibration during TIDL import
+    advanced_options:calibration_iterations: 2
+    advanced_options:quantization_scale_type: 4
   model_path: gcrn_fixed_4sec.onnx
   model_id: ase-0200
   input_details: null

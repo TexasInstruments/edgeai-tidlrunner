@@ -1,10 +1,7 @@
 # VGGish11 sound classification
 # Usage: tidlrunner-cli {compile,infer,evaluate} --config_path data/configs/subset/models/audio/audio_classification/urbansound8k/vggish11_config.yaml
 #
-# NOTE: model_path uses the FP32 floating-point model (not PTQ) because the PTQ model
-# (vggish11_20250324-1807_ptq.onnx, opset 17 QDQ format) fails TIDL import on
-# TIDL tools 11.02.04.00 with "TIDL Compute Import Failed". The FP32 model (opset 15)
-# compiles successfully with TIDL and runs with tidl_offload: true.
+
 task_type: audio_classification
 dataloader:
   name: audio_classification_dataloader
@@ -36,7 +33,7 @@ session:
     advanced_options:weight_clipping: 1
     advanced_options:bias_calibration: 1
     advanced_options:add_data_convert_ops: 3
-  model_path: vggish11_20250324-1807.onnx
+  model_path: vggish11.onnx
   model_id: ac-0100
   input_details: null
   output_details: null

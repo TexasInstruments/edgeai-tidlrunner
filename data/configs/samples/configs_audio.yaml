@@ -1,11 +1,13 @@
 configs:
-  ac-0100: models/audio/audio_classification/urbansound8k/vggish11_20250324-1807_config.yaml
-  ac-0200: models/audio/audio_classification/urbansound8k/yamnet_combined_config.yaml
+  ac-0100: models/audio/audio_classification/urbansound8k/vggish11_config.yaml
+  ac-0200: models/audio/audio_classification/urbansound8k/yamnet_config.yaml
   ase-0100: models/audio/speech_enhancement/voicebank_demand_16k/gtcrn_dns3_config.yaml
   ase-0200: models/audio/speech_enhancement/voicebank_demand_16k/gcrn_fixed_4sec_config.yaml
+  ase-0210: models/audio/speech_enhancement/voicebank_demand_16k/gcrn_g16_fixed_4sec_config.yaml
   # tvmrt trial variants (TVM runtime instead of onnxrt); onnxrt remains primary.
   # GTCRN is intentionally omitted: its variable-length STFT input is incompatible
   # with TVM's static-shape compilation.
-  ac-0101: models/audio/audio_classification/urbansound8k/vggish11_20250324-1807_tvmrt_config.yaml
-  ac-0201: models/audio/audio_classification/urbansound8k/yamnet_combined_tvmrt_config.yaml
+  ac-0101: models/audio/audio_classification/urbansound8k/vggish11_tvmrt_config.yaml
+  ac-0201: models/audio/audio_classification/urbansound8k/yamnet_tvmrt_config.yaml
   ase-0201: models/audio/speech_enhancement/voicebank_demand_16k/gcrn_fixed_4sec_tvmrt_config.yaml
+  ase-0211: models/audio/speech_enhancement/voicebank_demand_16k/gcrn_g16_fixed_4sec_tvmrt_config.yaml
