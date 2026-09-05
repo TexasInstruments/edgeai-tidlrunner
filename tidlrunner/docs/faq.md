@@ -244,11 +244,11 @@ This gets printed during compilation:
 ============================== [Version Summary] ==============================
 
 -------------------------------------------------------------------------------
-|          TIDL Tools Version          |              11_01_06_00             |
+|          TIDL Tools Version          |              11_02_16_00             |
 -------------------------------------------------------------------------------
-|         C7x Firmware Version         |              11_01_06_00             |
+|         C7x Firmware Version         |              11_02_16_00             |
 -------------------------------------------------------------------------------
-|            Runtime Version           |                1.15.0                |
+|            Runtime Version           |                1.23.0                |
 -------------------------------------------------------------------------------
 |          Model Opset Version         |                  11                  |
 -------------------------------------------------------------------------------
@@ -259,10 +259,10 @@ You may also learn this from the downloaded tidl_tools_package
 
 ```bash
 file ./tools/tidl_tools_package/bin/AM62A/tidl_tools
-./tools/tidl_tools_package/bin/AM62A/tidl_tools: symbolic link to 11_01_06_00/tidl_tools
+./tools/tidl_tools_package/bin/AM62A/tidl_tools: symbolic link to 11_02_16_00/tidl_tools
 ```
 
-This tells that the installed tools will default to version 11_01_06_00 (which should have an equivalently tagged release through [edgeai-tidl-tools repo](https://github.com/TexasInstruments/edgeai-tidl-tools/releases)). It is okay to have multiple tools installed at this location, and either manually set TIDL_TOOLS_PATH in your environment or change the symbolic link above to point to your chosen tidl_tools directory
+This tells that the installed tools will default to version 11_02_16_00 (which should have an equivalently tagged release through [edgeai-tidl-tools repo](https://github.com/TexasInstruments/edgeai-tidl-tools/releases)). It is okay to have multiple tools installed at this location, and either manually set TIDL_TOOLS_PATH in your environment or change the symbolic link above to point to your chosen tidl_tools directory
 
 ###### How do I use a specific TIDL version with these tools?
 
@@ -277,7 +277,7 @@ Yes, but using a version other than the default tools will require setting the T
 You can change the default path by modifying the symbol link within a target device's directory, like so:
 
 ```bash
-ln -sf tools/tidl_tools_package/bin/AM62A/11_02_00_00/tidl_tools tools/tidl_tools_package/bin/AM62A/tidl_tools
+ln -sf tools/tidl_tools_package/bin/AM62A/11_02_16_00/tidl_tools tools/tidl_tools_package/bin/AM62A/tidl_tools
 ```
 
 ## Errors on the target processor / EVM
