@@ -1,7 +1,7 @@
 # YAMNet sound classification -- TVM runtime (tvmrt) trial variant
-# Usage: tidlrunner-cli {compile,infer,evaluate} --config_path data/configs/samples/models/audio/audio_classification/urbansound8k/yamnet_combined_tvmrt_config.yaml
+# Usage: tidlrunner-cli {compile,infer,evaluate} --config_path data/configs/samples/models/audio/audio_classification/urbansound8k/yamnet_tvmrt_config.yaml
 #
-# tvmrt compile of ac-0200 (onnxrt). Compiles the same ONNX model through the TVM runtime instead of ONNXRuntime.
+# tvmrt config of ac-0200 (onnxrt). Compiles the same ONNX model through the TVM runtime instead of ONNXRuntime.
 task_type: audio_classification
 dataloader:
   name: audio_classification_dataloader

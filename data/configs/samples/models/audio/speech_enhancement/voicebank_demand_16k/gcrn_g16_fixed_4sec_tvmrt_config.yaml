@@ -1,5 +1,5 @@
 # GCRN speech enhancement -- TVM runtime (tvmrt) AM62D feasibility variant (C7x TIDL offload)
-# Usage: tidlrunner-cli {compile,infer,evaluate} --config_path data/configs/samples/models/audio/speech_enhancement/voicebank_demand_16k/gcrn_fixed_4sec_tvmrt_config.yaml
+# Usage: tidlrunner-cli {compile,infer,evaluate} --config_path data/configs/samples/models/audio/speech_enhancement/voicebank_demand_16k/gcrn_g16_fixed_4sec_tvmrt_config.yaml
 #
 # Feasibility trial of the AM62D TVM 12.01 RC toolchain (bundled x86 TIDL tools 11.02.16.00)
 # driven through this repo's tvmrt pipeline. Unlike the AM62A ARM-only variant, this offloads
@@ -31,8 +31,9 @@ session:
     advanced_options:calibration_frames: 12  # TVM import path runs calibration during TIDL import
     advanced_options:calibration_iterations: 2
     advanced_options:quantization_scale_type: 4
-  model_path: gcrn_fixed_4sec.onnx
-  model_id: ase-0201
+
+  model_path: gcrn_g16_fixed_4sec.onnx
+  model_id: ase-0202
   input_details: null
   output_details: null
   num_inputs: 1
@@ -41,5 +42,5 @@ model_info:
     pesq: 2.246     # GCRN 4sec, ARM CPU FP32, VoiceBank-DEMAND-16k test set (824 files)
     stoi: 0.922
     si_sdr_db: 17.7
-  compact_name: gcrn_4sec_tvmrt
+  compact_name: gcrn_g16_4sec_tvmrt
   shortlisted: false
