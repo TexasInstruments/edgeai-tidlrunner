@@ -16,7 +16,7 @@ model_surgery:
   simplify_mode: null
 session:
   session_name: onnxrt
-  target_device: AM62A
+  target_device: AM62D
   tidl_offload: false  # ARM-only execution; GTCRN uses operators not supported by TIDL
   input_optimization: false  # disable image-specific input normalization
   input_mean: null  # override image default (123.675, 116.28, 103.53)
