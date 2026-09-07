@@ -3100,7 +3100,7 @@ def update_with_evm_perf(json_path: str) -> bool:
 
     csv_files = _glob.glob('/tmp/tidl_trace_subgraph_*_perf.csv')
     if not csv_files:
-        logger.debug('  No /tmp/tidl_trace_subgraph_*_perf.csv files found on this device')
+        logger.info('INFO: No EVM hardware performance data found. To capture it, set debug_level >= 1 in your TIDL config.')
         return False
 
     with open(json_path, 'r', encoding='utf-8') as fh:
