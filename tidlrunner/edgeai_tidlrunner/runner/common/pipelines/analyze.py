@@ -463,7 +463,13 @@ class InferAnalyzeFinal(compile_base.CompileModelBase):
             if refname == 'notidl':
                 onnx_layer_id = onnx_layer_name.replace("/", "_")
                 onnx_entries = os.listdir(onnx_trace_folder)
-                onnx_trace_path = list(filter(lambda path: onnx_layer_id in path, onnx_entries))
+                # Exact match only — substring containment would also match a
+                # sibling's file when one layer's sanitized name is a prefix of
+                # another's (e.g. a padded-pool's "_layer0"/"__N" internal steps
+                # sharing the final step's name as a prefix), silently pairing
+                # the wrong-shaped buffer and masking a real comparison behind
+                # a shape-mismatch exception elsewhere.
+                onnx_trace_path = list(filter(lambda path: path == onnx_layer_id + '.bin', onnx_entries))
                 onnx_trace_path = os.path.join(onnx_trace_folder, onnx_trace_path[0]) if len(onnx_trace_path)>0 else None
             else:
                 _onnx_trace_path = os.path.join(onnx_trace_folder, f"tidl_trace_subgraph_{subgraph_idx}_{_tidl_data_id}*_float.bin")
