@@ -138,32 +138,39 @@ def start_with_proper_environment(START_CLS=StartRunner, **kwargs):
     is_tidl_tools_path_defined = (os.environ.get('TIDL_TOOLS_PATH', None) is not None and os.environ.get('LD_LIBRARY_PATH', None) is not None)
     has_help_arg = any([arg in ('help', 'h', '--help', '-h') for arg in sys.argv])
 
-    if (not has_help_arg) and target_machine == rtwrapper.core.presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION and (not is_tidl_tools_path_defined):
-        print("INFO: TIDL_TOOLS_PATH or LD_LIBRARY_PATH is not set, restarting with proper environment...")
-        parser = StartRunner.get_arg_parser()
-        command_args, rest_args = parser.parse_known_args()
-        command_kwargs = vars(command_args)
-        if 'session.target_device' not in command_kwargs:
-            print('INFO: provide target_device argument - this has to match to with your device. eg: --target_device=AM62A')
-            print('INFO: list of supported devices can be found here:\n      https://github.com/TexasInstruments/edgeai/blob/main/edgeai-mpu/readme_sdk.md \n      https://github.com/TexasInstruments/edgeai-tidlrunner/blob/main/tools/tidl_tools_package/download.py#L50')
-            exit(0)
+    if (not has_help_arg) and target_machine == rtwrapper.core.presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION:
+        if not is_tidl_tools_path_defined:
+            print("INFO: TIDL_TOOLS_PATH or LD_LIBRARY_PATH is not set, setting up proper environment...")
+            parser = StartRunner.get_arg_parser()
+            command_args, rest_args = parser.parse_known_args()
+            command_kwargs = vars(command_args)
+            if 'session.target_device' not in command_kwargs:
+                print('INFO: provide target_device argument - this has to match to with your device. eg: --target_device=AM62A')
+                print('INFO: list of supported devices can be found here:\n      https://github.com/TexasInstruments/edgeai/blob/main/edgeai-mpu/readme_sdk.md \n      https://github.com/TexasInstruments/edgeai-tidlrunner/blob/main/tools/tidl_tools_package/download.py#L50')
+                exit(0)
 
-        start_kwargs = kwargs.copy()
-        cmd_keys_mapping = {
-            'session.target_device': 'target_device',
-            'session.target_machine': 'target_machine',
-        }
-        for cmd_key in cmd_keys_mapping:
-            if cmd_key in command_kwargs:
-                kwarg_key = cmd_keys_mapping[cmd_key]
-                start_kwargs[kwarg_key] = command_kwargs[cmd_key]
+            start_kwargs = kwargs.copy()
+            cmd_keys_mapping = {
+                'session.target_device': 'target_device',
+                'session.target_machine': 'target_machine',
+            }
+            for cmd_key in cmd_keys_mapping:
+                if cmd_key in command_kwargs:
+                    kwarg_key = cmd_keys_mapping[cmd_key]
+                    start_kwargs[kwarg_key] = command_kwargs[cmd_key]
+                #
             #
-        #
-        # certain runtime may need a new process to be launched with proper environment variables set
-        # this can be done by either restarting the current process or by setting parallel_processes option
-        # parallel_processes will use a new process for each model compilation, so it will ensure that proper environment is propagated
-        # for now using set_proper_environment with parallel_process instead of restart_with_proper_environment
-        rtwrapper.set_proper_environment(**start_kwargs) # rtwrapper.restart_with_proper_environment(**start_kwargs)
+            # certain runtime may need a new process to be launched with proper environment variables set
+            # this can be done by either restarting the current process or by setting parallel_processes option
+            # parallel_processes will use a new process for each model compilation, so it will ensure that proper environment is propagated
+            # for now using set_proper_environment with parallel_process instead of restart_with_proper_environment
+            rtwrapper.set_proper_environment(**start_kwargs) # rtwrapper.restart_with_proper_environment(**start_kwargs)
+        else:
+            # Tools already provided (e.g. sourced devices/am62d_env.sh). Keep the sourced
+            # paths and don't rewrite artifact symlinks - just fill the TIDL_RT_* defaults
+            # that set_env() would otherwise supply.
+            print("INFO: TIDL_TOOLS_PATH/LD_LIBRARY_PATH already set; filling missing TIDL_RT_* defaults.")
+            rtwrapper.set_environment(update_artifacts=False, **kwargs)
         START_CLS.main(**kwargs)
     else:
         # TIDL_TOOLS_PATH is not needed in EVM, but just set it to empty to pass through checks for it
