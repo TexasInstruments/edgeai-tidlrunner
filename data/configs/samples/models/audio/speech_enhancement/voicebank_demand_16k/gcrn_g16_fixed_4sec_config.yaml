@@ -1,5 +1,5 @@
-# GCRN speech enhancement -- TVM runtime (tvmrt) AM62D (C7x TIDL offload)
-# Usage: tidlrunner-cli {compile,infer,evaluate} --config_path data/configs/samples/models/audio/speech_enhancement/voicebank_demand_16k/gcrn_g16_fixed_4sec_tvmrt_config.yaml
+# GCRN speech enhancement -- ONNX runtime (onnxrt) AM62A (C7x TIDL offload)
+# Usage: tidlrunner-cli {compile,infer,evaluate} --config_path data/configs/samples/models/audio/speech_enhancement/voicebank_demand_16k/gcrn_g16_fixed_4sec_config.yaml
 # Note: GCRN expects fixed 4-second input; GCRNSTFTTransform pads/truncates to audio_duration*sample_rate samples
 task_type: audio_speechenhancement
 common:
@@ -14,8 +14,8 @@ preprocess:
 postprocess: {}  # dispatched via PostProcessTransforms.from_kwargs() using task_type
 model_surgery: false
 session:
-  session_name: tvmrt
-  target_device: AM62D
+  session_name: onnxrt
+  target_device: AM62A
   tidl_offload: true  # offload to AM62D C7x DSP via bundled TIDL tools
   input_optimization: false  # disable image-specific input normalization
   input_mean: null  # override image default (123.675, 116.28, 103.53)
@@ -27,7 +27,7 @@ session:
     advanced_options:quantization_scale_type: 4
 
   model_path: gcrn_g16_fixed_4sec.onnx
-  model_id: ase-0211
+  model_id: ase-0210
   input_details: null
   output_details: null
   num_inputs: 1
@@ -36,5 +36,5 @@ model_info:
     pesq: 2.246     # GCRN 4sec, ARM CPU FP32, VoiceBank-DEMAND-16k test set (824 files)
     stoi: 0.922
     si_sdr_db: 17.7
-  compact_name: gcrn_g16_4sec_tvmrt
+  compact_name: gcrn_g16_4sec
   shortlisted: false

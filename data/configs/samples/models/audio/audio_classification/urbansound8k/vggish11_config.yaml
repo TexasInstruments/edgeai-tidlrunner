@@ -1,5 +1,5 @@
 # VGGish11 sound classification
-# Usage: tidlrunner-cli {compile,infer,evaluate} --config_path data/configs/subset/models/audio/audio_classification/urbansound8k/vggish11_config.yaml
+# Usage: tidlrunner-cli {compile,infer,evaluate} --config_path data/configs/samples/models/audio/audio_classification/urbansound8k/vggish11_config.yaml
 #
 
 task_type: audio_classification
