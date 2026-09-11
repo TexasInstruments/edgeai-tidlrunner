@@ -119,14 +119,14 @@ data/configs/samples/models/audio/
 
 ## Running Pipelines
 
-All commands are run from the repo root (`edgeai-tidlrunner/`) with the AM62D env sourced (`source devices/am62d_env.sh`; see Prerequisites). `evaluate` takes `--target_device AM62D`.
+All commands are run from the repo root (`edgeai-tidlrunner/`) with the AM62D env sourced (`source devices/am62d_env.sh`; see Prerequisites).
 
 ##### VGGish11 — Sound Classification
 
 ```bash
 tidlrunner-cli compile  --config_path data/configs/samples/models/audio/audio_classification/urbansound8k/vggish11_tvmrt_config.yaml
 tidlrunner-cli infer    --config_path data/configs/samples/models/audio/audio_classification/urbansound8k/vggish11_tvmrt_config.yaml
-tidlrunner-cli evaluate --config_path data/configs/samples/models/audio/audio_classification/urbansound8k/vggish11_tvmrt_config.yaml --target_device AM62D
+tidlrunner-cli evaluate --config_path data/configs/samples/models/audio/audio_classification/urbansound8k/vggish11_tvmrt_config.yaml
 ```
 
 ##### YAMNet — Sound Classification
@@ -134,7 +134,7 @@ tidlrunner-cli evaluate --config_path data/configs/samples/models/audio/audio_cl
 ```bash
 tidlrunner-cli compile  --config_path data/configs/samples/models/audio/audio_classification/urbansound8k/yamnet_tvmrt_config.yaml
 tidlrunner-cli infer    --config_path data/configs/samples/models/audio/audio_classification/urbansound8k/yamnet_tvmrt_config.yaml
-tidlrunner-cli evaluate --config_path data/configs/samples/models/audio/audio_classification/urbansound8k/yamnet_tvmrt_config.yaml --target_device AM62D
+tidlrunner-cli evaluate --config_path data/configs/samples/models/audio/audio_classification/urbansound8k/yamnet_tvmrt_config.yaml
 ```
 
 ##### GTCRN — Speech Enhancement (ARM CPU)
@@ -142,15 +142,15 @@ tidlrunner-cli evaluate --config_path data/configs/samples/models/audio/audio_cl
 ```bash
 tidlrunner-cli compile  --config_path data/configs/samples/models/audio/speech_enhancement/voicebank_demand_16k/gtcrn_dns3_config.yaml
 tidlrunner-cli infer    --config_path data/configs/samples/models/audio/speech_enhancement/voicebank_demand_16k/gtcrn_dns3_config.yaml
-tidlrunner-cli evaluate --config_path data/configs/samples/models/audio/speech_enhancement/voicebank_demand_16k/gtcrn_dns3_config.yaml --target_device AM62D
+tidlrunner-cli evaluate --config_path data/configs/samples/models/audio/speech_enhancement/voicebank_demand_16k/gtcrn_dns3_config.yaml
 ```
 
 ##### GCRN — Speech Enhancement
 
 ```bash
-tidlrunner-cli compile  --config_path data/configs/samples/models/audio/speech_enhancement/voicebank_demand_16k/gcrn_g16_fixed_4sec_tvmrt_config.yaml
-tidlrunner-cli infer    --config_path data/configs/samples/models/audio/speech_enhancement/voicebank_demand_16k/gcrn_g16_fixed_4sec_tvmrt_config.yaml
-tidlrunner-cli evaluate --config_path data/configs/samples/models/audio/speech_enhancement/voicebank_demand_16k/gcrn_g16_fixed_4sec_tvmrt_config.yaml --target_device AM62D
+tidlrunner-cli compile  --config_path data/configs/samples/models/audio/speech_enhancement/voicebank_demand_16k/gcrn_fixed_4sec_tvmrt_config.yaml
+tidlrunner-cli infer    --config_path data/configs/samples/models/audio/speech_enhancement/voicebank_demand_16k/gcrn_fixed_4sec_tvmrt_config.yaml
+tidlrunner-cli evaluate --config_path data/configs/samples/models/audio/speech_enhancement/voicebank_demand_16k/gcrn_fixed_4sec_tvmrt_config.yaml
 ```
 
 ## Audio-Specific Settings

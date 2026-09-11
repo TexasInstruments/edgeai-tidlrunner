@@ -1,20 +1,21 @@
 #!/usr/bin/env bash
 #
-# One-shot AM62D setup — the single-script equivalent of setup_runner_pc.sh for
-# the AM62D audio flow. Run it AFTER activating the dedicated venv:
+# One-shot AM62D setup — standalone, no other setup script needed. Run it
+# AFTER activating the dedicated venv:
 #
 #   pyenv virtualenv 3.10 tidlrunner-am62d   # once
 #   pyenv activate tidlrunner-am62d
 #   ./devices/setup_am62d.sh
 #   source devices/am62d_env.sh              # per shell, see that file
 #
-# It installs the ARM GCC 15.2 cross-toolchain into tools/tidl_tools_package/bin/
-# (setup_runner_pc.sh only fetches 13.2), the RC x86 TVM wheel (force-reinstall so
-# it wins over any resolved tvm), tidlrunner[pc,audio] + tools, and
+# It installs both cross-toolchains this flow needs into
+# tools/tidl_tools_package/bin/ — ARM GCC 15.2 and C7x CGT 5.0.0.LTS, each
+# skipped if already present — the RC x86 TVM wheel (force-reinstall so it wins
+# over any resolved tvm), tidlrunner[pc,audio] + tools + onnxruntime, and
 # tidl_onnx_model_optimizer (which this flow needs but the standard
 # tidlrunner-tools-download — bypassed here — normally provides). It does NOT
-# create the venv, run setup_runner_pc.sh, or source am62d_env.sh: those are
-# prereq / per-shell runtime env, kept separate by design.
+# create the venv or source am62d_env.sh: those are prereq / per-shell runtime
+# env, kept separate by design.
 #
 # Full setup: tidlrunner/docs/setup_am62d.md.
 
@@ -27,7 +28,7 @@ AM62D_TVM_WHEEL="${AM62D_TVM_WHEEL:-https://artifactory.itg.ti.com/artifactory/g
 TIDL_OPT_REF="${TIDL_OPT_REF:-11_02_16_00}"
 
 # Repo root, resolved from this script's location (works from any cwd).
-_REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+_REPO_ROOT="$(CDPATH= cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # Guard 1: a venv must be active — installing into system Python (or the standard
 # tidlrunner venv) would clobber its TVM with the RC git build.
@@ -42,19 +43,10 @@ if [ -n "$_VENV_NAME" ] && [[ "$_VENV_NAME" != *am62d* ]]; then
     echo "         expected something containing 'am62d' (e.g. tidlrunner-am62d)."
 fi
 
-# Guard 2: toolchain prereq — setup_runner_pc.sh must have populated the bin dir
-# (am62d_env.sh points ARM64_GCC_PATH/CGT7X_ROOT into it).
 _TOOLS_BIN="$_REPO_ROOT/tools/tidl_tools_package/bin"
-if [ ! -d "$_TOOLS_BIN" ]; then
-    echo "Error: $_TOOLS_BIN not found."
-    echo "       Run ./setup_runner_pc.sh once first (downloads the cross-toolchains)."
-    exit 1
-fi
+mkdir -p "$_TOOLS_BIN"
 
-# ARM GCC 15.2 cross-toolchain — am62d_env.sh points ARM64_GCC_PATH here, but
-# setup_runner_pc.sh only fetches 13.2. Install 15.2 into the shared bin/ dir.
-# ponytail: temporary — fold into tools/tidl_tools_package/download.py once it
-# supports 15.2, then drop this block.
+# ARM GCC 15.2 cross-toolchain — am62d_env.sh points ARM64_GCC_PATH here.
 _GCC_NAME="arm-gnu-toolchain-15.2.rel1-x86_64-aarch64-none-linux-gnu"
 ARM_GCC_15_2_URL="${ARM_GCC_15_2_URL:-https://developer.arm.com/-/media/Files/downloads/gnu/15.2.rel1/binrel/${_GCC_NAME}.tar.xz}"
 if [ -d "$_TOOLS_BIN/$_GCC_NAME" ]; then
@@ -67,12 +59,36 @@ else
     rm -f "$_TOOLS_BIN/$_GCC_NAME.tar.xz"
 fi
 
+# C7x CGT compiler — CGT7X_ROOT in am62d_env.sh. Version/URL mirror
+# download.py:404 / :785 (the standard flow's source of truth); it only fetches
+# this on the 11.2.x/11.2 paths, so don't rely on setup_runner_pc.sh for it.
+_CGT_VER="${C7X_CGT_VERSION:-5.0.0.LTS}"
+_CGT_NAME="ti-cgt-c7000_${_CGT_VER}"
+_CGT_FILE="ti_cgt_c7000_${_CGT_VER}_linux-x64_installer.bin"
+C7X_CGT_URL="${C7X_CGT_URL:-https://dr-download.ti.com/software-development/ide-configuration-compiler-or-debugger/MD-707zYe3Rik/${_CGT_VER}/${_CGT_FILE}}"
+if [ -d "$_TOOLS_BIN/$_CGT_NAME" ]; then
+    echo "INFO: C7x CGT $_CGT_VER already present, skipping download."
+else
+    echo "INFO: downloading C7x CGT $_CGT_VER ..."
+    curl -L --fail -o "$_TOOLS_BIN/$_CGT_FILE" "$C7X_CGT_URL"
+    echo "INFO: running the unattended installer into $_TOOLS_BIN ..."
+    chmod +x "$_TOOLS_BIN/$_CGT_FILE"
+    "$_TOOLS_BIN/$_CGT_FILE" --mode unattended --prefix "$_TOOLS_BIN"
+    rm -f "$_TOOLS_BIN/$_CGT_FILE"
+    # The installer picks its own dirname — fail loudly if it isn't what am62d_env.sh expects.
+    [ -d "$_TOOLS_BIN/$_CGT_NAME" ] || {
+        echo "Error: installer did not produce $_TOOLS_BIN/$_CGT_NAME"; exit 1; }
+fi
+
 echo "INFO: installing RC x86 TVM wheel (force-reinstall)..."
 echo "INFO:   $AM62D_TVM_WHEEL"
 pip install --force-reinstall --upgrade "$AM62D_TVM_WHEEL"
 
-echo "INFO: installing tidlrunner[pc,audio] + tools..."
-pip install -e "$_REPO_ROOT/tidlrunner[pc,audio]"
+echo "INFO: installing tidlrunner[pc,audio] + tools + onnxruntime..."
+# Plain onnxruntime (CPU): tvmrt_wrapper.py's _get_{input,output}_details use it
+# only to read onnx model I/O shapes via CPUExecutionProvider, not for TIDL
+# inference — no need for the TI-modified onnxruntime-tidl the standard flow uses.
+pip install -e "$_REPO_ROOT/tidlrunner[pc,audio]" onnxruntime
 pip install -e "$_REPO_ROOT/tools"
 
 echo "INFO: installing tidl_onnx_model_optimizer (git, ref $TIDL_OPT_REF)..."
