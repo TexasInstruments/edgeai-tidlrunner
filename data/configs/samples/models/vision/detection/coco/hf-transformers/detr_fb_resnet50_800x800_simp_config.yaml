@@ -49,7 +49,7 @@ postprocess:
   - - -1
     - 1
   formatter:
-    name: DetectionXYWH2XYXYCenterXY
+    name: DetectionCenterXYWH2XYXY
   resize_with_pad: true
   normalized_detections: false
   shuffle_indices: null

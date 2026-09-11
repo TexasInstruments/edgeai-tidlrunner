@@ -73,7 +73,7 @@ class DetectionXYWH2XYXY():
         bbox[..., 3] = y2
         return bbox, info_dict
     
-class DetectionXYWH2XYXYCenterXY():
+class DetectionCenterXYWH2XYXY():
     def __call__(self, bbox, info_dict):
         x1 = bbox[..., 0] - 0.5 * bbox[..., 2]
         y1 = bbox[..., 1] - 0.5 * bbox[..., 3]
@@ -107,7 +107,7 @@ PISTPROCESS_FORMATTERS = {
     'detection_yxhw2xywh': DetectionYXHW2XYWH(),
     'detection_xyxy2xywh': DetectionXYXY2XYWH(),
     'detection_xywh2xyxy': DetectionXYWH2XYXY(),
-    'detection_xywh2xyxy_centerxy': DetectionXYWH2XYXYCenterXY(),
+    'detection_centerxywh2xyxy': DetectionCenterXYWH2XYXY(),
     'detection_boxsl2boxls': DetectionBoxSL2BoxLS(),
     'yolov4_detection_boxsl2boxls': Yolov4DetectionBoxSL2BoxLS()
 }
