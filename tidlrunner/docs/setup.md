@@ -23,7 +23,7 @@ pyenv virtualenv 3.10 tidlrunner
 pyenv activate tidlrunner
 ```
 
-> **AM62D (audio):** the AM62D device uses a separate RC TVM toolchain and a dedicated venv — see [setup_am62d.md](./setup_am62d.md).
+> **AM62D (audio):** the AM62D device uses a separate TVM toolchain and a dedicated venv — see [setup_am62d.md](./setup_am62d.md).
 
 ## Setup script selection
 

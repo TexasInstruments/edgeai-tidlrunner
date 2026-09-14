@@ -10,7 +10,7 @@
 #
 # It installs both cross-toolchains this flow needs into
 # tools/tidl_tools_package/bin/ — ARM GCC 15.2 and C7x CGT 5.0.0.LTS, each
-# skipped if already present — the RC x86 TVM wheel (force-reinstall so it wins
+# skipped if already present — the x86 TVM wheel (force-reinstall so it wins
 # over any resolved tvm), tidlrunner[pc,audio] + tools + onnxruntime, and
 # tidl_onnx_model_optimizer (which this flow needs but the standard
 # tidlrunner-tools-download — bypassed here — normally provides). It does NOT
@@ -21,17 +21,17 @@
 
 set -e
 
-# Internal-artifactory RC wheel (x86, cp310). Override with AM62D_TVM_WHEEL.
-AM62D_TVM_WHEEL="${AM62D_TVM_WHEEL:-https://artifactory.itg.ti.com/artifactory/generic-epd-sdto-codegen-local/tvm/c7x/am62d/12_1/tvm-0.18.0-0git6acc98882-cp310-cp310-linux_x86_64.whl}"
+# AM62D TVM wheel (x86, cp310). Override with AM62D_TVM_WHEEL.
+AM62D_TVM_WHEEL="${AM62D_TVM_WHEEL:-https://software-dl.ti.com/mctools/esd/tvm/c7x/am62d/12_1/tvm-0.18.0-0git6acc98882-cp310-cp310-linux_x86_64.whl}"
 
-# Ref for tidl_onnx_model_optimizer — match the RC wheel's bundled tools version.
+# Ref for tidl_onnx_model_optimizer — match the TVM wheel's bundled tools version.
 TIDL_OPT_REF="${TIDL_OPT_REF:-11_02_16_00}"
 
 # Repo root, resolved from this script's location (works from any cwd).
 _REPO_ROOT="$(CDPATH= cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # Guard 1: a venv must be active — installing into system Python (or the standard
-# tidlrunner venv) would clobber its TVM with the RC git build.
+# tidlrunner venv) would clobber its TVM with the git build.
 if python -c "import sys; sys.exit(0 if sys.prefix == sys.base_prefix else 1)"; then
     echo "Error: no virtualenv active. Create and activate the dedicated venv first:"
     echo "       pyenv virtualenv 3.10 tidlrunner-am62d && pyenv activate tidlrunner-am62d"
@@ -80,7 +80,7 @@ else
         echo "Error: installer did not produce $_TOOLS_BIN/$_CGT_NAME"; exit 1; }
 fi
 
-echo "INFO: installing RC x86 TVM wheel (force-reinstall)..."
+echo "INFO: installing x86 TVM wheel (force-reinstall)..."
 echo "INFO:   $AM62D_TVM_WHEEL"
 pip install --force-reinstall --upgrade "$AM62D_TVM_WHEEL"
 

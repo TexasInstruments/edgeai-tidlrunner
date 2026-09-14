@@ -11,7 +11,7 @@
 # tools/tidl_tools_package/bin/ (downloaded by devices/setup_am62d.sh).
 # Override by exporting either var before sourcing.
 #
-# Prereqs: the dedicated venv (tidlrunner-am62d) with the RC x86 TVM wheel active,
+# Prereqs: the dedicated venv (tidlrunner-am62d) with the x86 TVM wheel active,
 # and tools/tidl_tools_package/bin/ populated (run ./devices/setup_am62d.sh once).
 # Full setup: tidlrunner/docs/setup_am62d.md.
 # Usage:
@@ -37,11 +37,11 @@ if [ -z "$_TVM_DIR" ]; then
     return 1
 fi
 
-# Bundled x86 TIDL tools for AM62D live inside the RC wheel.
+# Bundled x86 TIDL tools for AM62D live inside the TVM wheel.
 export TIDL_TOOLS_PATH="$_TVM_DIR/3rdparty/x86_tidl_tools/AM62D"
 if [ ! -d "$TIDL_TOOLS_PATH" ]; then
     echo "Error: bundled TIDL tools not found at $TIDL_TOOLS_PATH"
-    echo "       (is the AM62D 12.01 RC TVM wheel installed?)"
+    echo "       (is the AM62D TVM wheel installed?)"
     return 1
 fi
 
@@ -60,7 +60,7 @@ if [ ! -d "$ARM64_GCC_PATH" ] || [ ! -d "$CGT7X_ROOT" ]; then
     return 1
 fi
 
-# SOC identifier read by the RC wheel's TIDL compile path.
+# SOC identifier read by the TVM wheel's TIDL compile path.
 export SOC="${SOC:-am62d}"
 
 unset _TVM_DIR _REPO_ROOT _TOOLS_BIN

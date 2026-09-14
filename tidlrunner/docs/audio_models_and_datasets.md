@@ -24,7 +24,7 @@ Speech-enhancement metrics below are the **ARM CPU FP32 reference** values (`mod
 
 ## Prerequisites
 
-The AM62D flow uses a dedicated venv and the RC TVM toolchain. Complete the [AM62D setup](setup_am62d.md) first — it creates the **`tidlrunner-am62d`** venv and `devices/setup_am62d.sh` installs `tidlrunner[pc,audio]` (with the audio extras: `librosa`, `soundfile`, `scipy`, `pesq`, `pystoi`, `scikit-learn`).
+The AM62D flow uses a dedicated venv and the TVM toolchain. Complete the [AM62D setup](setup_am62d.md) first — it creates the **`tidlrunner-am62d`** venv and `devices/setup_am62d.sh` installs `tidlrunner[pc,audio]` (with the audio extras: `librosa`, `soundfile`, `scipy`, `pesq`, `pystoi`, `scikit-learn`).
 
 Then, once per shell, source the toolchain env:
 

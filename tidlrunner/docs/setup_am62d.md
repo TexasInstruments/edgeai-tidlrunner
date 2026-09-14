@@ -1,8 +1,8 @@
-# Setup for AM62D (TVM RC toolchain)
+# Setup for AM62D (TVM toolchain)
 
 AM62D is a device dedicated to audio DL models. Its compile flow differs from the standard [setup](./setup.md): it uses a **TVM wheel** whose bundled `x86_tidl_tools/AM62D` replace the usual `tools/tidl_tools_package` download, and it offloads to the C7x via the TVM runtime (tvmrt).
 
-Because the RC wheel is `tvm==0.18.0` (a special git build) it would clobber the standard TVM in the main `tidlrunner` venv. Keep the AM62D flow in its own dedicated venv, **`tidlrunner-am62d`**, standalone from any standard `tidlrunner` setup.
+Because the TVM wheel is `tvm==0.18.0` (a special git build) it would clobber the standard TVM in the main `tidlrunner` venv. Keep the AM62D flow in its own dedicated venv, **`tidlrunner-am62d`**, standalone from any standard `tidlrunner` setup.
 
 For the audio models this device runs (and how to run their pipelines), see [audio_models_and_datasets.md](./audio_models_and_datasets.md).
 
@@ -23,7 +23,6 @@ With the venv active, one script installs the ARM GCC 15.2 and C7x CGT 5.0.0.LTS
 
 Notes:
 
-- The RC wheel is hosted internally on artifactory (the x86 `cp310` build for PC compilation). Override the URL with `AM62D_TVM_WHEEL=<url> ./devices/setup_am62d.sh` if it moves. The matching `...cp314-...linux_aarch64.whl` is the **on-device (EVM) runtime** wheel — not needed for PC compilation. Override the toolchain URLs with `C7X_CGT_URL=<url>` / `ARM_GCC_15_2_URL=<url>` if either moves.
 - `tidl_onnx_model_optimizer` is installed here because `surgery.py` imports it unconditionally for `.onnx` models, and this flow bypasses the standard `tidlrunner-tools-download` that normally provides it.
 - Plain `onnxruntime` (CPU) is installed because `tvmrt_wrapper.py` imports it to read onnx model I/O shapes via `CPUExecutionProvider`; it is not declared as a dependency anywhere else in this flow. This is not the TI-modified `onnxruntime-tidl` the standard flow uses — that's only needed for TIDL-accelerated inference, which this code path doesn't do.
 - **Build prereqs.** The script does no `apt` install. Wheels cover everything on Python 3.10 x86_64, but if a source build fails: `sudo apt-get install -y cmake libffi-dev libjpeg-dev zlib1g-dev protobuf-compiler`.
