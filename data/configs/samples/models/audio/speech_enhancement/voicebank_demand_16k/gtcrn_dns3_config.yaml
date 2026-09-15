@@ -19,8 +19,8 @@ session:
   target_device: AM62D
   tidl_offload: false  # ARM-only execution; GTCRN uses operators not supported by TIDL
   input_optimization: false  # disable image-specific input normalization
-  input_mean: null  # override image default (123.675, 116.28, 103.53)
-  input_scale: null  # override image default (0.017125, 0.017507, 0.017429)
+  input_mean: null  # override image default
+  input_scale: null  # override image default
   model_path: gtcrn_dns3.onnx
   model_id: ase-0100
   input_details: null

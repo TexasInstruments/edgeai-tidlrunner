@@ -1,6 +1,5 @@
 # VGGish11 sound classification
 # Usage: tidlrunner-cli {compile,infer,evaluate} --config_path data/configs/samples/models/audio/audio_classification/urbansound8k/vggish11_config.yaml
-#
 
 task_type: audio_classification
 dataloader:
@@ -17,22 +16,13 @@ session:
   target_device: AM62A
   tidl_offload: true
   input_optimization: false  # disable image-specific input normalization
-  input_mean: null  # override image default (123.675, 116.28, 103.53)
-  input_scale: null  # override image default (0.017125, 0.017507, 0.017429)
+  input_mean: null  # override image default
+  input_scale: null  # override image default
   runtime_options:
     tensor_bits: 8
-    accuracy_level: 1  # FP32 model: TIDL performs its own quantization
-    max_num_subgraphs: 16
-    ti_internal_nc_flag: 83886080
+    accuracy_level: 1
     advanced_options:calibration_frames: 100
     advanced_options:calibration_iterations: 2
-    advanced_options:high_resolution_optimization: 0
-    advanced_options:quantization_scale_type: 4 # 4: Asymmetric Per-Channel Quantization
-    advanced_options:pre_batchnorm_fold: 1
-    advanced_options:activation_clipping: 1  # preset internally for accuracy_level 0/1
-    advanced_options:weight_clipping: 1
-    advanced_options:bias_calibration: 1
-    advanced_options:add_data_convert_ops: 3
   model_path: vggish11.onnx
   model_id: ac-0100
   input_details: null
