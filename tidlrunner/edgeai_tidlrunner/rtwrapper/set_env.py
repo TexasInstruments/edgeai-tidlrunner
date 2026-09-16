@@ -172,16 +172,16 @@ def set_environment(update_artifacts=True, **kwargs):
 
 def set_proper_environment(**kwargs):
     """
-    Restart the process with correct environment.
-    This should be called only if TIDL_TOOLS_PATH or LD_LIBRARY_PATH is not properly set
+    Set the correct environment variables.
+    This can be used if TIDL_TOOLS_PATH and LD_LIBRARY_PATH are already set
     """
     set_environment(**kwargs)
 
 
 def restart_with_proper_environment(**kwargs):
     """
-    Restart the process with correct environment.
-    This should be called only if TIDL_TOOLS_PATH or LD_LIBRARY_PATH is not properly set
+    Restart the process with correct environment variables.
+    This should be called only if TIDL_TOOLS_PATH or LD_LIBRARY_PATH are not already set
     """
     set_environment(**kwargs)
 

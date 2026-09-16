@@ -169,8 +169,8 @@ def start_with_proper_environment(START_CLS=StartRunner, **kwargs):
             # Tools already provided (e.g. sourced devices/am62d_env.sh). Keep the sourced
             # paths and don't rewrite artifact symlinks - just fill the TIDL_RT_* defaults
             # that set_env() would otherwise supply.
-            print("INFO: TIDL_TOOLS_PATH/LD_LIBRARY_PATH already set; filling missing TIDL_RT_* defaults.")
-            rtwrapper.set_environment(update_artifacts=False, **kwargs)
+            print("INFO: TIDL_TOOLS_PATH/LD_LIBRARY_PATH already set, filling the missing TIDL_RT_* defaults.")
+            rtwrapper.set_proper_environment(update_artifacts=False, **kwargs)
         START_CLS.main(**kwargs)
     else:
         # TIDL_TOOLS_PATH is not needed in EVM, but just set it to empty to pass through checks for it
