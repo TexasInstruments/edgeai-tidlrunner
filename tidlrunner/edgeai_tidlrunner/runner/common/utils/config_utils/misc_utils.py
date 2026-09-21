@@ -345,4 +345,4 @@ def load_and_format_yaml(file_path):
 
 def enum_to_list(enum_type: Enum) -> List[str]:
     return [v for k, v in vars(enum_type).items()
-            if k.isupper() and not k.endswith('_DEFAULT')]
+            if k.isupper() and not k.endswith('_DEFAULT_')]

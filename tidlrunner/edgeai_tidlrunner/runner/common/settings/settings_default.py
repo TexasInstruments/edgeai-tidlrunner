@@ -47,7 +47,7 @@ RUNTIME_SETTINGS_DEFAULT = {
     # False: No TIDL
     'tidl_offload': True,
 
-    'target_device': presets.TargetDeviceType.TARGET_DEVICE_DEFAULT,
+    'target_device': presets.TargetDeviceType.TARGET_DEVICE_DEFAULT_,
     'target_machine': presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION,
     'target_device_preset': True,
 
@@ -337,7 +337,7 @@ COPY_SETTINGS_DEFAULT['commands.report'] = COPY_SETTINGS_DEFAULT['common.basic']
 SETTINGS_DEFAULT['commands.package'] = SETTINGS_DEFAULT['common.basic'] | {
     'command': {'default': None, 'type': str, '_positional':True, 'metavar': 'package', 'help': 'run package command'},
     'pipeline_type':        {'dest': 'common.pipeline_type', 'default': 'package', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'}, 
-    'target_device':        {'dest': 'session.target_device', 'default': presets.TargetDeviceType.TARGET_DEVICE_DEFAULT, 'type': str, 'metavar': 'value', 'choices': utils.enum_to_list(enumerations.TargetDeviceType), '_gui':True, 'help': 'target device for inference (AM68A, AM69A, etc.)'},
+    'target_device':        {'dest': 'session.target_device', 'default': presets.TargetDeviceType.TARGET_DEVICE_DEFAULT_, 'type': str, 'metavar': 'value', 'choices': utils.enum_to_list(enumerations.TargetDeviceType), '_gui':True, 'help': 'target device for inference (AM68A, AM69A, etc.)'},
     'tensor_bits':          {'dest': 'session.runtime_options.tensor_bits', 'default': 8, 'type': int, 'metavar': 'value', 'choices': utils.enum_to_list(enumerations.TensorBits), '_gui':True, 'help': 'quantization bit-width for tensors (8 or 16)'},
     'work_path':                {'dest': 'common.work_path', 'default':'./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits', 'type':str, '_gui':True, 'metavar':'value', 'help':'work path'},
     'run_label':            {'dest': 'common.run_label', 'default': '', 'type': str, 'metavar': 'value', 'help': 'run_label to create run_dir'},

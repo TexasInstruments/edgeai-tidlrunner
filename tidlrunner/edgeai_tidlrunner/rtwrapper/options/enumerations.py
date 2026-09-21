@@ -109,7 +109,7 @@ class TargetDeviceType:
     TARGET_DEVICE_AM62 = 'AM62'
     TARGET_DEVICE_AM62X = 'AM62X'
     TARGET_DEVICE_AM62D = 'AM62D'
-    TARGET_DEVICE_DEFAULT = TARGET_DEVICE_AM62A
+    TARGET_DEVICE_DEFAULT_ = TARGET_DEVICE_AM62A
 
 
 # compilation can only be run in PC as of now, but inference can be run in both PC and EVM
@@ -150,7 +150,7 @@ class CalibrationIterationsFactor:
 
 
 class ModelQuantType:
-    MODEL_QUANT_TYPE_DEFAULT = None
+    MODEL_QUANT_TYPE_DEFAULT_ = None
     MODEL_QUANT_TYPE_QUANT_CLIP_P2 = "QUANT_CLIP_P2"
     MODEL_QUANT_TYPE_QUANT_TFLITE = "QUANT_TFLITE"
     MODEL_QUANT_TYPE_QUANT_QDQ = "QUANT_QDQ"
