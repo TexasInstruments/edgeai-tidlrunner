@@ -28,12 +28,12 @@ Inspect model outputs and activation data
 | `--log_file` | `common.log_file` | `run.log` | None |
 | `--pipeline_type` | `common.pipeline_type` | `compile` | type of pipeline to run |
 | `--verbose` | `common.verbose` | `0` | verbosity level |
-| `--model_path` | `session.model_path` | `` | input model |
 | `--config_path` | `common.config_path` | `` | path to configuration file |
+| `--model_path` | `session.model_path` | `` | input model |
 | `--work_path` | `common.work_path` | `./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits` | work path |
 | `--run_label` | `common.run_label` | `` | run_label to create run_dir |
 | `--run_dir` | `session.run_dir` | `{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}` | run_dir |
-| `--downgrade_onnx_ir_version` | `common.downgrade_onnx_ir_version` | `9` | downgrade ir_version, if the onnx model has higher value (temporary workaround until tidl-onnx-model-optimizer is updated). |
+| `--downgrade_onnx_ir_version` | `common.downgrade_onnx_ir_version` | `` | downgrade ir_version, if the onnx model has higher value (temporary workaround until tidl-onnx-model-optimizer is updated). |
 | `--input_optimization` | `session.input_optimization` | `False` | merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32 |
 | `--input_mean` | `session.input_mean` | `(123.675, 116.28, 103.53)` | mean values for input normalization (RGB channels) |
 | `--input_scale` | `session.input_scale` | `(0.017125, 0.017507, 0.017429)` | scale values for input normalization (RGB channels) |
@@ -48,7 +48,7 @@ Inspect model outputs and activation data
 | `--upgrade_config` | `common.upgrade_config` | `True` | upgrade edgeai-benchmark config to work with tidlrunner |
 | `--model_selection` | `common.model_selection` | `` | select a subset of models to run - path of the model is compared using this model_selection regex to select a particular model or not |
 | `--model_shortlist` | `common.model_shortlist` | `` | select a subset of models to run - models configs with model_shortlist value <= this specified value will be used |
-| `--preset_selection` | `common.preset_selection` | `` | select a preset for speed accuracy trade-off: None, SPEED, ACCURACY, BALANCED |
+| `--preset_selection` | `common.preset_selection` | `DEFAULT` | select a preset for speed accuracy trade-off: None, SPEED, ACCURACY, BALANCED |
 | `--config_template` | `common.config_template` | `data/templates/configs/param_template_config.yaml` | param template path |
 | `--incremental` | `common.incremental` | `False` | param template path |
 | `--clear_run_dir` | `common.clear_run_dir` | `True` | clear_run_dir |
@@ -122,12 +122,12 @@ Compile models and generate target-specific artifacts
 | `--log_file` | `common.log_file` | `run.log` | None |
 | `--pipeline_type` | `common.pipeline_type` | `compile` | type of pipeline to run |
 | `--verbose` | `common.verbose` | `0` | verbosity level |
-| `--model_path` | `session.model_path` | `` | input model |
 | `--config_path` | `common.config_path` | `` | path to configuration file |
+| `--model_path` | `session.model_path` | `` | input model |
 | `--work_path` | `common.work_path` | `./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits` | work path |
 | `--run_label` | `common.run_label` | `` | run_label to create run_dir |
 | `--run_dir` | `session.run_dir` | `{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}` | run_dir |
-| `--downgrade_onnx_ir_version` | `common.downgrade_onnx_ir_version` | `9` | downgrade ir_version, if the onnx model has higher value (temporary workaround until tidl-onnx-model-optimizer is updated). |
+| `--downgrade_onnx_ir_version` | `common.downgrade_onnx_ir_version` | `` | downgrade ir_version, if the onnx model has higher value (temporary workaround until tidl-onnx-model-optimizer is updated). |
 | `--input_optimization` | `session.input_optimization` | `False` | merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32 |
 | `--input_mean` | `session.input_mean` | `(123.675, 116.28, 103.53)` | mean values for input normalization (RGB channels) |
 | `--input_scale` | `session.input_scale` | `(0.017125, 0.017507, 0.017429)` | scale values for input normalization (RGB channels) |
@@ -142,7 +142,7 @@ Compile models and generate target-specific artifacts
 | `--upgrade_config` | `common.upgrade_config` | `True` | upgrade edgeai-benchmark config to work with tidlrunner |
 | `--model_selection` | `common.model_selection` | `` | select a subset of models to run - path of the model is compared using this model_selection regex to select a particular model or not |
 | `--model_shortlist` | `common.model_shortlist` | `` | select a subset of models to run - models configs with model_shortlist value <= this specified value will be used |
-| `--preset_selection` | `common.preset_selection` | `` | select a preset for speed accuracy trade-off: None, SPEED, ACCURACY, BALANCED |
+| `--preset_selection` | `common.preset_selection` | `DEFAULT` | select a preset for speed accuracy trade-off: None, SPEED, ACCURACY, BALANCED |
 | `--config_template` | `common.config_template` | `data/templates/configs/param_template_config.yaml` | param template path |
 | `--incremental` | `common.incremental` | `False` | param template path |
 | `--clear_run_dir` | `common.clear_run_dir` | `True` | clear_run_dir |
@@ -210,12 +210,12 @@ Evaluate model accuracy against ground truth labels
 | `--log_file` | `common.log_file` | `run.log` | None |
 | `--pipeline_type` | `common.pipeline_type` | `compile` | type of pipeline to run |
 | `--verbose` | `common.verbose` | `0` | verbosity level |
-| `--model_path` | `session.model_path` | `` | input model |
 | `--config_path` | `common.config_path` | `` | path to configuration file |
+| `--model_path` | `session.model_path` | `` | input model |
 | `--work_path` | `common.work_path` | `./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits` | work path |
 | `--run_label` | `common.run_label` | `` | run_label to create run_dir |
 | `--run_dir` | `session.run_dir` | `{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}` | run_dir |
-| `--downgrade_onnx_ir_version` | `common.downgrade_onnx_ir_version` | `9` | downgrade ir_version, if the onnx model has higher value (temporary workaround until tidl-onnx-model-optimizer is updated). |
+| `--downgrade_onnx_ir_version` | `common.downgrade_onnx_ir_version` | `` | downgrade ir_version, if the onnx model has higher value (temporary workaround until tidl-onnx-model-optimizer is updated). |
 | `--input_optimization` | `session.input_optimization` | `False` | merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32 |
 | `--input_mean` | `session.input_mean` | `(123.675, 116.28, 103.53)` | mean values for input normalization (RGB channels) |
 | `--input_scale` | `session.input_scale` | `(0.017125, 0.017507, 0.017429)` | scale values for input normalization (RGB channels) |
@@ -230,7 +230,7 @@ Evaluate model accuracy against ground truth labels
 | `--upgrade_config` | `common.upgrade_config` | `True` | upgrade edgeai-benchmark config to work with tidlrunner |
 | `--model_selection` | `common.model_selection` | `` | select a subset of models to run - path of the model is compared using this model_selection regex to select a particular model or not |
 | `--model_shortlist` | `common.model_shortlist` | `` | select a subset of models to run - models configs with model_shortlist value <= this specified value will be used |
-| `--preset_selection` | `common.preset_selection` | `` | select a preset for speed accuracy trade-off: None, SPEED, ACCURACY, BALANCED |
+| `--preset_selection` | `common.preset_selection` | `DEFAULT` | select a preset for speed accuracy trade-off: None, SPEED, ACCURACY, BALANCED |
 | `--config_template` | `common.config_template` | `data/templates/configs/param_template_config.yaml` | param template path |
 | `--incremental` | `common.incremental` | `False` | param template path |
 | `--clear_run_dir` | `common.clear_run_dir` | `True` | clear_run_dir |
@@ -311,8 +311,8 @@ Extract model submodules, operators, or layer ranges
 | `--log_file` | `common.log_file` | `run.log` | None |
 | `--pipeline_type` | `common.pipeline_type` | `extract` | type of pipeline to run |
 | `--verbose` | `common.verbose` | `0` | verbosity level |
-| `--model_path` | `session.model_path` | `` | input model |
 | `--config_path` | `common.config_path` | `` | path to configuration file |
+| `--model_path` | `session.model_path` | `` | input model |
 | `--work_path` | `common.work_path` | `./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits` | work path |
 | `--run_label` | `common.run_label` | `` | run_label to create run_dir |
 | `--run_dir` | `session.run_dir` | `{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}` | run_dir |
@@ -338,12 +338,12 @@ Run inference using compiled models
 | `--log_file` | `common.log_file` | `run.log` | None |
 | `--pipeline_type` | `common.pipeline_type` | `compile` | type of pipeline to run |
 | `--verbose` | `common.verbose` | `0` | verbosity level |
-| `--model_path` | `session.model_path` | `` | input model |
 | `--config_path` | `common.config_path` | `` | path to configuration file |
+| `--model_path` | `session.model_path` | `` | input model |
 | `--work_path` | `common.work_path` | `./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits` | work path |
 | `--run_label` | `common.run_label` | `` | run_label to create run_dir |
 | `--run_dir` | `session.run_dir` | `{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}` | run_dir |
-| `--downgrade_onnx_ir_version` | `common.downgrade_onnx_ir_version` | `9` | downgrade ir_version, if the onnx model has higher value (temporary workaround until tidl-onnx-model-optimizer is updated). |
+| `--downgrade_onnx_ir_version` | `common.downgrade_onnx_ir_version` | `` | downgrade ir_version, if the onnx model has higher value (temporary workaround until tidl-onnx-model-optimizer is updated). |
 | `--input_optimization` | `session.input_optimization` | `False` | merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32 |
 | `--input_mean` | `session.input_mean` | `(123.675, 116.28, 103.53)` | mean values for input normalization (RGB channels) |
 | `--input_scale` | `session.input_scale` | `(0.017125, 0.017507, 0.017429)` | scale values for input normalization (RGB channels) |
@@ -358,7 +358,7 @@ Run inference using compiled models
 | `--upgrade_config` | `common.upgrade_config` | `True` | upgrade edgeai-benchmark config to work with tidlrunner |
 | `--model_selection` | `common.model_selection` | `` | select a subset of models to run - path of the model is compared using this model_selection regex to select a particular model or not |
 | `--model_shortlist` | `common.model_shortlist` | `` | select a subset of models to run - models configs with model_shortlist value <= this specified value will be used |
-| `--preset_selection` | `common.preset_selection` | `` | select a preset for speed accuracy trade-off: None, SPEED, ACCURACY, BALANCED |
+| `--preset_selection` | `common.preset_selection` | `DEFAULT` | select a preset for speed accuracy trade-off: None, SPEED, ACCURACY, BALANCED |
 | `--config_template` | `common.config_template` | `data/templates/configs/param_template_config.yaml` | param template path |
 | `--incremental` | `common.incremental` | `False` | param template path |
 | `--clear_run_dir` | `common.clear_run_dir` | `True` | clear_run_dir |
@@ -430,12 +430,12 @@ Analyze model runtime and layer-level statistics
 | `--log_file` | `common.log_file` | `run.log` | None |
 | `--pipeline_type` | `common.pipeline_type` | `compile` | type of pipeline to run |
 | `--verbose` | `common.verbose` | `0` | verbosity level |
-| `--model_path` | `session.model_path` | `` | input model |
 | `--config_path` | `common.config_path` | `` | path to configuration file |
+| `--model_path` | `session.model_path` | `` | input model |
 | `--work_path` | `common.work_path` | `./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits` | work path |
 | `--run_label` | `common.run_label` | `` | run_label to create run_dir |
 | `--run_dir` | `session.run_dir` | `{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}` | run_dir |
-| `--downgrade_onnx_ir_version` | `common.downgrade_onnx_ir_version` | `9` | downgrade ir_version, if the onnx model has higher value (temporary workaround until tidl-onnx-model-optimizer is updated). |
+| `--downgrade_onnx_ir_version` | `common.downgrade_onnx_ir_version` | `` | downgrade ir_version, if the onnx model has higher value (temporary workaround until tidl-onnx-model-optimizer is updated). |
 | `--input_optimization` | `session.input_optimization` | `False` | merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32 |
 | `--input_mean` | `session.input_mean` | `(123.675, 116.28, 103.53)` | mean values for input normalization (RGB channels) |
 | `--input_scale` | `session.input_scale` | `(0.017125, 0.017507, 0.017429)` | scale values for input normalization (RGB channels) |
@@ -450,7 +450,7 @@ Analyze model runtime and layer-level statistics
 | `--upgrade_config` | `common.upgrade_config` | `True` | upgrade edgeai-benchmark config to work with tidlrunner |
 | `--model_selection` | `common.model_selection` | `` | select a subset of models to run - path of the model is compared using this model_selection regex to select a particular model or not |
 | `--model_shortlist` | `common.model_shortlist` | `` | select a subset of models to run - models configs with model_shortlist value <= this specified value will be used |
-| `--preset_selection` | `common.preset_selection` | `` | select a preset for speed accuracy trade-off: None, SPEED, ACCURACY, BALANCED |
+| `--preset_selection` | `common.preset_selection` | `DEFAULT` | select a preset for speed accuracy trade-off: None, SPEED, ACCURACY, BALANCED |
 | `--config_template` | `common.config_template` | `data/templates/configs/param_template_config.yaml` | param template path |
 | `--incremental` | `common.incremental` | `False` | param template path |
 | `--clear_run_dir` | `common.clear_run_dir` | `True` | clear_run_dir |
@@ -567,12 +567,12 @@ Run model surgery optimizations on the input model
 | `--log_file` | `common.log_file` | `run.log` | None |
 | `--pipeline_type` | `common.pipeline_type` | `optimize` | type of pipeline to run |
 | `--verbose` | `common.verbose` | `0` | verbosity level |
-| `--model_path` | `session.model_path` | `` | input model |
 | `--config_path` | `common.config_path` | `` | path to configuration file |
+| `--model_path` | `session.model_path` | `` | input model |
 | `--work_path` | `common.work_path` | `./work_dirs/{run_label}/{pipeline_type}/{target_device}/{tensor_bits}bits` | work path |
 | `--run_label` | `common.run_label` | `` | run_label to create run_dir |
 | `--run_dir` | `session.run_dir` | `{work_path}/{model_id}_{runtime_name}_{model_path}_{model_ext}` | run_dir |
-| `--downgrade_onnx_ir_version` | `common.downgrade_onnx_ir_version` | `9` | downgrade ir_version, if the onnx model has higher value (temporary workaround until tidl-onnx-model-optimizer is updated). |
+| `--downgrade_onnx_ir_version` | `common.downgrade_onnx_ir_version` | `` | downgrade ir_version, if the onnx model has higher value (temporary workaround until tidl-onnx-model-optimizer is updated). |
 | `--input_optimization` | `session.input_optimization` | `False` | merge in input_mean and input_scale into the model if possible, so that model input can be in uint8 and not float32 |
 | `--input_mean` | `session.input_mean` | `(123.675, 116.28, 103.53)` | mean values for input normalization (RGB channels) |
 | `--input_scale` | `session.input_scale` | `(0.017125, 0.017507, 0.017429)` | scale values for input normalization (RGB channels) |
