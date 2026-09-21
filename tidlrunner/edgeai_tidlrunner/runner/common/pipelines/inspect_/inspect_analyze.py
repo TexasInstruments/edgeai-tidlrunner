@@ -37,12 +37,12 @@ import math
 import yaml
 import xlsxwriter
 
-from ...common import utils
-from ...common import bases
-from ..settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
-from .common_ import compile_base
-from . import compile
-from . import infer
+from ....common import utils
+from ....common import bases
+from ...settings.settings_default import SETTINGS_DEFAULT, COPY_SETTINGS_DEFAULT
+from .. common_ import compile_base
+from .. import compile
+from .. import infer
 
 # TIDL maximum supported ONNX IR version
 MAX_SUPPORTED_IR_VERSION = 9
@@ -56,8 +56,8 @@ def _write_outputs_to_bin(root, basename, output_dict):
 
 
 class CompileAnalyzeNoTIDL(compile.CompileModel):
-    ARGS_DICT=SETTINGS_DEFAULT['commands.analyze']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['commands.analyze']
+    ARGS_DICT=SETTINGS_DEFAULT['commands.inspect']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['commands.inspect']
 
     def __init__(self, **kwargs):
         kargs_copy = copy.deepcopy(kwargs)
@@ -126,8 +126,8 @@ class CompileAnalyzeNoTIDL(compile.CompileModel):
 
 
 class InferAnalyzeNoTIDL(infer.InferModel):
-    ARGS_DICT=SETTINGS_DEFAULT['commands.analyze']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['commands.analyze']
+    ARGS_DICT=SETTINGS_DEFAULT['commands.inspect']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['commands.inspect']
 
     def __init__(self, **kwargs):
         kargs_copy = copy.deepcopy(kwargs)
@@ -148,8 +148,8 @@ class InferAnalyzeNoTIDL(infer.InferModel):
 
 
 class CompileAnalyzeTIDL32(compile.CompileModel):
-    ARGS_DICT = SETTINGS_DEFAULT['commands.analyze']
-    COPY_ARGS = COPY_SETTINGS_DEFAULT['commands.analyze']
+    ARGS_DICT = SETTINGS_DEFAULT['commands.inspect']
+    COPY_ARGS = COPY_SETTINGS_DEFAULT['commands.inspect']
 
     def __init__(self, **kwargs):
         kargs_copy = copy.deepcopy(kwargs)
@@ -178,8 +178,8 @@ class CompileAnalyzeTIDL32(compile.CompileModel):
 
 
 class InferAnalyzeTIDL32(infer.InferModel):
-    ARGS_DICT=SETTINGS_DEFAULT['commands.analyze']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['commands.analyze']
+    ARGS_DICT=SETTINGS_DEFAULT['commands.inspect']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['commands.inspect']
 
     def __init__(self, **kwargs):
         kargs_copy = copy.deepcopy(kwargs)
@@ -228,8 +228,8 @@ class InferAnalyzeTIDL32(infer.InferModel):
     
 
 class CompileAnalyzeTIDL(compile.CompileModel):
-    ARGS_DICT = SETTINGS_DEFAULT['commands.analyze']
-    COPY_ARGS = COPY_SETTINGS_DEFAULT['commands.analyze']
+    ARGS_DICT = SETTINGS_DEFAULT['commands.inspect']
+    COPY_ARGS = COPY_SETTINGS_DEFAULT['commands.inspect']
 
     def __init__(self, **kwargs):
         kargs_copy = copy.deepcopy(kwargs)
@@ -242,8 +242,8 @@ class CompileAnalyzeTIDL(compile.CompileModel):
 
 
 class InferAnalyzeTIDL(infer.InferModel):
-    ARGS_DICT=SETTINGS_DEFAULT['commands.analyze']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['commands.analyze']
+    ARGS_DICT=SETTINGS_DEFAULT['commands.inspect']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['commands.inspect']
 
     def __init__(self, **kwargs):
         kargs_copy = copy.deepcopy(kwargs)
@@ -282,8 +282,8 @@ class InferAnalyzeTIDL(infer.InferModel):
 
 
 class InferAnalyzeFinal(compile_base.CompileModelBase):
-    ARGS_DICT=SETTINGS_DEFAULT['commands.analyze']
-    COPY_ARGS=COPY_SETTINGS_DEFAULT['commands.analyze']
+    ARGS_DICT=SETTINGS_DEFAULT['commands.inspect']
+    COPY_ARGS=COPY_SETTINGS_DEFAULT['commands.inspect']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

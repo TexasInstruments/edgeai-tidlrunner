@@ -271,21 +271,6 @@ register_help(
 COPY_SETTINGS_DEFAULT['commands.inspect'] = COPY_SETTINGS_DEFAULT['commands.infer'] | {
 }
 
-
-##########################################################################
-SETTINGS_DEFAULT['commands.analyze'] = SETTINGS_DEFAULT['commands.inspect'] | {
-    'command': {'default': None, 'type': str, '_positional':True, 'metavar': 'analyze', 'help': 'run analyze command'},
-}
-
-register_help(
-    section='command',
-    name='analyze',
-    description='Inspect model outputs and activation data'
-)(SETTINGS_DEFAULT['commands.analyze'])
-
-COPY_SETTINGS_DEFAULT['commands.analyze'] = COPY_SETTINGS_DEFAULT['commands.inspect'] | {
-}
-
 ##########################################################################
 SETTINGS_DEFAULT['commands.extract'] = SETTINGS_DEFAULT['common.basic'] | {
     'command': {'default': None, 'type': str, '_positional':True, 'metavar': 'extract', 'help': 'run extract command'},

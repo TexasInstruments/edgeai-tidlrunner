@@ -30,7 +30,7 @@
 from .infer import InferModel
 from .compile import CompileModel
 from .evaluate import InferEvaluate
-from .analyze import CompileAnalyzeNoTIDL, InferAnalyzeNoTIDL, CompileAnalyzeTIDL32, InferAnalyzeTIDL32, CompileAnalyzeTIDL, InferAnalyzeTIDL, InferAnalyzeFinal
+from .inspect_.inspect_analyze import CompileAnalyzeNoTIDL, InferAnalyzeNoTIDL, CompileAnalyzeTIDL32, InferAnalyzeTIDL32, CompileAnalyzeTIDL, InferAnalyzeTIDL, InferAnalyzeFinal
 from .report import GenReport
 from .surgery import ModelSurgery
 from .extract import ExtractNodes
@@ -47,7 +47,6 @@ def get_command_pipelines(**kwargs):
         'evaluate': ['InferEvaluate', 'UpdateModelInspectorEVMPerfJSON', 'UpdateModelInspectorEVMAccuracyJSON', 'GenerateModelInspectorHTML'],
         'compile+infer': ['CompileModel', 'GenerateModelInspectorJSON', 'GenerateModelInspectorHTML', 'InferModel'],
         'compile+evaluate': ['CompileModel', 'InferEvaluate', 'GenerateModelInspectorJSON', 'GenerateModelInspectorHTML'],
-        'analyze': ['CompileAnalyzeTIDL', 'InferAnalyzeTIDL', 'CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL32', 'InferAnalyzeTIDL32', 'InferAnalyzeFinal', 'GenerateModelInspectorJSON', 'GenerateModelInspectorHTML'],
         'inspect': ['CompileAnalyzeTIDL', 'InferAnalyzeTIDL', 'CompileAnalyzeNoTIDL', 'InferAnalyzeNoTIDL', 'CompileAnalyzeTIDL32', 'InferAnalyzeTIDL32', 'InferAnalyzeFinal','GenerateModelInspectorJSON', 'GenerateModelInspectorHTML'],
         'report': ['GenReport'],   
         'package': ['PackageArtifacts'], 
