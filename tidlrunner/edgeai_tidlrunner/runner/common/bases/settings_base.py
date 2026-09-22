@@ -52,7 +52,8 @@ SETTING_PIPELINE_RUNNER_ARGS_BASE = {
     'parallel_processes':       {'dest': 'common.parallel_processes', 'default': SettingsBaseDefaults.NUM_PARALLEL_PROCESSES, 'type': int, 'metavar': 'value', 'help': 'number of parallel processes to use'},
     'parallel_devices':         {'dest': 'common.parallel_devices', 'default': None, 'type': int, 'metavar': 'value', 'help': 'number of parallel gpu devices to use for compilation (used only if gpu based tidl-tools is installed)'},
     'target_machine':           {'dest': 'session.target_machine', 'default': presets.TargetMachineType.TARGET_MACHINE_PC_EMULATION, 'type': str, 'metavar': 'value', 'choices': utils.enum_to_list(enumerations.TargetMachineType), 'help': 'target machine for running the inference (pc, evm)'},
-    'target_device':            {'dest': 'session.target_device', 'default': presets.TargetDeviceType.TARGET_DEVICE_AM62A, 'type': str, 'metavar': 'value', 'choices': utils.enum_to_list(enumerations.TargetDeviceType), 'help': 'target device for inference (AM62A, AM69A, etc.)'},
+    # don't add choices here as different commands have different choices - eg. report has an additional NONE choice
+    'target_device':            {'dest': 'session.target_device', 'default': presets.TargetDeviceType.TARGET_DEVICE_AM62A, 'type': str, 'metavar': 'value', 'help': 'target device for inference (AM62A, AM69A, etc.)'},
 }
 
 

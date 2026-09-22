@@ -301,7 +301,7 @@ COPY_SETTINGS_DEFAULT['commands.extract'] = COPY_SETTINGS_DEFAULT['common.basic'
 SETTINGS_DEFAULT['commands.report'] = SETTINGS_DEFAULT['common.basic'] | {
     'command': {'default': None, 'type': str, '_positional':True, 'metavar': 'report', 'help': 'run report command'},
     'pipeline_type':          {'dest': 'common.pipeline_type', 'default': 'compile', 'type': str, 'metavar': 'value', 'help': 'type of pipeline to run'},
-    'target_device':          {'dest': 'session.target_device', 'default': None, 'type': str, 'metavar': 'value', 'choices': utils.enum_to_list(enumerations.TargetDeviceType), '_gui':True, 'help': 'target device for report (AM62A, AM69A, etc. None for all devices)'},
+    'target_device':          {'dest': 'session.target_device', 'default': 'NONE', 'type': str, 'metavar': 'value', 'choices': utils.enum_to_list(enumerations.TargetDeviceType)+['NONE'], '_gui':True, 'help': 'target device for report (AM62A, AM69A, etc. None for all devices)'},
     'report_mode':            {'dest': 'common.report.mode', 'default': 'detailed', 'type': str, 'metavar': 'value', 'choices': ['summary', 'detailed'], '_gui':True, 'help': 'report generation mode (summary or detailed)'},
     'report_path':            {'dest': 'common.report.path', 'default': './work_dirs/{run_label}/{pipeline_type}', 'type': str, 'metavar': 'value', '_gui':True, 'help': 'path where reports will be generated'},
     'run_label':              {'dest': 'common.run_label', 'default': '', 'type': str, 'metavar': 'value', 'help': 'run_label to create run_dir'},
