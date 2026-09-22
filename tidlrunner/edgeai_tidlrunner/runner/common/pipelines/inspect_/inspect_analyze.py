@@ -55,16 +55,29 @@ def _write_outputs_to_bin(root, basename, output_dict):
         out.tofile(os.path.join(root, basename + output_name.replace("/", "_") + '.bin'))
 
 
+def _modify_work_path_and_run_dir(kargs_copy, suffix_folder=''):
+    tensor_bits = kargs_copy.get('session.runtime_options.tensor_bits', '') or 'x'
+    tensor_bits_str = f'{str(tensor_bits)}' if tensor_bits else ''
+    tensor_bits_slash = f'{str(tensor_bits)}' + os.sep if tensor_bits else ''
+    work_path = kargs_copy['common.work_path']
+    work_path = work_path.replace('{tensor_bits}/', tensor_bits_slash)
+    work_path = work_path.replace('{tensor_bits}', tensor_bits_str)
+    run_dir = os.path.join(kargs_copy['session.run_dir'], suffix_folder)
+    return work_path, run_dir
+
+
 class CompileAnalyzeNoTIDL(compile.CompileModel):
     ARGS_DICT=SETTINGS_DEFAULT['commands.inspect']
     COPY_ARGS=COPY_SETTINGS_DEFAULT['commands.inspect']
 
     def __init__(self, **kwargs):
         kargs_copy = copy.deepcopy(kwargs)
-        kargs_copy['tidl_offload'] = False
-        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'notidl')
+        work_path, run_dir = _modify_work_path_and_run_dir(kargs_copy, 'notidl')
+        kargs_copy['common.work_path'] = work_path
+        kargs_copy['session.run_dir'] = run_dir
         kargs_copy['common.postprocess_enable'] = False        
         kargs_copy['common.clear_run_dir'] = False     
+        kargs_copy['tidl_offload'] = False
         super().__init__(**kargs_copy)
 
     def _prepare_model(self):
@@ -131,9 +144,11 @@ class InferAnalyzeNoTIDL(infer.InferModel):
 
     def __init__(self, **kwargs):
         kargs_copy = copy.deepcopy(kwargs)
+        work_path, run_dir = _modify_work_path_and_run_dir(kargs_copy, 'notidl')
+        kargs_copy['common.work_path'] = work_path
+        kargs_copy['session.run_dir'] = run_dir
+        kargs_copy['common.postprocess_enable'] = False
         kargs_copy['tidl_offload'] = False
-        kargs_copy['session.run_dir'] = os.path.join(kargs_copy['session.run_dir'], 'notidl')
-        kargs_copy['common.postprocess_enable'] = False            
         super().__init__(**kargs_copy)
 
     def _run(self):
@@ -153,19 +168,7 @@ class CompileAnalyzeTIDL32(compile.CompileModel):
 
     def __init__(self, **kwargs):
         kargs_copy = copy.deepcopy(kwargs)
-
-        tensor_bits = kargs_copy.get('session.runtime_options.tensor_bits', '') or 'x'
-        tensor_bits_str = f'{str(tensor_bits)}' if tensor_bits else ''
-        tensor_bits_slash = f'{str(tensor_bits)}' + os.sep if tensor_bits else ''
-        run_dir = kargs_copy['session.run_dir']
-        run_dir = run_dir.replace('{tensor_bits}/', tensor_bits_slash)
-        run_dir = run_dir.replace('{tensor_bits}', tensor_bits_str)
-        run_dir = os.path.join(kargs_copy['session.run_dir'], 'tidl32')
-
-        work_path = kargs_copy['common.work_path']
-        work_path = work_path.replace('{tensor_bits}/', tensor_bits_slash)
-        work_path = work_path.replace('{tensor_bits}', tensor_bits_str)
-
+        work_path, run_dir = _modify_work_path_and_run_dir(kargs_copy, 'tidl32')
         kargs_copy['common.work_path'] = work_path
         kargs_copy['session.run_dir'] = run_dir
         kargs_copy['session.runtime_options.tensor_bits'] = 32
@@ -183,19 +186,7 @@ class InferAnalyzeTIDL32(infer.InferModel):
 
     def __init__(self, **kwargs):
         kargs_copy = copy.deepcopy(kwargs)
-
-        tensor_bits = kargs_copy.get('session.runtime_options.tensor_bits', '') or 'x'
-        tensor_bits_str = f'{str(tensor_bits)}' if tensor_bits else ''
-        tensor_bits_slash = f'{str(tensor_bits)}' + os.sep if tensor_bits else ''
-        run_dir = kargs_copy['session.run_dir']
-        run_dir = run_dir.replace('{tensor_bits}/', tensor_bits_slash)
-        run_dir = run_dir.replace('{tensor_bits}', tensor_bits_str)
-        run_dir = os.path.join(kargs_copy['session.run_dir'], 'tidl32')
-
-        work_path = kargs_copy['common.work_path']
-        work_path = work_path.replace('{tensor_bits}/', tensor_bits_slash)
-        work_path = work_path.replace('{tensor_bits}', tensor_bits_str)
-
+        work_path, run_dir = _modify_work_path_and_run_dir(kargs_copy, 'tidl32')
         kargs_copy['common.work_path'] = work_path
         kargs_copy['session.run_dir'] = run_dir
         kargs_copy['session.runtime_options.debug_level'] = 0 if kargs_copy['common.analyze_level'] == 0 else 4
