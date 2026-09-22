@@ -1173,7 +1173,12 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
                             logger.debug(f"  Layer {layer_id} ({layer_name}): using activation data from bin files")
 
                 # Metrics/Accuracy data (only process if not null)
+                # Check both old format (metrics field) and new format (performance.accuracy)
                 metrics = tidl_layer.get('metrics')
+                if metrics is None and tidl_layer.get('performance'):
+                    # New format: metrics are nested in performance.accuracy
+                    perf = tidl_layer['performance']
+                    metrics = perf.get('accuracy', {})
                 if metrics is not None:
                     metrics_entry = {
                         'subgraph': sg_id,
@@ -1192,14 +1197,20 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
                 if tidl_layer.get('performance'):
                     perf = tidl_layer['performance']
 
-                    if perf.get('layer_cycles') is not None or perf.get('kernel_cycles') is not None:
+                    # Handle new nested structure: performance.accuracy and performance.infer_time
+                    infer_time_data = perf.get('infer_time', {})
+                    # Fallback to old structure for backward compatibility
+                    if not infer_time_data:
+                        infer_time_data = perf
+
+                    if infer_time_data.get('layer_cycles') is not None or infer_time_data.get('kernel_cycles') is not None:
                         cycles_list.append({
                             'layer_num': layer_id,
                             'layer_type': layer_type,
-                            'kernelOnlyCycles': perf.get('kernel_cycles') or 0,
-                            'coreLoopCycles':   perf.get('core_loop_cycles') or 0,
-                            'layerCycles':      perf.get('layer_cycles') or 0,
-                            'ioCycles':         perf.get('io_cycles') or 0,
+                            'kernelOnlyCycles': infer_time_data.get('kernel_cycles') or 0,
+                            'coreLoopCycles':   infer_time_data.get('core_loop_cycles') or 0,
+                            'layerCycles':      infer_time_data.get('layer_cycles') or 0,
+                            'ioCycles':         infer_time_data.get('io_cycles') or 0,
                         })
 
                     mem = perf.get('memory') or {}
@@ -1241,17 +1252,9 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
             elif metrics_list:
                 metrics_data[sg_id] = metrics_list
 
-            # On EVM: proctime is computed from inflated debug cycles (unreliable)
-            # and memory data is leftover from PC simulation — skip both.
-            # EVM is detected by presence of infer_time_subgraph_ms in metadata.
-            _is_evm_src = (
-                json_data.get('metadata', {}).get('performance_source') == 'evm_hardware' or
-                json_data.get('metadata', {}).get('infer_time_subgraph_ms') is not None or
-                json_data.get('performance_source') == 'evm_hardware'
-            )
             if cycles_list:
                 cycles_data[sg_id] = cycles_list
-            if memory_list and not _is_evm_src:
+            if memory_list:
                 memory_data[sg_id] = memory_list
 
         # Config data from metadata and subgraphs
@@ -1437,12 +1440,15 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
     )
     performance_source = 'evm_hardware' if is_evm_data else 'pc_simulation'
 
-    # Accuracy: flat keys in metadata (accuracy_top1%, accuracy_ap[.5:.95]%, etc.)
+    # Accuracy: nested in metadata['accuracy'] (new format) OR flat keys in metadata (old format)
     # Also support old nested evm_accuracy key for backward compat
-    evm_accuracy = {k: v for k, v in meta.items()
-                    if k.lower().startswith('accuracy') and isinstance(v, (int, float))}
-    if not evm_accuracy:
-        evm_accuracy = meta.get('evm_accuracy', {})
+    if 'accuracy' in meta and isinstance(meta['accuracy'], dict):
+        evm_accuracy = meta['accuracy']
+    else:
+        evm_accuracy = {k: v for k, v in meta.items()
+                        if k.lower().startswith('accuracy') and isinstance(v, (int, float))}
+        if not evm_accuracy:
+            evm_accuracy = meta.get('evm_accuracy', {})
 
     # Scan cycles_data to find which cycle sub-fields are actually non-zero.
     _has_kernel = _has_core = _has_io = False
@@ -1461,25 +1467,28 @@ def generate_html(json_data: Dict[str, Any], template_path: str, output_path: st
             if row.get('ddr_usage', 0):  _has_ddr  = True
 
     is_evm = (performance_source == 'evm_hardware')
-    # On EVM the /tmp/ CSV has no memory data and Layer Cycles at debug_level>1
-    # are inflated — proctime_us and IO (dmaPipeupCycles) are unreliable.
-    # Force those flags off so the HTML never renders misleading charts.
+    # On EVM the /tmp/ CSV has no IO data and Layer Cycles at debug_level>1
+    # are inflated — proctime_us and IO (dmaPipeupCycles) are unreliable, so
+    # that flag stays forced off. Memory usage is a property of the compiled
+    # schedule (computed from the PC-sim CSV either way), not of measured vs.
+    # simulated cycles, so it stays available on EVM runs too.
     perf_availability = {
         'source':        performance_source,
         'has_cycles':    bool(cycles_data),
         'has_kernel':    _has_kernel,
         'has_core':      _has_core,
         'has_io':        False if is_evm else _has_io,
-        'has_memory':    False if is_evm else bool(memory_data),
-        'has_l2':        False if is_evm else _has_l2,
-        'has_msmc':      False if is_evm else _has_msmc,
-        'has_ddr':       False if is_evm else _has_ddr,
+        'has_memory':    bool(memory_data),
+        'has_l2':        _has_l2,
+        'has_msmc':      _has_msmc,
+        'has_ddr':       _has_ddr,
         'evm_accuracy':  evm_accuracy,
-        # Timing: flat keys in metadata (new format) OR nested evm_timing (old format)
-        'evm_timing':    ({k: meta[k] for k in
+        # Timing: nested in metadata['infer_time'] (new format) OR flat keys in metadata (old format)
+        # Also support old nested evm_timing key for backward compat
+        'evm_timing':    (meta['infer_time'] if 'infer_time' in meta and isinstance(meta['infer_time'], dict) else
+                         ({k: meta[k] for k in
                            ('infer_time_subgraph_ms', 'infer_time_core_ms', 'infer_time_invoke_ms')
-                           if k in meta}
-                          or meta.get('evm_timing', {})),
+                           if k in meta} or meta.get('evm_timing', {}))),
     }
     perf_availability_json = json.dumps(perf_availability, indent=2)
 

@@ -6237,9 +6237,12 @@ function updateMemoryChart(subgraphNum) {
     const lkp = buildLayerLookups(subgraphNum);
 
     // Build datasets for each active memory type (bar chart)
+    const PA = (typeof PERF_AVAILABILITY !== 'undefined') ? PERF_AVAILABILITY : {};
+    const memoryTypeAvailable = { ddr: PA.has_ddr, l2: PA.has_l2, msmc: PA.has_msmc };
     const datasets = [];
     let numDatasets = 0;
     for (const memType of ['ddr', 'l2', 'msmc']) {
+        if (!memoryTypeAvailable[memType]) continue;
         if (!activeMemoryTypes.has(memType)) continue;
         numDatasets++;
         const cfg = MEMORY_TYPE_CONFIG[memType];

@@ -325,43 +325,7 @@ class ActivationDataParser:
         indices = np.random.choice(len(data), max_samples, replace=False)
         return data[indices]
 
-    def _sanitize_float(self, value: float) -> float:
-        """Convert Infinity/NaN to None for JSON compatibility"""
-        if np.isnan(value) or np.isinf(value):
-            return None
-        return value
-
-    def _calculate_statistics(self, notidl_data: np.ndarray, tidl_data: np.ndarray) -> Dict[str, float]:
-        """Calculate statistics needed for plot generation"""
-        try:
-            notidl_min = float(np.min(notidl_data))
-            notidl_max = float(np.max(notidl_data))
-            notidl_mean = float(np.mean(notidl_data))
-            notidl_std = float(np.std(notidl_data))
-
-            tidl_min = float(np.min(tidl_data))
-            tidl_max = float(np.max(tidl_data))
-            tidl_mean = float(np.mean(tidl_data))
-            tidl_std = float(np.std(tidl_data))
-
-            return {
-                'total_points': len(notidl_data),
-                'notidl_min': self._sanitize_float(notidl_min),
-                'notidl_max': self._sanitize_float(notidl_max),
-                'notidl_mean': self._sanitize_float(notidl_mean),
-                'notidl_std': self._sanitize_float(notidl_std),
-                'tidl_min': self._sanitize_float(tidl_min),
-                'tidl_max': self._sanitize_float(tidl_max),
-                'tidl_mean': self._sanitize_float(tidl_mean),
-                'tidl_std': self._sanitize_float(tidl_std)
-            }
-
-        except Exception as e:
-            logger.debug(f"    Error calculating statistics: {e}")
-            return {}
-
-    def _generate_histogram_json(self, notidl_data: np.ndarray, tidl_data: np.ndarray,
-                              stats: Dict[str, float]) -> Dict[str, Any]:
+    def _generate_histogram_json(self, notidl_data: np.ndarray, tidl_data: np.ndarray) -> Dict[str, Any]:
         """Generate histogram data for visualization"""
 
         try:
@@ -410,8 +374,7 @@ class ActivationDataParser:
             'notidl_counts': notidl_counts_list,
         }
 
-    def _generate_scatter_plot_d3(self, notidl_data: np.ndarray, tidl_data: np.ndarray,
-                                   stats: Dict[str, float]) -> Dict[str, Any]:
+    def _generate_scatter_plot_d3(self, notidl_data: np.ndarray, tidl_data: np.ndarray) -> Dict[str, Any]:
         """Generate scatter plot data for D3 visualization"""
 
         try:
@@ -455,7 +418,6 @@ class ActivationDataParser:
             scatter_data = {
                 'x': [float(notidl_rounded[i]) for i in range(len(notidl_rounded))],
                 'y': [float(tidl_rounded[i]) for i in range(len(tidl_rounded))],
-                'sample_size': len(tidl_rounded),
                 'total_points': total_points,
                 'axis': {
                     'min': axis_min,
@@ -469,7 +431,7 @@ class ActivationDataParser:
             logger.debug(f"    Error generating D3 scatter plot: {e}")
             import traceback
             traceback.print_exc()
-            return {'x': [], 'y': [], 'sample_size': 0, 'total_points': 0}
+            return {'x': [], 'y': [], 'total_points': 0}
 
     def process_layer(self, subgraph_id: int, tidl_layer_id: str) -> Optional[Dict[str, Any]]:
         """Process a single layer and generate plot data
@@ -504,9 +466,8 @@ class ActivationDataParser:
             return None
 
         try:
-            stats = self._calculate_statistics(notidl_data, tidl_data)
-            histogram_data = self._generate_histogram_json(notidl_data, tidl_data, stats)
-            scatter_data = self._generate_scatter_plot_d3(notidl_data, tidl_data, stats)
+            histogram_data = self._generate_histogram_json(notidl_data, tidl_data)
+            scatter_data = self._generate_scatter_plot_d3(notidl_data, tidl_data)
 
         except Exception as e:
             logger.debug(f"  Error processing layer {tidl_layer_id}: {e}")
@@ -519,7 +480,6 @@ class ActivationDataParser:
         return {
             'histogram': histogram_data,
             'scatter': scatter_data,
-            'metrics': stats,
             'bin_files': {
                 'tidl': tidl_path,
                 'notidl': notidl_path
@@ -1530,14 +1490,12 @@ class TIDLSubgraphParser:
             # Initialize onnx_mapping for all layers
             onnx_indices = []
             onnx_names = []
-            mapping_type = 'none'
 
             # Priority 1: Check if this layer is involved in fusion (multiple ONNX nodes)
             fusion_info = fusion_map.get(layer_idx)
             if fusion_info and fusion_info.get('fused_onnx_indices'):
                 onnx_indices = fusion_info['fused_onnx_indices']
                 onnx_names = fusion_info['fused_onnx_names']
-                mapping_type = 'fusion' if len(onnx_indices) > 1 else '1-to-1'
 
             # Priority 2: Use netLog-parsed onnx_node_index if available
             # (skip if that ONNX node is already owned by an earlier-processed
@@ -1597,7 +1555,6 @@ class TIDLSubgraphParser:
             layer['onnx_mapping'] = {
                 'onnx_node_names': onnx_names,
                 'onnx_node_indices': onnx_indices,
-                'mapping_type': mapping_type,
             }
             # Claim these nodes so priority 2/3 on a later layer (in this
             # subgraph or a later-processed one) can't re-claim them too.
@@ -1626,8 +1583,7 @@ class TIDLSubgraphParser:
                         if other_names:
                             layer['onnx_mapping'] = {
                                 'onnx_node_names': other_names,
-                                'onnx_node_indices': other_mapping.get('onnx_node_indices', []),
-                                'mapping_type': other_mapping.get('mapping_type', '1-to-1'),
+                                'onnx_node_indices': other_mapping.get('onnx_node_indices', [])
                             }
                             break
                 if layer.get('onnx_mapping', {}).get('onnx_node_names'):
@@ -1677,8 +1633,7 @@ class TIDLSubgraphParser:
                         continue
                     layer['onnx_mapping'] = {
                         'onnx_node_names': [base_name],
-                        'onnx_node_indices': [onnx_idx],
-                        'mapping_type': '1-to-1',
+                        'onnx_node_indices': [onnx_idx]
                     }
                     self.owned_onnx_nodes.add(onnx_idx)
                     logger.debug(f"    Layer {layer.get('layer_index')} ({layer_type}): extracted ONNX mapping → {base_name}")
@@ -2262,13 +2217,15 @@ class ONNXParser:
             'input_shape': [
                 {
                     'name': inp.name,
-                    'shape': self.get_tensor_shape(inp)
+                    'shape': self.get_tensor_shape(inp),
+                    'dtype': tensor_metadata.get(inp.name, {}).get('dtype', 'unknown')
                 } for inp in graph.inputs
             ],
             'output_shape': [
                 {
                     'name': out.name,
-                    'shape': self.get_tensor_shape(out)
+                    'shape': self.get_tensor_shape(out),
+                    'dtype': tensor_metadata.get(out.name, {}).get('dtype', 'unknown')
                 } for out in graph.outputs
             ]
         }
@@ -2474,13 +2431,15 @@ class ONNXParser:
             'input_shape': [
                 {
                     'name': inp.name,
-                    'shape': self.get_tensor_shape(inp)
+                    'shape': self.get_tensor_shape(inp),
+                    'dtype': tensor_metadata.get(inp.name, {}).get('dtype', 'unknown')
                 } for inp in graph.input
             ],
             'output_shape': [
                 {
                     'name': out.name,
-                    'shape': self.get_tensor_shape(out)
+                    'shape': self.get_tensor_shape(out),
+                    'dtype': tensor_metadata.get(out.name, {}).get('dtype', 'unknown')
                 } for out in graph.output
             ]
         }
@@ -3140,15 +3099,24 @@ def update_with_evm_perf(json_path: str) -> bool:
             p = perf_map[lid]
 
             # Replace performance with only the two reliable EVM metrics.
-            # Everything else (proctime_us, core_loop_cycles, io_cycles, memory)
-            # is set null — HTML hides charts for null fields automatically.
+            # proctime_us/core_loop_cycles/io_cycles are set null — HTML hides
+            # charts for null fields automatically. memory is NOT wiped: it's a
+            # property of the compiled schedule (which buffer lives where), not
+            # of measured-vs-simulated cycles, so the PC-sim-computed value
+            # already on the layer stays valid on an EVM run too.
+            existing_memory = None
+            if isinstance(layer.get('performance'), dict):
+                existing_memory = layer['performance'].get('memory')
+            if existing_memory is None:
+                existing_memory = {'l2_kb': None, 'msmc_kb': None, 'ddr_kb': None, 'total_kb': None}
+
             layer['performance'] = {
                 'layer_cycles':     p['layer_cycles'],
                 'kernel_cycles':    p['kernel_cycles'],
                 'core_loop_cycles': None,
                 'proctime_us':      None,
                 'io_cycles':        None,
-                'memory':           {'l2_kb': None, 'msmc_kb': None, 'ddr_kb': None, 'total_kb': None},
+                'memory':           existing_memory,
             }
             matched += 1
             updated = True
@@ -3174,19 +3142,33 @@ def update_with_evm_perf(json_path: str) -> bool:
         run_dir = os.path.dirname(os.path.dirname(json_path))  # inspector/ -> model_dir
         acc = load_accuracy_from_result_yaml(run_dir)
         if acc:
-            timing_written = False
+            # Initialize accuracy and infer_time dictionaries if not already present
+            if 'accuracy' not in meta:
+                meta['accuracy'] = {}
+            if 'infer_time' not in meta:
+                meta['infer_time'] = {}
+
+            # Add infer_time metrics to infer_time dictionary
             for key in ('infer_time_subgraph_ms', 'infer_time_core_ms', 'infer_time_invoke_ms'):
                 raw = acc.get(key)
                 if raw is not None:
                     # Values are already per-frame averages (basert_wrapper divides
                     # the running sum by num_frames before writing result.yaml).
                     # Do NOT divide again here.
-                    meta[key] = round(float(raw), 3)
-                    timing_written = True
+                    meta['infer_time'][key] = round(float(raw), 3)
+
+            # Add num_frames to metadata if present
             if acc.get('num_frames'):
                 meta['num_frames'] = acc['num_frames']
-            if timing_written:
-                logger.debug(f'  EVM timing written to metadata')
+
+            # Add accuracy metrics to accuracy dictionary
+            accuracy = {k: v for k, v in acc.items() if k.lower().startswith('accuracy')}
+            if accuracy:
+                meta['accuracy'].update(accuracy)
+                logger.debug(f'  EVM accuracy written to accuracy: {accuracy}')
+
+            logger.debug(f'  EVM infer_time written to infer_time: {list(meta["infer_time"].keys())}')
+            logger.debug(f'  EVM accuracy written to accuracy: {list(meta["accuracy"].keys())}')
 
         # Clean up any old-format keys left from previous runs
         data.pop('performance_source', None)  # remove from root if present
@@ -3403,34 +3385,26 @@ def load_memory_data(model_dir_path: str) -> Dict[int, List[Dict[str, Any]]]:
                         out_vol = float(row['outVol(KB)'].strip()) if row['outVol(KB)'].strip() else 0.0
                         wt_vol = float(row['wtVol(KB)'].strip()) if row['wtVol(KB)'].strip() else 0.0
 
-                        src_mem_in = row[' srcMem-IN'].strip()
                         dst_mem_in = row[' dstMem-IN'].strip()
-                        src_mem_out = row['srcMem-OUT'].strip()
                         dst_mem_out = row['dstMem-OUT'].strip()
-                        src_mem_wt = row[' srcMem-WT'].strip()
                         dst_mem_wt = row[' dstMem-WT'].strip()
 
-                        l2_usage = 0.0
                         msmc_usage = 0.0
                         ddr_usage = 0.0
 
-                        for mem_loc, vol in [(src_mem_in, in_vol), (dst_mem_in, in_vol),
-                                             (src_mem_out, out_vol), (dst_mem_out, out_vol),
-                                             (src_mem_wt, wt_vol), (dst_mem_wt, wt_vol)]:
-                            if 'L2' in mem_loc:
-                                l2_usage += vol / 2
-                            elif 'MSMC' in mem_loc or 'L3' in mem_loc:
-                                msmc_usage += vol / 2
+                        for mem_loc, vol in [(dst_mem_in, in_vol), (dst_mem_out, out_vol), (dst_mem_wt, wt_vol)]:
+                            if 'MSMC' in mem_loc or 'L3' in mem_loc:
+                                msmc_usage += vol
                             elif 'DDR' in mem_loc:
-                                ddr_usage += vol / 2
+                                ddr_usage += vol
 
                         layer_data.append({
                             'layer_num': layer_num,
                             'layer_type': layer_type,
-                            'l2_usage': l2_usage,
+                            'l2_usage': None,
                             'msmc_usage': msmc_usage,
                             'ddr_usage': ddr_usage,
-                            'total_usage': l2_usage + msmc_usage + ddr_usage
+                            'total_usage': msmc_usage + ddr_usage
                         })
                     except (ValueError, KeyError) as e:
                         continue
@@ -3663,12 +3637,14 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
 
         for subgraph_id, tidl_info in tidl_data.items():
             enhanced_layers = {}  # Changed from list to dict
-
-            subgraph_metrics = metrics_data.get(str(subgraph_id), [])
-            metrics_lookup = {m['tidl_layer_id']: m for m in subgraph_metrics if m.get('tidl_layer_id')}
-
+            
             subgraph_perf = performance_data.get(subgraph_id, [])
-            perf_lookup = {p['layer_num']: p for p in subgraph_perf}
+            perf_lookup = {}
+            for p in subgraph_perf:
+                if isinstance(p, dict) and 'layer_num' in p:
+                    perf_lookup[p['layer_num']] = p
+                else:
+                    logger.debug(f'Skipping invalid performance entry: {p}')
 
             # Get fusion and expansion maps for this subgraph
             fusion_map = tidl_info.get('fusion_map', {})
@@ -3776,7 +3752,14 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
                     mapping_type = 'none'
 
                 # Determine performance — all layers get the field (null if not available)
+                # layer_num/layer_type here would just duplicate the outer
+                # layer_id/layer_type already set on enhanced_layer below.
                 perf_value = perf_lookup.get(layer_idx, None)
+                if perf_value is not None:
+                    # Create a copy of perf_value without layer identification fields
+                    # since layer_id and layer_type are already duplicated elsewhere
+                    perf_value = {k: v for k, v in perf_value.items()
+                                if k not in ('layer_num', 'layer_type')}
 
                 # Determine activation data and bin_files
                 layer_type_str = layer.get('layer_type', '')
@@ -3791,14 +3774,14 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
                     act = activation_data[act_key]
                     act_data = {
                         'histogram': act.get('histogram', {'tidl_bins': [], 'tidl_counts': [], 'notidl_bins': [], 'notidl_counts': []}),
-                        'scatter': act.get('scatter', {'x': [], 'y': [], 'sample_size': 0, 'total_points': 0}),
+                        'scatter': act.get('scatter', {'x': [], 'y': [], 'total_points': 0}),
                         'metrics': act.get('metrics', None),
                         'bin_files': act.get('bin_files', None),
                     }
                 else:
                     act_data = {
                         'histogram': {'tidl_bins': [], 'tidl_counts': [], 'notidl_bins': [], 'notidl_counts': []},
-                        'scatter': {'x': [], 'y': [], 'sample_size': 0, 'total_points': 0},
+                        'scatter': {'x': [], 'y': [], 'total_points': 0},
                         'metrics': None,
                         'bin_files': None,
                     }
@@ -3811,7 +3794,6 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
                     'onnx_mapping': {
                         'onnx_node_indices': onnx_indices,
                         'onnx_node_names': onnx_names,
-                        'mapping_type': mapping_type,
                     },
                     'inputs': inputs_list,
                     'outputs': outputs_list,
@@ -3854,7 +3836,7 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
             onnx_inputs.append({
                 'name': inp.get('name', ''),
                 'shape': inp.get('shape', []),
-                'dtype': 'float32'  # Default, could be extracted if available
+                'dtype': inp.get('dtype', 'float32').removeprefix('type_')
             })
 
         # Extract outputs from 'output_shape' (not 'outputs')
@@ -3862,7 +3844,7 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
             onnx_outputs.append({
                 'name': out.get('name', ''),
                 'shape': out.get('shape', []),
-                'dtype': 'float32'  # Default, could be extracted if available
+                'dtype': out.get('dtype', 'float32').removeprefix('type_')
             })
 
         # Metadata with only essential fields (matching reference schema)
@@ -3870,7 +3852,9 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
             'model_name': model_details.get('name', 'Unknown'),
             'task_type': config_data.get('task_type', 'Unknown'),
             'inputs': onnx_inputs,
-            'outputs': onnx_outputs
+            'outputs': onnx_outputs,
+            'accuracy': {},
+            'infer_time': {}
         }
 
         # Store target_device and tensor_bits for use in each subgraph
@@ -3971,8 +3955,7 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
                 if matched_name:
                     layer['onnx_mapping'] = {
                         'onnx_node_names': [matched_name],
-                        'onnx_node_indices': [],
-                        'mapping_type': 'activation_fusion',
+                        'onnx_node_indices': []
                     }
                     act_fused_count += 1
         logger.debug(f"  Activation-fusion mapping: matched {act_fused_count} embedded-activation layers")
@@ -4018,8 +4001,7 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
                 if matched_name:
                     layer['onnx_mapping'] = {
                         'onnx_node_names': [matched_name],
-                        'onnx_node_indices': [],
-                        'mapping_type': 'boundary_layer_match',
+                        'onnx_node_indices': []
                     }
                     type_match_count += 1
         logger.debug(f"  Boundary-layer type match: matched {type_match_count} layers")
@@ -4121,8 +4103,7 @@ def main(work_dirs_path, output_json_path, extract_activations=False):
                 ordered_names = [n for n in onnx_layers if n in visited]
                 layer['onnx_mapping'] = {
                     'onnx_node_indices': [],
-                    'onnx_node_names': ordered_names,
-                    'mapping_type': 'delegated_fusion',
+                    'onnx_node_names': ordered_names
                 }
                 owned_onnx_nodes.update(visited)
                 forward_fill_count += len(visited)
@@ -4475,7 +4456,7 @@ def update_with_activations(work_dirs_path, json_path):
                 act = activation_data[act_key]
                 layer['activation_data'] = {
                     'histogram': act.get('histogram', {'tidl_bins': [], 'tidl_counts': [], 'notidl_bins': [], 'notidl_counts': []}),
-                    'scatter': act.get('scatter', {'x': [], 'y': [], 'sample_size': 0, 'total_points': 0}),
+                    'scatter': act.get('scatter', {'x': [], 'y': [], 'total_points': 0}),
                     'metrics': act.get('metrics', None),
                     'bin_files': act.get('bin_files', None),
                 }
